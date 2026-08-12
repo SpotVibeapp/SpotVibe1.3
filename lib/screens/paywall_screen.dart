@@ -91,7 +91,7 @@ class _PaywallHeader extends StatelessWidget {
                   width: 72,
                   height: 72,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.25),
+                    color: Colors.white.withValues(alpha: 0.25),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.workspace_premium_rounded, size: 40, color: Colors.white),
@@ -112,9 +112,9 @@ class _PaywallHeader extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.3),
+                        color: Colors.white.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(AppTheme.radiusXl),
-                        border: Border.all(color: Colors.white.withOpacity(0.6)),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.6)),
                       ),
                       child: const Text(
                         'PRO',
@@ -223,7 +223,7 @@ class _PlanTab extends StatelessWidget {
                 : null,
             borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
             boxShadow: isSelected
-                ? [BoxShadow(color: appColors.proGold.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))]
+                ? [BoxShadow(color: appColors.proGold.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))]
                 : null,
           ),
           child: Row(
@@ -241,7 +241,7 @@ class _PlanTab extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.white.withOpacity(0.3) : appColors.proGold.withOpacity(0.15),
+                    color: isSelected ? Colors.white.withValues(alpha: 0.3) : appColors.proGold.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(AppTheme.radiusXl),
                   ),
                   child: Text(
@@ -341,7 +341,7 @@ class _FeatureList extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(color: colors.outlineVariant.withOpacity(0.3)),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: List.generate(_features.length, (i) {
@@ -360,7 +360,7 @@ class _FeatureList extends StatelessWidget {
                       height: 36,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [appColors.proGold.withOpacity(0.2), appColors.proGoldLight.withOpacity(0.15)],
+                          colors: [appColors.proGold.withValues(alpha: 0.2), appColors.proGoldLight.withValues(alpha: 0.15)],
                         ),
                         borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                       ),
@@ -381,7 +381,7 @@ class _FeatureList extends StatelessWidget {
                 ),
               ),
               if (i < _features.length - 1)
-                Divider(height: 1, thickness: 1, color: colors.outlineVariant.withOpacity(0.2)),
+                Divider(height: 1, thickness: 1, color: colors.outlineVariant.withValues(alpha: 0.2)),
             ],
           );
         }),
@@ -410,7 +410,7 @@ class _PurchaseButton extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         boxShadow: [
-          BoxShadow(color: appColors.proGold.withOpacity(0.4), blurRadius: 16, offset: const Offset(0, 6)),
+          BoxShadow(color: appColors.proGold.withValues(alpha: 0.4), blurRadius: 16, offset: const Offset(0, 6)),
         ],
       ),
       child: Material(
@@ -583,7 +583,7 @@ class _AlreadySubscribedView extends StatelessWidget {
                   ),
                   shape: BoxShape.circle,
                   boxShadow: [
-                    BoxShadow(color: appColors.proGold.withOpacity(0.35), blurRadius: 24, spreadRadius: 4),
+                    BoxShadow(color: appColors.proGold.withValues(alpha: 0.35), blurRadius: 24, spreadRadius: 4),
                   ],
                 ),
                 child: const Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 48),

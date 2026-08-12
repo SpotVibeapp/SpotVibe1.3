@@ -127,7 +127,7 @@ class _ClaimHeader extends StatelessWidget {
                     width: 64,
                     height: 64,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -153,7 +153,7 @@ class _ClaimHeader extends StatelessWidget {
                       'Powered by SpotVibe Premium',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -197,7 +197,7 @@ class _VenueEventCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-        border: Border.all(color: colors.outlineVariant.withOpacity(0.3)),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -259,7 +259,7 @@ class _PerksList extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(color: colors.outlineVariant.withOpacity(0.3)),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: List.generate(_PremiumSalesView._perks.length, (i) {
@@ -279,8 +279,8 @@ class _PerksList extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            appColors.proGold.withOpacity(0.2),
-                            appColors.proGoldLight.withOpacity(0.15),
+                            appColors.proGold.withValues(alpha: 0.2),
+                            appColors.proGoldLight.withValues(alpha: 0.15),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
@@ -312,7 +312,7 @@ class _PerksList extends StatelessWidget {
                 Divider(
                   height: 1,
                   thickness: 1,
-                  color: colors.outlineVariant.withOpacity(0.2),
+                  color: colors.outlineVariant.withValues(alpha: 0.2),
                 ),
             ],
           );
@@ -341,7 +341,7 @@ class _PremiumCta extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         boxShadow: [
           BoxShadow(
-            color: appColors.proGold.withOpacity(0.4),
+            color: appColors.proGold.withValues(alpha: 0.4),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -456,12 +456,12 @@ class _VerifyOwnershipViewState extends State<_VerifyOwnershipView> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      appColors.proGold.withOpacity(0.15),
-                      appColors.proGoldLight.withOpacity(0.1),
+                      appColors.proGold.withValues(alpha: 0.15),
+                      appColors.proGoldLight.withValues(alpha: 0.1),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                  border: Border.all(color: appColors.proGold.withOpacity(0.3)),
+                  border: Border.all(color: appColors.proGold.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -552,7 +552,7 @@ class _VerifyOwnershipViewState extends State<_VerifyOwnershipView> {
                   borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
                   boxShadow: [
                     BoxShadow(
-                      color: appColors.proGold.withOpacity(0.35),
+                      color: appColors.proGold.withValues(alpha: 0.35),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -627,7 +627,7 @@ class _SubmittedConfirmation extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: appColors.proGold.withOpacity(0.35),
+                      color: appColors.proGold.withValues(alpha: 0.35),
                       blurRadius: 24,
                       spreadRadius: 4,
                     ),

@@ -184,7 +184,7 @@ class _AggregateSummaryRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(color: colors.outlineVariant.withOpacity(0.3)),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -235,7 +235,7 @@ class _Divider extends StatelessWidget {
     return Container(
       width: 1,
       height: 40,
-      color: colors.outlineVariant.withOpacity(0.4),
+      color: colors.outlineVariant.withValues(alpha: 0.4),
       margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXs),
     );
   }
@@ -296,7 +296,7 @@ class _EventInsightCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(color: colors.outlineVariant.withOpacity(0.25)),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -309,7 +309,7 @@ class _EventInsightCard extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [appColors.creatorTeal.withOpacity(0.12), appColors.creatorTealLight.withOpacity(0.06)],
+                colors: [appColors.creatorTeal.withValues(alpha: 0.12), appColors.creatorTealLight.withValues(alpha: 0.06)],
               ),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(AppTheme.radiusLarge)),
             ),
@@ -345,7 +345,7 @@ class _EventInsightCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingSm, vertical: 3),
                   decoration: BoxDecoration(
-                    color: appColors.creatorTeal.withOpacity(0.15),
+                    color: appColors.creatorTeal.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(AppTheme.radiusXl),
                   ),
                   child: Text(
@@ -424,7 +424,7 @@ class _EventInsightCard extends StatelessWidget {
                 vertical: AppTheme.spacingSm + 2,
               ),
               decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: colors.outlineVariant.withOpacity(0.25))),
+                border: Border(top: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.25))),
               ),
               child: Row(
                 children: [

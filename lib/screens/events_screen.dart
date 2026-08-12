@@ -109,7 +109,7 @@ class _EventsScreenState extends State<EventsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
               child: Row(
                 children: [
-                  Text('SpotVibe', style: text.headlineMedium?.copyWith(color: colors.primary)),
+                  Text('vibely', style: text.headlineMedium?.copyWith(color: colors.primary)),
                   const Spacer(),
                   // Map view button
                   IconButton(
@@ -330,9 +330,9 @@ class _ActiveAreaStrip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(
             horizontal: AppTheme.spacingMd, vertical: AppTheme.spacingSm),
         decoration: BoxDecoration(
-          color: colors.primaryContainer.withOpacity(0.22),
+          color: colors.primaryContainer.withValues(alpha: 0.22),
           borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-          border: Border.all(color: colors.primary.withOpacity(0.35)),
+          border: Border.all(color: colors.primary.withValues(alpha: 0.35)),
         ),
         child: Row(
           children: [

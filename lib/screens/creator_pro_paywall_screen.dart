@@ -100,7 +100,7 @@ class _CreatorProHeader extends StatelessWidget {
                   width: 72,
                   height: 72,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.campaign_rounded, size: 38, color: Colors.white),
@@ -121,9 +121,9 @@ class _CreatorProHeader extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.25),
+                        color: Colors.white.withValues(alpha: 0.25),
                         borderRadius: BorderRadius.circular(AppTheme.radiusXl),
-                        border: Border.all(color: Colors.white.withOpacity(0.55)),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.55)),
                       ),
                       child: const Text(
                         'PRO',
@@ -175,10 +175,10 @@ class _PriceChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd, vertical: AppTheme.spacingMd),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [appColors.creatorTeal.withOpacity(0.12), appColors.creatorTealLight.withOpacity(0.08)],
+          colors: [appColors.creatorTeal.withValues(alpha: 0.12), appColors.creatorTealLight.withValues(alpha: 0.08)],
         ),
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(color: appColors.creatorTeal.withOpacity(0.3)),
+        border: Border.all(color: appColors.creatorTeal.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -199,7 +199,7 @@ class _PriceChip extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingSm, vertical: AppTheme.spacingXs),
             decoration: BoxDecoration(
-              color: appColors.creatorTeal.withOpacity(0.15),
+              color: appColors.creatorTeal.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(AppTheme.radiusXl),
             ),
             child: Text(
@@ -241,7 +241,7 @@ class _CreatorFeatureList extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(color: colors.outlineVariant.withOpacity(0.3)),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: List.generate(_features.length, (i) {
@@ -261,8 +261,8 @@ class _CreatorFeatureList extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            appColors.creatorTeal.withOpacity(0.2),
-                            appColors.creatorTealLight.withOpacity(0.12),
+                            appColors.creatorTeal.withValues(alpha: 0.2),
+                            appColors.creatorTealLight.withValues(alpha: 0.12),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
@@ -284,7 +284,7 @@ class _CreatorFeatureList extends StatelessWidget {
                 ),
               ),
               if (i < _features.length - 1)
-                Divider(height: 1, thickness: 1, color: colors.outlineVariant.withOpacity(0.2)),
+                Divider(height: 1, thickness: 1, color: colors.outlineVariant.withValues(alpha: 0.2)),
             ],
           );
         }),
@@ -307,7 +307,7 @@ class _FreeVsProComparison extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(color: colors.outlineVariant.withOpacity(0.3)),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -316,7 +316,7 @@ class _FreeVsProComparison extends StatelessWidget {
             padding: const EdgeInsets.all(AppTheme.spacingMd),
             child: Text('What you get', style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
           ),
-          Divider(height: 1, color: colors.outlineVariant.withOpacity(0.3)),
+          Divider(height: 1, color: colors.outlineVariant.withValues(alpha: 0.3)),
           _ComparisonRow(label: 'One-time events', free: true, pro: true, appColors: appColors, text: text, colors: colors),
           _ComparisonRow(label: 'Basic event page', free: true, pro: true, appColors: appColors, text: text, colors: colors),
           _ComparisonRow(label: 'Public feed listing', free: true, pro: true, appColors: appColors, text: text, colors: colors),
@@ -371,7 +371,7 @@ class _ComparisonRow extends StatelessWidget {
             ],
           ),
         ),
-        if (!isLast) Divider(height: 1, color: colors.outlineVariant.withOpacity(0.2)),
+        if (!isLast) Divider(height: 1, color: colors.outlineVariant.withValues(alpha: 0.2)),
       ],
     );
   }
@@ -379,7 +379,7 @@ class _ComparisonRow extends StatelessWidget {
   Widget _indicator(bool value, ColorScheme colors, AppColorsExtension appColors) {
     return value
         ? Icon(Icons.check_rounded, size: AppTheme.iconSm, color: appColors.creatorTeal)
-        : Icon(Icons.remove_rounded, size: AppTheme.iconSm, color: colors.onSurfaceVariant.withOpacity(AppTheme.opacityDisabled));
+        : Icon(Icons.remove_rounded, size: AppTheme.iconSm, color: colors.onSurfaceVariant.withValues(alpha: AppTheme.opacityDisabled));
   }
 }
 
@@ -404,7 +404,7 @@ class _SubscribeButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         boxShadow: [
           BoxShadow(
-            color: appColors.creatorTeal.withOpacity(0.4),
+            color: appColors.creatorTeal.withValues(alpha: 0.4),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),

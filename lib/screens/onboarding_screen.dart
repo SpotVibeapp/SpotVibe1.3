@@ -239,7 +239,7 @@ class _WelcomePage extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: colors.primary.withOpacity(0.30),
+                      color: colors.primary.withValues(alpha: 0.30),
                       blurRadius: 40,
                       offset: const Offset(0, 16),
                     ),
@@ -315,10 +315,10 @@ class _FeaturePill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(
           horizontal: AppTheme.spacingMd, vertical: AppTheme.spacingSm),
       decoration: BoxDecoration(
-        color: colors.primaryContainer.withOpacity(0.45),
+        color: colors.primaryContainer.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(AppTheme.radiusXl),
         border: Border.all(
-            color: colors.primary.withOpacity(0.18),
+            color: colors.primary.withValues(alpha: 0.18),
             width: AppTheme.borderDefault),
       ),
       child: Row(
@@ -463,13 +463,13 @@ class _OnboardingPermCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppTheme.spacingMd),
       decoration: BoxDecoration(
         color: done && granted
-            ? colors.primaryContainer.withOpacity(0.35)
+            ? colors.primaryContainer.withValues(alpha: 0.35)
             : colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         border: Border.all(
           color: done && granted
-              ? colors.primary.withOpacity(0.4)
-              : colors.outlineVariant.withOpacity(0.4),
+              ? colors.primary.withValues(alpha: 0.4)
+              : colors.outlineVariant.withValues(alpha: 0.4),
           width:
               done && granted ? AppTheme.borderSelected : AppTheme.borderDefault,
         ),
@@ -483,7 +483,7 @@ class _OnboardingPermCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: done && granted
                   ? colors.primaryContainer
-                  : iconColor.withOpacity(0.12),
+                  : iconColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
             ),
             child: done && granted
@@ -541,7 +541,7 @@ class _OnboardingPermCard extends StatelessWidget {
                       onPressed: loading ? null : onAllow,
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(0, 40),
-                        side: BorderSide(color: iconColor.withOpacity(0.6)),
+                        side: BorderSide(color: iconColor.withValues(alpha: 0.6)),
                         foregroundColor: iconColor,
                       ),
                       child: loading
@@ -628,7 +628,7 @@ class _InterestsPage extends StatelessWidget {
               'Select at least one to personalise your feed.',
               style: text.bodySmall?.copyWith(
                 color: colors.onSurfaceVariant
-                    .withOpacity(AppTheme.opacityHint),
+                    .withValues(alpha: AppTheme.opacityHint),
               ),
             ),
         ],
@@ -670,7 +670,7 @@ class _InterestChip extends StatelessWidget {
             border: Border.all(
               color: isSelected
                   ? colors.primary
-                  : colors.outlineVariant.withOpacity(0.5),
+                  : colors.outlineVariant.withValues(alpha: 0.5),
               width: AppTheme.borderDefault,
             ),
           ),
@@ -762,7 +762,7 @@ class _ReadyPageState extends State<_ReadyPage>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: colors.primary.withOpacity(0.30),
+                        color: colors.primary.withValues(alpha: 0.30),
                         blurRadius: 36,
                         offset: const Offset(0, 14),
                       ),

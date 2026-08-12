@@ -314,9 +314,9 @@ class _RecurringBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingSm, vertical: 3),
       decoration: BoxDecoration(
-        color: appColors.creatorTeal.withOpacity(0.12),
+        color: appColors.creatorTeal.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppTheme.radiusXl),
-        border: Border.all(color: appColors.creatorTeal.withOpacity(0.3)),
+        border: Border.all(color: appColors.creatorTeal.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -353,9 +353,9 @@ class _ContactSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingMd),
       decoration: BoxDecoration(
-        color: appColors.creatorTeal.withOpacity(0.06),
+        color: appColors.creatorTeal.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(color: appColors.creatorTeal.withOpacity(0.2)),
+        border: Border.all(color: appColors.creatorTeal.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

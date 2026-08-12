@@ -161,12 +161,12 @@ class _ProTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd, vertical: AppTheme.spacingMd),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [appColors.proGold.withOpacity(0.15), appColors.proGoldLight.withOpacity(0.08)],
+            colors: [appColors.proGold.withValues(alpha: 0.15), appColors.proGoldLight.withValues(alpha: 0.08)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-          border: Border.all(color: appColors.proGold.withOpacity(0.4)),
+          border: Border.all(color: appColors.proGold.withValues(alpha: 0.4)),
         ),
         child: Row(
           children: [
@@ -224,7 +224,7 @@ class _SettingsTile extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(AppTheme.spacingSm),
         decoration: BoxDecoration(
-          color: colors.primaryContainer.withOpacity(0.5),
+          color: colors.primaryContainer.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
         ),
         child: Icon(icon, size: AppTheme.iconMd, color: colors.primary),

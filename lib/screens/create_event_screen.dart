@@ -500,10 +500,10 @@ class _CreatorProSection extends StatelessWidget {
           padding: const EdgeInsets.all(AppTheme.spacingMd),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [appColors.creatorTeal.withOpacity(0.08), appColors.creatorTealLight.withOpacity(0.05)],
+              colors: [appColors.creatorTeal.withValues(alpha: 0.08), appColors.creatorTealLight.withValues(alpha: 0.05)],
             ),
             borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-            border: Border.all(color: appColors.creatorTeal.withOpacity(0.35), width: AppTheme.borderDefault),
+            border: Border.all(color: appColors.creatorTeal.withValues(alpha: 0.35), width: AppTheme.borderDefault),
           ),
           child: Row(
             children: [
@@ -528,7 +528,7 @@ class _CreatorProSection extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: appColors.creatorTeal.withOpacity(0.15),
+                            color: appColors.creatorTeal.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(AppTheme.radiusXl),
                           ),
                           child: Text(
@@ -692,10 +692,10 @@ class _RecurringOption extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingSm),
           decoration: BoxDecoration(
-            color: selected ? appColors.creatorTeal.withOpacity(0.12) : colors.surfaceContainerLow,
+            color: selected ? appColors.creatorTeal.withValues(alpha: 0.12) : colors.surfaceContainerLow,
             borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
             border: Border.all(
-              color: selected ? appColors.creatorTeal : colors.outlineVariant.withOpacity(0.3),
+              color: selected ? appColors.creatorTeal : colors.outlineVariant.withValues(alpha: 0.3),
               width: selected ? AppTheme.borderSelected : AppTheme.borderDefault,
             ),
           ),
@@ -782,7 +782,7 @@ class _CategoryDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: 'Category',
@@ -815,7 +815,7 @@ class _DateTimeTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.surfaceContainerLow,
           borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-          border: Border.all(color: colors.outlineVariant.withOpacity(0.4)),
+          border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.4)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -865,7 +865,7 @@ class _CreationAccessSelector extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(AppTheme.spacingMd),
         decoration: BoxDecoration(
-          color: appColors.proGold.withOpacity(0.08),
+          color: appColors.proGold.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
           border: Border.all(color: appColors.proGold, width: AppTheme.borderSelected),
         ),
@@ -958,17 +958,17 @@ class _TierCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppTheme.spacingMd),
         decoration: BoxDecoration(
           color: isSelected
-              ? accentColor.withOpacity(0.08)
+              ? accentColor.withValues(alpha: 0.08)
               : isUpgradeCard
-                  ? accentColor.withOpacity(0.04)
+                  ? accentColor.withValues(alpha: 0.04)
                   : colors.surfaceContainerLow,
           borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
           border: Border.all(
             color: isSelected
                 ? accentColor
                 : isUpgradeCard
-                    ? accentColor.withOpacity(0.4)
-                    : colors.outlineVariant.withOpacity(0.5),
+                    ? accentColor.withValues(alpha: 0.4)
+                    : colors.outlineVariant.withValues(alpha: 0.5),
             width: isSelected ? AppTheme.borderSelected : AppTheme.borderDefault,
           ),
         ),

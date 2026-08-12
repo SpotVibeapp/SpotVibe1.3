@@ -132,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: 64,
                         height: 64,
                         decoration: BoxDecoration(
-                          color: colors.onPrimary.withOpacity(0.15),
+                          color: colors.onPrimary.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -143,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: AppTheme.spacingSm),
                       Text(
-                        'SpotVibe',
+                        'vibely',
                         style: text.headlineMedium?.copyWith(
                           color: colors.onPrimary,
                           fontWeight: FontWeight.w800,
@@ -444,7 +444,7 @@ class _SocialButton extends StatelessWidget {
           color: colors.surfaceContainerLow,
           borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
           border: Border.all(
-            color: colors.outlineVariant.withOpacity(0.4),
+            color: colors.outlineVariant.withValues(alpha: 0.4),
             width: AppTheme.borderDefault,
           ),
         ),

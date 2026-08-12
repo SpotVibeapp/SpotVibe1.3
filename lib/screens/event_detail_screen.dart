@@ -84,7 +84,7 @@ class _DetailContent extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: colors.surfaceContainerLowest,
                       borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                      border: Border.all(color: colors.outlineVariant.withOpacity(0.3)),
+                      border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.3)),
                     ),
                     child: Column(
                       children: [
@@ -93,19 +93,19 @@ class _DetailContent extends StatelessWidget {
                           label: DateFormat('EEEE, MMMM d, yyyy').format(event.dateTime),
                         ),
                         const SizedBox(height: AppTheme.spacingSm),
-                        Divider(height: 1, color: colors.outlineVariant.withOpacity(0.3)),
+                        Divider(height: 1, color: colors.outlineVariant.withValues(alpha: 0.3)),
                         const SizedBox(height: AppTheme.spacingSm),
                         _InfoRow(
                           icon: Icons.access_time_rounded,
                           label: DateFormat('h:mm a').format(event.dateTime),
                         ),
                         const SizedBox(height: AppTheme.spacingSm),
-                        Divider(height: 1, color: colors.outlineVariant.withOpacity(0.3)),
+                        Divider(height: 1, color: colors.outlineVariant.withValues(alpha: 0.3)),
                         const SizedBox(height: AppTheme.spacingSm),
                         _InfoRow(icon: Icons.location_on_rounded, label: event.fullLocation),
                         if (event.cost != null && event.cost! > 0) ...[
                           const SizedBox(height: AppTheme.spacingSm),
-                          Divider(height: 1, color: colors.outlineVariant.withOpacity(0.3)),
+                          Divider(height: 1, color: colors.outlineVariant.withValues(alpha: 0.3)),
                           const SizedBox(height: AppTheme.spacingSm),
                           _InfoRow(
                             icon: Icons.confirmation_number_rounded,
@@ -113,14 +113,14 @@ class _DetailContent extends StatelessWidget {
                           ),
                         ],
                         const SizedBox(height: AppTheme.spacingSm),
-                        Divider(height: 1, color: colors.outlineVariant.withOpacity(0.3)),
+                        Divider(height: 1, color: colors.outlineVariant.withValues(alpha: 0.3)),
                         const SizedBox(height: AppTheme.spacingSm),
                         Row(
                           children: [
                             Container(
                               padding: const EdgeInsets.all(AppTheme.spacingSm),
                               decoration: BoxDecoration(
-                                color: colors.primaryContainer.withOpacity(0.5),
+                                color: colors.primaryContainer.withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                               ),
                               child: Icon(Icons.link_rounded, size: AppTheme.iconSm, color: colors.primary),
@@ -230,7 +230,7 @@ class _InfoRow extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(AppTheme.spacingSm),
           decoration: BoxDecoration(
-            color: colors.primaryContainer.withOpacity(0.5),
+            color: colors.primaryContainer.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
           ),
           child: Icon(icon, size: AppTheme.iconSm, color: colors.primary),
@@ -294,7 +294,7 @@ class _CounterButton extends StatelessWidget {
           color: isActive ? colors.primaryContainer : colors.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
           border: Border.all(
-            color: isActive ? colors.primary : colors.outlineVariant.withOpacity(0.3),
+            color: isActive ? colors.primary : colors.outlineVariant.withValues(alpha: 0.3),
             width: isActive ? AppTheme.borderSelected : AppTheme.borderDefault,
           ),
         ),

@@ -167,10 +167,10 @@ class _CreatorProUpgradeBanner extends StatelessWidget {
         padding: const EdgeInsets.all(AppTheme.spacingMd),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [appColors.creatorTeal.withOpacity(0.1), appColors.creatorTealLight.withOpacity(0.06)],
+            colors: [appColors.creatorTeal.withValues(alpha: 0.1), appColors.creatorTealLight.withValues(alpha: 0.06)],
           ),
           borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-          border: Border.all(color: appColors.creatorTeal.withOpacity(0.3)),
+          border: Border.all(color: appColors.creatorTeal.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
@@ -223,7 +223,7 @@ class _EventAnalyticsRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd, vertical: AppTheme.spacingXs),
         decoration: BoxDecoration(
-          color: appColors.creatorTeal.withOpacity(0.07),
+          color: appColors.creatorTeal.withValues(alpha: 0.07),
           borderRadius: const BorderRadius.vertical(bottom: Radius.circular(AppTheme.radiusLarge)),
         ),
         child: Row(

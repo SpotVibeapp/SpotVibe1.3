@@ -96,7 +96,7 @@ class _PermissionPromptScreenState extends State<PermissionPromptScreen> {
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: colors.onPrimary.withOpacity(0.18),
+                      color: colors.onPrimary.withValues(alpha: 0.18),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -117,7 +117,7 @@ class _PermissionPromptScreenState extends State<PermissionPromptScreen> {
                   Text(
                     'A couple of quick permissions make the experience\nway better.',
                     style: text.bodyMedium?.copyWith(
-                      color: colors.onPrimary.withOpacity(0.85),
+                      color: colors.onPrimary.withValues(alpha: 0.85),
                     ),
                   ),
                 ],
@@ -191,8 +191,8 @@ class _PermissionPromptScreenState extends State<PermissionPromptScreen> {
                       'You can change these settings at any time in your device\'s Settings app.',
                       textAlign: TextAlign.center,
                       style: text.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant.withOpacity(
-                            AppTheme.opacityHint),
+                        color: colors.onSurfaceVariant.withValues(
+                            alpha: AppTheme.opacityHint),
                       ),
                     ),
                   ],
@@ -239,13 +239,13 @@ class _PermissionCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppTheme.spacingMd),
       decoration: BoxDecoration(
         color: done && granted
-            ? colors.primaryContainer.withOpacity(0.35)
+            ? colors.primaryContainer.withValues(alpha: 0.35)
             : colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         border: Border.all(
           color: done && granted
-              ? colors.primary.withOpacity(0.4)
-              : colors.outlineVariant.withOpacity(0.4),
+              ? colors.primary.withValues(alpha: 0.4)
+              : colors.outlineVariant.withValues(alpha: 0.4),
           width: done && granted ? AppTheme.borderSelected : AppTheme.borderDefault,
         ),
       ),
@@ -259,7 +259,7 @@ class _PermissionCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: done && granted
                   ? colors.primaryContainer
-                  : iconColor.withOpacity(0.12),
+                  : iconColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
             ),
             child: done && granted
@@ -334,7 +334,7 @@ class _PermissionCard extends StatelessWidget {
                       onPressed: loading ? null : onAllow,
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(0, 40),
-                        side: BorderSide(color: iconColor.withOpacity(0.6)),
+                        side: BorderSide(color: iconColor.withValues(alpha: 0.6)),
                         foregroundColor: iconColor,
                       ),
                       child: loading

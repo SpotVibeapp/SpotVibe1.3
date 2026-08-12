@@ -128,7 +128,7 @@ class _EventSummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(color: colors.outlineVariant.withOpacity(0.3)),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -161,7 +161,7 @@ class _EventSummaryCard extends StatelessWidget {
             padding: const EdgeInsets.all(AppTheme.spacingSm),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [appColors.creatorTeal.withOpacity(0.15), appColors.creatorTealLight.withOpacity(0.08)],
+                colors: [appColors.creatorTeal.withValues(alpha: 0.15), appColors.creatorTealLight.withValues(alpha: 0.08)],
               ),
               borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
             ),
@@ -189,12 +189,12 @@ class _SearchInsightCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppTheme.spacingMd),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [appColors.creatorTeal.withOpacity(0.12), appColors.creatorTealLight.withOpacity(0.06)],
+          colors: [appColors.creatorTeal.withValues(alpha: 0.12), appColors.creatorTealLight.withValues(alpha: 0.06)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(color: appColors.creatorTeal.withOpacity(0.3)),
+        border: Border.all(color: appColors.creatorTeal.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -202,7 +202,7 @@ class _SearchInsightCard extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: appColors.creatorTeal.withOpacity(0.18),
+              color: appColors.creatorTeal.withValues(alpha: 0.18),
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.search_rounded, color: appColors.creatorTeal, size: AppTheme.iconMd),
@@ -266,7 +266,7 @@ class _StatTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(color: colors.outlineVariant.withOpacity(0.3)),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
@@ -274,7 +274,7 @@ class _StatTile extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: color.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, size: AppTheme.iconSm + 2, color: color),
@@ -310,7 +310,7 @@ class _AnalyticsBarChart extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(color: colors.outlineVariant.withOpacity(0.3)),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,7 +366,7 @@ class _Bar extends StatelessWidget {
             height: 100 * ratio.clamp(0.05, 1.0),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [color, color.withOpacity(0.6)],
+                colors: [color, color.withValues(alpha: 0.6)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -400,10 +400,10 @@ class _EngagementCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppTheme.spacingMd),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [appColors.creatorTeal.withOpacity(0.1), appColors.creatorTealLight.withOpacity(0.05)],
+          colors: [appColors.creatorTeal.withValues(alpha: 0.1), appColors.creatorTealLight.withValues(alpha: 0.05)],
         ),
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(color: appColors.creatorTeal.withOpacity(0.25)),
+        border: Border.all(color: appColors.creatorTeal.withValues(alpha: 0.25)),
       ),
       child: Row(
         children: [
@@ -411,7 +411,7 @@ class _EngagementCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: appColors.creatorTeal.withOpacity(0.2),
+              color: appColors.creatorTeal.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.trending_up_rounded, color: appColors.creatorTeal, size: AppTheme.iconMd),
@@ -461,7 +461,7 @@ class _TipsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(color: colors.outlineVariant.withOpacity(0.3)),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
