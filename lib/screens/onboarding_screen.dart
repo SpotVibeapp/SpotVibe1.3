@@ -1,0 +1,950 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../repositories/onboarding_repository.dart';
+import '../services/deep_link_service.dart';
+import '../services/permission_service.dart';
+import '../theme/theme.dart';
+
+// ── Interest category data ─────────────────────────────────────────────────────
+
+class _InterestOption {
+  final String label;
+  final IconData icon;
+  const _InterestOption(this.label, this.icon);
+}
+
+const List<_InterestOption> _kInterests = [
+  _InterestOption('Music', Icons.music_note_rounded),
+  _InterestOption('Sports', Icons.sports_soccer_rounded),
+  _InterestOption('Food & Drink', Icons.restaurant_rounded),
+  _InterestOption('Arts', Icons.palette_rounded),
+  _InterestOption('Nightlife', Icons.nightlife_rounded),
+  _InterestOption('Comedy', Icons.sentiment_very_satisfied_rounded),
+  _InterestOption('Community', Icons.people_rounded),
+  _InterestOption('Tech', Icons.computer_rounded),
+  _InterestOption('Fitness', Icons.fitness_center_rounded),
+  _InterestOption('Family', Icons.child_care_rounded),
+  _InterestOption('Outdoor', Icons.park_rounded),
+  _InterestOption('Film', Icons.movie_rounded),
+];
+
+// ── Main onboarding screen ─────────────────────────────────────────────────────
+
+class OnboardingScreen extends StatefulWidget {
+  final PermissionService permissionService;
+  final OnboardingRepository onboardingRepository;
+
+  const OnboardingScreen({
+    super.key,
+    required this.permissionService,
+    required this.onboardingRepository,
+  });
+
+  @override
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
+}
+
+class _OnboardingScreenState extends State<OnboardingScreen>
+    with TickerProviderStateMixin {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+  static const int _totalPages = 4;
+
+  // Permission step state
+  bool _locationGranted = false;
+  bool _locationDone = false;
+  bool _locationLoading = false;
+  bool _notifGranted = false;
+  bool _notifDone = false;
+  bool _notifLoading = false;
+
+  // Interests step state
+  final Set<String> _selectedInterests = {};
+
+  // Welcome page animation
+  late final AnimationController _heroController;
+  late final Animation<double> _heroScale;
+  late final Animation<double> _heroFade;
+
+  @override
+  void initState() {
+    super.initState();
+    _heroController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _heroScale = Tween<double>(begin: 0.72, end: 1.0).animate(
+      CurvedAnimation(parent: _heroController, curve: Curves.elasticOut),
+    );
+    _heroFade = CurvedAnimation(parent: _heroController, curve: Curves.easeIn);
+    _heroController.forward();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _heroController.dispose();
+    super.dispose();
+  }
+
+  // ── Navigation helpers ───────────────────────────────────────────────────────
+
+  void _nextPage() {
+    if (_currentPage < _totalPages - 1) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeInOutCubic,
+      );
+    }
+  }
+
+  Future<void> _finish() async {
+    await widget.onboardingRepository.saveInterests(_selectedInterests.toList());
+    await widget.onboardingRepository.markDone();
+    await widget.permissionService.markAsked();
+    if (!mounted) return;
+    final pending = await DeepLinkService.consumePendingLink();
+    if (mounted) context.go(pending ?? '/');
+  }
+
+  // ── Permission helpers ───────────────────────────────────────────────────────
+
+  Future<void> _requestLocation() async {
+    if (_locationLoading || _locationDone) return;
+    setState(() => _locationLoading = true);
+    final granted = await widget.permissionService.requestLocation();
+    if (mounted) {
+      setState(() {
+        _locationGranted = granted;
+        _locationLoading = false;
+        _locationDone = true;
+      });
+    }
+  }
+
+  Future<void> _requestNotifs() async {
+    if (_notifLoading || _notifDone) return;
+    setState(() => _notifLoading = true);
+    final granted = await widget.permissionService.requestNotifications();
+    if (mounted) {
+      setState(() {
+        _notifGranted = granted;
+        _notifLoading = false;
+        _notifDone = true;
+      });
+    }
+  }
+
+  // ── Build ────────────────────────────────────────────────────────────────────
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Page content
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                physics: const NeverScrollableScrollPhysics(),
+                onPageChanged: (i) => setState(() => _currentPage = i),
+                children: [
+                  _WelcomePage(
+                    heroScale: _heroScale,
+                    heroFade: _heroFade,
+                  ),
+                  _PermissionsPage(
+                    locationGranted: _locationGranted,
+                    locationDone: _locationDone,
+                    locationLoading: _locationLoading,
+                    notifGranted: _notifGranted,
+                    notifDone: _notifDone,
+                    notifLoading: _notifLoading,
+                    onRequestLocation: _requestLocation,
+                    onRequestNotifs: _requestNotifs,
+                  ),
+                  _InterestsPage(
+                    selected: _selectedInterests,
+                    onToggle: (label) => setState(() {
+                      if (_selectedInterests.contains(label)) {
+                        _selectedInterests.remove(label);
+                      } else {
+                        _selectedInterests.add(label);
+                      }
+                    }),
+                  ),
+                  const _ReadyPage(),
+                ],
+              ),
+            ),
+
+            // Bottom navigation area
+            _OnboardingFooter(
+              currentPage: _currentPage,
+              totalPages: _totalPages,
+              onNext: _nextPage,
+              onSkip: _currentPage == _totalPages - 1 ? null : _finish,
+              onFinish: _currentPage == _totalPages - 1 ? _finish : null,
+              isLastPage: _currentPage == _totalPages - 1,
+              colors: colors,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Page 1: Welcome ────────────────────────────────────────────────────────────
+
+class _WelcomePage extends StatelessWidget {
+  final Animation<double> heroScale;
+  final Animation<double> heroFade;
+
+  const _WelcomePage({required this.heroScale, required this.heroFade});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
+    return FadeTransition(
+      opacity: heroFade,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(
+          AppTheme.spacingLg,
+          AppTheme.spacingXl,
+          AppTheme.spacingLg,
+          AppTheme.spacingMd,
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: AppTheme.spacingXl),
+
+            // Hero graphic
+            ScaleTransition(
+              scale: heroScale,
+              child: Container(
+                width: 148,
+                height: 148,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [colors.primary, colors.tertiary],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.primary.withOpacity(0.30),
+                      blurRadius: 40,
+                      offset: const Offset(0, 16),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.celebration_rounded,
+                  size: 72,
+                  color: colors.onPrimary,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: AppTheme.spacingXl),
+
+            Text(
+              'Discover events\nhappening near you',
+              textAlign: TextAlign.center,
+              style: text.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                height: 1.2,
+              ),
+            ),
+
+            const SizedBox(height: AppTheme.spacingMd),
+
+            Text(
+              'SpotVibe surfaces the best local events — concerts, food festivals, '
+              'community meetups and more — personalised to what you love.',
+              textAlign: TextAlign.center,
+              style: text.bodyLarge?.copyWith(
+                color: colors.onSurfaceVariant,
+                height: 1.55,
+              ),
+            ),
+
+            const SizedBox(height: AppTheme.spacingXl),
+
+            // Feature pills row
+            Wrap(
+              spacing: AppTheme.spacingSm,
+              runSpacing: AppTheme.spacingSm,
+              alignment: WrapAlignment.center,
+              children: [
+                _FeaturePill(
+                    icon: Icons.location_on_rounded, label: 'Near you'),
+                _FeaturePill(
+                    icon: Icons.tune_rounded, label: 'Personalised'),
+                _FeaturePill(
+                    icon: Icons.group_rounded, label: 'Social'),
+                _FeaturePill(
+                    icon: Icons.notifications_active_rounded,
+                    label: 'Reminders'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FeaturePill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _FeaturePill({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppTheme.spacingMd, vertical: AppTheme.spacingSm),
+      decoration: BoxDecoration(
+        color: colors.primaryContainer.withOpacity(0.45),
+        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        border: Border.all(
+            color: colors.primary.withOpacity(0.18),
+            width: AppTheme.borderDefault),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: AppTheme.iconSm, color: colors.primary),
+          const SizedBox(width: AppTheme.spacingXs),
+          Text(
+            label,
+            style: text.labelMedium?.copyWith(
+              color: colors.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Page 2: Permissions ────────────────────────────────────────────────────────
+
+class _PermissionsPage extends StatelessWidget {
+  final bool locationGranted;
+  final bool locationDone;
+  final bool locationLoading;
+  final bool notifGranted;
+  final bool notifDone;
+  final bool notifLoading;
+  final VoidCallback onRequestLocation;
+  final VoidCallback onRequestNotifs;
+
+  const _PermissionsPage({
+    required this.locationGranted,
+    required this.locationDone,
+    required this.locationLoading,
+    required this.notifGranted,
+    required this.notifDone,
+    required this.notifLoading,
+    required this.onRequestLocation,
+    required this.onRequestNotifs,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppTheme.spacingLg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: AppTheme.spacingMd),
+
+          // Section header
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: colors.primaryContainer,
+              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+            ),
+            child: Icon(Icons.lock_open_rounded,
+                size: AppTheme.iconMd, color: colors.onPrimaryContainer),
+          ),
+          const SizedBox(height: AppTheme.spacingMd),
+          Text(
+            'A couple of quick\npermissions',
+            style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: AppTheme.spacingXs),
+          Text(
+            'Granting these makes SpotVibe way more useful. '
+            'You can change them at any time in Settings.',
+            style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
+          ),
+
+          const SizedBox(height: AppTheme.spacingLg),
+
+          // Location card
+          _OnboardingPermCard(
+            icon: Icons.location_on_rounded,
+            iconColor: colors.primary,
+            title: 'Location',
+            description:
+                'Find events happening right near you. Only used while the app is open — never in the background.',
+            granted: locationGranted,
+            done: locationDone,
+            loading: locationLoading,
+            onAllow: onRequestLocation,
+          ),
+
+          const SizedBox(height: AppTheme.spacingMd),
+
+          // Notifications card
+          _OnboardingPermCard(
+            icon: Icons.notifications_rounded,
+            iconColor: colors.tertiary,
+            title: 'Notifications',
+            description:
+                'Get alerts for events you care about, RSVP reminders, and social updates.',
+            granted: notifGranted,
+            done: notifDone,
+            loading: notifLoading,
+            onAllow: onRequestNotifs,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OnboardingPermCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String description;
+  final bool granted;
+  final bool done;
+  final bool loading;
+  final VoidCallback onAllow;
+
+  const _OnboardingPermCard({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.description,
+    required this.granted,
+    required this.done,
+    required this.loading,
+    required this.onAllow,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      padding: const EdgeInsets.all(AppTheme.spacingMd),
+      decoration: BoxDecoration(
+        color: done && granted
+            ? colors.primaryContainer.withOpacity(0.35)
+            : colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        border: Border.all(
+          color: done && granted
+              ? colors.primary.withOpacity(0.4)
+              : colors.outlineVariant.withOpacity(0.4),
+          width:
+              done && granted ? AppTheme.borderSelected : AppTheme.borderDefault,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: done && granted
+                  ? colors.primaryContainer
+                  : iconColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+            ),
+            child: done && granted
+                ? Icon(Icons.check_rounded,
+                    color: colors.onPrimaryContainer, size: AppTheme.iconMd)
+                : Icon(icon, color: iconColor, size: AppTheme.iconMd),
+          ),
+          const SizedBox(width: AppTheme.spacingMd),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: text.titleMedium,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (done) ...[
+                      const SizedBox(width: AppTheme.spacingXs),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: granted
+                              ? colors.primaryContainer
+                              : colors.surfaceContainerHighest,
+                          borderRadius:
+                              BorderRadius.circular(AppTheme.radiusSmall),
+                        ),
+                        child: Text(
+                          granted ? 'Allowed' : 'Denied',
+                          style: text.labelSmall?.copyWith(
+                            color: granted
+                                ? colors.onPrimaryContainer
+                                : colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: AppTheme.spacingXs),
+                Text(description,
+                    style: text.bodySmall
+                        ?.copyWith(color: colors.onSurfaceVariant)),
+                if (!done) ...[
+                  const SizedBox(height: AppTheme.spacingMd),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: loading ? null : onAllow,
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 40),
+                        side: BorderSide(color: iconColor.withOpacity(0.6)),
+                        foregroundColor: iconColor,
+                      ),
+                      child: loading
+                          ? SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: iconColor),
+                            )
+                          : const Text('Allow'),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Page 3: Interest selection ─────────────────────────────────────────────────
+
+class _InterestsPage extends StatelessWidget {
+  final Set<String> selected;
+  final ValueChanged<String> onToggle;
+
+  const _InterestsPage({required this.selected, required this.onToggle});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppTheme.spacingLg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: AppTheme.spacingMd),
+
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: colors.tertiaryContainer,
+              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+            ),
+            child: Icon(Icons.favorite_rounded,
+                size: AppTheme.iconMd, color: colors.onTertiaryContainer),
+          ),
+          const SizedBox(height: AppTheme.spacingMd),
+          Text(
+            'What are you into?',
+            style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: AppTheme.spacingXs),
+          Text(
+            'Pick your interests and we\'ll show you events you\'ll actually care about.',
+            style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
+          ),
+
+          const SizedBox(height: AppTheme.spacingLg),
+
+          Wrap(
+            spacing: AppTheme.spacingSm,
+            runSpacing: AppTheme.spacingSm,
+            children: _kInterests.map((interest) {
+              final isSelected = selected.contains(interest.label);
+              return _InterestChip(
+                label: interest.label,
+                icon: interest.icon,
+                isSelected: isSelected,
+                onTap: () => onToggle(interest.label),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: AppTheme.spacingMd),
+
+          if (selected.isEmpty)
+            Text(
+              'Select at least one to personalise your feed.',
+              style: text.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant
+                    .withOpacity(AppTheme.opacityHint),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InterestChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _InterestChip({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppTheme.spacingMd, vertical: AppTheme.spacingSm),
+          decoration: BoxDecoration(
+            color: isSelected ? colors.primary : colors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+            border: Border.all(
+              color: isSelected
+                  ? colors.primary
+                  : colors.outlineVariant.withOpacity(0.5),
+              width: AppTheme.borderDefault,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: AppTheme.iconSm,
+                color: isSelected ? colors.onPrimary : colors.onSurfaceVariant,
+              ),
+              const SizedBox(width: AppTheme.spacingXs),
+              Text(
+                label,
+                style: text.labelMedium?.copyWith(
+                  color:
+                      isSelected ? colors.onPrimary : colors.onSurfaceVariant,
+                  fontWeight:
+                      isSelected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Page 4: Ready ──────────────────────────────────────────────────────────────
+
+class _ReadyPage extends StatefulWidget {
+  const _ReadyPage();
+
+  @override
+  State<_ReadyPage> createState() => _ReadyPageState();
+}
+
+class _ReadyPageState extends State<_ReadyPage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scale;
+  late final Animation<double> _fade;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _scale = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+    );
+    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
+    return FadeTransition(
+      opacity: _fade,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.spacingXl),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ScaleTransition(
+                scale: _scale,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [colors.primary, colors.tertiary],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colors.primary.withOpacity(0.30),
+                        blurRadius: 36,
+                        offset: const Offset(0, 14),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.check_rounded,
+                    size: 60,
+                    color: colors.onPrimary,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: AppTheme.spacingXl),
+
+              Text(
+                'You\'re all set! 🎉',
+                style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: AppTheme.spacingMd),
+
+              Text(
+                'Your personalised event feed is ready.\n'
+                'Tap Explore to see what\'s happening near you.',
+                textAlign: TextAlign.center,
+                style: text.bodyLarge?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  height: 1.55,
+                ),
+              ),
+
+              const SizedBox(height: AppTheme.spacingXl),
+
+              // Three value reminders
+              _CheckItem(
+                icon: Icons.search_rounded,
+                label: 'Browse events near you',
+                colors: colors,
+                text: text,
+              ),
+              const SizedBox(height: AppTheme.spacingSm),
+              _CheckItem(
+                icon: Icons.tune_rounded,
+                label: 'Filter by date, price & category',
+                colors: colors,
+                text: text,
+              ),
+              const SizedBox(height: AppTheme.spacingSm),
+              _CheckItem(
+                icon: Icons.group_rounded,
+                label: 'See who else is going',
+                colors: colors,
+                text: text,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CheckItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final ColorScheme colors;
+  final TextTheme text;
+
+  const _CheckItem({
+    required this.icon,
+    required this.label,
+    required this.colors,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: colors.primaryContainer,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: AppTheme.iconSm, color: colors.onPrimaryContainer),
+        ),
+        const SizedBox(width: AppTheme.spacingMd),
+        Expanded(
+          child: Text(
+            label,
+            style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Footer: dots indicator + CTA buttons ──────────────────────────────────────
+
+class _OnboardingFooter extends StatelessWidget {
+  final int currentPage;
+  final int totalPages;
+  final VoidCallback onNext;
+  final VoidCallback? onSkip;
+  final VoidCallback? onFinish;
+  final bool isLastPage;
+  final ColorScheme colors;
+
+  const _OnboardingFooter({
+    required this.currentPage,
+    required this.totalPages,
+    required this.onNext,
+    required this.onSkip,
+    required this.onFinish,
+    required this.isLastPage,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppTheme.spacingLg,
+        AppTheme.spacingSm,
+        AppTheme.spacingLg,
+        AppTheme.spacingLg,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Dot indicators
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(totalPages, (i) {
+              final isActive = i == currentPage;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: isActive ? 24 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: isActive
+                      ? colors.primary
+                      : colors.outlineVariant,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              );
+            }),
+          ),
+
+          const SizedBox(height: AppTheme.spacingMd),
+
+          // Primary CTA
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: isLastPage ? onFinish : onNext,
+              child: Text(isLastPage ? 'Explore SpotVibe' : 'Continue'),
+            ),
+          ),
+
+          // Skip link (hidden on last page)
+          if (!isLastPage) ...[
+            const SizedBox(height: AppTheme.spacingXs),
+            TextButton(
+              onPressed: onSkip,
+              child: Text(
+                'Skip for now',
+                style: text.labelMedium?.copyWith(
+                    color: colors.onSurfaceVariant),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}

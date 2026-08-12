@@ -1,0 +1,92 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+
+/// Replace these with your real RevenueCat API keys from the RevenueCat dashboard.
+/// https://app.revenuecat.com → Project → API Keys
+const _kRevenueCatAndroidKey = 'YOUR_REVENUECAT_ANDROID_API_KEY';
+const _kRevenueCatAppleKey = 'YOUR_REVENUECAT_APPLE_API_KEY';
+
+/// Entitlement identifier created in the RevenueCat dashboard.
+const kProEntitlementId = 'pro';
+
+class RevenueCatService {
+  bool _initialized = false;
+
+  /// Call once at app startup before any purchases are made.
+  Future<void> initialize() async {
+    if (kIsWeb) return; // RevenueCat SDK is mobile-only
+    if (_initialized) return;
+    try {
+      await Purchases.setLogLevel(LogLevel.error);
+      final configuration = PurchasesConfiguration(
+        defaultTargetPlatform == TargetPlatform.android
+            ? _kRevenueCatAndroidKey
+            : _kRevenueCatAppleKey,
+      );
+      await Purchases.configure(configuration);
+      _initialized = true;
+    } catch (_) {}
+  }
+
+  /// Log in a known user so their purchases are associated with their account.
+  Future<void> logIn(String userId) async {
+    if (kIsWeb || !_initialized) return;
+    try {
+      await Purchases.logIn(userId);
+    } catch (_) {}
+  }
+
+  /// Log out — reverts to anonymous purchasing.
+  Future<void> logOut() async {
+    if (kIsWeb || !_initialized) return;
+    try {
+      await Purchases.logOut();
+    } catch (_) {}
+  }
+
+  /// Returns true when the user has an active "pro" entitlement.
+  Future<bool> checkProEntitlement() async {
+    if (kIsWeb || !_initialized) return false;
+    try {
+      final info = await Purchases.getCustomerInfo();
+      return info.entitlements.active.containsKey(kProEntitlementId);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Returns the current RevenueCat offerings (packages available for purchase).
+  Future<Offerings?> fetchOfferings() async {
+    if (kIsWeb || !_initialized) return null;
+    try {
+      return await Purchases.getOfferings();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Purchase a package. Returns updated [CustomerInfo] on success, null on failure/cancellation.
+  Future<CustomerInfo?> purchasePackage(Package package) async {
+    if (kIsWeb || !_initialized) return null;
+    try {
+      return await Purchases.purchasePackage(package);
+    } on PurchasesErrorCode catch (e) {
+      if (e == PurchasesErrorCode.purchaseCancelledError) return null;
+      rethrow;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Restore previous purchases. Returns true when the pro entitlement is restored.
+  Future<bool> restorePurchases() async {
+    if (kIsWeb || !_initialized) return false;
+    try {
+      final info = await Purchases.restorePurchases();
+      return info.entitlements.active.containsKey(kProEntitlementId);
+    } catch (_) {
+      return false;
+    }
+  }
+}

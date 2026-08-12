@@ -1,0 +1,6 @@
+{
+  "dart.lineLength": 100,
+  "dart.previewFlutterUiGuides": true,
+  "editor.formatOnSave": true,
+  "files.exclude": { "**/.dart_tool": true, "**/build": true }
+}
