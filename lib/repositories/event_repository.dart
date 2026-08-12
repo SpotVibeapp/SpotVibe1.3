@@ -1,4 +1,21 @@
+import '../data/el_paso_events.dart';
 import '../models/event.dart';
+
+/// Data-source contract for the public event feed.
+///
+/// - [FirebaseEventRepository] — Firestore + El Paso seed (production)
+/// - [MockEventRepository] — in-memory curated + generated events
+abstract class EventRepository {
+  Future<Event?> getEventById(String id);
+  Future<List<Event>> getUpcomingEvents();
+  Future<List<Event>> getEventsForLocation({
+    required String city,
+    required String state,
+    required String zip,
+  });
+  Future<void> toggleBookmark(String eventId);
+  Future<void> toggleInterested(String eventId);
+}
 
 // ── City centre coordinates for known cities ───────────────────────────────────
 // Used both to set lat/lng on hardcoded events and to seed jitter in the
@@ -10,6 +27,7 @@ const Map<String, List<double>> _kCityCoords = {
   'Queens':        [40.7282, -73.7949],
   'Manhattan':     [40.7831, -73.9712],
   'Austin':        [30.2672, -97.7431],
+  'El Paso':       [31.7619, -106.4850],
   'Chicago':       [41.8781, -87.6298],
   'Los Angeles':   [34.0522, -118.2437],
   'Portland':      [45.5051, -122.6750],
@@ -2005,7 +2023,7 @@ List<Event> _generateEventsForLocation(
   return events;
 }
 
-class EventRepository {
+class MockEventRepository implements EventRepository {
   /// Looks up a single event by [id]. Returns `null` if the event is not found.
   /// Used by the deep link route handler when `state.extra` is absent (cold start).
   Future<Event?> getEventById(String id) async {
@@ -2024,6 +2042,8 @@ class EventRepository {
     // not "current time + N hours" which would change every time the app is opened.
     final midnight = DateTime(now.year, now.month, now.day);
     return [
+      // ── EL PASO (default local seed) ───────────────────────────────────────
+      ...buildElPasoSeedEvents(midnight),
       // ── FACEBOOK EVENTS ────────────────────────────────────────────────────
       Event(
         id: 'evt_fb_001',
@@ -3025,7 +3045,11 @@ class EventRepository {
     await Future.delayed(const Duration(milliseconds: 400));
     final now = DateTime.now();
     final midnight = DateTime(now.year, now.month, now.day);
-    return _generateEventsForLocation(city, state, zip, midnight);
+    final generated = _generateEventsForLocation(city, state, zip, midnight);
+    if (city.toLowerCase() == 'el paso') {
+      return [...buildElPasoSeedEvents(midnight), ...generated];
+    }
+    return generated;
   }
 
   Future<void> toggleBookmark(String eventId) async {

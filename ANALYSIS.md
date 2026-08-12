@@ -14,7 +14,7 @@
 
 ## TL;DR
 
-This is a well-structured **prototype**: clean architecture, good layering, polished UI code — but it has **no real backend**. Auth, events, RSVPs, and users are all simulated in memory with fake delays. It's not shippable as-is: there's a **signing key committed to a public repo**, broken release signing, placeholder deep-link keys, zero tests, and inconsistent branding ("Vibely" vs "SpotVibe").
+This is a well-structured **prototype**: clean architecture, good layering, polished UI code — but it has **no real backend**. Auth, events, RSVPs, and users are all simulated in memory with fake delays. It's not shippable as-is: there's a **signing key committed to a public repo**, broken release signing, placeholder deep-link keys, and (historically) zero tests. User-facing branding is now **SpotVibe** (`app.spotvibe`, `https://spotvibe.app`); leftover Vibely strings were removed 2026-08-12.
 
 ---
 
@@ -60,16 +60,17 @@ Both `AndroidManifest.xml` and `ios/Runner/Info.plist` still contain
 and the URI scheme `REPLACE_WITH_BRANCH_URI_SCHEME`. The deferred deep-link flow
 (proudly documented in `main.dart`) **cannot work** until real Branch keys are set.
 
-### 7. Branding mismatch everywhere
-The product is **SpotVibe**, but the binary says **Vibely/Primio**:
-- `applicationId = com.primio.vibely` (Android) — **decide now**; you can't
-  change it after publishing without losing your Play listing.
-- App label `Vibely` (AndroidManifest + iOS `CFBundleDisplayName/CFBundleName`).
-- Deep-link domain `https://vibely.app` (`kDeepLinkBase` in `deep_link_service.dart`).
-- pubspec name `primio_app`.
+### 7. Branding mismatch everywhere — **fixed 2026-08-12**
+The product, binary, and share surfaces are **SpotVibe**:
+- `applicationId` / namespace / iOS bundle id: `app.spotvibe`
+- App label `SpotVibe` (AndroidManifest + iOS `CFBundleDisplayName/CFBundleName`)
+- Deep-link domain `https://spotvibe.app` (`kDeepLinkBase`); `spotvibe://` scheme
+- pubspec name `spotvibe_app`
+- Home/login logos, share cards, and story watermarks say SpotVibe
+- Legacy `vibely.app` / `vibely://` links still open in-app
 
 ### 8. iOS Info.plist branding + review risk
-Location usage strings say "Vibely uses your location…". Also,
+Location usage strings say "SpotVibe uses your location…". Also,
 `NSLocationAlwaysAndWhenInUseUsageDescription` is declared but the app only ever
 requests when-in-use — remove the "Always" key or App Review may ask why.
 
@@ -94,7 +95,7 @@ requests when-in-use — remove the "Always" key or App Review may ask why.
 | **God file** | `event_repository.dart` is **3,038 lines** — mock-data generator, city coordinates table, and repository logic in one file. Split into `mock_event_source.dart` + a thin repository so a real backend can drop in. |
 | **Dead dependencies** | `flutter_bloc` + `equatable` declared in pubspec but **never imported** in `lib/` (everything uses `provider`). Remove them. |
 | **Fake delays in production code** | `Future.delayed(300–800ms)` scattered through repositories to simulate latency. Remove when wiring a real backend or they become pure added latency. |
-| **Hardcoded config** | `kDeepLinkBase = 'https://vibely.app'` in code; no `--dart-define` / env config for staging vs prod. |
+| **Hardcoded config** | `kDeepLinkBase = 'https://spotvibe.app'` in code; no `--dart-define` / env config for staging vs prod. |
 | **Inconsistent version pinning** | `video_player: 2.10.0` exact-pinned while everything else uses `^` ranges. |
 | **`.flutter-plugins-dependencies` committed** | Generated file; belongs in `.gitignore` (it's already listed but was committed anyway — `git rm --cached`). |
 
@@ -103,7 +104,7 @@ requests when-in-use — remove the "Always" key or App Review may ask why.
 ## Suggested roadmap to a shippable app
 
 1. **Today:** remove the keystore from git + history, delete `Firebase.js`, rotate anything exposed.
-2. **This week:** fix release signing fallback; set real Branch keys (or strip Branch entirely if deferred links aren't needed yet); decide `com.primio.vibely` vs a SpotVibe applicationId.
+2. **This week:** fix release signing fallback; set real Branch keys (or strip Branch entirely if deferred links aren't needed yet). Application id is `app.spotvibe`.
 3. **Next:** wire a real backend — Firebase Auth + Firestore is the fastest path since you already have a Firebase project (`spotvibe-cfa08`). Replace the in-memory `UserRepository` first (persist sessions with `flutter_secure_storage`).
 4. **Then:** split `event_repository.dart`, remove `flutter_bloc`, add a `test/` suite starting with models and the moderation service, add a CI check (`flutter analyze` + `flutter test`).
 

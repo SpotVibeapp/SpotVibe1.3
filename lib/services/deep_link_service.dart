@@ -9,12 +9,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Base URL used for all SpotVibe deep links.
 /// On Android this triggers the intent-filter; on iOS the associated domain.
-const String kDeepLinkBase = 'https://vibely.app';
+const String kDeepLinkBase = 'https://spotvibe.app';
+
+/// Hosts that map to in-app event routes (current brand + legacy Vibely links).
+const Set<String> _kDeepLinkHosts = {'spotvibe.app', 'www.spotvibe.app', 'vibely.app'};
+
+/// Custom URI schemes that map to in-app event routes.
+const Set<String> _kDeepLinkSchemes = {'spotvibe', 'vibely'};
 
 /// SharedPreferences key that stores a deep link path that arrived before the
 /// user completed first-run setup (permissions screen).  Consumed once on the
 /// first launch after installation so the user lands on the right event.
-const String _kPendingLinkKey = 'vibely_pending_deep_link';
+const String _kPendingLinkKey = 'spotvibe_pending_deep_link';
+const String _kPendingLinkKeyLegacy = 'vibely_pending_deep_link';
 
 class DeepLinkService {
   /// Returns the shareable deep link URL for a curated event.
@@ -25,17 +32,18 @@ class DeepLinkService {
       '$kDeepLinkBase/user-event/$eventId';
 
   /// Extracts the GoRouter path (e.g. `/event/42`) from either an https URL
-  /// (`https://vibely.app/event/42`) or a custom-scheme URL
-  /// (`vibely://event/42`).  Returns `null` for unrecognised URLs.
+  /// (`https://spotvibe.app/event/42`) or a custom-scheme URL
+  /// (`spotvibe://event/42`). Legacy `vibely.app` / `vibely://` links still
+  /// resolve. Returns `null` for unrecognised URLs.
   static String? pathFromUri(String uriString) {
     final uri = Uri.tryParse(uriString);
     if (uri == null) return null;
     if ((uri.scheme == 'https' || uri.scheme == 'http') &&
-        uri.host == 'vibely.app') {
+        _kDeepLinkHosts.contains(uri.host)) {
       final p = uri.path;
       if (p.startsWith('/event/') || p.startsWith('/user-event/')) return p;
     }
-    if (uri.scheme == 'vibely') {
+    if (_kDeepLinkSchemes.contains(uri.scheme)) {
       final p = '/${uri.host}${uri.path}';
       if (p.startsWith('/event/') || p.startsWith('/user-event/')) return p;
     }
@@ -54,8 +62,12 @@ class DeepLinkService {
   /// Returns `null` when nothing is stored.
   static Future<String?> consumePendingLink() async {
     final prefs = await SharedPreferences.getInstance();
-    final path = prefs.getString(_kPendingLinkKey);
-    if (path != null) await prefs.remove(_kPendingLinkKey);
+    final path = prefs.getString(_kPendingLinkKey) ??
+        prefs.getString(_kPendingLinkKeyLegacy);
+    if (path != null) {
+      await prefs.remove(_kPendingLinkKey);
+      await prefs.remove(_kPendingLinkKeyLegacy);
+    }
     return path;
   }
 

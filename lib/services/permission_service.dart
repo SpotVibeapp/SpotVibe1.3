@@ -3,7 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-const _kPermissionsAskedKey = 'vibely_permissions_asked';
+const _kPermissionsAskedKey = 'spotvibe_permissions_asked';
+const _kPermissionsAskedKeyLegacy = 'vibely_permissions_asked';
 
 /// Thin service that manages location and notification permission requests.
 /// All methods are no-ops on web.
@@ -12,7 +13,9 @@ class PermissionService {
   Future<bool> hasAskedBefore() async {
     if (kIsWeb) return true;
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_kPermissionsAskedKey) ?? false;
+    return prefs.getBool(_kPermissionsAskedKey) ??
+        prefs.getBool(_kPermissionsAskedKeyLegacy) ??
+        false;
   }
 
   /// Marks the permission prompt as having been shown so it is not shown again.

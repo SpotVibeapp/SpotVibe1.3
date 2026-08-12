@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import '../data/el_paso_events.dart';
 import '../models/event.dart';
 import '../repositories/event_repository.dart';
 
@@ -1028,6 +1029,19 @@ class EventService {
     } else {
       final events = await _repository.getUpcomingEvents();
       filtered = events.where((e) => e.dateTime.isAfter(DateTime.now())).toList();
+      // Default city bias: El Paso metro when the user hasn't searched a
+      // city and hasn't shared GPS yet. Nearby GPS still wins via the
+      // haversine filter below.
+      if (userLat == null && userLng == null) {
+        final nearby = filtered.where((e) {
+          if (e.city.toLowerCase() == kElPasoCity.toLowerCase()) return true;
+          if (e.latitude == 0 && e.longitude == 0) return false;
+          return _haversineDistanceMiles(
+                kElPasoLat, kElPasoLng, e.latitude, e.longitude) <=
+              40;
+        }).toList();
+        if (nearby.isNotEmpty) filtered = nearby;
+      }
     }
 
     if (category != null && category != 'All') {
