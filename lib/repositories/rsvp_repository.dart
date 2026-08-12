@@ -1,7 +1,31 @@
 import 'package:uuid/uuid.dart';
 import '../models/rsvp.dart';
 
-class RsvpRepository {
+/// RSVP + comment store for a single event.
+///
+/// - [FirebaseRsvpRepository] — Firestore subcollections
+/// - [MockRsvpRepository] — in-memory, seeded fake attendees
+abstract class RsvpRepository {
+  Future<List<EventComment>> getComments(String eventId);
+  Future<EventComment> addComment({
+    required String eventId,
+    required String text,
+    required String authorId,
+    required String authorName,
+    required String authorAvatar,
+  });
+  Future<List<RsvpEntry>> getRsvps(String eventId);
+  Future<RsvpEntry> addRsvp({
+    required String eventId,
+    required String userId,
+    required String userName,
+    required String avatarUrl,
+    required bool isPrivate,
+  });
+  Future<void> removeRsvp({required String eventId, required String userId});
+}
+
+class MockRsvpRepository implements RsvpRepository {
   final _uuid = const Uuid();
 
   // In-memory stores keyed by eventId — simulates a backend per session.

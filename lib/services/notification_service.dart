@@ -3,10 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show Color;
 
 /// Channel IDs — one per logical notification category.
-const _kChannelEvents = 'vibely_events';
-const _kChannelUpdates = 'vibely_updates';
-const _kChannelMessages = 'vibely_messages';
-const _kChannelSocial = 'vibely_social';
+const _kChannelEvents = 'spotvibe_events';
+const _kChannelUpdates = 'spotvibe_updates';
+const _kChannelMessages = 'spotvibe_messages';
+const _kChannelSocial = 'spotvibe_social';
 
 /// Unique notification IDs per category (incremented in-memory).
 int _nextId = 1;

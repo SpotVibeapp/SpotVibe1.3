@@ -9,6 +9,9 @@ import 'providers/auth_provider.dart';
 import 'providers/subscription_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/notification_provider.dart';
+import 'repositories/firebase_event_repository.dart';
+import 'repositories/firebase_rsvp_repository.dart';
+import 'repositories/firebase_user_event_repository.dart';
 import 'repositories/firebase_user_repository.dart';
 import 'repositories/follow_repository.dart';
 import 'repositories/mock_user_repository.dart';
@@ -40,7 +43,8 @@ void main() async {
   // Real auth when Firebase is configured for this platform; falls back to
   // the in-memory mock so the app still runs everywhere else (e.g. Android/
   // iOS builds before `flutterfire configure` has been run).
-  final userRepository = await _createUserRepository();
+  final backend = await _createBackend();
+  final userRepository = backend.users;
 
   final revenueCatService = RevenueCatService();
   await revenueCatService.initialize();
@@ -98,6 +102,9 @@ void main() async {
 
   runApp(SpotVibeApp(
     userRepository: userRepository,
+    eventRepository: backend.events,
+    rsvpRepository: backend.rsvps,
+    userEventRepository: backend.userEvents,
     revenueCatService: revenueCatService,
     notificationService: notificationService,
     permissionService: permissionService,
@@ -106,24 +113,51 @@ void main() async {
   ));
 }
 
-/// Initializes Firebase and returns the real user repository, or falls back
-/// to the mock implementation when Firebase isn't configured on this
-/// platform (keeps dev/demo builds running without native Firebase files).
-Future<UserRepository> _createUserRepository() async {
+class _AppBackend {
+  final UserRepository users;
+  final EventRepository events;
+  final RsvpRepository rsvps;
+  final UserEventRepository userEvents;
+  const _AppBackend({
+    required this.users,
+    required this.events,
+    required this.rsvps,
+    required this.userEvents,
+  });
+}
+
+/// Initializes Firebase and returns real repos, or in-memory mocks when
+/// Firebase isn't configured on this platform.
+Future<_AppBackend> _createBackend() async {
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    debugPrint('Firebase initialized — real authentication enabled.');
-    return FirebaseUserRepository();
+    debugPrint('Firebase initialized — auth + events/RSVPs enabled.');
+    final events = FirebaseEventRepository();
+    await events.ensureSeeded();
+    return _AppBackend(
+      users: FirebaseUserRepository(),
+      events: events,
+      rsvps: FirebaseRsvpRepository(),
+      userEvents: FirebaseUserEventRepository(),
+    );
   } catch (e) {
-    debugPrint('Firebase unavailable ($e) — using mock user repository.');
-    return MockUserRepository();
+    debugPrint('Firebase unavailable ($e) — using mock repositories.');
+    return _AppBackend(
+      users: MockUserRepository(),
+      events: MockEventRepository(),
+      rsvps: MockRsvpRepository(),
+      userEvents: UserEventRepository(),
+    );
   }
 }
 
 class SpotVibeApp extends StatefulWidget {
   final UserRepository userRepository;
+  final EventRepository eventRepository;
+  final RsvpRepository rsvpRepository;
+  final UserEventRepository userEventRepository;
   final RevenueCatService revenueCatService;
   final NotificationService notificationService;
   final PermissionService permissionService;
@@ -133,6 +167,9 @@ class SpotVibeApp extends StatefulWidget {
   const SpotVibeApp({
     super.key,
     required this.userRepository,
+    required this.eventRepository,
+    required this.rsvpRepository,
+    required this.userEventRepository,
     required this.revenueCatService,
     required this.notificationService,
     required this.permissionService,
@@ -157,7 +194,7 @@ class _SpotVibeAppState extends State<SpotVibeApp> {
       // Branch: handles foreground links and subsequent session links.
       widget.branchService.linkStream.listen((path) => _router.go(path));
 
-      // app_links: fallback for vibely:// custom-scheme URIs and HTTPS
+      // app_links: fallback for spotvibe:// custom-scheme URIs and HTTPS
       // App Links that Branch doesn't intercept (e.g. direct share copies).
       final appLinks = AppLinks();
       appLinks.uriLinkStream.listen((uri) {
@@ -173,11 +210,11 @@ class _SpotVibeAppState extends State<SpotVibeApp> {
       providers: [
         Provider(create: (_) => AiModerationService()),
         ChangeNotifierProvider(create: (_) => EventExpiryService()),
-        Provider(create: (_) => EventRepository()),
+        Provider<EventRepository>(create: (_) => widget.eventRepository),
         Provider<UserRepository>(create: (_) => widget.userRepository),
         Provider(create: (_) => FollowRepository()),
-        Provider(create: (_) => RsvpRepository()),
-        Provider(create: (_) => UserEventRepository()),
+        Provider<RsvpRepository>(create: (_) => widget.rsvpRepository),
+        Provider<UserEventRepository>(create: (_) => widget.userEventRepository),
         Provider(create: (_) => NotificationRepository()),
         Provider(create: (_) => NotificationPreferencesRepository()),
         Provider(create: (_) => OnboardingRepository()),

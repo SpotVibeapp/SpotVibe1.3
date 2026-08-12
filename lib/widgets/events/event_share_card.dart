@@ -113,7 +113,7 @@ class _ShareSheetState extends State<_ShareSheet> {
 
     try {
       final dir = Directory.systemTemp;
-      final file = File('${dir.path}/vibely_share_${_event.id}.png');
+      final file = File('${dir.path}/spotvibe_share_${_event.id}.png');
       await file.writeAsBytes(bytes);
 
       // Attach a plain-text subject so apps that accept both show the title
@@ -394,7 +394,7 @@ class _ShareCardGraphic extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                   ),
                   child: const Text(
-                    'vibely',
+                    'SpotVibe',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
@@ -513,7 +513,7 @@ class _ShareCardGraphic extends StatelessWidget {
             child: RotatedBox(
               quarterTurns: 1,
               child: Text(
-                'vibely.app',
+                'spotvibe.app',
                 style: TextStyle(
                   color: Colors.white38,
                   fontSize: 9,

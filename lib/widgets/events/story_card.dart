@@ -103,7 +103,7 @@ class _StorySheetState extends State<_StorySheet> {
     try {
       // Save to a temp file and share via native sheet
       final dir = Directory.systemTemp;
-      final file = File('${dir.path}/vibely_story_${widget.eventId}.png');
+      final file = File('${dir.path}/spotvibe_story_${widget.eventId}.png');
       await file.writeAsBytes(bytes);
       await Share.shareXFiles(
         [XFile(file.path, mimeType: 'image/png')],
@@ -334,7 +334,7 @@ class _StoryCardContent extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                   ),
                   child: const Text(
-                    'vibely',
+                    'SpotVibe',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
@@ -407,7 +407,7 @@ class _StoryCardContent extends StatelessWidget {
                 ],
                 const SizedBox(height: AppTheme.spacingSm),
                 const Text(
-                  'vibely.app',
+                  'spotvibe.app',
                   style: TextStyle(
                     color: Colors.white54,
                     fontSize: 9,

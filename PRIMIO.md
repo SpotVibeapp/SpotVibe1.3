@@ -5,7 +5,7 @@ A local events discovery app where users browse upcoming events, RSVP (publicly 
 
 ## User Event Creation
 - Free users post events at no charge; one active (future-dated) event at a time enforced by `kFreeUserActiveEventLimit = 1` in `user_event_service.dart`
-- Creator Pro and Vibely Pro users are exempt from the active-event limit — unlimited concurrent events
+- Creator Pro and SpotVibe Pro users are exempt from the active-event limit — unlimited concurrent events
 - Featured listing (`isPremiumListing = true`) is a Creator Pro privilege; standard free events appear in the public feed without featured placement
 - Each user-created event automatically gets a dedicated chat room keyed as `user_{eventId}` (ChatRepository removed — this is a legacy note; messaging has been removed)
 - Event creators have admin rights: edit/delete from `MyEventsScreen` and `UserEventDetailScreen`; identity check is `auth.user.id == event.creatorId`
@@ -68,7 +68,7 @@ A local events discovery app where users browse upcoming events, RSVP (publicly 
 - **Share entry point**: `QuickActionsSection` Share button calls `showEventShareSheet()` from `lib/widgets/events/event_share_card.dart`
 - **Share options sheet** (`_ShareSheet`): three actions — "Share as Card" (image capture via `RenderRepaintBoundary`, shared via `Share.shareXFiles`), "Share with Link" (rich text message via `Share.share`), "Copy Link" (clipboard tile showing the URL inline)
 - **Rich share message**: built by `DeepLinkService._buildShareMessage()` — "Check out [title]! + 📅 date + 📍 venue + Branch link"; Branch link resolved via `DeepLinkService.branchEventLink()`, falls back to plain HTTPS
-- **Share card graphic** (`_ShareCardGraphic`): 1.91:1 Open Graph ratio; event image background + left-to-right dark gradient; brand pill top-left; category chip + title + date + venue + cost badge on left; `vibely.app` watermark bottom-right; captured at `pixelRatio: 3.0`
+- **Share card graphic** (`_ShareCardGraphic`): 1.91:1 Open Graph ratio; event image background + left-to-right dark gradient; brand pill top-left; category chip + title + date + venue + cost badge on left; `spotvibe.app` watermark bottom-right; captured at `pixelRatio: 3.0`
 - **Web guard**: image capture button replaced by an info tile; "Share with Link" still available on web via `Share.share`; "Copy Link" always available; `shareEvent()` in `DeepLinkService` falls back to clipboard on web
 - **`ShareAnalyticsService`** (`lib/services/share_analytics_service.dart`): in-memory tracker recording `(eventId, category, method)` per share; `ShareMethod` constants: `card`, `link`, `clipboard`, `instagramStory`; `_sendToBackend()` stub ready for Firebase Analytics wiring
 - **`DeepLinkService.shareEvent()`** upgraded: accepts optional `eventDateTime`/`eventLocation`; calls `branchEventLink()` for attributed deep link; uses `Share.share()` on mobile; `copyEventLink()` is a new lightweight clipboard-only fallback
@@ -86,16 +86,16 @@ A local events discovery app where users browse upcoming events, RSVP (publicly 
 - `DeepLinkService.shareEvent()` copies the link to the clipboard and shows a SnackBar; `pathFromUri()` converts both `https://vibely.app/…` and `vibely://…` URIs to GoRouter paths
 - Both `/event/:id` and `/user-event/:id` are **top-level** GoRoutes (not nested under `/`) so they work on cold-start
 - Cold-start curated event deep links use `_EventDeepLinkLoader` (in `app_router.dart`); user-event deep links use `_UserEventDetailLoader`; in-app navigation passes `Event` via `state.extra` to skip the async load
-- **Runtime deep link listener**: `app_links: ^6.3.4` — `_VibelyAppState.initState()` subscribes to `AppLinks().uriLinkStream`; on every incoming URI it calls `DeepLinkService.pathFromUri()` and `_router.go(path)`; web-guarded with `kIsWeb`
+- **Runtime deep link listener**: `app_links: ^6.3.4` — `_SpotVibeAppState.initState()` subscribes to `AppLinks().uriLinkStream`; on every incoming URI it calls `DeepLinkService.pathFromUri()` and `_router.go(path)`; web-guarded with `kIsWeb`
 - **Cold-start URI priority** (resolved in `main()` before `runApp`): (1) `AppLinks().getInitialLink()` from OS, (2) stored pending link from `DeepLinkService.consumePendingLink()`, (3) `/permissions` on first launch, (4) `/` for returning users
 - **First-install deep link flow** (deferred): `AppRouter.build()` has a `redirect` callback — if an event path arrives but permissions haven't been shown, it saves the path via `DeepLinkService.savePendingLink()` and sends the user to `/permissions`; `PermissionPromptScreen._finish()` calls `consumePendingLink()` and restores the event path after `markAsked()`
-- **Pending link storage**: `SharedPreferences` key `vibely_pending_deep_link`; save/consume are atomic (consume removes immediately after reading)
-- Android: `autoVerify` HTTPS intent-filters cover both path patterns + `vibely://` custom-scheme filter for `app_links`; requires `/.well-known/assetlinks.json` on `vibely.app` before App Links verification passes in production
-- iOS: `CFBundleURLTypes` registers `vibely://`; `FlutterDeepLinkingEnabled = true` in `Info.plist` ensures GoRouter receives the initial URI on cold start; for Universal Links add `com.apple.developer.associated-domains` (`applinks:vibely.app`) in Xcode entitlements
+- **Pending link storage**: `SharedPreferences` key `spotvibe_pending_deep_link`; save/consume are atomic (consume removes immediately after reading)
+- Android: `autoVerify` HTTPS intent-filters cover both path patterns + `spotvibe://` custom-scheme filter for `app_links`; requires `/.well-known/assetlinks.json` on `spotvibe.app` before App Links verification passes in production
+- iOS: `CFBundleURLTypes` registers `spotvibe://`; `FlutterDeepLinkingEnabled = true` in `Info.plist` ensures GoRouter receives the initial URI on cold start; for Universal Links add `com.apple.developer.associated-domains` (`applinks:spotvibe.app`) in Xcode entitlements
 - **Truly deferred deep links** (app not yet installed): handled by `BranchService` in `deep_link_service.dart` using `flutter_branch_sdk: ^6.7.0`; Branch stores the link server-side on click and delivers it to `FlutterBranchSdk.initSession()` on first post-install open; `BranchService.getInitialLink()` is the highest-priority cold-start source in `main()`, above `app_links`
 - **Branch key placeholders**: `key_live_REPLACE_WITH_BRANCH_LIVE_KEY` and `key_test_REPLACE_WITH_BRANCH_TEST_KEY` appear in both `AndroidManifest.xml` and `Info.plist`; replace with real keys from the Branch dashboard before release; also replace `REPLACE_WITH_BRANCH_URI_SCHEME` and `REPLACE_WITH_BRANCH_APP_DOMAIN` in both files
 - **Branch short links**: `DeepLinkService.branchEventLink()` generates Branch short URLs for sharing (falls back to plain HTTPS link on web or if Branch is unavailable); wire this into `shareEvent()` callers when ready to replace clipboard-only sharing with Branch-attributed links
-- **Runtime Branch stream**: `BranchService.linkStream` wraps `FlutterBranchSdk.initSession()` and is subscribed in `_VibelyAppState.initState()` alongside `app_links.uriLinkStream`; both listeners call `_router.go(path)` so either source can navigate the running app
+- **Runtime Branch stream**: `BranchService.linkStream` wraps `FlutterBranchSdk.initSession()` and is subscribed in `_SpotVibeAppState.initState()` alongside `app_links.uriLinkStream`; both listeners call `_router.go(path)` so either source can navigate the running app
 
 ## Creator Tiers
 
@@ -156,7 +156,7 @@ A local events discovery app where users browse upcoming events, RSVP (publicly 
 
 ## First-Time Onboarding
 - `OnboardingScreen` at `/onboarding` — 4-page `PageView` shown once on first launch: **Welcome** (animated hero + feature pills), **Permissions** (location + notifications), **Interests** (12-category chip grid), **Ready** (animated confirmation)
-- `OnboardingRepository` in `lib/repositories/onboarding_repository.dart` — SharedPrefs-backed; stores `vibely_onboarding_done` (bool) and `vibely_interests` (comma-separated categories); registered as a global `Provider` in `main.dart`
+- `OnboardingRepository` in `lib/repositories/onboarding_repository.dart` — SharedPrefs-backed; stores `spotvibe_onboarding_done` (bool) and `spotvibe_interests` (comma-separated categories); registered as a global `Provider` in `main.dart`
 - First-launch detection: `main()` checks `PermissionService.hasAskedBefore()` — if false, also checks `OnboardingRepository.isOnboardingDone()`; sends user to `/onboarding` unless already done
 - `OnboardingScreen._finish()` saves interests → calls `onboardingRepository.markDone()` + `permissionService.markAsked()` → restores pending deep link or goes to `/`
 - Deep-link redirect in `AppRouter.build()` now points first-install users to `/onboarding` (was `/permissions`); `/permissions` route is preserved for returning users who navigate there

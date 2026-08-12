@@ -125,6 +125,8 @@ class Event {
     int? interestedCount,
     bool? isBookmarked,
     bool? isInterested,
+    double? latitude,
+    double? longitude,
     EventSource? source,
     String? sourceUrl,
   }) =>
@@ -147,8 +149,8 @@ class Event {
         interestedCount: interestedCount ?? this.interestedCount,
         isBookmarked: isBookmarked ?? this.isBookmarked,
         isInterested: isInterested ?? this.isInterested,
-        latitude: latitude,
-        longitude: longitude,
+        latitude: latitude ?? this.latitude,
+        longitude: longitude ?? this.longitude,
         source: source ?? this.source,
         sourceUrl: sourceUrl ?? this.sourceUrl,
       );
