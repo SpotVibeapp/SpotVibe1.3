@@ -1,7 +1,7 @@
 {
   "version": "0.2.0",
   "configurations": [
-    { "name": "SpotVibe (Chrome)", "request": "launch", "type": "dart", "program": "lib/main.dart", "deviceId": "chrome", "args": ["--web-port", "8080"] },
+    { "name": "SpotVibe (Chrome)", "request": "launch", "type": "dart", "program": "lib/main.dart", "deviceId": "chrome", "args": ["--web-port", "8080"], "toolArgs": ["--dart-define=TICKETMASTER_API_KEY=${env:TICKETMASTER_API_KEY}"] },
     { "name": "SpotVibe (Web Server)", "request": "launch", "type": "dart", "program": "lib/main.dart", "deviceId": "web-server", "args": ["--web-port", "8080", "--web-hostname", "0.0.0.0"] },
     { "name": "SpotVibe (Android)", "request": "launch", "type": "dart", "program": "lib/main.dart" },
     { "name": "SpotVibe (iOS)", "request": "launch", "type": "dart", "program": "lib/main.dart" },

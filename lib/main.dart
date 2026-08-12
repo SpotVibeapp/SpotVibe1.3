@@ -32,6 +32,7 @@ import 'services/notification_service.dart';
 import 'services/permission_service.dart';
 import 'services/personalization_service.dart';
 import 'services/revenue_cat_service.dart';
+import 'services/ticketmaster_service.dart';
 import 'providers/follow_provider.dart';
 import 'providers/personalization_provider.dart';
 import 'theme/theme.dart';
@@ -211,6 +212,7 @@ class _SpotVibeAppState extends State<SpotVibeApp> {
         Provider(create: (_) => AiModerationService()),
         ChangeNotifierProvider(create: (_) => EventExpiryService()),
         Provider<EventRepository>(create: (_) => widget.eventRepository),
+        Provider(create: (_) => TicketmasterService()),
         Provider<UserRepository>(create: (_) => widget.userRepository),
         Provider(create: (_) => FollowRepository()),
         Provider<RsvpRepository>(create: (_) => widget.rsvpRepository),

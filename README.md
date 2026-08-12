@@ -5,9 +5,10 @@ comment, and share. Built with **Flutter** (Dart 3, provider state management,
 go_router navigation).
 
 > ⚠️ **Prototype:** **auth is real (Firebase Auth + Firestore)** once the
-> Firebase console steps below are done; events/RSVPs are still served by an
-> in-memory mock backend. The app falls back to mock auth automatically when
-> Firebase isn't configured on a platform.
+> Firebase console steps below are done. The public feed is **real events
+> only** — curated El Paso listings plus live Ticketmaster results (no
+> invented "Live Music Night — City" templates). The app falls back to
+> mock auth automatically when Firebase isn't configured on a platform.
 
 ---
 
@@ -81,9 +82,25 @@ pattern (`FirebaseEventRepository`, `FirebaseRsvpRepository`,
 if `Firebase.initializeApp` succeeds, real backends are used; otherwise
 the app still runs on mocks.
 
-Default feed: El Paso (County Coliseum, Southwest University Park, Plaza
-Theatre, Franklin Mountains, Hueco Tanks, …). Searching another city still
-works. Deploy `firestore.rules` so the El Paso seed can be written.
+Default feed: curated El Paso venues (County Coliseum, Southwest University
+Park, Plaza Theatre, Franklin Mountains, Hueco Tanks, …) merged with live
+Ticketmaster listings for that area. Searching another city uses Ticketmaster
+only — the app never invents events. Duplicate title + venue + day rows are
+collapsed, preferring the Ticketmaster row (official event photo + ticket
+URL). Deploy `firestore.rules` so the El Paso seed can be written.
+
+### Ticketmaster (live listings + official images)
+
+1. Create a free API key at https://developer.ticketmaster.com/
+2. Run with the key as a dart-define (never commit it):
+
+```bash
+flutter run --dart-define=TICKETMASTER_API_KEY=your_key_here
+```
+
+Without a key the feed still shows the curated El Paso seed (real venues,
+Wikimedia venue photos) and stays empty for other cities instead of faking
+listings.
 
 ### One-time console setup (you must do this)
 

@@ -29,10 +29,30 @@ void main() {
     expect(map['cityKey'], 'el paso');
   });
 
-  test('mock default feed includes the El Paso seed', () async {
+  test('seed photos are venue files, not generic stock', () {
+    final events = buildElPasoSeedEvents(DateTime(2026, 8, 12));
+    expect(events.every((e) => !e.imageUrl.contains('unsplash.com')), isTrue);
+    final withPhotos = events.where((e) => e.imageUrl.isNotEmpty);
+    expect(withPhotos.every((e) => e.imageUrl.contains('commons.wikimedia.org')),
+        isTrue);
+  });
+
+  test('mock feed is only the El Paso seed — no invented national events',
+      () async {
     final repo = MockEventRepository();
     final events = await repo.getUpcomingEvents();
-    expect(events.any((e) => e.id == 'evt_ep_001'), isTrue);
-    expect(events.any((e) => e.city == 'El Paso'), isTrue);
+    final seed = buildElPasoSeedEvents(DateTime.now());
+    expect(events.length, seed.length);
+    expect(events.every((e) => e.city == 'El Paso'), isTrue);
+    expect(events.any((e) => e.title.contains('Live Music Night')), isFalse);
+    expect(events.any((e) => e.id.startsWith('evt_fb_')), isFalse);
+    expect(events.any((e) => e.id.startsWith('gen_')), isFalse);
+
+    final houston = await repo.getEventsForLocation(
+      city: 'Houston',
+      state: 'TX',
+      zip: '77002',
+    );
+    expect(houston, isEmpty);
   });
 }

@@ -8,7 +8,12 @@ const String kElPasoState = 'TX';
 const String kElPasoZip = '79901';
 
 /// Seed version written to `meta/event_seed`. Bump to re-upsert curated docs.
-const int kElPasoSeedVersion = 1;
+const int kElPasoSeedVersion = 2;
+
+/// Wikimedia Commons photo of the actual venue (redirects to a sized file).
+String venuePhoto(String filename) =>
+    'https://commons.wikimedia.org/wiki/Special:FilePath/'
+    '${Uri.encodeComponent(filename)}?width=1200';
 
 String _avatar(String name, String hex) =>
     'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}'
@@ -78,8 +83,7 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       category: 'Sports',
       organizer: 'El Paso Chihuahuas',
       avatarHex: 'C41E3A',
-      imageUrl:
-          'https://images.unsplash.com/photo-1566577739112-5180d4bf9390?q=80&w=800&auto=format&fit=crop',
+      imageUrl: venuePhoto('Southwest University Park.jpg'),
       lat: 31.7601,
       lng: -106.4933,
       cost: 18,
@@ -102,8 +106,7 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       category: 'Music',
       organizer: 'El Paso Live',
       avatarHex: '6C5CE7',
-      imageUrl:
-          'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=800&auto=format&fit=crop',
+      imageUrl: venuePhoto('El Paso County Coliseum 2.jpg'),
       lat: 31.7654,
       lng: -106.4425,
       cost: 45,
@@ -125,8 +128,7 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       category: 'Arts',
       organizer: 'Plaza Theatre Performing Arts Center',
       avatarHex: 'E17055',
-      imageUrl:
-          'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800&auto=format&fit=crop',
+      imageUrl: venuePhoto('The Plaza Theatre.JPG'),
       lat: 31.7588,
       lng: -106.4875,
       cost: 12,
@@ -148,8 +150,7 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       category: 'Markets',
       organizer: 'Downtown El Paso',
       avatarHex: '00B894',
-      imageUrl:
-          'https://images.unsplash.com/photo-1488459716781-31db52582fe9?q=80&w=800&auto=format&fit=crop',
+      imageUrl: venuePhoto('El Paso San Jacinto Plaza.jpg'),
       lat: 31.7591,
       lng: -106.4883,
       source: EventSource.facebook,
@@ -170,8 +171,7 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       category: 'Social',
       organizer: 'El Paso Outdoor Club',
       avatarHex: 'E1306C',
-      imageUrl:
-          'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=800&auto=format&fit=crop',
+      imageUrl: venuePhoto('El Paso Franklin Mountains and Scenic Drive aerial.jpg'),
       lat: 31.7965,
       lng: -106.4780,
       source: EventSource.instagram,
@@ -192,8 +192,7 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       category: 'Sports',
       organizer: 'UTEP Athletics',
       avatarHex: 'FF6600',
-      imageUrl:
-          'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=800&auto=format&fit=crop',
+      imageUrl: venuePhoto('El Paso Sun Bowl Stadium.jpg'),
       lat: 31.7733,
       lng: -106.5078,
       cost: 25,
@@ -215,8 +214,7 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       category: 'Wellness',
       organizer: 'Franklin Mountains State Park',
       avatarHex: '00CEC9',
-      imageUrl:
-          'https://images.unsplash.com/photo-1551632811-561732d1e306?q=80&w=800&auto=format&fit=crop',
+      imageUrl: venuePhoto('Franklin Mountains State Park Cactus.jpg'),
       lat: 31.8967,
       lng: -106.5220,
       cost: 5,
@@ -238,8 +236,7 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       category: 'Sports',
       organizer: 'Hueco Tanks Friends',
       avatarHex: 'E17055',
-      imageUrl:
-          'https://images.unsplash.com/photo-1522163182402-834f871fd851?q=80&w=800&auto=format&fit=crop',
+      imageUrl: venuePhoto('Hueco-tanks-east-mtn-tx1.jpg'),
       lat: 31.9168,
       lng: -106.0430,
       cost: 7,
@@ -261,8 +258,7 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       category: 'Arts',
       organizer: 'El Paso Museum of Art',
       avatarHex: 'A29BFE',
-      imageUrl:
-          'https://images.unsplash.com/photo-1531913223931-b0d3198229ee?q=80&w=800&auto=format&fit=crop',
+      imageUrl: venuePhoto('El Paso Museum of Art. El Paso, Texas.jpg'),
       lat: 31.7585,
       lng: -106.4889,
       source: EventSource.instagram,
@@ -283,8 +279,7 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       category: 'Music',
       organizer: 'El Paso Symphony Orchestra',
       avatarHex: '6C5CE7',
-      imageUrl:
-          'https://images.unsplash.com/photo-1507838153414-b4b713384a76?q=80&w=800&auto=format&fit=crop',
+      imageUrl: venuePhoto('Abraham Chavez Theater.jpg'),
       lat: 31.7580,
       lng: -106.4915,
       cost: 35,
@@ -306,8 +301,7 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       category: 'Food',
       organizer: 'Union Plaza Merchants',
       avatarHex: 'FF7675',
-      imageUrl:
-          'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=800&auto=format&fit=crop',
+      imageUrl: venuePhoto('Rofo Union Plaza 20220430-01.jpg'),
       lat: 31.7570,
       lng: -106.4920,
       source: EventSource.facebook,
@@ -328,8 +322,7 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       category: 'Arts',
       organizer: 'Chamizal Community Arts',
       avatarHex: 'E1306C',
-      imageUrl:
-          'https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?q=80&w=800&auto=format&fit=crop',
+      imageUrl: venuePhoto('Segundo Barrio 1975.jpg'),
       lat: 31.7522,
       lng: -106.4828,
       cost: 10,
@@ -351,8 +344,7 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       category: 'Community',
       organizer: 'El Paso County Parks',
       avatarHex: '00B894',
-      imageUrl:
-          'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?q=80&w=800&auto=format&fit=crop',
+      imageUrl: venuePhoto('AscaratePark-US-MexicoBorderAerial (24086868608).jpg'),
       lat: 31.7580,
       lng: -106.4060,
       source: EventSource.google,
@@ -373,8 +365,7 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       category: 'Social',
       organizer: 'Concordia Heritage Association',
       avatarHex: '2D3436',
-      imageUrl:
-          'https://images.unsplash.com/photo-1509557965875-b88c97052f0e?q=80&w=800&auto=format&fit=crop',
+      imageUrl: venuePhoto('Concordia cemetery section 1.jpg'),
       lat: 31.7786,
       lng: -106.4500,
       cost: 15,
@@ -396,8 +387,7 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       category: 'Dance',
       organizer: 'Borderland Dance Collective',
       avatarHex: 'FD79A8',
-      imageUrl:
-          'https://images.unsplash.com/photo-1504609813442-a8924e83f76e?q=80&w=800&auto=format&fit=crop',
+      imageUrl: venuePhoto('Don Haskins Center.jpg'),
       lat: 31.7774,
       lng: -106.5065,
       cost: 12,
@@ -419,8 +409,7 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       category: 'Music',
       organizer: 'El Paso Songwriters',
       avatarHex: 'E17055',
-      imageUrl:
-          'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=800&auto=format&fit=crop',
+      imageUrl: '', // no public-domain venue photo available
       lat: 31.7885,
       lng: -106.5030,
       cost: 5,
@@ -442,8 +431,7 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       category: 'Community',
       organizer: 'El Paso/Trans-Pecos Audubon',
       avatarHex: '00CEC9',
-      imageUrl:
-          'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=800&auto=format&fit=crop',
+      imageUrl: venuePhoto('El Paso Desert Botanical Garden.jpg'),
       lat: 31.8010,
       lng: -106.5450,
       source: EventSource.google,
@@ -464,8 +452,7 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       category: 'Community',
       organizer: 'Ysleta del Sur Pueblo & Mission',
       avatarHex: 'FDCB6E',
-      imageUrl:
-          'https://images.unsplash.com/photo-1529543544282-ea669407fca3?q=80&w=800&auto=format&fit=crop',
+      imageUrl: venuePhoto('YsletaMission.JPG'),
       lat: 31.6920,
       lng: -106.3270,
       source: EventSource.local,

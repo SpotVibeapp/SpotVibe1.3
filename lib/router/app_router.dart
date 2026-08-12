@@ -38,12 +38,23 @@ import '../screens/venue_claim_screen.dart';
 import '../providers/subscription_provider.dart';
 import '../services/deep_link_service.dart';
 import '../services/event_service.dart';
+import '../services/ticketmaster_service.dart';
 import '../services/notification_service.dart';
 import '../services/permission_service.dart';
 import '../services/revenue_cat_service.dart';
 import '../services/user_event_service.dart';
 
 class AppRouter {
+  static EventService _eventService(
+    BuildContext context,
+    EventRepository eventRepo,
+  ) {
+    return EventService(
+      repository: eventRepo,
+      ticketmaster: context.read<TicketmasterService>(),
+    );
+  }
+
   /// Build the router.  [initialLocation] is resolved at startup:
   ///  - `/permissions` on first-ever launch (permissions not yet asked)
   ///  - a stored pending deep link path if one was saved before permissions
@@ -120,7 +131,7 @@ class AppRouter {
           final personalization = context.read<PersonalizationProvider>();
           return MultiProvider(
             providers: [
-              Provider(create: (_) => EventService(repository: eventRepo)),
+              Provider(create: (ctx) => _eventService(ctx, eventRepo)),
               ChangeNotifierProvider(
                 create: (ctx) => EventProvider(
                   service: ctx.read<EventService>(),
@@ -142,7 +153,7 @@ class AppRouter {
           final expiry = context.read<EventExpiryService>();
           return MultiProvider(
             providers: [
-              Provider(create: (_) => EventService(repository: eventRepo)),
+              Provider(create: (ctx) => _eventService(ctx, eventRepo)),
               ChangeNotifierProvider(
                 create: (ctx) => EventProvider(
                   service: ctx.read<EventService>(),
@@ -171,7 +182,7 @@ class AppRouter {
           if (eventExtra != null) {
             return MultiProvider(
               providers: [
-                Provider(create: (_) => EventService(repository: eventRepo)),
+                Provider(create: (ctx) => _eventService(ctx, eventRepo)),
                 ChangeNotifierProvider(
                   create: (ctx) => EventProvider(
                     service: ctx.read<EventService>(),
@@ -193,6 +204,7 @@ class AppRouter {
           return _EventDeepLinkLoader(
             eventId: eventId,
             eventRepo: eventRepo,
+            ticketmaster: context.read<TicketmasterService>(),
             rsvpRepo: rsvpRepo,
             notifs: notifs,
             auth: auth,
@@ -214,7 +226,7 @@ class AppRouter {
           final eventRepo = context.read<EventRepository>();
           return ChangeNotifierProvider(
             create: (_) => EventProvider(
-              service: EventService(repository: eventRepo),
+              service: _eventService(context, eventRepo),
               expiryService: context.read<EventExpiryService>(),
             )..loadEvents(),
             child: const SavedEventsScreen(),
@@ -369,6 +381,7 @@ class AppRouter {
 class _EventDeepLinkLoader extends StatefulWidget {
   final String eventId;
   final EventRepository eventRepo;
+  final TicketmasterService ticketmaster;
   final RsvpRepository rsvpRepo;
   final NotificationService notifs;
   final AuthProvider auth;
@@ -376,6 +389,7 @@ class _EventDeepLinkLoader extends StatefulWidget {
   const _EventDeepLinkLoader({
     required this.eventId,
     required this.eventRepo,
+    required this.ticketmaster,
     required this.rsvpRepo,
     required this.notifs,
     required this.auth,
@@ -396,7 +410,8 @@ class _EventDeepLinkLoaderState extends State<_EventDeepLinkLoader> {
   }
 
   Future<void> _load() async {
-    final event = await widget.eventRepo.getEventById(widget.eventId);
+    var event = await widget.eventRepo.getEventById(widget.eventId);
+    event ??= await widget.ticketmaster.getEventById(widget.eventId);
     if (!mounted) return;
     if (event == null) {
       ScaffoldMessenger.of(context).showSnackBar(

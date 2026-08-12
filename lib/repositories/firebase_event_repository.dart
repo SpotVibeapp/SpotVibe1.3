@@ -14,8 +14,8 @@ import 'event_repository.dart';
 ///   `users/{uid}/saved_events/{id}` per-user bookmark / interested flags
 ///   `meta/event_seed`               seed version so we only upsert once
 ///
-/// Falls back to [MockEventRepository] if Firestore is unreachable or rules
-/// haven't been published yet.
+/// Falls back to [MockEventRepository] (curated El Paso only) if Firestore
+/// is unreachable or rules haven't been published yet.
 class FirebaseEventRepository implements EventRepository {
   FirebaseEventRepository({
     FirebaseFirestore? firestore,
@@ -135,9 +135,7 @@ class FirebaseEventRepository implements EventRepository {
       }
       var events = snap.docs
           .map((doc) => eventFromMap(doc.id, doc.data()))
-          .where((e) =>
-              e.city.toLowerCase() == key ||
-              e.state.toLowerCase() == state.toLowerCase())
+          .where((e) => e.city.toLowerCase() == key)
           .toList();
       if (events.isEmpty) {
         return _fallback.getEventsForLocation(

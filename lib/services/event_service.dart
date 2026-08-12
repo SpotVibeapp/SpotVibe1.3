@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 import '../data/el_paso_events.dart';
+import '../data/event_dedupe.dart';
 import '../models/event.dart';
 import '../repositories/event_repository.dart';
+import 'ticketmaster_service.dart';
 
 // ── Zip prefix → US state abbreviation ────────────────────────────────────────
 // Covers all 50 states. First 3 digits of a 5-digit zip map to a state code.
@@ -975,8 +977,51 @@ const Map<String, String> _zipToCity = {
 
 class EventService {
   final EventRepository _repository;
+  final TicketmasterService? _ticketmaster;
 
-  EventService({required EventRepository repository}) : _repository = repository;
+  EventService({
+    required EventRepository repository,
+    TicketmasterService? ticketmaster,
+  })  : _repository = repository,
+        _ticketmaster = ticketmaster;
+
+  /// Merges curated/Firestore rows with live Ticketmaster listings and
+  /// drops same-show duplicates. Placeholder Ticketmaster seed rows
+  /// (Chihuahuas / Coliseum / Sun Bowl / symphony) are dropped once the
+  /// API returns real dates for those venues.
+  Future<List<Event>> _withLiveListings({
+    required List<Event> local,
+    String? city,
+    String? state,
+    double? lat,
+    double? lng,
+  }) async {
+    final tm = _ticketmaster;
+    if (tm == null || !tm.isConfigured) {
+      return dedupeEvents(local);
+    }
+    final remote = await tm.search(
+      city: city,
+      stateCode: state,
+      lat: lat,
+      lng: lng,
+    );
+    var curated = local;
+    if (remote.isNotEmpty) {
+      curated = local
+          .where((e) =>
+              !(e.id.startsWith('evt_ep_') &&
+                  e.source == EventSource.ticketmaster))
+          .toList();
+    }
+    return dedupeEvents([...curated, ...remote]);
+  }
+
+  Future<Event?> getEventById(String id) async {
+    final local = await _repository.getEventById(id);
+    if (local != null) return local;
+    return _ticketmaster?.getEventById(id);
+  }
 
   Future<List<Event>> getUpcomingEvents({
     String? category,
@@ -1001,10 +1046,7 @@ class EventService {
   }) async {
     List<Event> filtered;
 
-    // ── Area search: generate city-specific events for ANY location ──────────
-    // When the user enters a zip / city / state we resolve it to a concrete city
-    // name and generate a full set of 12 events for that exact city. This means
-    // the app works for every city in America — not just the hardcoded 26 events.
+    // ── Area search: curated local rows + live Ticketmaster for that city ──
     if (areaQuery != null && areaQuery.isNotEmpty) {
       final resolved = _resolveLocation(areaQuery);
       if (resolved != null) {
@@ -1013,8 +1055,14 @@ class EventService {
           state: resolved.state,
           zip: resolved.zip.isNotEmpty ? resolved.zip : areaQuery.trim(),
         );
+        filtered = await _withLiveListings(
+          local: filtered,
+          city: resolved.city,
+          state: resolved.state,
+        );
       } else {
-        // Completely unrecognised input — fall back to default feed with substring filter
+        // Unrecognised input — try Ticketmaster with the raw city string
+        // instead of inventing "Live Music Night — City" listings.
         final defaults = await _repository.getUpcomingEvents();
         final aq = areaQuery.toLowerCase().trim();
         final matched = defaults.where((e) =>
@@ -1023,12 +1071,20 @@ class EventService {
             e.zipCode.contains(aq) ||
             e.address.toLowerCase().contains(aq) ||
             e.location.toLowerCase().contains(aq)).toList();
-        filtered = matched.isNotEmpty ? matched : defaults;
+        filtered = await _withLiveListings(
+          local: matched,
+          city: areaQuery.trim(),
+        );
       }
       filtered = filtered.where((e) => e.dateTime.isAfter(DateTime.now())).toList();
     } else {
       final events = await _repository.getUpcomingEvents();
       filtered = events.where((e) => e.dateTime.isAfter(DateTime.now())).toList();
+      filtered = await _withLiveListings(
+        local: filtered,
+        lat: userLat ?? kElPasoLat,
+        lng: userLng ?? kElPasoLng,
+      );
       // Default city bias: El Paso metro when the user hasn't searched a
       // city and hasn't shared GPS yet. Nearby GPS still wins via the
       // haversine filter below.
