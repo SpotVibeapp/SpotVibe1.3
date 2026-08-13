@@ -72,6 +72,16 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppTheme.spacingMd),
                 _SettingsTile(
+                  icon: Icons.map_outlined,
+                  label: 'Map',
+                  onTap: () => context.push('/map'),
+                ),
+                _SettingsTile(
+                  icon: Icons.notifications_none_rounded,
+                  label: 'Notifications',
+                  onTap: () => context.push('/notifications'),
+                ),
+                _SettingsTile(
                   icon: themeProvider.isDarkMode
                       ? Icons.light_mode_rounded
                       : Icons.dark_mode_rounded,
@@ -118,6 +128,16 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.event_rounded,
               label: 'My Events',
               onTap: () => context.push('/my-events'),
+            ),
+            _SettingsTile(
+              icon: Icons.map_outlined,
+              label: 'Map',
+              onTap: () => context.push('/map'),
+            ),
+            _SettingsTile(
+              icon: Icons.notifications_none_rounded,
+              label: 'Notifications',
+              onTap: () => context.push('/notifications'),
             ),
             _SettingsTile(
               icon: themeProvider.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,

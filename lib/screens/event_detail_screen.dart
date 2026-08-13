@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../data/event_time.dart';
 import '../models/event.dart';
 import '../providers/auth_provider.dart';
 import '../providers/follow_provider.dart';
@@ -90,14 +90,7 @@ class _DetailContent extends StatelessWidget {
                       children: [
                         _InfoRow(
                           icon: Icons.calendar_today_rounded,
-                          label: DateFormat('EEEE, MMMM d, yyyy').format(event.dateTime),
-                        ),
-                        const SizedBox(height: AppTheme.spacingSm),
-                        Divider(height: 1, color: colors.outlineVariant.withValues(alpha: 0.3)),
-                        const SizedBox(height: AppTheme.spacingSm),
-                        _InfoRow(
-                          icon: Icons.access_time_rounded,
-                          label: DateFormat('h:mm a').format(event.dateTime),
+                          label: formatEventWhen(event.dateTime),
                         ),
                         const SizedBox(height: AppTheme.spacingSm),
                         Divider(height: 1, color: colors.outlineVariant.withValues(alpha: 0.3)),
@@ -112,31 +105,33 @@ class _DetailContent extends StatelessWidget {
                             label: event.costLabel,
                           ),
                         ],
-                        const SizedBox(height: AppTheme.spacingSm),
-                        Divider(height: 1, color: colors.outlineVariant.withValues(alpha: 0.3)),
-                        const SizedBox(height: AppTheme.spacingSm),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(AppTheme.spacingSm),
-                              decoration: BoxDecoration(
-                                color: colors.primaryContainer.withValues(alpha: 0.5),
-                                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                        if (SourceBadge.isHonest(event.source)) ...[
+                          const SizedBox(height: AppTheme.spacingSm),
+                          Divider(height: 1, color: colors.outlineVariant.withValues(alpha: 0.3)),
+                          const SizedBox(height: AppTheme.spacingSm),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(AppTheme.spacingSm),
+                                decoration: BoxDecoration(
+                                  color: colors.primaryContainer.withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                                ),
+                                child: Icon(Icons.confirmation_number_rounded, size: AppTheme.iconSm, color: colors.primary),
                               ),
-                              child: Icon(Icons.link_rounded, size: AppTheme.iconSm, color: colors.primary),
-                            ),
-                            const SizedBox(width: AppTheme.spacingSm),
-                            Expanded(
-                              child: Text(
-                                'Found on',
-                                style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
-                                overflow: TextOverflow.ellipsis,
+                              const SizedBox(width: AppTheme.spacingSm),
+                              Expanded(
+                                child: Text(
+                                  'Tickets',
+                                  style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: AppTheme.spacingSm),
-                            SourceBadge(source: event.source),
-                          ],
-                        ),
+                              const SizedBox(width: AppTheme.spacingSm),
+                              SourceBadge(source: event.source),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),

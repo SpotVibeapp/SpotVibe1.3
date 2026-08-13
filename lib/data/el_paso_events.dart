@@ -8,7 +8,7 @@ const String kElPasoState = 'TX';
 const String kElPasoZip = '79901';
 
 /// Seed version written to `meta/event_seed`. Bump to re-upsert curated docs.
-const int kElPasoSeedVersion = 2;
+const int kElPasoSeedVersion = 3;
 
 /// Wikimedia Commons photo of the actual venue (redirects to a sized file).
 String venuePhoto(String filename) =>
@@ -89,8 +89,8 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       cost: 18,
       source: EventSource.ticketmaster,
       sourceUrl: 'https://www.milb.com/el-paso',
-      bookmarked: 214,
-      interested: 580,
+      bookmarked: 0,
+      interested: 0,
     ),
     ep(
       id: 'evt_ep_002',
@@ -111,8 +111,8 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       lng: -106.4425,
       cost: 45,
       source: EventSource.ticketmaster,
-      bookmarked: 389,
-      interested: 1024,
+      bookmarked: 0,
+      interested: 0,
     ),
     ep(
       id: 'evt_ep_003',
@@ -133,8 +133,8 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       lng: -106.4875,
       cost: 12,
       source: EventSource.local,
-      bookmarked: 96,
-      interested: 248,
+      bookmarked: 0,
+      interested: 0,
     ),
     ep(
       id: 'evt_ep_004',
@@ -153,9 +153,9 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       imageUrl: venuePhoto('El Paso San Jacinto Plaza.jpg'),
       lat: 31.7591,
       lng: -106.4883,
-      source: EventSource.facebook,
-      bookmarked: 167,
-      interested: 412,
+      source: EventSource.local,
+      bookmarked: 0,
+      interested: 0,
     ),
     ep(
       id: 'evt_ep_005',
@@ -174,9 +174,9 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       imageUrl: venuePhoto('El Paso Franklin Mountains and Scenic Drive aerial.jpg'),
       lat: 31.7965,
       lng: -106.4780,
-      source: EventSource.instagram,
-      bookmarked: 203,
-      interested: 541,
+      source: EventSource.local,
+      bookmarked: 0,
+      interested: 0,
     ),
     ep(
       id: 'evt_ep_006',
@@ -197,8 +197,8 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       lng: -106.5078,
       cost: 25,
       source: EventSource.ticketmaster,
-      bookmarked: 276,
-      interested: 733,
+      bookmarked: 0,
+      interested: 0,
     ),
     ep(
       id: 'evt_ep_007',
@@ -218,9 +218,9 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       lat: 31.8967,
       lng: -106.5220,
       cost: 5,
-      source: EventSource.google,
-      bookmarked: 142,
-      interested: 318,
+      source: EventSource.local,
+      bookmarked: 0,
+      interested: 0,
     ),
     ep(
       id: 'evt_ep_008',
@@ -241,8 +241,8 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       lng: -106.0430,
       cost: 7,
       source: EventSource.local,
-      bookmarked: 188,
-      interested: 421,
+      bookmarked: 0,
+      interested: 0,
     ),
     ep(
       id: 'evt_ep_009',
@@ -261,9 +261,9 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       imageUrl: venuePhoto('El Paso Museum of Art. El Paso, Texas.jpg'),
       lat: 31.7585,
       lng: -106.4889,
-      source: EventSource.instagram,
-      bookmarked: 87,
-      interested: 231,
+      source: EventSource.local,
+      bookmarked: 0,
+      interested: 0,
     ),
     ep(
       id: 'evt_ep_010',
@@ -284,8 +284,8 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       lng: -106.4915,
       cost: 35,
       source: EventSource.ticketmaster,
-      bookmarked: 154,
-      interested: 390,
+      bookmarked: 0,
+      interested: 0,
     ),
     ep(
       id: 'evt_ep_011',
@@ -304,9 +304,9 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       imageUrl: venuePhoto('Rofo Union Plaza 20220430-01.jpg'),
       lat: 31.7570,
       lng: -106.4920,
-      source: EventSource.facebook,
-      bookmarked: 221,
-      interested: 604,
+      source: EventSource.local,
+      bookmarked: 0,
+      interested: 0,
     ),
     ep(
       id: 'evt_ep_012',
@@ -327,8 +327,8 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       lng: -106.4828,
       cost: 10,
       source: EventSource.local,
-      bookmarked: 73,
-      interested: 198,
+      bookmarked: 0,
+      interested: 0,
     ),
     ep(
       id: 'evt_ep_013',
@@ -347,9 +347,9 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       imageUrl: venuePhoto('AscaratePark-US-MexicoBorderAerial (24086868608).jpg'),
       lat: 31.7580,
       lng: -106.4060,
-      source: EventSource.google,
-      bookmarked: 118,
-      interested: 305,
+      source: EventSource.local,
+      bookmarked: 0,
+      interested: 0,
     ),
     ep(
       id: 'evt_ep_014',
@@ -370,8 +370,8 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       lng: -106.4500,
       cost: 15,
       source: EventSource.local,
-      bookmarked: 91,
-      interested: 244,
+      bookmarked: 0,
+      interested: 0,
     ),
     ep(
       id: 'evt_ep_015',
@@ -391,9 +391,9 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       lat: 31.7774,
       lng: -106.5065,
       cost: 12,
-      source: EventSource.facebook,
-      bookmarked: 134,
-      interested: 356,
+      source: EventSource.local,
+      bookmarked: 0,
+      interested: 0,
     ),
     ep(
       id: 'evt_ep_016',
@@ -414,8 +414,8 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       lng: -106.5030,
       cost: 5,
       source: EventSource.local,
-      bookmarked: 64,
-      interested: 171,
+      bookmarked: 0,
+      interested: 0,
     ),
     ep(
       id: 'evt_ep_017',
@@ -434,9 +434,9 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       imageUrl: venuePhoto('El Paso Desert Botanical Garden.jpg'),
       lat: 31.8010,
       lng: -106.5450,
-      source: EventSource.google,
-      bookmarked: 52,
-      interested: 139,
+      source: EventSource.local,
+      bookmarked: 0,
+      interested: 0,
     ),
     ep(
       id: 'evt_ep_018',
@@ -456,8 +456,8 @@ List<Event> buildElPasoSeedEvents(DateTime midnight) {
       lat: 31.6920,
       lng: -106.3270,
       source: EventSource.local,
-      bookmarked: 79,
-      interested: 206,
+      bookmarked: 0,
+      interested: 0,
     ),
   ];
 }

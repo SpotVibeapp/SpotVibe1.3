@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import '../../data/event_time.dart';
 import '../../models/event.dart';
 import '../../theme/theme.dart';
 import '../common/event_image_placeholder.dart';
@@ -97,23 +97,12 @@ class _EventImage extends StatelessWidget {
                   color: colors.surface.withValues(alpha: 0.92),
                   borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                 ),
-                child: Column(
-                  children: [
-                    Text(
-                      DateFormat('dd').format(event.dateTime),
-                      style: text.titleMedium?.copyWith(
-                        color: colors.primary,
-                        height: 1.1,
-                      ),
-                    ),
-                    Text(
-                      DateFormat('MMM').format(event.dateTime).toUpperCase(),
-                      style: text.labelSmall?.copyWith(
-                        color: colors.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  formatEventDayChip(event.dateTime),
+                  style: text.labelMedium?.copyWith(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
@@ -135,12 +124,12 @@ class _EventImage extends StatelessWidget {
                 ),
               ),
             ),
-            // Source badge — bottom-left
-            Positioned(
-              bottom: AppTheme.spacingSm,
-              left: AppTheme.spacingSm,
-              child: SourceBadge(source: event.source),
-            ),
+            if (SourceBadge.isHonest(event.source))
+              Positioned(
+                bottom: AppTheme.spacingSm,
+                left: AppTheme.spacingSm,
+                child: SourceBadge(source: event.source),
+              ),
           ],
         ),
       ),
@@ -194,10 +183,13 @@ class _EventDetails extends StatelessWidget {
               const Spacer(),
               Icon(Icons.access_time_rounded, size: AppTheme.iconSm, color: appColors.subtleText),
               const SizedBox(width: AppTheme.spacingXs),
-              Text(
-                DateFormat('h:mm a').format(event.dateTime),
-                style: text.labelSmall?.copyWith(color: appColors.subtleText),
-                overflow: TextOverflow.ellipsis,
+              Flexible(
+                child: Text(
+                  formatEventWhen(event.dateTime),
+                  style: text.labelSmall?.copyWith(color: appColors.subtleText),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               ),
             ],
           ),

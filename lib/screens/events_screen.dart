@@ -2,16 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/personalization_provider.dart';
-import '../widgets/common/personalization_banner.dart';
 import '../providers/auth_provider.dart';
 import '../providers/event_provider.dart';
-import '../providers/notification_provider.dart';
-import '../providers/theme_provider.dart';
 import '../services/location_service.dart';
 import '../theme/theme.dart';
 import '../widgets/common/category_chips.dart';
-import '../widgets/common/filter_quick_chips.dart';
 import '../widgets/common/empty_state_view.dart';
+import '../widgets/common/event_card_skeleton.dart';
 import '../widgets/common/paginated_events_list.dart';
 import '../widgets/events/filter_sheet.dart';
 import '../widgets/events/search_header.dart';
@@ -24,7 +21,6 @@ class EventsScreen extends StatefulWidget {
 }
 
 class _EventsScreenState extends State<EventsScreen> {
-  // Shared controller so the area-active strip can clear the field
   final _areaController = TextEditingController();
   final _locationService = LocationService();
   bool _fetchingLocation = false;
@@ -35,8 +31,6 @@ class _EventsScreenState extends State<EventsScreen> {
     super.dispose();
   }
 
-  /// Returns up to 6 autocomplete suggestions matching [query].
-  /// Searches event titles, then appends matching category names.
   List<String> _buildSuggestions(String query, EventProvider provider) {
     final q = query.toLowerCase().trim();
     if (q.isEmpty) return [];
@@ -44,7 +38,6 @@ class _EventsScreenState extends State<EventsScreen> {
     final seen = <String>{};
     final results = <String>[];
 
-    // Event titles
     for (final e in provider.events) {
       if (results.length >= 6) break;
       final t = e.title;
@@ -53,7 +46,6 @@ class _EventsScreenState extends State<EventsScreen> {
       }
     }
 
-    // Category names (if still room)
     for (final cat in provider.categories) {
       if (results.length >= 6) break;
       if (cat != 'All' && cat.toLowerCase().contains(q) && seen.add(cat)) {
@@ -68,7 +60,6 @@ class _EventsScreenState extends State<EventsScreen> {
     if (_fetchingLocation) return;
     final eventProvider = context.read<EventProvider>();
 
-    // If already using GPS, tapping again clears it
     if (eventProvider.hasUserLocation) {
       eventProvider.clearUserLocation();
       return;
@@ -93,7 +84,6 @@ class _EventsScreenState extends State<EventsScreen> {
     final eventProvider = context.watch<EventProvider>();
     final personalization = context.watch<PersonalizationProvider>();
     final authProvider = context.watch<AuthProvider>();
-    final themeProvider = context.watch<ThemeProvider>();
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final activeFilters = eventProvider.activeFilterCount;
@@ -111,57 +101,6 @@ class _EventsScreenState extends State<EventsScreen> {
                 children: [
                   Text('SpotVibe', style: text.headlineMedium?.copyWith(color: colors.primary)),
                   const Spacer(),
-                  // Map view button
-                  IconButton(
-                    onPressed: () => context.push('/map'),
-                    icon: Icon(Icons.map_outlined,
-                        color: colors.onSurfaceVariant),
-                    tooltip: 'Map view',
-                  ),
-                  // Notifications button — badge driven by NotificationProvider
-                  Builder(builder: (context) {
-                    final unread =
-                        context.watch<NotificationProvider>().unreadCount;
-                    return Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        IconButton(
-                          onPressed: () => context.push('/notifications'),
-                          icon: Icon(Icons.notifications_none_rounded,
-                              color: colors.onSurfaceVariant),
-                        ),
-                        if (unread > 0)
-                          Positioned(
-                            top: 6,
-                            right: 6,
-                            child: IgnorePointer(
-                              child: Container(
-                                width: 18,
-                                height: 18,
-                                decoration: BoxDecoration(
-                                  color: colors.error,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                      color: colors.surface,
-                                      width: AppTheme.borderSelected),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    unread > 9 ? '9+' : '$unread',
-                                    style: TextStyle(
-                                      fontSize: 9,
-                                      color: colors.onError,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    );
-                  }),
-                  // Filter button with badge
                   Stack(
                     clipBehavior: Clip.none,
                     children: [
@@ -204,6 +143,7 @@ class _EventsScreenState extends State<EventsScreen> {
                         ),
                         icon: Icon(Icons.tune_rounded,
                             color: activeFilters > 0 ? colors.primary : colors.onSurfaceVariant),
+                        tooltip: 'Filters',
                       ),
                       if (activeFilters > 0)
                         Positioned(
@@ -226,19 +166,6 @@ class _EventsScreenState extends State<EventsScreen> {
                           ),
                         ),
                     ],
-                  ),
-                  IconButton(
-                    onPressed: themeProvider.toggleTheme,
-                    icon: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: Icon(
-                        themeProvider.isDarkMode
-                            ? Icons.light_mode_rounded
-                            : Icons.dark_mode_rounded,
-                        key: ValueKey(themeProvider.isDarkMode),
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
                   ),
                 ],
               ),
@@ -270,19 +197,6 @@ class _EventsScreenState extends State<EventsScreen> {
               onSelected: eventProvider.selectCategory,
             ),
             const SizedBox(height: AppTheme.spacingXs),
-            // ── Airbnb-style quick filter chips ───────────────────────────
-            FilterQuickChips(eventProvider: eventProvider),
-            const SizedBox(height: AppTheme.spacingXs),
-            // ── Personalization banner (only when feed is being re-ranked) ─
-            if (personalization.isActive &&
-                eventProvider.searchQuery.isEmpty &&
-                eventProvider.activeFilterCount == 0 &&
-                !eventProvider.sortByDistance)
-              PersonalizationBanner(
-                topCategories: personalization.topCategories,
-                onReset: personalization.reset,
-              ),
-            // Area search active strip
             if (hasAreaQuery)
               _ActiveAreaStrip(
                 areaQuery: eventProvider.areaQuery,
@@ -292,7 +206,6 @@ class _EventsScreenState extends State<EventsScreen> {
                   eventProvider.searchArea('');
                 },
               ),
-            // Search results header — shown when keyword search is active
             if (eventProvider.searchQuery.isNotEmpty && !eventProvider.isLoading)
               _SearchResultsHeader(eventProvider: eventProvider),
             Expanded(
@@ -364,8 +277,6 @@ class _ActiveAreaStrip extends StatelessWidget {
   }
 }
 
-
-/// Compact strip showing result count + sort order when keyword search is active.
 class _SearchResultsHeader extends StatelessWidget {
   final EventProvider eventProvider;
   const _SearchResultsHeader({required this.eventProvider});
@@ -394,7 +305,6 @@ class _SearchResultsHeader extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          // Sort toggle: Date ↔ Distance (only visible when user has GPS location)
           if (eventProvider.hasUserLocation)
             GestureDetector(
               onTap: () => eventProvider.setSortByDistance(!sortingByDistance),
@@ -438,12 +348,10 @@ class _EventsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ── 1. Loading ───────────────────────────────────────────────────────────
     if (eventProvider.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const EventFeedSkeleton();
     }
 
-    // ── 2. API / network error ───────────────────────────────────────────────
     if (eventProvider.error != null) {
       return EmptyStateView(
         variant: EmptyStateVariant.apiError,
@@ -464,7 +372,6 @@ class _EventsList extends StatelessWidget {
       final isAreaSearch = areaQuery.isNotEmpty;
       final hasLocation = eventProvider.hasUserLocation;
 
-      // ── 3. Filters / search active — too strict ──────────────────────────
       if (hasFilters) {
         return EmptyStateView(
           variant: EmptyStateVariant.filtersTooStrict,
@@ -480,7 +387,6 @@ class _EventsList extends StatelessWidget {
         );
       }
 
-      // ── 4. Area search active but no results ─────────────────────────────
       if (isAreaSearch) {
         return EmptyStateView(
           variant: EmptyStateVariant.noEventsNearby,
@@ -525,7 +431,6 @@ class _EventsList extends StatelessWidget {
         );
       }
 
-      // ── 5. No GPS + no results — suggest enabling location ───────────────
       if (!hasLocation) {
         return EmptyStateView(
           variant: EmptyStateVariant.noLocation,
@@ -542,7 +447,6 @@ class _EventsList extends StatelessWidget {
         );
       }
 
-      // ── 6. Generic empty ──────────────────────────────────────────────────
       return EmptyStateView(
         variant: EmptyStateVariant.generic,
         icon: Icons.event_busy_rounded,
@@ -584,7 +488,6 @@ class _EventsList extends StatelessWidget {
       );
     }
 
-    // ── 7. Paginated results (15 events per page) ─────────────────────────────
     return PaginatedEventsList(
       eventProvider: eventProvider,
       personalization: personalization,

@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spotvibe_app/data/el_paso_events.dart';
 import 'package:spotvibe_app/data/event_codec.dart';
+import 'package:spotvibe_app/models/event.dart';
 import 'package:spotvibe_app/repositories/event_repository.dart';
+import 'package:spotvibe_app/widgets/common/source_badge.dart';
 
 void main() {
   test('El Paso seed has unique ids at real venues', () {
@@ -54,5 +56,19 @@ void main() {
       zip: '77002',
     );
     expect(houston, isEmpty);
+  });
+
+  test('seed sources are honest — local or Ticketmaster only', () {
+    final events = buildElPasoSeedEvents(DateTime(2026, 8, 12));
+    expect(
+      events.every((e) =>
+          e.source == EventSource.local ||
+          e.source == EventSource.ticketmaster),
+      isTrue,
+    );
+    expect(events.every((e) => e.bookmarkedCount == 0), isTrue);
+    expect(events.every((e) => e.interestedCount == 0), isTrue);
+    expect(SourceBadge.isHonest(EventSource.ticketmaster), isTrue);
+    expect(SourceBadge.isHonest(EventSource.facebook), isFalse);
   });
 }

@@ -6,10 +6,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../data/event_time.dart';
 import '../../theme/theme.dart';
 import '../common/event_image_placeholder.dart';
 
@@ -424,5 +424,4 @@ class _StoryCardContent extends StatelessWidget {
 }
 
 /// Convenience helper to build a formatted date string from a [DateTime].
-String formatStoryDate(DateTime dt) =>
-    DateFormat('EEE, MMM d · h:mm a').format(dt);
+String formatStoryDate(DateTime dt) => formatEventWhen(dt);
