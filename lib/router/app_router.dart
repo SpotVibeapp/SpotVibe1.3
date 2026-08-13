@@ -29,9 +29,11 @@ import '../repositories/onboarding_repository.dart';
 import '../screens/permission_prompt_screen.dart';
 import '../screens/event_detail_screen.dart';
 import '../screens/events_screen.dart';
+import '../screens/legal_document_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/my_events_screen.dart';
 import '../screens/paywall_screen.dart';
+import '../data/legal.dart';
 import '../screens/profile_screen.dart';
 import '../screens/user_event_detail_screen.dart';
 import '../screens/saved_events_screen.dart';
@@ -236,6 +238,16 @@ class AppRouter {
         },
       ),
 
+      GoRoute(
+        path: '/privacy',
+        builder: (context, state) =>
+            const LegalDocumentScreen(document: kPrivacyPolicy),
+      ),
+      GoRoute(
+        path: '/terms',
+        builder: (context, state) =>
+            const LegalDocumentScreen(document: kTermsOfUse),
+      ),
       GoRoute(
         path: '/paywall',
         builder: (context, state) => const PaywallScreen(),

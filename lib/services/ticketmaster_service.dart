@@ -5,10 +5,15 @@ import '../models/event.dart';
 
 /// Live Ticketmaster Discovery API.
 ///
-/// Pass the key at build/run time so it never ships in source:
+/// Override at build/run time if needed:
 ///   flutter run --dart-define=TICKETMASTER_API_KEY=your_key
 ///
 /// Get a free key: https://developer.ticketmaster.com/
+const String kTicketmasterApiKey = String.fromEnvironment(
+  'TICKETMASTER_API_KEY',
+  defaultValue: 'ACde2XLPYSODlESFOv3u5TYMAVF1N8F0',
+);
+
 class TicketmasterService {
   TicketmasterService({Dio? dio, String? apiKey})
       : _dio = dio ??
@@ -16,8 +21,7 @@ class TicketmasterService {
               connectTimeout: const Duration(seconds: 12),
               receiveTimeout: const Duration(seconds: 12),
             )),
-        _apiKey = apiKey ??
-            const String.fromEnvironment('TICKETMASTER_API_KEY', defaultValue: '');
+        _apiKey = apiKey ?? kTicketmasterApiKey;
 
   final Dio _dio;
   final String _apiKey;
