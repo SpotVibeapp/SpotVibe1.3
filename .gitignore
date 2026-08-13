@@ -57,3 +57,6 @@ Firebase.js
 /android/app/profile
 /android/app/release
 node_modules
+
+# Firebase CLI local cache (do not commit hosting hashes)
+.firebase/

@@ -38,13 +38,11 @@ import '../screens/profile_screen.dart';
 import '../screens/user_event_detail_screen.dart';
 import '../screens/saved_events_screen.dart';
 import '../screens/venue_claim_screen.dart';
-import '../providers/subscription_provider.dart';
 import '../services/deep_link_service.dart';
 import '../services/event_service.dart';
 import '../services/ticketmaster_service.dart';
 import '../services/notification_service.dart';
 import '../services/permission_service.dart';
-import '../services/revenue_cat_service.dart';
 import '../services/user_event_service.dart';
 
 class AppRouter {

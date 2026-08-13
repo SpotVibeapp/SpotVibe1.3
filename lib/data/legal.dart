@@ -97,7 +97,7 @@ const LegalDocument kPrivacyPolicy = LegalDocument(
     ),
     LegalSection(
       'Contact',
-      'SpotVibe\nEl Paso, Texas\n$kLegalContactEmail',
+      '$kLegalEntityName\nEl Paso, Texas\n$kLegalContactEmail',
     ),
   ],
 );
@@ -105,7 +105,7 @@ const LegalDocument kPrivacyPolicy = LegalDocument(
 const LegalDocument kTermsOfUse = LegalDocument(
   title: 'Terms of Use',
   intro:
-      'These Terms of Use are a contract between you and $kLegalEntityName (“SpotVibe,” “we,” “us”) for the SpotVibe apps and related services. Effective $kLegalEffectiveDate. By creating an account, browsing as a guest, posting an event, or starting a subscription, you agree to these Terms and our Privacy Policy.',
+      'These Terms of Use are a contract between you and $kLegalEntityName, a Texas limited liability company (“SpotVibe,” “we,” “us”), for the SpotVibe apps and related services. Effective $kLegalEffectiveDate. By creating an account, browsing as a guest, posting an event, or starting a subscription, you agree to these Terms and our Privacy Policy.',
   sections: [
     LegalSection(
       'The service',
@@ -129,9 +129,10 @@ const LegalDocument kTermsOfUse = LegalDocument(
     LegalSection(
       'Subscriptions and payments',
       'Free: browse the feed and post up to two upcoming one-time events at a time.\n\n'
-          'SpotVibe Premium is an auto-renewing subscription. After a 7-day free trial (if offered), it costs \$12.99 per month, unless you are one of the first 25 founding venues and purchase the founding plan at \$9.99 per month. Prices may appear in your local currency and may include tax.\n\n'
-          'Payment is charged to your Apple App Store or Google Play account. Your subscription renews each month until you cancel. Cancel at least 24 hours before the end of the current period in your Apple or Google subscription settings. Unused portions of a period are generally not refundable except where required by law or store policy.\n\n'
-          'If you start a free trial and do not cancel before it ends, you will be charged the then-current subscription price. Managing or restoring purchases is handled by Apple or Google. We do not get your full payment card number.',
+          'Title: SpotVibe Premium. Length: one month, auto-renewing. Price: \$12.99 USD per month after any introductory period, unless you purchase the founding plan described below. What you get: unlimited events, recurring events, featured placement once per week, live analytics, custom branding, a contact button, ad-free event pages, and the ability to claim additional listings after verification.\n\n'
+          'Founding plan: the first 25 venues that purchase product spotvibe_premium_founding_monthly are billed \$9.99 USD per month for that store product. New founding purchases stop when those 25 slots are taken. If you already bought the founding product, Apple or Google — not this app — keep billing that product until you cancel.\n\n'
+          'Payment will be charged to your Apple ID or Google Play account at confirmation of purchase. The subscription automatically renews unless auto-renew is turned off at least 24 hours before the end of the current period. Your account will be charged for renewal within 24 hours prior to the end of the current period. You can manage and turn off auto-renewal in your Account Settings after purchase. Any unused portion of a free trial is forfeited when you purchase a subscription, where the store allows.\n\n'
+          'If a 7-day free trial is offered and you do not cancel before it ends, you will be charged the then-current price. Refunds, if any, are handled by Apple or Google under their rules. We do not receive or store your full payment card number. Store terms (Apple Media Services or Google Play) also apply to the purchase.',
     ),
     LegalSection(
       'Tickets and third parties',
