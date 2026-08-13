@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../data/pricing.dart';
 import '../models/user_event.dart';
+import '../providers/auth_provider.dart';
 import '../providers/create_event_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/user_events_provider.dart';
+import '../repositories/user_event_repository.dart';
 import '../services/ai_moderation_service.dart';
 import '../services/user_event_service.dart';
 import '../theme/theme.dart';
@@ -91,7 +94,12 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final sub = context.read<SubscriptionProvider>();
-      if (sub.isSubscribed && !_purchaseConfirmed) {
+      if (sub.isSubscribed) {
+        setState(() {
+          _purchaseConfirmed = true;
+          _isCreatorPro = true;
+        });
+      } else {
         setState(() => _purchaseConfirmed = true);
       }
     });
@@ -148,41 +156,46 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     if (picked != null) setState(() => _selectedTime = picked);
   }
 
-  Future<void> _showPayPerEventDialog() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => const _PurchaseDialog(
-        price: kBasicEventCreationPrice,
-        label: 'Single Event',
-      ),
-    );
-    if (confirmed == true) {
+  Future<void> _openPaywall() async {
+    final result = await context.push<bool>('/paywall');
+    if (result == true && mounted) {
       setState(() {
-        _isPremiumListing = false;
+        _isCreatorPro = true;
         _purchaseConfirmed = true;
       });
-    }
-  }
-
-  void _openPaywall() {
-    context.push('/paywall');
-  }
-
-  Future<void> _openCreatorProPaywall() async {
-    final result = await context.push<bool>('/creator-pro-paywall');
-    if (result == true && mounted) {
-      setState(() => _isCreatorPro = true);
     }
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (!_isEditing && !_purchaseConfirmed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please choose how to publish your event first.')),
-      );
-      return;
+    final subCheck = context.read<SubscriptionProvider>();
+    if (!_isEditing && !subCheck.isSubscribed) {
+      final auth = context.read<AuthProvider>();
+      final uid = auth.user?.id;
+      if (uid != null) {
+        final mine = await context.read<UserEventRepository>().getEventsForUser(uid);
+        final active = countActiveUserEvents(mine.map((e) => e.dateTime));
+        if (!canPostAnotherFreeEvent(active, isPremium: false)) {
+          if (!mounted) return;
+          final upgrade = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('One active event on Free'),
+              content: const Text(
+                'Free accounts can have one upcoming event at a time. '
+                'Upgrade to Premium ($kPremiumMonthlyLabel) for unlimited and recurring events.',
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Not now')),
+                FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Go Premium')),
+              ],
+            ),
+          );
+          if (upgrade == true && mounted) await _openPaywall();
+          return;
+        }
+      }
     }
 
     // ── AI content moderation ───────────────────────────────────────────────
@@ -286,9 +299,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               _SectionHeader(title: 'Event Publishing'),
               _CreationAccessSelector(
                 isSubscribed: sub.isSubscribed,
-                purchaseConfirmed: _purchaseConfirmed,
-                onPayPerEvent: _showPayPerEventDialog,
-                onUpgradePro: _openPaywall,
+                onUpgrade: _openPaywall,
               ),
               const SizedBox(height: AppTheme.spacingLg),
             ],
@@ -435,7 +446,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               contactSocialController: _contactSocialController,
               brandColorController: _brandColorController,
               brandLogoController: _brandLogoController,
-              onUpgrade: _openCreatorProPaywall,
+              onUpgrade: _openPaywall,
               onRecurringChanged: (v) => setState(() => _recurringType = v),
             ),
 
@@ -446,10 +457,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               label: Text(_isEditing
                   ? 'Save Changes'
                   : sub.isSubscribed
-                      ? 'Publish Event — Free (Pro)'
-                      : _purchaseConfirmed
-                          ? 'Publish Event — \$${kBasicEventCreationPrice.toStringAsFixed(2)}'
-                          : 'Publish Event'),
+                      ? 'Publish Event — Premium'
+                      : 'Publish Event — Free'),
             ),
             const SizedBox(height: AppTheme.spacingXl),
           ],
@@ -532,7 +541,7 @@ class _CreatorProSection extends StatelessWidget {
                             borderRadius: BorderRadius.circular(AppTheme.radiusXl),
                           ),
                           child: Text(
-                            '\$9.99/mo',
+                            '\$15/mo',
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
@@ -574,7 +583,7 @@ class _CreatorProSection extends StatelessWidget {
               const Icon(Icons.campaign_rounded, color: Colors.white, size: AppTheme.iconSm),
               const SizedBox(width: AppTheme.spacingXs),
               Text(
-                'Creator Pro Features Unlocked',
+                'Premium features unlocked',
                 style: text.labelMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
               ),
             ],
@@ -844,23 +853,19 @@ class _DateTimeTile extends StatelessWidget {
 
 class _CreationAccessSelector extends StatelessWidget {
   final bool isSubscribed;
-  final bool purchaseConfirmed;
-  final VoidCallback onPayPerEvent;
-  final VoidCallback onUpgradePro;
+  final VoidCallback onUpgrade;
 
   const _CreationAccessSelector({
     required this.isSubscribed,
-    required this.purchaseConfirmed,
-    required this.onPayPerEvent,
-    required this.onUpgradePro,
+    required this.onUpgrade,
   });
 
   @override
   Widget build(BuildContext context) {
     final appColors = Theme.of(context).extension<AppColorsExtension>()!;
     final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
 
-    // Pro subscribers: show confirmed banner
     if (isSubscribed) {
       return Container(
         padding: const EdgeInsets.all(AppTheme.spacingMd),
@@ -878,12 +883,12 @@ class _CreationAccessSelector extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Pro — Unlimited Events',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(color: appColors.proGold),
+                    'Premium — unlimited events',
+                    style: text.titleSmall?.copyWith(color: appColors.proGold),
                   ),
                   Text(
-                    'Your subscription covers unlimited event creation.',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: colors.onSurfaceVariant),
+                    'Recurring events, analytics, branding, and claims are included.',
+                    style: text.labelSmall?.copyWith(color: colors.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -894,152 +899,30 @@ class _CreationAccessSelector extends StatelessWidget {
       );
     }
 
-    // Non-Pro: two options side by side
-    return Row(
-      children: [
-        Expanded(
-          child: _TierCard(
-            title: 'Pay per Event',
-            price: '\$${kBasicEventCreationPrice.toStringAsFixed(2)}',
-            subtitle: 'One-time charge',
-            features: const ['Visible in event feed', 'Dedicated chat room', 'Edit & delete anytime'],
-            isSelected: purchaseConfirmed,
-            accentColor: colors.primary,
-            onTap: onPayPerEvent,
-          ),
-        ),
-        const SizedBox(width: AppTheme.spacingSm),
-        Expanded(
-          child: _TierCard(
-            title: 'Go Pro',
-            price: '\$${kProMonthlyPrice.toStringAsFixed(2)}/mo',
-            subtitle: 'Unlimited events',
-            features: const ['Unlimited event creation', 'Featured placement', 'Pro badge on profile'],
-            isSelected: false,
-            accentColor: appColors.proGold,
-            onTap: onUpgradePro,
-            isUpgradeCard: true,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TierCard extends StatelessWidget {
-  final String title;
-  final String price;
-  final String subtitle;
-  final List<String> features;
-  final bool isSelected;
-  final Color accentColor;
-  final VoidCallback onTap;
-  final bool isUpgradeCard;
-
-  const _TierCard({
-    required this.title,
-    required this.price,
-    required this.subtitle,
-    required this.features,
-    required this.isSelected,
-    required this.accentColor,
-    required this.onTap,
-    this.isUpgradeCard = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(AppTheme.spacingMd),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? accentColor.withValues(alpha: 0.08)
-              : isUpgradeCard
-                  ? accentColor.withValues(alpha: 0.04)
-                  : colors.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-          border: Border.all(
-            color: isSelected
-                ? accentColor
-                : isUpgradeCard
-                    ? accentColor.withValues(alpha: 0.4)
-                    : colors.outlineVariant.withValues(alpha: 0.5),
-            width: isSelected ? AppTheme.borderSelected : AppTheme.borderDefault,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: text.titleSmall?.copyWith(color: isSelected || isUpgradeCard ? accentColor : colors.onSurface),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (isUpgradeCard) Icon(Icons.star_rounded, size: 14, color: accentColor),
-                if (isSelected) Icon(Icons.check_circle_rounded, size: 16, color: accentColor),
-              ],
-            ),
-            const SizedBox(height: AppTheme.spacingXs),
-            Text(price, style: text.titleMedium?.copyWith(color: accentColor, fontWeight: FontWeight.w800)),
-            Text(subtitle, style: text.labelSmall),
-            const SizedBox(height: AppTheme.spacingSm),
-            ...features.map(
-              (f) => Padding(
-                padding: const EdgeInsets.only(bottom: 2),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.check_rounded, size: 12, color: accentColor),
-                    const SizedBox(width: 4),
-                    Expanded(child: Text(f, style: text.labelSmall)),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacingMd),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.4)),
       ),
-    );
-  }
-}
-
-class _PurchaseDialog extends StatelessWidget {
-  final double price;
-  final String label;
-
-  const _PurchaseDialog({required this.price, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final colors = Theme.of(context).colorScheme;
-    return AlertDialog(
-      title: const Text('Publish This Event'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('$label — \$${price.toStringAsFixed(2)} one-time fee', style: text.bodyMedium),
-          const SizedBox(height: AppTheme.spacingSm),
+          Text('Free plan', style: text.titleSmall),
+          const SizedBox(height: AppTheme.spacingXs),
           Text(
-            'Your event will be published immediately with its own dedicated chat room. Upgrade to Pro for \$${kProMonthlyPrice.toStringAsFixed(2)}/mo and create unlimited events for free.',
+            'One upcoming one-time event at a time. Basic page (title, description, photo, location, time) in the public feed.',
             style: text.bodySmall?.copyWith(color: colors.onSurfaceVariant),
+          ),
+          const SizedBox(height: AppTheme.spacingMd),
+          OutlinedButton.icon(
+            onPressed: onUpgrade,
+            icon: const Icon(Icons.workspace_premium_rounded),
+            label: const Text('Upgrade to Premium — \$15/month'),
           ),
         ],
       ),
-      actions: [
-        TextButton(onPressed: () => context.pop(false), child: const Text('Cancel')),
-        FilledButton(onPressed: () => context.pop(true), child: Text('Confirm & Pay \$${kBasicEventCreationPrice.toStringAsFixed(2)}')),
-      ],
     );
   }
 }

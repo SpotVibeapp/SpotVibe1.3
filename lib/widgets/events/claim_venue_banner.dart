@@ -36,7 +36,7 @@ class ClaimVenueBanner extends StatelessWidget {
             const SizedBox(width: AppTheme.spacingSm),
             Expanded(
               child: Text(
-                'Do you own this venue? Claim this page.',
+                'Promoter? Claim this event with Premium (\$15/mo).',
                 style: text.labelMedium?.copyWith(
                   color: colors.onSurfaceVariant,
                 ),

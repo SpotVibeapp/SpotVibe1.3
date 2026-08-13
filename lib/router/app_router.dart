@@ -20,7 +20,7 @@ import '../repositories/user_event_repository.dart';
 import '../screens/create_event_screen.dart';
 import '../screens/creator_analytics_screen.dart';
 import '../screens/creator_dashboard_screen.dart';
-import '../screens/creator_pro_paywall_screen.dart';
+
 import '../screens/event_map_screen.dart';
 import '../services/event_expiry_service.dart';
 import '../screens/onboarding_screen.dart';
@@ -240,7 +240,7 @@ class AppRouter {
       ),
       GoRoute(
         path: '/creator-pro-paywall',
-        builder: (context, state) => const CreatorProPaywallScreen(),
+        builder: (context, state) => const PaywallScreen(),
       ),
       GoRoute(
         path: '/creator-dashboard',

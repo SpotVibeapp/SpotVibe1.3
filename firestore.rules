@@ -71,6 +71,18 @@ service cloud.firestore {
       allow write: if true; // client seed version stamp
     }
 
+    match /event_claims/{claimId} {
+      allow read: if request.auth != null
+                  && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.eventId is string
+                    && request.resource.data.email is string
+                    && request.resource.data.statement is string
+                    && request.resource.data.statement.size() <= 2000;
+      allow update, delete: if false;
+    }
+
     match /user_reports/{reportId} {
       allow create: if request.auth != null
                     && request.resource.data.reportedUserId is string

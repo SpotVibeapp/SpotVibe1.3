@@ -1,17 +1,15 @@
+import '../data/pricing.dart';
 import '../models/user_event.dart';
 import '../repositories/user_event_repository.dart';
 
+export '../data/pricing.dart'
+    show kPremiumMonthlyPrice, kPremiumMonthlyLabel, kFreePrice;
 export '../models/user_event.dart' show RecurringType;
 
-/// Pricing for event creation.
-/// Non-Creator-Pro users: $4.99 one-time charge per event.
-/// Creator Pro subscribers ($9.99/month): unlimited recurring events + premium features.
-/// SpotVibe Pro subscribers ($24.99/month): unlimited event creation at no extra cost.
-const double kBasicEventCreationPrice = 4.99;
-const double kProMonthlyPrice = 24.99;
-
-/// Monthly price for the Creator Pro tier (event hosting features).
-const double kCreatorProMonthlyPrice = 9.99;
+/// Legacy aliases — launch pricing is Free vs $15/month Premium.
+const double kBasicEventCreationPrice = kFreePrice;
+const double kProMonthlyPrice = kPremiumMonthlyPrice;
+const double kCreatorProMonthlyPrice = kPremiumMonthlyPrice;
 
 class UserEventService {
   final UserEventRepository _repository;
@@ -54,6 +52,9 @@ class UserEventService {
     if (title.trim().isEmpty) throw ArgumentError('Event title is required.');
     if (description.trim().isEmpty) throw ArgumentError('Description is required.');
     if (location.trim().isEmpty) throw ArgumentError('Location is required.');
+    if (!isCreatorPro && recurringType != RecurringType.none) {
+      throw ArgumentError('Recurring events require SpotVibe Premium.');
+    }
 
     return _repository.createEvent(
       creatorId: creatorId,

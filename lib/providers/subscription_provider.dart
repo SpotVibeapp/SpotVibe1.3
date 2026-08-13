@@ -27,13 +27,11 @@ class SubscriptionProvider extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  /// Which plan toggle is selected: 0 = monthly, 1 = annual.
-  int _selectedPlanIndex = 1; // default to annual (best value)
-  int get selectedPlanIndex => _selectedPlanIndex;
+  /// Launch is monthly-only. Index kept for API compatibility (always 0).
+  int get selectedPlanIndex => 0;
 
   void selectPlan(int index) {
-    _selectedPlanIndex = index;
-    notifyListeners();
+    // Annual is not offered at launch.
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -44,9 +42,14 @@ class SubscriptionProvider extends ChangeNotifier {
   /// Convenience: returns the annual package from the current offering, if any.
   Package? get annualPackage => currentOffering?.annual;
 
-  /// Returns the package corresponding to [selectedPlanIndex].
-  Package? get selectedPackage =>
-      _selectedPlanIndex == 0 ? monthlyPackage : annualPackage;
+  /// Launch offering is monthly Premium only.
+  Package? get selectedPackage {
+    final monthly = monthlyPackage;
+    if (monthly != null) return monthly;
+    final packs = currentOffering?.availablePackages;
+    if (packs == null || packs.isEmpty) return null;
+    return packs.first;
+  }
 
   // ── Initialisation ───────────────────────────────────────────────────────────
 

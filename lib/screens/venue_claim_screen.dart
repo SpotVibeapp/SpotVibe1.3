@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../data/pricing.dart';
 import '../models/event.dart';
+import '../models/event_claim.dart';
+import '../providers/auth_provider.dart';
 import '../providers/subscription_provider.dart';
+import '../repositories/event_claim_repository.dart';
 import '../theme/theme.dart';
 
 /// Shown when a venue owner taps "Claim this page" on an auto-generated event.
@@ -63,9 +67,9 @@ class _PremiumSalesView extends StatelessWidget {
                 const SizedBox(height: AppTheme.spacingSm),
                 Text(
                   'SpotVibe automatically generates pages for local venues and events. '
-                  'As the venue owner, becoming a SpotVibe Premium member gives you '
-                  'full control over this listing — edit details, showcase specials, '
-                  'and connect directly with your guests.',
+                  'Claiming and editing an existing listing is a Premium feature '
+                  '($kPremiumMonthlyLabel). After you subscribe we verify you are '
+                  'an authorized promoter before you can change the page.',
                   style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
                 ),
                 const SizedBox(height: AppTheme.spacingLg),
@@ -351,11 +355,7 @@ class _PremiumCta extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-          onTap: () {
-            // Close this screen and open the paywall.
-            context.pop();
-            context.push('/paywall');
-          },
+          onTap: () => context.push('/paywall'),
           child: SizedBox(
             height: AppTheme.buttonHeight + 6,
             child: Row(
@@ -368,7 +368,7 @@ class _PremiumCta extends StatelessWidget {
                 ),
                 const SizedBox(width: AppTheme.spacingSm),
                 Text(
-                  'Unlock Premium & Claim Page',
+                  'Subscribe to Premium — $kPremiumMonthlyLabel',
                   style: text.labelLarge?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -399,21 +399,65 @@ class _VerifyOwnershipViewState extends State<_VerifyOwnershipView> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _roleController = TextEditingController();
+  final _orgController = TextEditingController();
+  final _proofUrlController = TextEditingController();
+  final _statementController = TextEditingController();
+  ClaimRole _role = ClaimRole.promoter;
+  ClaimProofMethod _proof = ClaimProofMethod.officialEmail;
+  bool _authorized = false;
   bool _submitted = false;
+  bool _saving = false;
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _roleController.dispose();
+    _orgController.dispose();
+    _proofUrlController.dispose();
+    _statementController.dispose();
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _submitted = true);
+    if (!_authorized) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Confirm you are authorized to represent this event.')),
+      );
+      return;
+    }
+    final auth = context.read<AuthProvider>();
+    final uid = auth.user?.id;
+    if (uid == null) {
+      context.push('/login');
+      return;
+    }
+    setState(() => _saving = true);
+    await context.read<EventClaimRepository>().submit(
+          EventClaim(
+            id: '',
+            eventId: widget.event.id,
+            eventTitle: widget.event.title,
+            venueName: widget.event.location,
+            userId: uid,
+            fullName: _nameController.text.trim(),
+            email: _emailController.text.trim(),
+            phone: _phoneController.text.trim(),
+            organization: _orgController.text.trim(),
+            role: _role,
+            proofMethod: _proof,
+            proofUrl: _proofUrlController.text.trim(),
+            statement: _statementController.text.trim(),
+            status: ClaimStatus.pending,
+            createdAt: DateTime.now(),
+          ),
+        );
+    if (!mounted) return;
+    setState(() {
+      _saving = false;
+      _submitted = true;
+    });
   }
 
   @override
@@ -562,7 +606,7 @@ class _VerifyOwnershipViewState extends State<_VerifyOwnershipView> {
                   color: Colors.transparent,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                    onTap: _submit,
+                    onTap: _saving ? null : _submit,
                     child: SizedBox(
                       height: AppTheme.buttonHeight,
                       child: Row(

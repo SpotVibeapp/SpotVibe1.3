@@ -16,6 +16,7 @@ import 'repositories/firebase_user_repository.dart';
 import 'repositories/follow_repository.dart';
 import 'repositories/mock_user_repository.dart';
 import 'repositories/onboarding_repository.dart';
+import 'repositories/event_claim_repository.dart';
 import 'repositories/event_repository.dart';
 import 'repositories/notification_preferences_repository.dart';
 import 'repositories/notification_repository.dart';
@@ -106,6 +107,7 @@ void main() async {
     eventRepository: backend.events,
     rsvpRepository: backend.rsvps,
     userEventRepository: backend.userEvents,
+    claimRepository: backend.claims,
     revenueCatService: revenueCatService,
     notificationService: notificationService,
     permissionService: permissionService,
@@ -119,11 +121,13 @@ class _AppBackend {
   final EventRepository events;
   final RsvpRepository rsvps;
   final UserEventRepository userEvents;
+  final EventClaimRepository claims;
   const _AppBackend({
     required this.users,
     required this.events,
     required this.rsvps,
     required this.userEvents,
+    required this.claims,
   });
 }
 
@@ -142,6 +146,7 @@ Future<_AppBackend> _createBackend() async {
       events: events,
       rsvps: FirebaseRsvpRepository(),
       userEvents: FirebaseUserEventRepository(),
+      claims: FirebaseEventClaimRepository(),
     );
   } catch (e) {
     debugPrint('Firebase unavailable ($e) — using mock repositories.');
@@ -150,6 +155,7 @@ Future<_AppBackend> _createBackend() async {
       events: MockEventRepository(),
       rsvps: MockRsvpRepository(),
       userEvents: UserEventRepository(),
+      claims: MockEventClaimRepository(),
     );
   }
 }
@@ -159,6 +165,7 @@ class SpotVibeApp extends StatefulWidget {
   final EventRepository eventRepository;
   final RsvpRepository rsvpRepository;
   final UserEventRepository userEventRepository;
+  final EventClaimRepository claimRepository;
   final RevenueCatService revenueCatService;
   final NotificationService notificationService;
   final PermissionService permissionService;
@@ -171,6 +178,7 @@ class SpotVibeApp extends StatefulWidget {
     required this.eventRepository,
     required this.rsvpRepository,
     required this.userEventRepository,
+    required this.claimRepository,
     required this.revenueCatService,
     required this.notificationService,
     required this.permissionService,
@@ -217,6 +225,7 @@ class _SpotVibeAppState extends State<SpotVibeApp> {
         Provider(create: (_) => FollowRepository()),
         Provider<RsvpRepository>(create: (_) => widget.rsvpRepository),
         Provider<UserEventRepository>(create: (_) => widget.userEventRepository),
+        Provider<EventClaimRepository>(create: (_) => widget.claimRepository),
         Provider(create: (_) => NotificationRepository()),
         Provider(create: (_) => NotificationPreferencesRepository()),
         Provider(create: (_) => OnboardingRepository()),

@@ -205,13 +205,15 @@ class _ProTile extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text('SpotVibe Pro', style: text.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
+                      Text('SpotVibe Premium', style: text.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
                       const SizedBox(width: AppTheme.spacingSm),
                       if (isSubscribed) const ProBadge(),
                     ],
                   ),
                   Text(
-                    isSubscribed ? 'Active — all features unlocked' : 'Unlock all features · tap to upgrade',
+                    isSubscribed
+                        ? 'Active — \$15/month'
+                        : '\$15/month · recurring events, claims, analytics',
                     style: text.labelSmall?.copyWith(color: appColors.proGold),
                   ),
                 ],
