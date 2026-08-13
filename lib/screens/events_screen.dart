@@ -109,7 +109,7 @@ class _EventsScreenState extends State<EventsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
               child: Row(
                 children: [
-                  Text('vibely', style: text.headlineMedium?.copyWith(color: colors.primary)),
+                  Text('SpotVibe', style: text.headlineMedium?.copyWith(color: colors.primary)),
                   const Spacer(),
                   // Map view button
                   IconButton(

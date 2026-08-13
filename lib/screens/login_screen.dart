@@ -143,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: AppTheme.spacingSm),
                       Text(
-                        'vibely',
+                        'SpotVibe',
                         style: text.headlineMedium?.copyWith(
                           color: colors.onPrimary,
                           fontWeight: FontWeight.w800,
