@@ -7,6 +7,7 @@ import '../providers/auth_provider.dart';
 import '../providers/follow_provider.dart';
 import '../providers/event_provider.dart';
 import '../services/deep_link_service.dart';
+import '../services/maps_service.dart';
 import '../theme/theme.dart';
 import '../widgets/events/claim_venue_banner.dart';
 import '../widgets/common/app_avatar.dart';
@@ -16,6 +17,7 @@ import '../widgets/common/user_action_sheet.dart';
 import '../widgets/events/attendees_section.dart';
 import '../widgets/events/comment_section.dart';
 import '../widgets/events/practical_details_section.dart';
+import '../widgets/events/get_tickets_button.dart';
 import '../widgets/events/quick_actions_section.dart';
 import '../widgets/events/rsvp_button.dart';
 import '../widgets/events/similar_events_section.dart';
@@ -95,7 +97,13 @@ class _DetailContent extends StatelessWidget {
                         const SizedBox(height: AppTheme.spacingSm),
                         Divider(height: 1, color: colors.outlineVariant.withValues(alpha: 0.3)),
                         const SizedBox(height: AppTheme.spacingSm),
-                        _InfoRow(icon: Icons.location_on_rounded, label: event.fullLocation),
+                        GestureDetector(
+                          onTap: () => MapsService.openDirections(event),
+                          child: _InfoRow(
+                            icon: Icons.location_on_rounded,
+                            label: event.fullLocation,
+                          ),
+                        ),
                         if (event.cost != null && event.cost! > 0) ...[
                           const SizedBox(height: AppTheme.spacingSm),
                           Divider(height: 1, color: colors.outlineVariant.withValues(alpha: 0.3)),
@@ -136,10 +144,11 @@ class _DetailContent extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: AppTheme.spacingMd),
-                  // Quick actions: Calendar, Directions, Share, Story + Report
+                  GetTicketsButton(event: event),
+                  if (event.sourceUrl != null && event.sourceUrl!.isNotEmpty)
+                    const SizedBox(height: AppTheme.spacingSm),
                   QuickActionsSection(event: event),
                   const SizedBox(height: AppTheme.spacingLg),
-                  // Practical details: Weather, Parking, Duration, Age, Accessibility
                   PracticalDetailsSection(event: event),
                   const SizedBox(height: AppTheme.spacingLg),
                   _CounterRow(event: event, eventIndex: eventIndex),

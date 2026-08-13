@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/event.dart';
+import '../../services/maps_service.dart';
 import '../../theme/theme.dart';
 import 'add_to_calendar_button.dart';
 import 'event_share_card.dart';
@@ -9,13 +10,17 @@ class QuickActionsSection extends StatelessWidget {
   final Event event;
   const QuickActionsSection({super.key, required this.event});
 
-  void _getDirections(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening directions to ${event.location}…'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  Future<void> _getDirections(BuildContext context) async {
+    final ok = await MapsService.openDirections(event);
+    if (!context.mounted) return;
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not open maps for this venue.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   void _shareEvent(BuildContext context) {

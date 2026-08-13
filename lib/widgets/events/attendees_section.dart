@@ -13,7 +13,41 @@ class AttendeesSection extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
 
-    if (rsvp.totalRsvpCount == 0) return const SizedBox.shrink();
+    if (rsvp.totalRsvpCount == 0) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Who\'s going', style: text.titleMedium),
+          const SizedBox(height: AppTheme.spacingSm),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(AppTheme.spacingLg),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+              border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.3)),
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.people_outline_rounded,
+                    size: AppTheme.iconLg, color: colors.onSurfaceVariant),
+                const SizedBox(height: AppTheme.spacingSm),
+                Text(
+                  'No one has RSVP\'d yet',
+                  style: text.titleSmall,
+                ),
+                const SizedBox(height: AppTheme.spacingXs),
+                Text(
+                  'Be the first to say you\'re going.',
+                  style: text.bodySmall?.copyWith(color: colors.onSurfaceVariant),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
 
     final publicList = rsvp.publicAttendees;
     final privateCount = rsvp.totalRsvpCount - publicList.length;
@@ -21,7 +55,8 @@ class AttendeesSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Social proof header — avatar stack + count
+        Text('Who\'s going', style: text.titleMedium),
+        const SizedBox(height: AppTheme.spacingSm),
         _SocialProofHeader(
           publicList: publicList,
           totalCount: rsvp.totalRsvpCount,
