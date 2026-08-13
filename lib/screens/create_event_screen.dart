@@ -44,7 +44,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   bool _purchaseConfirmed = false;
   String? _moderationError;
 
-  // ── Creator Pro fields ────────────────────────────────────────────────────
+  // ── Premium fields ────────────────────────────────────────────────────────
   bool _isCreatorPro = false;
   RecurringType _recurringType = RecurringType.none;
   final _contactPhoneController = TextEditingController();
@@ -81,7 +81,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       _selectedCategory = e.category;
       _isPremiumListing = e.isPremiumListing;
       _purchaseConfirmed = true; // editing — already paid/confirmed
-      // Restore Creator Pro fields if event was created as Creator Pro
+      // Restore Premium fields if the event was created on Premium
       _isCreatorPro = e.isCreatorPro;
       _recurringType = e.recurringType;
       _contactPhoneController.text = e.contactPhone ?? '';
@@ -181,10 +181,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           final upgrade = await showDialog<bool>(
             context: context,
             builder: (ctx) => AlertDialog(
-              title: const Text('One active event on Free'),
+              title: const Text('Free plan limit'),
               content: const Text(
-                'Free accounts can have one upcoming event at a time. '
-                'Upgrade to Premium ($kPremiumMonthlyLabel) for unlimited and recurring events.',
+                'Free accounts can have 2 upcoming one-time events at a time. '
+                'Start a $kPremiumTrialLabel for unlimited and recurring events.',
               ),
               actions: [
                 TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Not now')),
@@ -437,7 +437,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             ),
             const SizedBox(height: AppTheme.spacingLg),
 
-            // ── Creator Pro Section ─────────────────────────────────────────
+            // ── Premium section ──────────────────────────────────────────────
             _CreatorProSection(
               isCreatorPro: _isCreatorPro,
               recurringType: _recurringType,
@@ -470,7 +470,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
 // ── Sub-widgets ──────────────────────────────────────────────────────────────
 
-// ── Creator Pro Section ────────────────────────────────────────────────────────
+// ── Premium section ────────────────────────────────────────────────────────────
 
 class _CreatorProSection extends StatelessWidget {
   final bool isCreatorPro;
@@ -532,7 +532,7 @@ class _CreatorProSection extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text('Creator Pro', style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
+                        Text('Premium', style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
                         const SizedBox(width: AppTheme.spacingXs),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -541,7 +541,7 @@ class _CreatorProSection extends StatelessWidget {
                             borderRadius: BorderRadius.circular(AppTheme.radiusXl),
                           ),
                           child: Text(
-                            '\$15/mo',
+                            kPremiumMonthlyLabel,
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
@@ -566,7 +566,7 @@ class _CreatorProSection extends StatelessWidget {
       );
     }
 
-    // Unlocked Creator Pro fields
+    // Unlocked Premium fields
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -919,7 +919,7 @@ class _CreationAccessSelector extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: onUpgrade,
             icon: const Icon(Icons.workspace_premium_rounded),
-            label: const Text('Upgrade to Premium — \$15/month'),
+            label: const Text('Upgrade to Premium — $kPremiumMonthlyLabel'),
           ),
         ],
       ),

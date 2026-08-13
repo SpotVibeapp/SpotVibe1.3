@@ -5,7 +5,7 @@ import '../models/user_event.dart';
 import '../providers/user_events_provider.dart';
 import '../theme/theme.dart';
 import '../widgets/user_events/user_event_card.dart';
-import '../services/user_event_service.dart' show kCreatorProMonthlyPrice;
+import '../data/pricing.dart';
 
 class MyEventsScreen extends StatefulWidget {
   const MyEventsScreen({super.key});
@@ -97,7 +97,7 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
       itemCount: provider.events.length + (hasAnyCreatorPro ? 0 : 1),
       separatorBuilder: (_, __) => const SizedBox(height: AppTheme.spacingSm),
       itemBuilder: (context, index) {
-        // Show Creator Pro upgrade banner as the last item if user has no pro events
+        // Show Premium upgrade banner as the last item if user has no pro events
         if (!hasAnyCreatorPro && index == provider.events.length) {
           return _CreatorProUpgradeBanner(colors: colors, appColors: appColors, text: text);
         }
@@ -162,7 +162,7 @@ class _CreatorProUpgradeBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/creator-pro-paywall'),
+      onTap: () => context.push('/paywall'),
       child: Container(
         padding: const EdgeInsets.all(AppTheme.spacingMd),
         decoration: BoxDecoration(
@@ -189,11 +189,11 @@ class _CreatorProUpgradeBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Upgrade to Creator Pro',
+                    'Upgrade to Premium',
                     style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
                   ),
                   Text(
-                    'Recurring events, analytics & custom branding — \$${kCreatorProMonthlyPrice.toStringAsFixed(2)}/mo',
+                    'Recurring events, analytics & custom branding — start a $kPremiumTrialLabel',
                     style: text.labelSmall?.copyWith(color: colors.onSurfaceVariant),
                     maxLines: 2,
                   ),

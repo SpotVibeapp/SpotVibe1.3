@@ -6,7 +6,7 @@ export '../data/pricing.dart'
     show kPremiumMonthlyPrice, kPremiumMonthlyLabel, kFreePrice;
 export '../models/user_event.dart' show RecurringType;
 
-/// Legacy aliases — launch pricing is Free vs $15/month Premium.
+/// Legacy aliases — launch pricing is Free vs $12.99/month Premium.
 const double kBasicEventCreationPrice = kFreePrice;
 const double kProMonthlyPrice = kPremiumMonthlyPrice;
 const double kCreatorProMonthlyPrice = kPremiumMonthlyPrice;
@@ -56,6 +56,19 @@ class UserEventService {
       throw ArgumentError('Recurring events require SpotVibe Premium.');
     }
 
+    var listing = isPremiumListing && isCreatorPro;
+    String? featuredWeekKey;
+    if (isCreatorPro) {
+      final week = isoWeekKey(DateTime.now());
+      final mine = await _repository.getEventsForUser(creatorId);
+      final alreadyFeatured =
+          mine.any((e) => e.featuredWeekKey == week);
+      if (!alreadyFeatured) {
+        listing = true;
+        featuredWeekKey = week;
+      }
+    }
+
     return _repository.createEvent(
       creatorId: creatorId,
       title: title.trim(),
@@ -73,7 +86,7 @@ class UserEventService {
       organizerName: organizerName,
       mapLink: mapLink?.trim().isNotEmpty == true ? mapLink!.trim() : null,
       chatLink: chatLink?.trim().isNotEmpty == true ? chatLink!.trim() : null,
-      isPremiumListing: isPremiumListing,
+      isPremiumListing: listing,
       isCreatorPro: isCreatorPro,
       recurringType: recurringType,
       contactPhone: contactPhone?.trim().isNotEmpty == true ? contactPhone!.trim() : null,
@@ -81,6 +94,7 @@ class UserEventService {
       contactSocial: contactSocial?.trim().isNotEmpty == true ? contactSocial!.trim() : null,
       brandColor: brandColor?.trim().isNotEmpty == true ? brandColor!.trim() : null,
       brandLogoUrl: brandLogoUrl?.trim().isNotEmpty == true ? brandLogoUrl!.trim() : null,
+      featuredWeekKey: featuredWeekKey,
     );
   }
 

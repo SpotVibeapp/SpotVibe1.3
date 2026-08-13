@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/event.dart';
+import '../services/event_analytics_service.dart';
 import '../services/event_expiry_service.dart';
 import '../services/event_service.dart';
 import '../services/notification_service.dart';
@@ -11,16 +12,19 @@ class EventProvider extends ChangeNotifier {
   final NotificationService? _notifications;
   final EventExpiryService? _expiry;
   final PersonalizationProvider? _personalization;
+  final EventAnalyticsService? _analytics;
 
   EventProvider({
     required EventService service,
     NotificationService? notificationService,
     EventExpiryService? expiryService,
     PersonalizationProvider? personalizationProvider,
+    EventAnalyticsService? analytics,
   })  : _service = service,
         _notifications = notificationService,
         _expiry = expiryService,
-        _personalization = personalizationProvider {
+        _personalization = personalizationProvider,
+        _analytics = analytics {
     // Subscribe to the once-per-minute expiry clock.
     // Each tick triggers loadEvents(), which already filters
     // out events whose dateTime is in the past.
@@ -132,6 +136,15 @@ class EventProvider extends ChangeNotifier {
       if (!_sortByDistance && _personalization != null) {
         _events = _personalization.rank(_events,
             userLat: _userLat, userLng: _userLng);
+      }
+      if (!_sortByDistance) {
+        _events = promoteFeaturedEvents(_events);
+      }
+      final analytics = _analytics;
+      if (analytics != null) {
+        analytics.recordImpressions(
+          _events.where((e) => e.isUserCreated).map((e) => e.id),
+        );
       }
       // Notify when a location search returns a new set of events.
       if (_areaQuery.isNotEmpty && _events.isNotEmpty && _events.length != previous) {

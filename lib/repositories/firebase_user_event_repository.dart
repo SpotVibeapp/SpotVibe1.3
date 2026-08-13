@@ -95,6 +95,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
     String? contactSocial,
     String? brandColor,
     String? brandLogoUrl,
+    String? featuredWeekKey,
   }) {
     return _guard(() async {
       final event = UserCreatedEvent(
@@ -124,6 +125,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
         contactSocial: contactSocial,
         brandColor: brandColor,
         brandLogoUrl: brandLogoUrl,
+        featuredWeekKey: featuredWeekKey,
       );
       final payload = {
         ...userEventToMap(event),
@@ -160,6 +162,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
           contactSocial: contactSocial,
           brandColor: brandColor,
           brandLogoUrl: brandLogoUrl,
+          featuredWeekKey: featuredWeekKey,
         ));
   }
 
@@ -199,5 +202,39 @@ class FirebaseUserEventRepository extends UserEventRepository {
         'interestedCount': FieldValue.increment(1),
       }, SetOptions(merge: true));
     }, () => super.incrementInterested(eventId));
+  }
+
+  @override
+  Future<void> incrementAnalytics(
+    String eventId, {
+    int impressions = 0,
+    int views = 0,
+    int saves = 0,
+    int clicks = 0,
+  }) async {
+    if (_useFallback) {
+      await super.incrementAnalytics(
+        eventId,
+        impressions: impressions,
+        views: views,
+        saves: saves,
+        clicks: clicks,
+      );
+      return;
+    }
+    try {
+      final patch = <String, dynamic>{};
+      if (impressions != 0) {
+        patch['analyticsSearchImpressions'] = FieldValue.increment(impressions);
+      }
+      if (views != 0) patch['analyticsViews'] = FieldValue.increment(views);
+      if (saves != 0) patch['analyticsSaves'] = FieldValue.increment(saves);
+      if (clicks != 0) patch['analyticsClicks'] = FieldValue.increment(clicks);
+      if (patch.isEmpty) return;
+      await _userEvents.doc(eventId).set(patch, SetOptions(merge: true));
+      await _events.doc(eventId).set(patch, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Analytics increment skipped ($e)');
+    }
   }
 }

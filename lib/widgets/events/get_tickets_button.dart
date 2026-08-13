@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/event.dart';
+import '../../services/event_analytics_service.dart';
 import '../../services/maps_service.dart';
 import '../../theme/theme.dart';
 

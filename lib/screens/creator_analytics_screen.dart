@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/user_event.dart';
 import '../theme/theme.dart';
 
-/// Analytics dashboard for a single Creator Pro event.
+/// Analytics dashboard for a single Premium event.
 /// Shows views, saves, and click-throughs with a visual bar chart.
 class CreatorAnalyticsScreen extends StatelessWidget {
   final UserCreatedEvent event;

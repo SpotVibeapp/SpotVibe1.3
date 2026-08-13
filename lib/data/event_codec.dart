@@ -60,6 +60,9 @@ Map<String, dynamic> eventToMap(Event event, {String kind = 'curated'}) {
     'sourceUrl': event.sourceUrl,
     'kind': kind,
     'cityKey': event.city.toLowerCase().trim(),
+    'isPremiumListing': event.isPremiumListing,
+    'isCreatorPro': event.isCreatorPro,
+    'featuredWeekKey': event.featuredWeekKey,
   };
 }
 
@@ -85,6 +88,11 @@ Event eventFromMap(String id, Map<String, dynamic> data) {
     longitude: (data['longitude'] as num?)?.toDouble() ?? 0,
     source: eventSourceFromName(data['source'] as String?),
     sourceUrl: data['sourceUrl'] as String?,
+    isPremiumListing: data['isPremiumListing'] as bool? ?? false,
+    isCreatorPro: data['isCreatorPro'] as bool? ?? false,
+    featuredWeekKey: data['featuredWeekKey'] as String?,
+    isUserCreated: data['kind'] == 'user' ||
+        (data['creatorId'] as String?)?.isNotEmpty == true,
   );
 }
 
@@ -151,6 +159,10 @@ Map<String, dynamic> userEventToMap(UserCreatedEvent event) {
         latitude: 0,
         longitude: 0,
         source: EventSource.local,
+        isPremiumListing: event.isPremiumListing,
+        isCreatorPro: event.isCreatorPro,
+        featuredWeekKey: event.featuredWeekKey,
+        isUserCreated: true,
       ),
       kind: 'user',
     ),
@@ -167,6 +179,7 @@ Map<String, dynamic> userEventToMap(UserCreatedEvent event) {
     'contactSocial': event.contactSocial,
     'brandColor': event.brandColor,
     'brandLogoUrl': event.brandLogoUrl,
+    'featuredWeekKey': event.featuredWeekKey,
     'analyticsSearchImpressions': event.analyticsSearchImpressions,
     'analyticsViews': event.analyticsViews,
     'analyticsSaves': event.analyticsSaves,

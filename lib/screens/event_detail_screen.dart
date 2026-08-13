@@ -9,7 +9,9 @@ import '../providers/event_provider.dart';
 import '../services/deep_link_service.dart';
 import '../services/maps_service.dart';
 import '../theme/theme.dart';
+import '../services/event_analytics_service.dart';
 import '../widgets/events/claim_venue_banner.dart';
+import '../widgets/events/event_page_ad.dart';
 import '../widgets/common/app_avatar.dart';
 import '../widgets/common/event_image_placeholder.dart';
 import '../widgets/common/source_badge.dart';
@@ -22,13 +24,32 @@ import '../widgets/events/quick_actions_section.dart';
 import '../widgets/events/rsvp_button.dart';
 import '../widgets/events/similar_events_section.dart';
 
-class EventDetailScreen extends StatelessWidget {
+class EventDetailScreen extends StatefulWidget {
   final Event event;
   const EventDetailScreen({super.key, required this.event});
 
   @override
+  State<EventDetailScreen> createState() => _EventDetailScreenState();
+}
+
+class _EventDetailScreenState extends State<EventDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      try {
+        context.read<EventAnalyticsService>().recordView(
+              widget.event.id,
+              viewerId: context.read<AuthProvider>().user?.id,
+            );
+      } catch (_) {}
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return _DetailContent(event: event, eventIndex: 0);
+    return _DetailContent(event: widget.event, eventIndex: 0);
   }
 }
 
@@ -79,6 +100,20 @@ class _DetailContent extends StatelessWidget {
                   _CategoryAndCost(event: event, appColors: appColors),
                   const SizedBox(height: AppTheme.spacingSm),
                   Text(event.title, style: text.headlineSmall),
+                  if (event.isFeaturedThisWeek) ...[
+                    const SizedBox(height: AppTheme.spacingXs),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: [appColors.proGold, appColors.proGoldLight]),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                      ),
+                      child: const Text(
+                        'FEATURED THIS WEEK',
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: AppTheme.spacingMd),
                   // Info card
                   Container(
@@ -164,6 +199,10 @@ class _DetailContent extends StatelessWidget {
                   _OrganizerRow(event: event),
                   const SizedBox(height: AppTheme.spacingLg),
                   ClaimVenueBanner(event: event),
+                  if (event.showsAds) ...[
+                    const SizedBox(height: AppTheme.spacingLg),
+                    const EventPageAd(),
+                  ],
                   const SizedBox(height: AppTheme.spacingLg),
                   const AttendeesSection(),
                   const SizedBox(height: AppTheme.spacingLg),

@@ -1234,7 +1234,7 @@ class EventService {
     }
 
     filtered.sort((a, b) => a.dateTime.compareTo(b.dateTime));
-    return filtered;
+    return promoteFeaturedEvents(filtered);
   }
 
   Future<Event> toggleBookmark(Event event) async {
@@ -1273,3 +1273,17 @@ double _haversineDistanceMiles(double lat1, double lng1, double lat2, double lng
 }
 
 double _toRad(double deg) => deg * math.pi / 180;
+
+/// Featured Premium listings stay at the top of the category feed this week.
+List<Event> promoteFeaturedEvents(List<Event> events) {
+  final featured = <Event>[];
+  final rest = <Event>[];
+  for (final event in events) {
+    if (event.isFeaturedThisWeek) {
+      featured.add(event);
+    } else {
+      rest.add(event);
+    }
+  }
+  return [...featured, ...rest];
+}

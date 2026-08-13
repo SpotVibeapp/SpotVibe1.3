@@ -5,9 +5,8 @@ import '../models/user_event.dart';
 import '../providers/user_events_provider.dart';
 import '../theme/theme.dart';
 
-/// The Premium Creator Dashboard — shown when a Creator Pro member views
-/// their events. Surfaces personalized stat sentences and per-event metrics
-/// for every Creator Pro event the user owns.
+/// The Premium dashboard — live searches, views, and RSVPs for every
+/// Premium event the user owns.
 class CreatorDashboardScreen extends StatefulWidget {
   const CreatorDashboardScreen({super.key});
 
@@ -64,7 +63,7 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                             const Icon(Icons.campaign_rounded, color: Colors.white, size: AppTheme.iconSm),
                             const SizedBox(width: AppTheme.spacingXs),
                             Text(
-                              'CREATOR PRO',
+                              'PREMIUM',
                               style: text.labelSmall?.copyWith(
                                 color: Colors.white70,
                                 fontWeight: FontWeight.w800,
@@ -514,10 +513,10 @@ class _EmptyDashboard extends StatelessWidget {
               child: const Icon(Icons.campaign_rounded, color: Colors.white, size: AppTheme.iconLg),
             ),
             const SizedBox(height: AppTheme.spacingLg),
-            Text('No Creator Pro Events Yet', style: text.headlineSmall),
+            Text('No Premium events yet', style: text.headlineSmall),
             const SizedBox(height: AppTheme.spacingSm),
             Text(
-              'Create your first Creator Pro event to start tracking searches, views, and RSVPs.',
+              'Create your first Premium event to start tracking searches, views, and RSVPs.',
               style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
@@ -525,7 +524,7 @@ class _EmptyDashboard extends StatelessWidget {
             FilledButton.icon(
               onPressed: () => context.push('/create-event'),
               icon: const Icon(Icons.add_rounded),
-              label: const Text('Create a Pro Event'),
+              label: const Text('Create a Premium event'),
               style: FilledButton.styleFrom(
                 backgroundColor: appColors.creatorTeal,
                 foregroundColor: Colors.white,

@@ -4,9 +4,9 @@
 A local events discovery app where users browse upcoming events, RSVP (publicly or privately), see who else is attending, leave comments, and interact socially through friend requests and user blocking/reporting. Designed for community-driven engagement with a vibrant, modern aesthetic.
 
 ## User Event Creation
-- Free users post events at no charge; one active (future-dated) event at a time enforced by `kFreeUserActiveEventLimit = 1` in `user_event_service.dart`
-- Creator Pro and SpotVibe Pro users are exempt from the active-event limit — unlimited concurrent events
-- Featured listing (`isPremiumListing = true`) is a Creator Pro privilege; standard free events appear in the public feed without featured placement
+- Free users post events at no charge; up to **2 upcoming** events at a time (`kFreeUserActiveEventLimit = 2` in `pricing.dart`)
+- Premium subscribers are exempt from the active-event limit — unlimited concurrent events
+- Featured listing (`featuredWeekKey` = current ISO week) is a Premium perk, 1× per week; free events stay in the public feed without featured placement
 - Each user-created event automatically gets a dedicated chat room keyed as `user_{eventId}` (ChatRepository removed — this is a legacy note; messaging has been removed)
 - Event creators have admin rights: edit/delete from `MyEventsScreen` and `UserEventDetailScreen`; identity check is `auth.user.id == event.creatorId`
 - `UserEventRepository` is app-global (registered in `main.dart`); `UserEventsProvider` and `CreateEventProvider` are route-scoped
@@ -99,9 +99,9 @@ A local events discovery app where users browse upcoming events, RSVP (publicly 
 
 ## Creator Tiers
 
-- **Free creators**: unlimited one-time events, **one active event at a time** (`kFreeUserActiveEventLimit = 1`), basic page (title/description/photo/location/time), appears in public feed — **no charge**; limit enforced in `CreateEventProvider.submit()` via `UserEventRepository.getActiveEventCount()`
-- **Premium** (`kPremiumMonthlyPrice = 14.99`): recurring events (weekly/monthly), featured placement, analytics dashboard, custom branding (color + logo), contact button (phone/website/social), no ads on event pages; `isCreatorPro = true` on `UserCreatedEvent` (field name preserved for backward compatibility); exempt from one-active-event limit
-- **Premium Plus** (`kPremiumPlusMonthlyPrice = 29.99`): all Premium features + unlimited recurring events, guaranteed top-3 featured placement (rotated fairly among Plus subscribers), email list building (collect attendee emails), cross-promotion across related categories, detailed analytics (source breakdown, shares, new-user views); `isPremiumPlus = true` on `UserCreatedEvent`; also sets `isCreatorPro = true` at creation time; wire to RevenueCat entitlement `premium_plus` before release
+- **Free creators**: up to **2 upcoming one-time events**, basic page (title/description/photo/location/time), appears in public feed — **no charge**; limit enforced in `CreateEventScreen` via `canPostAnotherFreeEvent`
+- **Premium** (`kPremiumMonthlyPrice = 12.99` after a **7-day free trial**): recurring events, featured placement 1×/week, live analytics, custom branding, contact button, no ads, claims after verify; first 25 venues lock **$9.99/month** (`kFoundingMonthlyPrice`); `isCreatorPro = true` on `UserCreatedEvent` (field name preserved); exempt from the free-event cap
+- Launch is monthly only. Configure the same 7-day intro and optional founding product in App Store / Play / RevenueCat so store charges match the in-app copy.
 - **Paywalls**: `/premium-paywall` → `CreatorProPaywallScreen` (teal); `/premium-plus-paywall` → `PremiumPlusPaywallScreen` (amber-red); `/paywall` redirects to `/premium-paywall`
 - **Email list**: `/email-list/:id` → `EmailListScreen` — shows collected attendee emails with copy-to-clipboard; attendee opt-in via `_EmailOptInBanner` in `UserEventDetailScreen` (UI-only, no backend wired)
 - **Premium Dashboard** at `/creator-dashboard` (`CreatorDashboardScreen`) — shows all `isCreatorPro` events (including Plus); Plus events show shares + new-viewers sentence + email list button; Plus badge displayed in card header
@@ -136,10 +136,9 @@ A local events discovery app where users browse upcoming events, RSVP (publicly 
 ## Venue Claim Feature
 - `ClaimVenueBanner` in `lib/widgets/events/claim_venue_banner.dart` — subtle banner at the bottom of `EventDetailScreen` (auto-generated events only, not `UserEventDetailScreen`)
 - Tapping navigates to `/claim-venue` passing the `Event` object as `state.extra`
-- `/claim-venue` route wires a fresh `SubscriptionProvider` (reads global `RevenueCatService`) so the screen always reflects current subscription state
-- Non-subscribers see `_PremiumSalesView` (sales pitch + venue perks + CTA that pops then pushes `/paywall`)
-- Existing Pro members see `_VerifyOwnershipView` — a form collecting name, email, phone, role; submitting shows `_SubmittedConfirmation` (UI-only, no backend wired yet)
-- No backend yet: ownership verification is frontend-only; wire to a real API when a backend is ready
+- `/claim-venue` uses the global `SubscriptionProvider`
+- Everyone sees the verify form first. First approved claim is free. Later claims need Premium to unlock edits.
+- Work-domain emails auto-approve; personal inboxes stay pending for review. Claims persist to `event_claims`.
 
 ## Notification System
 

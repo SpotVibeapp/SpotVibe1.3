@@ -66,6 +66,50 @@ class RevenueCatService {
     }
   }
 
+  /// Every package across every offering (default + founding).
+  Future<List<Package>> allPackages() async {
+    final offerings = await fetchOfferings();
+    if (offerings == null) return const [];
+    final seen = <String>{};
+    final packs = <Package>[];
+    void addAll(Iterable<Package> source) {
+      for (final pack in source) {
+        final id = pack.storeProduct.identifier;
+        if (seen.add(id)) packs.add(pack);
+      }
+    }
+
+    if (offerings.current != null) {
+      addAll(offerings.current!.availablePackages);
+    }
+    for (final offering in offerings.all.values) {
+      addAll(offering.availablePackages);
+    }
+    return packs;
+  }
+
+  Package? packageForProduct(Iterable<Package> packages, String productId) {
+    for (final pack in packages) {
+      if (pack.storeProduct.identifier == productId) return pack;
+    }
+    return null;
+  }
+
+  /// True when this Apple/Google account already owns the founding SKU.
+  Future<bool> hasFoundingStorePurchase() async {
+    if (kIsWeb || !_initialized) return false;
+    try {
+      final info = await Purchases.getCustomerInfo();
+      final ids = <String>{
+        ...info.activeSubscriptions,
+        ...info.allPurchasedProductIdentifiers,
+      };
+      return ids.any(isFoundingStoreProduct);
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Purchase a package. Returns updated [CustomerInfo] on success, null on failure/cancellation.
   Future<CustomerInfo?> purchasePackage(Package package) async {
     if (kIsWeb || !_initialized) return null;

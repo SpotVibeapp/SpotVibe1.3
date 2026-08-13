@@ -124,6 +124,22 @@ class _EventImage extends StatelessWidget {
                 ),
               ),
             ),
+            if (event.isFeaturedThisWeek)
+              Positioned(
+                bottom: AppTheme.spacingSm,
+                right: AppTheme.spacingSm,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [appColors.proGold, appColors.proGoldLight]),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                  ),
+                  child: const Text(
+                    'FEATURED',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
+                  ),
+                ),
+              ),
             if (SourceBadge.isHonest(event.source))
               Positioned(
                 bottom: AppTheme.spacingSm,

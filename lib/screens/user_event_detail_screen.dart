@@ -7,6 +7,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/user_event.dart';
 import '../providers/auth_provider.dart';
 import '../services/deep_link_service.dart';
+import '../services/event_analytics_service.dart';
+import '../widgets/events/event_page_ad.dart';
 import '../theme/theme.dart';
 import '../widgets/events/add_to_calendar_button.dart';
 import '../widgets/events/story_card.dart';
@@ -16,13 +18,33 @@ import '../widgets/events/attendees_section.dart';
 import '../widgets/events/comment_section.dart';
 import '../widgets/events/rsvp_button.dart';
 
-class UserEventDetailScreen extends StatelessWidget {
+class UserEventDetailScreen extends StatefulWidget {
   final UserCreatedEvent event;
   const UserEventDetailScreen({super.key, required this.event});
 
   @override
+  State<UserEventDetailScreen> createState() => _UserEventDetailScreenState();
+}
+
+class _UserEventDetailScreenState extends State<UserEventDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      try {
+        context.read<EventAnalyticsService>().recordView(
+              widget.event.id,
+              viewerId: context.read<AuthProvider>().user?.id,
+              creatorId: widget.event.creatorId,
+            );
+      } catch (_) {}
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return _UserEventDetailContent(event: event);
+    return _UserEventDetailContent(event: widget.event);
   }
 }
 
@@ -104,7 +126,8 @@ class _UserEventDetailContent extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(child: Text(event.title, style: text.headlineSmall)),
-                      if (event.isPremiumListing)
+                      if (event.isPremiumListing &&
+                          event.featuredWeekKey != null)
                         _FeaturedBadge(appColors: appColors),
                     ],
                   ),
@@ -217,6 +240,22 @@ class _UserEventDetailContent extends StatelessWidget {
                   // Organizer
                   Row(
                     children: [
+                      if (event.isCreatorPro && (event.brandLogoUrl?.isNotEmpty ?? false))
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                          child: CachedNetworkImage(
+                            imageUrl: event.brandLogoUrl!,
+                            width: AppTheme.avatarSm,
+                            height: AppTheme.avatarSm,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) => AppAvatar(
+                              imageUrl: 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(event.organizerName)}&background=6C5CE7&color=fff',
+                              size: AppTheme.avatarSm,
+                              fallbackName: event.organizerName,
+                            ),
+                          ),
+                        )
+                      else
                       AppAvatar(
                         imageUrl: 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(event.organizerName)}&background=6C5CE7&color=fff',
                         size: AppTheme.avatarSm,
@@ -271,6 +310,10 @@ class _UserEventDetailContent extends StatelessWidget {
                   const AttendeesSection(),
                   const SizedBox(height: AppTheme.spacingLg),
                   const CommentSection(),
+                  if (!event.isCreatorPro) ...[
+                    const SizedBox(height: AppTheme.spacingLg),
+                    const EventPageAd(),
+                  ],
                   const SizedBox(height: AppTheme.spacingXl),
                 ],
               ),
@@ -363,14 +406,14 @@ class _ContactSection extends StatelessWidget {
           Text('Contact Organizer', style: text.labelMedium?.copyWith(fontWeight: FontWeight.w700, color: appColors.creatorTeal)),
           const SizedBox(height: AppTheme.spacingSm),
           if (event.contactPhone?.isNotEmpty ?? false)
-            _ContactTile(icon: Icons.phone_rounded, label: event.contactPhone!, color: appColors.creatorTeal, text: text, colors: colors),
+            _ContactTile(eventId: event.id, icon: Icons.phone_rounded, label: event.contactPhone!, color: appColors.creatorTeal, text: text, colors: colors),
           if (event.contactWebsite?.isNotEmpty ?? false) ...[
             const SizedBox(height: AppTheme.spacingXs),
-            _ContactTile(icon: Icons.language_rounded, label: event.contactWebsite!, color: appColors.creatorTeal, text: text, colors: colors, isUrl: true),
+            _ContactTile(eventId: event.id, icon: Icons.language_rounded, label: event.contactWebsite!, color: appColors.creatorTeal, text: text, colors: colors, isUrl: true),
           ],
           if (event.contactSocial?.isNotEmpty ?? false) ...[
             const SizedBox(height: AppTheme.spacingXs),
-            _ContactTile(icon: Icons.alternate_email_rounded, label: event.contactSocial!, color: appColors.creatorTeal, text: text, colors: colors),
+            _ContactTile(eventId: event.id, icon: Icons.alternate_email_rounded, label: event.contactSocial!, color: appColors.creatorTeal, text: text, colors: colors),
           ],
         ],
       ),
@@ -379,6 +422,7 @@ class _ContactSection extends StatelessWidget {
 }
 
 class _ContactTile extends StatelessWidget {
+  final String eventId;
   final IconData icon;
   final String label;
   final Color color;
@@ -386,6 +430,7 @@ class _ContactTile extends StatelessWidget {
   final ColorScheme colors;
   final bool isUrl;
   const _ContactTile({
+    required this.eventId,
     required this.icon,
     required this.label,
     required this.color,
@@ -397,14 +442,16 @@ class _ContactTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: isUrl
-          ? () async {
-              final uri = Uri.tryParse(label);
-              if (uri != null && await canLaunchUrl(uri)) {
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
-              }
-            }
-          : null,
+      onTap: () async {
+        try {
+          await context.read<EventAnalyticsService>().recordClick(eventId);
+        } catch (_) {}
+        if (!isUrl) return;
+        final uri = Uri.tryParse(label);
+        if (uri != null && await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      },
       child: Row(
         children: [
           Icon(icon, size: AppTheme.iconSm, color: color),

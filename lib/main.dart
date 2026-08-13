@@ -17,6 +17,7 @@ import 'repositories/follow_repository.dart';
 import 'repositories/mock_user_repository.dart';
 import 'repositories/onboarding_repository.dart';
 import 'repositories/event_claim_repository.dart';
+import 'repositories/founding_member_repository.dart';
 import 'repositories/event_repository.dart';
 import 'repositories/notification_preferences_repository.dart';
 import 'repositories/notification_repository.dart';
@@ -26,6 +27,7 @@ import 'repositories/user_event_repository.dart';
 import 'repositories/user_repository.dart';
 import 'router/app_router.dart';
 import 'services/ai_moderation_service.dart';
+import 'services/event_analytics_service.dart';
 import 'services/event_expiry_service.dart';
 import 'services/auth_service.dart';
 import 'services/deep_link_service.dart';
@@ -108,6 +110,7 @@ void main() async {
     rsvpRepository: backend.rsvps,
     userEventRepository: backend.userEvents,
     claimRepository: backend.claims,
+    foundingRepository: backend.founding,
     revenueCatService: revenueCatService,
     notificationService: notificationService,
     permissionService: permissionService,
@@ -122,12 +125,14 @@ class _AppBackend {
   final RsvpRepository rsvps;
   final UserEventRepository userEvents;
   final EventClaimRepository claims;
+  final FoundingMemberRepository founding;
   const _AppBackend({
     required this.users,
     required this.events,
     required this.rsvps,
     required this.userEvents,
     required this.claims,
+    required this.founding,
   });
 }
 
@@ -147,6 +152,7 @@ Future<_AppBackend> _createBackend() async {
       rsvps: FirebaseRsvpRepository(),
       userEvents: FirebaseUserEventRepository(),
       claims: FirebaseEventClaimRepository(),
+      founding: FirebaseFoundingMemberRepository(),
     );
   } catch (e) {
     debugPrint('Firebase unavailable ($e) — using mock repositories.');
@@ -156,6 +162,7 @@ Future<_AppBackend> _createBackend() async {
       rsvps: MockRsvpRepository(),
       userEvents: UserEventRepository(),
       claims: MockEventClaimRepository(),
+      founding: MockFoundingMemberRepository(),
     );
   }
 }
@@ -166,6 +173,7 @@ class SpotVibeApp extends StatefulWidget {
   final RsvpRepository rsvpRepository;
   final UserEventRepository userEventRepository;
   final EventClaimRepository claimRepository;
+  final FoundingMemberRepository foundingRepository;
   final RevenueCatService revenueCatService;
   final NotificationService notificationService;
   final PermissionService permissionService;
@@ -179,6 +187,7 @@ class SpotVibeApp extends StatefulWidget {
     required this.rsvpRepository,
     required this.userEventRepository,
     required this.claimRepository,
+    required this.foundingRepository,
     required this.revenueCatService,
     required this.notificationService,
     required this.permissionService,
@@ -226,6 +235,12 @@ class _SpotVibeAppState extends State<SpotVibeApp> {
         Provider<RsvpRepository>(create: (_) => widget.rsvpRepository),
         Provider<UserEventRepository>(create: (_) => widget.userEventRepository),
         Provider<EventClaimRepository>(create: (_) => widget.claimRepository),
+        Provider<FoundingMemberRepository>(create: (_) => widget.foundingRepository),
+        Provider(
+          create: (ctx) => EventAnalyticsService(
+            repository: ctx.read<UserEventRepository>(),
+          ),
+        ),
         Provider(create: (_) => NotificationRepository()),
         Provider(create: (_) => NotificationPreferencesRepository()),
         Provider(create: (_) => OnboardingRepository()),
@@ -258,7 +273,9 @@ class _SpotVibeAppState extends State<SpotVibeApp> {
         ChangeNotifierProvider(
           create: (ctx) => SubscriptionProvider(
             service: ctx.read<RevenueCatService>(),
-          ),
+            founding: ctx.read<FoundingMemberRepository>(),
+            currentUserId: () => ctx.read<AuthProvider>().user?.id,
+          )..initialize(),
         ),
       ],
       child: Consumer<ThemeProvider>(

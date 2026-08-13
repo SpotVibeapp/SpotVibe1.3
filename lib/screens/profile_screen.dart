@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../data/pricing.dart';
 import '../providers/auth_provider.dart';
 import '../providers/follow_provider.dart';
 import '../providers/subscription_provider.dart';
@@ -123,7 +124,7 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: AppTheme.spacingXl),
 
-            _ProTile(isSubscribed: sub.isSubscribed, appColors: appColors, text: text),
+            _ProTile(sub: sub, appColors: appColors, text: text),
             _SettingsTile(
               icon: Icons.event_rounded,
               label: 'My Events',
@@ -166,11 +167,11 @@ class ProfileScreen extends StatelessWidget {
 }
 
 class _ProTile extends StatelessWidget {
-  final bool isSubscribed;
+  final SubscriptionProvider sub;
   final AppColorsExtension appColors;
   final TextTheme text;
 
-  const _ProTile({required this.isSubscribed, required this.appColors, required this.text});
+  const _ProTile({required this.sub, required this.appColors, required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -207,13 +208,15 @@ class _ProTile extends StatelessWidget {
                     children: [
                       Text('SpotVibe Premium', style: text.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
                       const SizedBox(width: AppTheme.spacingSm),
-                      if (isSubscribed) const ProBadge(),
+                      if (sub.isSubscribed) const ProBadge(),
                     ],
                   ),
                   Text(
-                    isSubscribed
-                        ? 'Active — \$15/month'
-                        : '\$15/month · recurring events, claims, analytics',
+                    sub.isSubscribed
+                        ? (sub.isInTrial
+                            ? 'Trial active — then ${sub.displayPriceLabel}'
+                            : 'Active — ${sub.displayPriceLabel}')
+                        : '${sub.displayPriceLabel} after a $kPremiumTrialLabel',
                     style: text.labelSmall?.copyWith(color: appColors.proGold),
                   ),
                 ],

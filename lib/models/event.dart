@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../data/pricing.dart';
+
 enum EventSource {
   facebook,
   instagram,
@@ -83,6 +85,10 @@ class Event {
   final double longitude;
   final EventSource source;
   final String? sourceUrl;
+  final bool isPremiumListing;
+  final bool isCreatorPro;
+  final String? featuredWeekKey;
+  final bool isUserCreated;
 
   const Event({
     required this.id,
@@ -107,6 +113,10 @@ class Event {
     this.longitude = 0,
     this.source = EventSource.local,
     this.sourceUrl,
+    this.isPremiumListing = false,
+    this.isCreatorPro = false,
+    this.featuredWeekKey,
+    this.isUserCreated = false,
   });
 
   Event copyWith({
@@ -129,6 +139,10 @@ class Event {
     double? longitude,
     EventSource? source,
     String? sourceUrl,
+    bool? isPremiumListing,
+    bool? isCreatorPro,
+    String? featuredWeekKey,
+    bool? isUserCreated,
   }) =>
       Event(
         id: id,
@@ -153,6 +167,10 @@ class Event {
         longitude: longitude ?? this.longitude,
         source: source ?? this.source,
         sourceUrl: sourceUrl ?? this.sourceUrl,
+        isPremiumListing: isPremiumListing ?? this.isPremiumListing,
+        isCreatorPro: isCreatorPro ?? this.isCreatorPro,
+        featuredWeekKey: featuredWeekKey ?? this.featuredWeekKey,
+        isUserCreated: isUserCreated ?? this.isUserCreated,
       );
 
   bool get isFree => cost == null || cost == 0;

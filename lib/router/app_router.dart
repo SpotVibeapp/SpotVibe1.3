@@ -22,6 +22,7 @@ import '../screens/creator_analytics_screen.dart';
 import '../screens/creator_dashboard_screen.dart';
 
 import '../screens/event_map_screen.dart';
+import '../services/event_analytics_service.dart';
 import '../services/event_expiry_service.dart';
 import '../screens/onboarding_screen.dart';
 import '../repositories/onboarding_repository.dart';
@@ -138,6 +139,7 @@ class AppRouter {
                   notificationService: notifs,
                   expiryService: expiry,
                   personalizationProvider: personalization,
+                  analytics: context.read<EventAnalyticsService>(),
                 )..loadEvents(),
               ),
             ],
@@ -274,11 +276,7 @@ class AppRouter {
         path: '/claim-venue',
         builder: (context, state) {
           final event = state.extra as Event;
-          final revCat = context.read<RevenueCatService>();
-          return ChangeNotifierProvider(
-            create: (_) => SubscriptionProvider(service: revCat)..initialize(),
-            child: VenueClaimScreen(event: event),
-          );
+          return VenueClaimScreen(event: event);
         },
       ),
       GoRoute(

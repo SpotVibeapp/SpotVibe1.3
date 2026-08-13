@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-/// How often a Creator Pro event auto-repeats.
+/// How often a Premium event auto-repeats.
 enum RecurringType { none, weekly, monthly }
 
 @immutable
@@ -26,28 +26,30 @@ class UserCreatedEvent {
   final int interestedCount;
   final DateTime createdAt;
 
-  // ── Creator Pro fields ──────────────────────────────────────────────────────
-  /// Whether this event was created by a Creator Pro subscriber.
+  // ── Premium fields (`isCreatorPro` kept for stored documents) ──────────────
+  /// Whether this event was created by a Premium subscriber.
   final bool isCreatorPro;
   /// Recurring schedule — none, weekly, or monthly.
   final RecurringType recurringType;
-  /// Optional phone number shown on event page (Creator Pro only).
+  /// Optional phone number shown on event page (Premium only).
   final String? contactPhone;
-  /// Optional website URL shown on event page (Creator Pro only).
+  /// Optional website URL shown on event page (Premium only).
   final String? contactWebsite;
-  /// Optional social handle/link shown on event page (Creator Pro only).
+  /// Optional social handle/link shown on event page (Premium only).
   final String? contactSocial;
-  /// Hex color string for custom brand accent, e.g. '#FF5733' (Creator Pro only).
+  /// Hex color string for custom brand accent, e.g. '#FF5733' (Premium only).
   final String? brandColor;
-  /// URL for custom brand logo shown on event page (Creator Pro only).
+  /// URL for custom brand logo shown on event page (Premium only).
   final String? brandLogoUrl;
-  /// Simulated search impressions count — how many times the event appeared in a search this week.
+  /// ISO week this event is featured in the category feed, e.g. `2026-W33`.
+  final String? featuredWeekKey;
+  /// Live search impressions — times the event appeared in a feed or search.
   final int analyticsSearchImpressions;
-  /// Simulated view count for the analytics dashboard.
+  /// Live view count for the analytics dashboard.
   final int analyticsViews;
-  /// Simulated save count for the analytics dashboard.
+  /// Live save count for the analytics dashboard.
   final int analyticsSaves;
-  /// Simulated click-through count for the analytics dashboard.
+  /// Live click-through count for the analytics dashboard.
   final int analyticsClicks;
 
   const UserCreatedEvent({
@@ -78,6 +80,7 @@ class UserCreatedEvent {
     this.contactSocial,
     this.brandColor,
     this.brandLogoUrl,
+    this.featuredWeekKey,
     this.analyticsSearchImpressions = 0,
     this.analyticsViews = 0,
     this.analyticsSaves = 0,
@@ -137,6 +140,8 @@ class UserCreatedEvent {
     bool clearBrandColor = false,
     String? brandLogoUrl,
     bool clearBrandLogoUrl = false,
+    String? featuredWeekKey,
+    bool clearFeaturedWeekKey = false,
     int? analyticsSearchImpressions,
     int? analyticsViews,
     int? analyticsSaves,
@@ -170,6 +175,9 @@ class UserCreatedEvent {
         contactSocial: clearContactSocial ? null : (contactSocial ?? this.contactSocial),
         brandColor: clearBrandColor ? null : (brandColor ?? this.brandColor),
         brandLogoUrl: clearBrandLogoUrl ? null : (brandLogoUrl ?? this.brandLogoUrl),
+        featuredWeekKey: clearFeaturedWeekKey
+            ? null
+            : (featuredWeekKey ?? this.featuredWeekKey),
         analyticsSearchImpressions: analyticsSearchImpressions ?? this.analyticsSearchImpressions,
         analyticsViews: analyticsViews ?? this.analyticsViews,
         analyticsSaves: analyticsSaves ?? this.analyticsSaves,

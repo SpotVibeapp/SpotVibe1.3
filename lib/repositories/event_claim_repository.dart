@@ -2,10 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../data/pricing.dart';
 import '../models/event_claim.dart';
 
 abstract class EventClaimRepository {
-  Future<EventClaim> submit(EventClaim claim);
+  Future<EventClaim> submit(
+    EventClaim claim, {
+    required bool isPremium,
+  });
   Future<EventClaim?> latestFor({
     required String eventId,
     required String userId,
@@ -14,15 +18,37 @@ abstract class EventClaimRepository {
     required String eventId,
     required String userId,
   });
+  Future<int> countUnlockedForUser(String userId);
+  Future<int> unlockEligibleForUser(String userId);
 }
 
 class MockEventClaimRepository implements EventClaimRepository {
-  final _byKey = <String, EventClaim>{};
+  final _byId = <String, EventClaim>{};
 
   String _key(String eventId, String userId) => '$eventId|$userId';
 
+  EventClaim? _latest(String eventId, String userId) {
+    EventClaim? match;
+    for (final claim in _byId.values) {
+      if (claim.eventId == eventId && claim.userId == userId) {
+        if (match == null || claim.createdAt.isAfter(match.createdAt)) {
+          match = claim;
+        }
+      }
+    }
+    return match;
+  }
+
   @override
-  Future<EventClaim> submit(EventClaim claim) async {
+  Future<EventClaim> submit(EventClaim claim, {required bool isPremium}) async {
+    final prior = await countUnlockedForUser(claim.userId);
+    final firstFree = claimUnlocksWithoutPay(
+      priorUnlockedClaims: prior,
+      isPremium: isPremium,
+    );
+    final workEmail = isValidEmail(claim.email) && !isPersonalEmail(claim.email);
+    final approved = workEmail;
+    final unlocked = approved && (firstFree || isPremium);
     final stored = EventClaim(
       id: claim.id.isEmpty ? const Uuid().v4() : claim.id,
       eventId: claim.eventId,
@@ -37,10 +63,12 @@ class MockEventClaimRepository implements EventClaimRepository {
       proofMethod: claim.proofMethod,
       proofUrl: claim.proofUrl,
       statement: claim.statement,
-      status: ClaimStatus.pending,
+      status: approved ? ClaimStatus.approved : ClaimStatus.pending,
       createdAt: claim.createdAt,
+      firstClaimFree: firstFree,
+      unlocked: unlocked,
     );
-    _byKey[_key(stored.eventId, stored.userId)] = stored;
+    _byId[stored.id] = stored;
     return stored;
   }
 
@@ -49,7 +77,7 @@ class MockEventClaimRepository implements EventClaimRepository {
     required String eventId,
     required String userId,
   }) async {
-    return _byKey[_key(eventId, userId)];
+    return _latest(eventId, userId);
   }
 
   @override
@@ -57,7 +85,25 @@ class MockEventClaimRepository implements EventClaimRepository {
     required String eventId,
     required String userId,
   }) async {
-    return _byKey[_key(eventId, userId)]?.status == ClaimStatus.approved;
+    return _latest(eventId, userId)?.canEditListing == true;
+  }
+
+  @override
+  Future<int> countUnlockedForUser(String userId) async {
+    return _byId.values.where((c) => c.userId == userId && c.unlocked).length;
+  }
+
+  @override
+  Future<int> unlockEligibleForUser(String userId) async {
+    var count = 0;
+    for (final entry in _byId.entries.toList()) {
+      final claim = entry.value;
+      if (claim.userId != userId) continue;
+      if (claim.status != ClaimStatus.approved || claim.unlocked) continue;
+      _byId[entry.key] = claim.copyWith(unlocked: true);
+      count++;
+    }
+    return count;
   }
 }
 
@@ -89,9 +135,38 @@ class FirebaseEventClaimRepository implements EventClaimRepository {
     }
   }
 
+  Map<String, dynamic> _toMap(EventClaim stored) {
+    return {
+      'eventId': stored.eventId,
+      'eventTitle': stored.eventTitle,
+      'venueName': stored.venueName,
+      'userId': stored.userId,
+      'fullName': stored.fullName,
+      'email': stored.email,
+      'phone': stored.phone,
+      'organization': stored.organization,
+      'role': stored.role.name,
+      'proofMethod': stored.proofMethod.name,
+      'proofUrl': stored.proofUrl,
+      'statement': stored.statement,
+      'status': stored.status.name,
+      'createdAtMs': stored.createdAt.millisecondsSinceEpoch,
+      'firstClaimFree': stored.firstClaimFree,
+      'unlocked': stored.unlocked,
+    };
+  }
+
   @override
-  Future<EventClaim> submit(EventClaim claim) {
+  Future<EventClaim> submit(EventClaim claim, {required bool isPremium}) {
     return _guard(() async {
+      final prior = await countUnlockedForUser(claim.userId);
+      final firstFree = claimUnlocksWithoutPay(
+        priorUnlockedClaims: prior,
+        isPremium: isPremium,
+      );
+      final workEmail = isValidEmail(claim.email) && !isPersonalEmail(claim.email);
+      final approved = workEmail;
+      final unlocked = approved && (firstFree || isPremium);
       final id = claim.id.isEmpty ? const Uuid().v4() : claim.id;
       final stored = EventClaim(
         id: id,
@@ -107,27 +182,14 @@ class FirebaseEventClaimRepository implements EventClaimRepository {
         proofMethod: claim.proofMethod,
         proofUrl: claim.proofUrl,
         statement: claim.statement,
-        status: ClaimStatus.pending,
+        status: approved ? ClaimStatus.approved : ClaimStatus.pending,
         createdAt: claim.createdAt,
+        firstClaimFree: firstFree,
+        unlocked: unlocked,
       );
-      await _claims.doc(id).set({
-        'eventId': stored.eventId,
-        'eventTitle': stored.eventTitle,
-        'venueName': stored.venueName,
-        'userId': stored.userId,
-        'fullName': stored.fullName,
-        'email': stored.email,
-        'phone': stored.phone,
-        'organization': stored.organization,
-        'role': stored.role.name,
-        'proofMethod': stored.proofMethod.name,
-        'proofUrl': stored.proofUrl,
-        'statement': stored.statement,
-        'status': stored.status.name,
-        'createdAtMs': stored.createdAt.millisecondsSinceEpoch,
-      });
+      await _claims.doc(id).set(_toMap(stored));
       return stored;
-    }, () => _fallback.submit(claim));
+    }, () => _fallback.submit(claim, isPremium: isPremium));
   }
 
   @override
@@ -158,7 +220,33 @@ class FirebaseEventClaimRepository implements EventClaimRepository {
     required String userId,
   }) async {
     final claim = await latestFor(eventId: eventId, userId: userId);
-    return claim?.status == ClaimStatus.approved;
+    return claim?.canEditListing == true;
+  }
+
+  @override
+  Future<int> countUnlockedForUser(String userId) {
+    return _guard(() async {
+      final snap = await _claims.where('userId', isEqualTo: userId).limit(50).get();
+      return snap.docs.where((d) => d.data()['unlocked'] == true).length;
+    }, () => _fallback.countUnlockedForUser(userId));
+  }
+
+  @override
+  Future<int> unlockEligibleForUser(String userId) {
+    return _guard(() async {
+      final snap = await _claims.where('userId', isEqualTo: userId).limit(50).get();
+      var count = 0;
+      final batch = _db.batch();
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        if (data['status'] != ClaimStatus.approved.name) continue;
+        if (data['unlocked'] == true) continue;
+        batch.update(doc.reference, {'unlocked': true});
+        count++;
+      }
+      if (count > 0) await batch.commit();
+      return count;
+    }, () => _fallback.unlockEligibleForUser(userId));
   }
 
   EventClaim _fromMap(String id, Map<String, dynamic> data) {
@@ -193,6 +281,8 @@ class FirebaseEventClaimRepository implements EventClaimRepository {
         (data['createdAtMs'] as num?)?.toInt() ??
             DateTime.now().millisecondsSinceEpoch,
       ),
+      firstClaimFree: data['firstClaimFree'] as bool? ?? false,
+      unlocked: data['unlocked'] as bool? ?? false,
     );
   }
 }

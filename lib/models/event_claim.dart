@@ -52,6 +52,10 @@ class EventClaim {
   final String statement;
   final ClaimStatus status;
   final DateTime createdAt;
+  /// True when this is the promoter's first claim (no Premium required to unlock).
+  final bool firstClaimFree;
+  /// True when the claimer may edit the listing.
+  final bool unlocked;
 
   const EventClaim({
     required this.id,
@@ -69,5 +73,35 @@ class EventClaim {
     required this.statement,
     required this.status,
     required this.createdAt,
+    this.firstClaimFree = false,
+    this.unlocked = false,
   });
+
+  bool get canEditListing => status == ClaimStatus.approved && unlocked;
+
+  EventClaim copyWith({
+    ClaimStatus? status,
+    bool? firstClaimFree,
+    bool? unlocked,
+  }) {
+    return EventClaim(
+      id: id,
+      eventId: eventId,
+      eventTitle: eventTitle,
+      venueName: venueName,
+      userId: userId,
+      fullName: fullName,
+      email: email,
+      phone: phone,
+      organization: organization,
+      role: role,
+      proofMethod: proofMethod,
+      proofUrl: proofUrl,
+      statement: statement,
+      status: status ?? this.status,
+      createdAt: createdAt,
+      firstClaimFree: firstClaimFree ?? this.firstClaimFree,
+      unlocked: unlocked ?? this.unlocked,
+    );
+  }
 }

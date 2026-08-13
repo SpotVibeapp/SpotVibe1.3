@@ -5,7 +5,8 @@ import '../data/pricing.dart';
 import '../providers/subscription_provider.dart';
 import '../theme/theme.dart';
 
-/// Single launch paywall: SpotVibe Premium at $15/month. No annual plan.
+/// Launch paywall: 7-day trial, then store-billed $12.99/month
+/// (or $9.99 founding SKU while slots remain).
 class PaywallScreen extends StatefulWidget {
   const PaywallScreen({super.key});
 
@@ -45,7 +46,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 const SizedBox(height: AppTheme.spacingLg),
                 _PriceBlock(sub: sub, text: text, appColors: appColors),
                 const SizedBox(height: AppTheme.spacingLg),
-                _FreeVsPremium(colors: colors, appColors: appColors, text: text),
+                _FreeVsPremium(sub: sub, colors: colors, appColors: appColors, text: text),
                 const SizedBox(height: AppTheme.spacingLg),
                 _FeatureList(colors: colors, appColors: appColors, text: text),
                 const SizedBox(height: AppTheme.spacingLg),
@@ -137,35 +138,56 @@ class _PriceBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final package = sub.monthlyPackage;
-    final price = package?.storeProduct.priceString ?? kPremiumMonthlyLabel;
+    final package = sub.selectedPackage;
+    final price = package?.storeProduct.priceString ?? sub.displayPriceLabel;
 
     return Column(
       children: [
         Text(
-          price,
-          style: text.headlineLarge?.copyWith(
-            fontWeight: FontWeight.w800,
+          kPremiumTrialLabel,
+          style: text.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
             color: appColors.proGold,
-            fontSize: 40,
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          'Billed monthly · cancel anytime · no annual plan',
+          'then $price',
+          style: text.headlineLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: appColors.proGold,
+            fontSize: 36,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          sub.billingFinePrint,
           style: text.bodySmall?.copyWith(color: colors.onSurfaceVariant),
           textAlign: TextAlign.center,
         ),
+        if (sub.offerFoundingPrice && !sub.isFoundingMember) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Founding venues lock ${kFoundingMonthlyLabel} — ${sub.foundingSlotsRemaining} of $kFoundingMemberLimit left',
+            style: text.labelSmall?.copyWith(
+              color: appColors.proGold,
+              fontWeight: FontWeight.w700,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ],
     );
   }
 }
 
 class _FreeVsPremium extends StatelessWidget {
+  final SubscriptionProvider sub;
   final ColorScheme colors;
   final AppColorsExtension appColors;
   final TextTheme text;
   const _FreeVsPremium({
+    required this.sub,
     required this.colors,
     required this.appColors,
     required this.text,
@@ -200,7 +222,7 @@ class _FreeVsPremium extends StatelessWidget {
           ),
           const SizedBox(height: AppTheme.spacingSm),
           Text(
-            'Premium — $kPremiumMonthlyLabel',
+            'Premium — ${sub.displayPriceLabel}',
             style: text.titleSmall?.copyWith(
               fontWeight: FontWeight.w800,
               color: appColors.proGold,
@@ -294,9 +316,9 @@ class _PurchaseButton extends StatelessWidget {
                     height: 24,
                     child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
                   )
-                : const Text(
-                    'Subscribe — $kPremiumMonthlyLabel',
-                    style: TextStyle(
+                : Text(
+                    sub.subscribeCtaLabel,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,

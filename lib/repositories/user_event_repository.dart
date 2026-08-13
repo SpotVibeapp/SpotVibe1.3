@@ -6,8 +6,16 @@ class UserEventRepository {
   final _uuid = const Uuid();
   final List<UserCreatedEvent> _events = _seedDemoEvents();
 
-  /// Pre-seeded Creator Pro events for the demo user so the Premium Dashboard
-  /// has real data on first login without requiring any event creation.
+  /// Pre-seeded Premium events for the demo user so the dashboard
+  /// has data on first login without requiring any event creation.
+  static String get _seedWeekKey {
+    final now = DateTime.now().toUtc();
+    final thursday = now.add(Duration(days: 4 - now.weekday));
+    final firstThursday = DateTime.utc(thursday.year, 1, 4);
+    final week = 1 + ((thursday.difference(firstThursday).inDays) / 7).floor();
+    return '${thursday.year}-W${week.toString().padLeft(2, '0')}';
+  }
+
   static List<UserCreatedEvent> _seedDemoEvents() {
     final now = DateTime.now();
     return [
@@ -25,6 +33,7 @@ class UserEventRepository {
         category: 'Social',
         organizerName: 'Alex Johnson',
         isPremiumListing: true,
+        featuredWeekKey: _seedWeekKey,
         isCreatorPro: true,
         recurringType: RecurringType.weekly,
         contactWebsite: 'https://trivianights.example.com',
@@ -108,6 +117,7 @@ class UserEventRepository {
     String? contactSocial,
     String? brandColor,
     String? brandLogoUrl,
+    String? featuredWeekKey,
   }) async {
     await Future.delayed(const Duration(milliseconds: 300));
     final event = UserCreatedEvent(
@@ -137,11 +147,7 @@ class UserEventRepository {
       contactSocial: contactSocial,
       brandColor: brandColor,
       brandLogoUrl: brandLogoUrl,
-      // Seed analytics counters on creation so the dashboard has demo data immediately
-      analyticsSearchImpressions: isCreatorPro ? (DateTime.now().millisecond % 600) + 200 : 0,
-      analyticsViews: isCreatorPro ? (DateTime.now().millisecond % 80) + 20 : 0,
-      analyticsSaves: isCreatorPro ? (DateTime.now().millisecond % 20) + 2 : 0,
-      analyticsClicks: isCreatorPro ? (DateTime.now().millisecond % 15) + 1 : 0,
+      featuredWeekKey: featuredWeekKey,
     );
     _events.add(event);
     return event;
@@ -164,5 +170,23 @@ class UserEventRepository {
     final index = _events.indexWhere((e) => e.id == eventId);
     if (index == -1) return;
     _events[index] = _events[index].copyWith(interestedCount: _events[index].interestedCount + 1);
+  }
+
+  Future<void> incrementAnalytics(
+    String eventId, {
+    int impressions = 0,
+    int views = 0,
+    int saves = 0,
+    int clicks = 0,
+  }) async {
+    final index = _events.indexWhere((e) => e.id == eventId);
+    if (index == -1) return;
+    final event = _events[index];
+    _events[index] = event.copyWith(
+      analyticsSearchImpressions: event.analyticsSearchImpressions + impressions,
+      analyticsViews: event.analyticsViews + views,
+      analyticsSaves: event.analyticsSaves + saves,
+      analyticsClicks: event.analyticsClicks + clicks,
+    );
   }
 }
