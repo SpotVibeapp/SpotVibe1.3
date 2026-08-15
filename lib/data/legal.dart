@@ -2,6 +2,8 @@
 /// `firebase deploy --only hosting`.
 const String kPrivacyPolicyUrl = 'https://spotvibe-cfa08.web.app/privacy.html';
 const String kTermsOfUseUrl = 'https://spotvibe-cfa08.web.app/terms.html';
+const String kAccountDeletionUrl =
+    'https://spotvibe-cfa08.web.app/delete_account.html';
 
 const String kLegalEntityName = 'Spotvibe LLC';
 const String kLegalContactEmail = 'blakejohnson@spotvibeapp.com';
@@ -79,7 +81,7 @@ const LegalDocument kPrivacyPolicy = LegalDocument(
     LegalSection(
       'Retention and your choices',
       'We keep account and event data while your account is open, and for a reasonable period after if needed for backups, disputes, or law.\n\n'
-          'You may access or update your profile in the app, delete events you created, and sign out. To delete your account and associated personal data, email $kLegalContactEmail from the address on the account. We aim to complete deletion requests within 30 days, except where we must keep records (for example a paid invoice or a legal hold).\n\n'
+          'You may access or update your profile in the app, delete events you created, and sign out. To delete your account and associated personal data, open Profile → Delete Account in the app, or visit $kAccountDeletionUrl. We aim to complete deletion requests within 30 days, except where we must keep records (for example a paid invoice or a legal hold).\n\n'
           'You can turn off notifications in the app and location in system settings. You can cancel a subscription in your Apple or Google account settings; we cannot cancel a store subscription for you.',
     ),
     LegalSection(

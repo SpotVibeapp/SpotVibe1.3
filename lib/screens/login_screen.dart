@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../config/app_config.dart';
 import '../providers/auth_provider.dart';
 import '../theme/theme.dart';
 
@@ -212,40 +214,54 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: AppTheme.spacingMd),
                     ],
 
-                    // ── Social Login Row ───────────────────────────────────
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _SocialButton(
-                            label: 'Google',
-                            icon: Icons.g_mobiledata_rounded,
-                            color: const Color(0xFF4285F4),
-                            isLoading: _socialLoading == 'google',
-                            onTap: () => _socialLogin('Google'),
-                          ),
-                        ),
-                        const SizedBox(width: AppTheme.spacingSm),
-                        Expanded(
-                          child: _SocialButton(
-                            label: 'Facebook',
-                            icon: Icons.facebook_rounded,
-                            color: const Color(0xFF1877F2),
-                            isLoading: _socialLoading == 'facebook',
-                            onTap: () => _socialLogin('Facebook'),
-                          ),
-                        ),
-                        const SizedBox(width: AppTheme.spacingSm),
-                        Expanded(
-                          child: _SocialButton(
-                            label: 'Apple',
-                            icon: Icons.apple_rounded,
-                            color: colors.onSurface,
-                            isLoading: _socialLoading == 'apple',
-                            onTap: () => _socialLogin('Apple'),
-                          ),
-                        ),
-                      ],
-                    ),
+                    // ── Social Login Row (hidden until each provider is
+                    //    configured — see lib/config/app_config.dart) ────────
+                    if (AppConfig.enableGoogleSignIn ||
+                        AppConfig.enableFacebookSignIn ||
+                        AppConfig.enableAppleSignIn)
+                      Row(
+                        children: [
+                          if (AppConfig.enableGoogleSignIn) ...[
+                            Expanded(
+                              child: _SocialButton(
+                                label: 'Google',
+                                icon: Icons.g_mobiledata_rounded,
+                                color: const Color(0xFF4285F4),
+                                isLoading: _socialLoading == 'google',
+                                onTap: () => _socialLogin('Google'),
+                              ),
+                            ),
+                            const SizedBox(width: AppTheme.spacingSm),
+                          ],
+                          if (AppConfig.enableFacebookSignIn && !kIsWeb) ...[
+                            Expanded(
+                              child: _SocialButton(
+                                label: 'Facebook',
+                                icon: Icons.facebook_rounded,
+                                color: const Color(0xFF1877F2),
+                                isLoading: _socialLoading == 'facebook',
+                                onTap: () => _socialLogin('Facebook'),
+                              ),
+                            ),
+                            const SizedBox(width: AppTheme.spacingSm),
+                          ],
+                          if (AppConfig.enableAppleSignIn &&
+                              !kIsWeb &&
+                              (defaultTargetPlatform == TargetPlatform.iOS ||
+                                  defaultTargetPlatform ==
+                                      TargetPlatform.macOS)) ...[
+                            Expanded(
+                              child: _SocialButton(
+                                label: 'Apple',
+                                icon: Icons.apple_rounded,
+                                color: colors.onSurface,
+                                isLoading: _socialLoading == 'apple',
+                                onTap: () => _socialLogin('Apple'),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     const SizedBox(height: AppTheme.spacingLg),
 
                     // ── Divider ────────────────────────────────────────────

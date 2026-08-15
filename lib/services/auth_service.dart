@@ -123,6 +123,12 @@ class AuthService {
     await _repository.logout();
   }
 
+  /// Permanently deletes the current user's account and associated data.
+  /// [password] re-authenticates email/password accounts.
+  Future<void> deleteAccount({String? password}) async {
+    await _repository.deleteAccount(password: password);
+  }
+
   Future<void> blockUser(String userId) async {
     await _repository.blockUser(userId);
   }

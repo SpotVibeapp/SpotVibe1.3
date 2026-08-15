@@ -57,11 +57,7 @@ class _ShareSheetState extends State<_ShareSheet> {
       DateFormat('EEE, MMM d · h:mm a').format(dt);
 
   Future<String> _buildShareLink() async {
-    return DeepLinkService.branchEventLink(
-      eventId: _event.id,
-      eventTitle: _event.title,
-      isUserEvent: false,
-    );
+    return DeepLinkService.eventLink(_event.id);
   }
 
   String _buildShareMessage(String link) {

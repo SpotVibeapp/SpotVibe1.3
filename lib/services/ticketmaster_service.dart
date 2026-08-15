@@ -5,13 +5,15 @@ import '../models/event.dart';
 
 /// Live Ticketmaster Discovery API.
 ///
-/// Override at build/run time if needed:
+/// The API key is supplied at build/run time and must never be committed:
 ///   flutter run --dart-define=TICKETMASTER_API_KEY=your_key
 ///
 /// Get a free key: https://developer.ticketmaster.com/
+///
+/// Without a key the feed still shows the curated El Paso seed and stays
+/// empty for other cities instead of failing.
 const String kTicketmasterApiKey = String.fromEnvironment(
   'TICKETMASTER_API_KEY',
-  defaultValue: 'ACde2XLPYSODlESFOv3u5TYMAVF1N8F0',
 );
 
 class TicketmasterService {

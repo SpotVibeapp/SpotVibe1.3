@@ -148,11 +148,16 @@ signs returning users in automatically at launch.
   (AndroidManifest.xml / Info.plist). Base URL constant:
   `kDeepLinkBase` in `lib/services/deep_link_service.dart`. Legacy
   `vibely.app` / `vibely://` links still resolve.
-- **Branch.io:** manifest/plist still contain `REPLACE_WITH_BRANCH_*`
-  placeholders — set real keys from the Branch dashboard before testing
-  deferred deep links.
+- **Deep links:** App Links / universal links / `spotvibe://` custom scheme via
+  `app_links` (the Branch SDK was removed). Serve `.well-known/assetlinks.json`
+  and `.well-known/apple-app-site-association` from `legal_site/` — templates
+  are included; fill in your Android signing-cert SHA-256 and Apple Team ID.
 - **Android signing:** create `android/key.properties` (see Flutter docs);
   release builds fall back to debug signing when it's absent. Never commit
   `key.properties` or keystores.
-- **Subscriptions:** RevenueCat entitlement id `pro`
+- **Subscriptions:** RevenueCat entitlement id `pro`; public SDK keys are
+  passed via `--dart-define=REVENUECAT_ANDROID_KEY=…` / `REVENUECAT_APPLE_KEY=…`
   (`lib/services/revenue_cat_service.dart`).
+- **Social sign-in:** Google/Facebook/Apple buttons are hidden until enabled in
+  `lib/config/app_config.dart` — flip a flag to `true` only once that provider
+  is fully configured end-to-end.

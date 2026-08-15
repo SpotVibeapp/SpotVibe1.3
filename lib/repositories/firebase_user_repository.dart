@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/user.dart';
 import 'user_repository.dart';
@@ -13,6 +14,9 @@ import 'user_repository.dart';
 /// - Each user gets a public profile document at `users/{uid}` in Firestore
 ///   (name, email, avatarUrl) so other features (attendee lists, comments)
 ///   can render profiles.
+/// - Blocks are stored at `blocks/{uid}/blocked/{targetUid}`.
+/// - Account deletion re-authenticates (when a password is supplied), purges
+///   the user's Firestore data, then deletes the Firebase Auth user.
 ///
 /// Errors are converted to user-friendly [Exception]s via
 /// [messageForAuthException] so the UI can show them directly.
@@ -123,7 +127,7 @@ class FirebaseUserRepository implements UserRepository {
     }
   }
 
-  // ── Social graph — not in Firestore yet (kept as no-ops) ─────────────────
+  // ── Social graph ──────────────────────────────────────────────────────────
 
   @override
   Future<void> addFriend(String userId) async {
@@ -132,7 +136,18 @@ class FirebaseUserRepository implements UserRepository {
 
   @override
   Future<void> blockUser(String userId) async {
-    // TODO(backend): store blocks in Firestore and enforce in queries.
+    final uid = _auth.currentUser?.uid;
+    if (uid == null || userId.isEmpty || userId == uid) return;
+    try {
+      await _db
+          .collection('blocks')
+          .doc(uid)
+          .collection('blocked')
+          .doc(userId)
+          .set({'blockedAt': FieldValue.serverTimestamp()});
+    } catch (_) {
+      // Blocking should never crash the app.
+    }
   }
 
   @override
@@ -140,12 +155,109 @@ class FirebaseUserRepository implements UserRepository {
     try {
       await _db.collection('user_reports').add({
         'reportedUserId': userId,
+        'reportedById': _auth.currentUser?.uid,
         'reason': reason,
         'createdAt': FieldValue.serverTimestamp(),
       });
     } catch (_) {
       // Reporting should never crash the app.
     }
+  }
+
+  // ── Account deletion ──────────────────────────────────────────────────────
+
+  @override
+  Future<void> deleteAccount({String? password}) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('No signed-in account to delete.');
+
+    // Re-authenticate email/password accounts before a destructive op.
+    if (password != null && password.isNotEmpty) {
+      final email = user.email;
+      if (email == null || email.isEmpty) {
+        throw Exception('This account has no email/password to verify.');
+      }
+      try {
+        await user.reauthenticateWithCredential(
+          EmailAuthProvider.credential(email: email, password: password),
+        );
+      } on FirebaseAuthException catch (e) {
+        throw Exception(messageForAuthException(e));
+      }
+    }
+
+    // Purge Firestore data first (while still authenticated, so security
+    // rules allow the deletes).
+    try {
+      await _purgeUserData(user.uid);
+    } catch (e) {
+      debugPrint('Client-side purge incomplete ($e). '
+          'The deleteUser Cloud Function performs authoritative cleanup.');
+    }
+
+    try {
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        throw Exception(
+          'For security, sign out and sign back in, then delete your account again.',
+        );
+      }
+      throw Exception(messageForAuthException(e));
+    }
+  }
+
+  /// Best-effort client-side cleanup of all Firestore docs owned by [uid].
+  /// Runs before the auth user is deleted. The `deleteUser` Cloud Function
+  /// (see functions/) performs the same cleanup server-side with Admin SDK.
+  Future<void> _purgeUserData(String uid) async {
+    final batch = _db.batch();
+
+    batch.delete(_users.doc(uid));
+    batch.delete(_db.collection('blocks').doc(uid));
+
+    final saves = await _users.doc(uid).collection('saved_events').get();
+    for (final d in saves.docs) {
+      batch.delete(d.reference);
+    }
+
+    final blocked = await _db
+        .collection('blocks')
+        .doc(uid)
+        .collection('blocked')
+        .get();
+    for (final d in blocked.docs) {
+      batch.delete(d.reference);
+    }
+
+    final userEvents =
+        await _db.collection('user_events').where('creatorId', isEqualTo: uid).get();
+    for (final d in userEvents.docs) {
+      batch.delete(d.reference);
+      batch.delete(_db.collection('events').doc(d.id));
+    }
+
+    final rsvps =
+        await _db.collectionGroup('rsvps').where('userId', isEqualTo: uid).get();
+    for (final d in rsvps.docs) {
+      batch.delete(d.reference);
+    }
+
+    final comments = await _db
+        .collectionGroup('comments')
+        .where('authorId', isEqualTo: uid)
+        .get();
+    for (final d in comments.docs) {
+      batch.delete(d.reference);
+    }
+
+    final claims =
+        await _db.collection('event_claims').where('userId', isEqualTo: uid).get();
+    for (final d in claims.docs) {
+      batch.delete(d.reference);
+    }
+
+    await batch.commit();
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

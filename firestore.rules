@@ -6,66 +6,104 @@ rules_version = '2';
 // Data model:
 //   users/{uid}                      public profile
 //   users/{uid}/saved_events/{id}    bookmarks / interested
+//   blocks/{uid}/blocked/{target}    per-user block list
 //   events/{eventId}                 curated + user-created feed
 //   events/{eventId}/rsvps/{userId}
 //   events/{eventId}/comments/{id}
 //   user_events/{id}                 creator extras (mirrors events/)
+//   event_claims/{id}
 //   user_reports/{id}
-//   meta/event_seed                  El Paso seed version
+//   meta/event_seed, meta/founding   admin / client-managed counters
+//
+// Notes:
+//  - The public feed is readable by everyone (including guests) for discovery.
+//  - Writes to the public feed require an authenticated creator.
+//  - Counters (bookmarks/interested/analytics) are the only fields other users
+//    may increment on someone else's event doc.
+//  - Curated El Paso seed data is written by the `seedCuratedEvents` Cloud
+//    Function (Admin SDK), not by clients.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ── User profiles ─────────────────────────────────────────────────────
     match /users/{uid} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null
-                    && request.auth.uid == uid
+      allow read: if isSignedIn();
+      allow create: if isOwner(uid)
                     && request.resource.data.keys().hasAll(['name', 'email', 'avatarUrl'])
                     && request.resource.data.name is string
                     && request.resource.data.name.size() <= 100;
-      allow update: if request.auth != null && request.auth.uid == uid;
-      allow delete: if false;
+      allow update: if isOwner(uid);
+      allow delete: if isOwner(uid);
 
       match /saved_events/{eventId} {
-        allow read, write: if request.auth != null
-                           && request.auth.uid == uid;
+        allow read, write: if isOwner(uid);
       }
     }
 
-    // Public feed. Anyone can read (discovery). Writes are open enough
-    // for the client-side El Paso seed and RSVP count increments.
-    // Tighten before a public launch.
+    // ── Blocks ────────────────────────────────────────────────────────────
+    match /blocks/{uid} {
+      allow read: if isOwner(uid);
+      match /blocked/{blockedUid} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // ── Public feed ───────────────────────────────────────────────────────
     match /events/{eventId} {
       allow read: if true;
-      allow create, update: if true;
-      allow delete: if request.auth != null
+      allow create: if isSignedIn()
+                    && request.resource.data.creatorId == request.auth.uid
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() <= 120;
+      allow update: if isSignedIn() && (
+                      resource.data.creatorId == request.auth.uid
+                      || request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly([
+                            'bookmarkedCount',
+                            'interestedCount',
+                            'analyticsSearchImpressions',
+                            'analyticsViews',
+                            'analyticsSaves',
+                            'analyticsClicks'
+                          ])
+                    );
+      allow delete: if isSignedIn()
                     && resource.data.creatorId == request.auth.uid;
 
       match /rsvps/{userId} {
         allow read: if true;
-        allow create, update, delete: if request.auth != null
-                                      && request.auth.uid == userId;
+        allow create, update, delete: if isOwner(userId);
       }
 
       match /comments/{commentId} {
         allow read: if true;
-        allow create: if request.auth != null
+        allow create: if isSignedIn()
                       && request.resource.data.authorId == request.auth.uid
                       && request.resource.data.text is string
                       && request.resource.data.text.size() <= 2000;
-        allow update, delete: if request.auth != null
+        allow update, delete: if isSignedIn()
                               && resource.data.authorId == request.auth.uid;
       }
     }
 
+    // ── Creator event extras ──────────────────────────────────────────────
     match /user_events/{eventId} {
       allow read: if true;
-      allow create: if request.auth != null
-                    && request.resource.data.creatorId == request.auth.uid;
-      allow update: if request.auth != null && (
+      allow create: if isSignedIn()
+                    && request.resource.data.creatorId == request.auth.uid
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() <= 120;
+      allow update: if isSignedIn() && (
                       resource.data.creatorId == request.auth.uid
-                      || request.resource.data.diff(resource.data)
-                          .affectedKeys()
+                      || request.resource.data.diff(resource.data).affectedKeys()
                           .hasOnly([
                             'analyticsSearchImpressions',
                             'analyticsViews',
@@ -74,39 +112,55 @@ service cloud.firestore {
                             'interestedCount'
                           ])
                     );
-      allow delete: if request.auth != null
+      allow delete: if isSignedIn()
                     && resource.data.creatorId == request.auth.uid;
+    }
+
+    // ── Founding member roster (counter only — no other meta writes) ──────
+    match /meta/founding {
+      allow read: if true;
+      allow create: if isSignedIn()
+                    && request.resource.data.memberIds is list
+                    && request.resource.data.count is int;
+      allow update: if isSignedIn()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['memberIds', 'count']);
+      allow delete: if false;
     }
 
     match /meta/{docId} {
       allow read: if true;
-      allow write: if true; // client seed version stamp
+      allow write: if false; // Admin SDK / Cloud Functions only
     }
 
+    // ── Venue claims ──────────────────────────────────────────────────────
     match /event_claims/{claimId} {
-      allow read: if request.auth != null
+      allow read: if isSignedIn()
                   && resource.data.userId == request.auth.uid;
-      allow create: if request.auth != null
+      allow create: if isSignedIn()
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.eventId is string
                     && request.resource.data.email is string
                     && request.resource.data.statement is string
                     && request.resource.data.statement.size() <= 2000;
-      allow update: if request.auth != null
+      allow update: if isSignedIn()
                     && resource.data.userId == request.auth.uid
-                    && request.resource.data.userId == resource.data.userId
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['unlocked']);
-      allow delete: if false;
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['unlocked']);
+      allow delete: if isSignedIn()
+                    && resource.data.userId == request.auth.uid;
     }
 
+    // ── User reports (write-only from clients; read by staff) ────────────
     match /user_reports/{reportId} {
-      allow create: if request.auth != null
+      allow create: if isSignedIn()
                     && request.resource.data.reportedUserId is string
                     && request.resource.data.reason is string
                     && request.resource.data.reason.size() <= 1000;
       allow read, update, delete: if false;
     }
 
+    // ── Deny everything else ──────────────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;
     }

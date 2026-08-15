@@ -8,6 +8,7 @@ import 'user_repository.dart';
 /// uses [FirebaseUserRepository] instead (see main.dart).
 class MockUserRepository implements UserRepository {
   AppUser? _currentUser;
+  final Set<String> _blockedIds = {};
 
   @override
   Future<AppUser?> getCurrentUser() async {
@@ -77,10 +78,17 @@ class MockUserRepository implements UserRepository {
   @override
   Future<void> blockUser(String userId) async {
     await Future.delayed(const Duration(milliseconds: 300));
+    _blockedIds.add(userId);
   }
 
   @override
   Future<void> reportUser(String userId, String reason) async {
     await Future.delayed(const Duration(milliseconds: 300));
+  }
+
+  @override
+  Future<void> deleteAccount({String? password}) async {
+    await Future.delayed(const Duration(milliseconds: 400));
+    _currentUser = null;
   }
 }

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart' show Color;
 /// Channel IDs — one per logical notification category.
 const _kChannelEvents = 'spotvibe_events';
 const _kChannelUpdates = 'spotvibe_updates';
-const _kChannelMessages = 'spotvibe_messages';
 const _kChannelSocial = 'spotvibe_social';
 
 /// Unique notification IDs per category (incremented in-memory).
@@ -42,18 +41,9 @@ class NotificationService {
           channelShowBadge: true,
         ),
         NotificationChannel(
-          channelKey: _kChannelMessages,
-          channelName: 'Messages',
-          channelDescription: 'Direct messages from other users',
-          defaultColor: const Color(0xFF00B894),
-          ledColor: const Color(0xFF00B894),
-          importance: NotificationImportance.High,
-          channelShowBadge: true,
-        ),
-        NotificationChannel(
           channelKey: _kChannelSocial,
           channelName: 'Social',
-          channelDescription: 'Friend requests and social activity',
+          channelDescription: 'Friend requests and activity from people you follow',
           defaultColor: const Color(0xFF6C5CE7),
           ledColor: const Color(0xFF6C5CE7),
           importance: NotificationImportance.High,
@@ -109,43 +99,6 @@ class NotificationService {
       channelKey: _kChannelUpdates,
       title: '⭐ You\'re Interested',
       body: 'You\'ll get updates about "$eventTitle" as the date approaches.',
-    );
-  }
-
-  // ── Direct message received ─────────────────────────────────────────────────
-
-  /// Called when a new inbound direct message arrives.
-  Future<void> notifyDirectMessage({
-    required String senderName,
-    required String messagePreview,
-  }) async {
-    if (!_canSend) return;
-    final preview = messagePreview.length > 60
-        ? '${messagePreview.substring(0, 57)}...'
-        : messagePreview;
-    await _send(
-      id: _nextNotifId(),
-      channelKey: _kChannelMessages,
-      title: '💬 $senderName',
-      body: preview,
-    );
-  }
-
-  /// Called when a new event chat message arrives from another user.
-  Future<void> notifyEventChatMessage({
-    required String senderName,
-    required String eventTitle,
-    required String messagePreview,
-  }) async {
-    if (!_canSend) return;
-    final preview = messagePreview.length > 55
-        ? '${messagePreview.substring(0, 52)}...'
-        : messagePreview;
-    await _send(
-      id: _nextNotifId(),
-      channelKey: _kChannelMessages,
-      title: '💬 $senderName in $eventTitle',
-      body: preview,
     );
   }
 

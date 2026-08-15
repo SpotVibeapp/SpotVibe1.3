@@ -108,6 +108,13 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Permanently deletes the account and signs out on success.
+  Future<void> deleteAccount({String? password}) async {
+    await _service.deleteAccount(password: password);
+    _user = null;
+    notifyListeners();
+  }
+
   Future<void> blockUser(String userId) async {
     try {
       await _service.blockUser(userId);

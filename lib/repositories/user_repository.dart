@@ -42,8 +42,16 @@ abstract class UserRepository {
 
   Future<void> logout();
 
-  // ── Social graph (still mocked everywhere; not yet in Firestore) ────────
+  // ── Social graph ────────────────────────────────────────────────────────
   Future<void> addFriend(String userId);
   Future<void> blockUser(String userId);
   Future<void> reportUser(String userId, String reason);
+
+  /// Permanently deletes the signed-in user's account and associated data.
+  ///
+  /// [password] re-authenticates email/password accounts (Firebase requires a
+  /// recent login for destructive operations). Social accounts may omit it;
+  /// if Firebase still requires a recent login, implementations throw a
+  /// friendly error telling the user to sign out and back in and retry.
+  Future<void> deleteAccount({String? password});
 }

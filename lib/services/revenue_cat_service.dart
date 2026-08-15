@@ -4,10 +4,16 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../data/pricing.dart';
 
-/// Replace these with your real RevenueCat API keys from the RevenueCat dashboard.
-/// https://app.revenuecat.com → Project → API Keys
-const _kRevenueCatAndroidKey = 'YOUR_REVENUECAT_ANDROID_API_KEY';
-const _kRevenueCatAppleKey = 'YOUR_REVENUECAT_APPLE_API_KEY';
+/// RevenueCat public SDK keys are supplied at build/run time and are never
+/// committed to the repo:
+///   flutter run --dart-define=REVENUECAT_ANDROID_KEY=goog_xxx \
+///               --dart-define=REVENUECAT_APPLE_KEY=appl_xxx
+///
+/// Get them from https://app.revenuecat.com → Project → API Keys.
+const String _kRevenueCatAndroidKey =
+    String.fromEnvironment('REVENUECAT_ANDROID_KEY');
+const String _kRevenueCatAppleKey =
+    String.fromEnvironment('REVENUECAT_APPLE_KEY');
 
 /// Entitlement identifier created in the RevenueCat dashboard.
 const kProEntitlementId = 'pro';
@@ -19,17 +25,11 @@ class RevenueCatService {
   Future<void> initialize() async {
     if (kIsWeb) return; // RevenueCat SDK is mobile-only
     if (_initialized) return;
+    final apiKey = defaultTargetPlatform == TargetPlatform.android
+        ? _kRevenueCatAndroidKey
+        : _kRevenueCatAppleKey;
+    if (apiKey.isEmpty) return; // Keys not supplied yet — local trial fallback.
     try {
-      await Purchases.setLogLevel(LogLevel.error);
-      final configuration = PurchasesConfiguration(
-        defaultTargetPlatform == TargetPlatform.android
-            ? _kRevenueCatAndroidKey
-            : _kRevenueCatAppleKey,
-      );
-      await Purchases.configure(configuration);
-      _initialized = true;
-    } catch (_) {}
-  }
 
   /// Log in a known user so their purchases are associated with their account.
   Future<void> logIn(String userId) async {

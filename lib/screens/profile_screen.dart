@@ -169,6 +169,11 @@ class ProfileScreen extends StatelessWidget {
               label: 'Terms of Use',
               onTap: () => context.push('/terms'),
             ),
+            _SettingsTile(
+              icon: Icons.delete_forever_rounded,
+              label: 'Delete Account',
+              onTap: () => _confirmDeleteAccount(context),
+            ),
             const SizedBox(height: AppTheme.spacingLg),
             OutlinedButton.icon(
               onPressed: () async {
@@ -182,6 +187,92 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  /// Shows the account-deletion confirmation and performs the deletion.
+  /// Returns the password entered (may be empty) so email accounts can
+  /// re-authenticate before the destructive operation.
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    final auth = context.read<AuthProvider>();
+    final password = await showDialog<String>(
+      context: context,
+      builder: (_) => const _DeleteAccountDialog(),
+    );
+    if (password == null || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await auth.deleteAccount(password: password.isEmpty ? null : password);
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Your account and data have been deleted.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      if (context.mounted) context.go('/');
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+}
+
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog();
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    return AlertDialog(
+      title: const Text('Delete account?'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'This permanently deletes your account, profile, events, RSVPs, and comments. This cannot be undone.',
+            style: text.bodyMedium,
+          ),
+          const SizedBox(height: AppTheme.spacingMd),
+          TextField(
+            controller: _controller,
+            obscureText: true,
+            decoration: const InputDecoration(
+              labelText: 'Password (email accounts)',
+              hintText: 'Optional',
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: colors.error),
+          onPressed: () => Navigator.pop(context, _controller.text),
+          child: const Text('Delete'),
+        ),
+      ],
     );
   }
 }

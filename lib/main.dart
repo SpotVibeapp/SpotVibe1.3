@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/subscription_provider.dart';
@@ -44,11 +45,11 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // ── Firebase / user backend ───────────────────────────────────────────────
-  // Real auth when Firebase is configured for this platform; falls back to
-  // the in-memory mock so the app still runs everywhere else (e.g. Android/
-  // iOS builds before `flutterfire configure` has been run).
+  // Real auth when Firebase is configured for this platform. Release builds
+  // MUST be configured — see _createBackend(): a store build that cannot
+  // reach Firebase shows a clear error instead of silently accepting fake
+  // logins. Debug/profile builds still fall back to in-memory mocks.
   final backend = await _createBackend();
-  final userRepository = backend.users;
 
   final revenueCatService = RevenueCatService();
   await revenueCatService.initialize();
@@ -56,47 +57,32 @@ void main() async {
   await notificationService.initialize();
   final permissionService = PermissionService();
 
-  // ── Initialise Branch SDK ─────────────────────────────────────────────────
-  final branchService = BranchService();
-  await branchService.initialize();
-
   // ── Resolve the initial deep link path ────────────────────────────────────
   // Priority order (highest → lowest):
-  //   1. Branch deferred link  — survives a fresh install across the App Store
-  //   2. OS cold-start URI     — delivered by app_links when app was already installed
-  //   3. Pending link          — saved from a previous session interrupted by /permissions
-  //   4. /permissions          — first-ever launch (permissions not yet asked)
-  //   5. /                     — all subsequent normal launches
+  //   1. OS cold-start URI     — delivered by app_links (App Links / custom scheme)
+  //   2. Pending link          — saved from a previous session interrupted by /permissions
+  //   3. /permissions          — first-ever launch (permissions not yet asked)
+  //   4. /                     — all subsequent normal launches
   String initialLocation = '/';
 
   if (!kIsWeb) {
-    // 1. Branch — highest priority: covers post-install deferred scenario.
-    final branchPath = await branchService.getInitialLink();
-    if (branchPath != null) {
-      initialLocation = branchPath;
-    } else {
-      // 2. OS cold-start URI via app_links.
-      try {
-        final appLinks = AppLinks();
-        final coldUri = await appLinks.getInitialLink();
-        if (coldUri != null) {
-          final path = DeepLinkService.pathFromUri(coldUri.toString());
-          if (path != null) initialLocation = path;
-        }
-      } catch (_) {}
-    }
+    try {
+      final appLinks = AppLinks();
+      final coldUri = await appLinks.getInitialLink();
+      if (coldUri != null) {
+        final path = DeepLinkService.pathFromUri(coldUri.toString());
+        if (path != null) initialLocation = path;
+      }
+    } catch (_) {}
   }
 
   if (initialLocation == '/') {
-    // 3. Pending link stored from a previous session (permissions flow).
     final pending = await DeepLinkService.consumePendingLink();
     if (pending != null) {
       initialLocation = pending;
     } else {
-      // 4 & 5. Normal startup.
       final hasAsked = await permissionService.hasAskedBefore();
       if (!hasAsked) {
-        // Check onboarding repo as the canonical first-launch gate.
         final onboardingRepo = OnboardingRepository();
         final onboardingDone = await onboardingRepo.isOnboardingDone();
         initialLocation = onboardingDone ? '/' : '/onboarding';
@@ -104,8 +90,13 @@ void main() async {
     }
   }
 
+  if (backend == null) {
+    runApp(const _BackendUnavailableApp());
+    return;
+  }
+
   runApp(SpotVibeApp(
-    userRepository: userRepository,
+    userRepository: backend.users,
     eventRepository: backend.events,
     rsvpRepository: backend.rsvps,
     userEventRepository: backend.userEvents,
@@ -114,7 +105,6 @@ void main() async {
     revenueCatService: revenueCatService,
     notificationService: notificationService,
     permissionService: permissionService,
-    branchService: branchService,
     initialLocation: initialLocation,
   ));
 }
@@ -136,9 +126,9 @@ class _AppBackend {
   });
 }
 
-/// Initializes Firebase and returns real repos, or in-memory mocks when
-/// Firebase isn't configured on this platform.
-Future<_AppBackend> _createBackend() async {
+/// Initializes Firebase and returns real repos, in-memory mocks (debug only),
+/// or `null` when a release build cannot reach Firebase.
+Future<_AppBackend?> _createBackend() async {
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -155,7 +145,12 @@ Future<_AppBackend> _createBackend() async {
       founding: FirebaseFoundingMemberRepository(),
     );
   } catch (e) {
-    debugPrint('Firebase unavailable ($e) — using mock repositories.');
+    debugPrint('Firebase unavailable ($e).');
+    if (kReleaseMode) {
+      // Store builds must never silently ship mock auth.
+      return null;
+    }
+    debugPrint('Using mock repositories (debug/profile only).');
     return _AppBackend(
       users: MockUserRepository(),
       events: MockEventRepository(),
@@ -163,6 +158,45 @@ Future<_AppBackend> _createBackend() async {
       userEvents: UserEventRepository(),
       claims: MockEventClaimRepository(),
       founding: MockFoundingMemberRepository(),
+    );
+  }
+}
+
+/// Shown when a release build cannot reach Firebase. Fails loud and clear
+/// instead of accepting fake logins.
+class _BackendUnavailableApp extends StatelessWidget {
+  const _BackendUnavailableApp();
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'SpotVibe',
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(Icons.cloud_off_rounded, size: 56),
+                SizedBox(height: 16),
+                Text(
+                  'SpotVibe could not connect to its backend.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'This build is not configured with Firebase.\n'
+                  'Run flutterfire configure --project=spotvibe-cfa08 and rebuild.',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -177,7 +211,6 @@ class SpotVibeApp extends StatefulWidget {
   final RevenueCatService revenueCatService;
   final NotificationService notificationService;
   final PermissionService permissionService;
-  final BranchService branchService;
   final String initialLocation;
 
   const SpotVibeApp({
@@ -191,7 +224,6 @@ class SpotVibeApp extends StatefulWidget {
     required this.revenueCatService,
     required this.notificationService,
     required this.permissionService,
-    required this.branchService,
     required this.initialLocation,
   });
 
@@ -208,12 +240,8 @@ class _SpotVibeAppState extends State<SpotVibeApp> {
     _router = AppRouter.build(initialLocation: widget.initialLocation);
 
     if (!kIsWeb) {
-      // ── Runtime deep link listeners ──────────────────────────────────────
-      // Branch: handles foreground links and subsequent session links.
-      widget.branchService.linkStream.listen((path) => _router.go(path));
-
-      // app_links: fallback for spotvibe:// custom-scheme URIs and HTTPS
-      // App Links that Branch doesn't intercept (e.g. direct share copies).
+      // app_links: handles https App Links, universal links, and spotvibe://
+      // custom-scheme URIs while the app is running.
       final appLinks = AppLinks();
       appLinks.uriLinkStream.listen((uri) {
         final path = DeepLinkService.pathFromUri(uri.toString());

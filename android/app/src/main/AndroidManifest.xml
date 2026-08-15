@@ -50,22 +50,10 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="vibely"/>
             </intent-filter>
-            <!-- PRIMIO_ADDED: flutter_branch_sdk — Branch URI scheme (replace 'REPLACE_WITH_BRANCH_URI_SCHEME' from Branch dashboard) -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="REPLACE_WITH_BRANCH_URI_SCHEME"/>
-            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data android:name="flutterEmbedding" android:value="2"/>
-        <!-- Sample AdMob app ID: ca-app-pub-3940256099942544~3347511713 -->
-        <!-- PRIMIO_ADDED: flutter_branch_sdk — Branch app keys (replace values with real keys from Branch dashboard) -->
-        <meta-data android:name="io.branch.sdk.BranchKey" android:value="key_live_REPLACE_WITH_BRANCH_LIVE_KEY"/>
-        <meta-data android:name="io.branch.sdk.BranchKey.test" android:value="key_test_REPLACE_WITH_BRANCH_TEST_KEY"/>
-        <meta-data android:name="io.branch.sdk.TestMode" android:value="false"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
@@ -77,12 +65,6 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
-        <!-- PRIMIO_ADDED: flutter_branch_sdk — Branch needs to query the browser to handle App Links -->
-        <intent>
-            <action android:name="android.intent.action.VIEW"/>
-            <category android:name="android.intent.category.BROWSABLE"/>
-            <data android:scheme="https"/>
-        </intent>
     </queries>
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- PRIMIO_ADDED: permission_handler — location permission for nearby event discovery -->
@@ -90,4 +72,6 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <!-- PRIMIO_ADDED: awesome_notifications — POST_NOTIFICATIONS required on Android 13+ -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Required for Google Play in-app subscriptions (purchases_flutter / Billing Library) -->
+    <uses-permission android:name="com.android.vending.BILLING"/>
 </manifest>

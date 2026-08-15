@@ -49,18 +49,6 @@
     <false/>
     <key>FlutterDeepLinkingEnabled</key>
     <true/>
-    <key>branch_key</key>
-    <dict>
-      <key>live</key>
-      <string>key_live_REPLACE_WITH_BRANCH_LIVE_KEY</string>
-      <key>test</key>
-      <string>key_test_REPLACE_WITH_BRANCH_TEST_KEY</string>
-    </dict>
-    <key>branch_universal_link_domains</key>
-    <array>
-      <string>REPLACE_WITH_BRANCH_APP_DOMAIN.app.link</string>
-      <string>REPLACE_WITH_BRANCH_APP_DOMAIN-alternate.app.link</string>
-    </array>
     <key>CFBundleURLTypes</key>
     <array>
       <dict>
@@ -74,24 +62,10 @@
           <string>vibely</string>
         </array>
       </dict>
-      <dict>
-        <key>CFBundleTypeRole</key>
-        <string>Editor</string>
-        <key>CFBundleURLName</key>
-        <string>io.branch.spotvibe</string>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          <string>REPLACE_WITH_BRANCH_URI_SCHEME</string>
-        </array>
-      </dict>
     </array>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>SpotVibe uses your location to show events happening near you while the app is open.</string>
     <key>NSUserNotificationsUsageDescription</key>
-    <string>SpotVibe sends you alerts for new events, messages, and friend activity.</string>
-    <key>NSBonjourServices</key>
-    <array/>
-    <key>NSLocalNetworkUsageDescription</key>
-    <string>Allow Flutter tools on your computer to connect and debug your application. This prompt will not appear on release builds.</string>
+    <string>SpotVibe sends you alerts for new events and activity on events you follow.</string>
   </dict>
 </plist>

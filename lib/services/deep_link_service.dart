@@ -1,8 +1,6 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_branch_sdk/flutter_branch_sdk.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,11 +16,13 @@ const Set<String> _kDeepLinkHosts = {'spotvibe.app', 'www.spotvibe.app', 'vibely
 const Set<String> _kDeepLinkSchemes = {'spotvibe', 'vibely'};
 
 /// SharedPreferences key that stores a deep link path that arrived before the
-/// user completed first-run setup (permissions screen).  Consumed once on the
+/// user completed first-run setup (permissions screen). Consumed once on the
 /// first launch after installation so the user lands on the right event.
 const String _kPendingLinkKey = 'spotvibe_pending_deep_link';
 const String _kPendingLinkKeyLegacy = 'vibely_pending_deep_link';
 
+/// Deep-link helpers. Uses the platform's App Links / universal links /
+/// custom-scheme routing (`app_links`) — no third-party link SDK.
 class DeepLinkService {
   /// Returns the shareable deep link URL for a curated event.
   static String eventLink(String eventId) => '$kDeepLinkBase/event/$eventId';
@@ -51,8 +51,7 @@ class DeepLinkService {
   }
 
   /// Persists a GoRouter path so it survives the first-run permission screen
-  /// and is restored immediately after.  Call this whenever a link arrives
-  /// before the user reaches the main app (e.g. from [AppRouter]'s redirect).
+  /// and is restored immediately after.
   static Future<void> savePendingLink(String path) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kPendingLinkKey, path);
@@ -71,48 +70,8 @@ class DeepLinkService {
     return path;
   }
 
-  /// Generates a Branch short link for the given event.  Falls back to the
-  /// standard HTTPS deep link if Branch is unavailable or on web.
-  static Future<String> branchEventLink({
-    required String eventId,
-    required String eventTitle,
-    required bool isUserEvent,
-  }) async {
-    final fallback =
-        isUserEvent ? userEventLink(eventId) : eventLink(eventId);
-    if (kIsWeb) return fallback;
-    try {
-      final buo = BranchUniversalObject(
-        canonicalIdentifier: isUserEvent ? 'user-event/$eventId' : 'event/$eventId',
-        title: eventTitle,
-        contentMetadata: BranchContentMetaData()
-          ..addCustomMetadata('eventId', eventId)
-          ..addCustomMetadata('isUserEvent', isUserEvent.toString()),
-      );
-      final lp = BranchLinkProperties(
-        channel: 'app',
-        feature: 'share',
-      )..addControlParam(
-          '\$deeplink_path',
-          isUserEvent ? '/user-event/$eventId' : '/event/$eventId',
-        );
-      final response = await FlutterBranchSdk.getShortUrl(
-        buo: buo,
-        linkProperties: lp,
-      );
-      if (response.success && response.result != null) {
-        return response.result!;
-      }
-    } catch (_) {}
-    return fallback;
-  }
-
   /// Shares the event via the native OS share sheet with a rich message that
-  /// includes the formatted date, venue, and a Branch deep link (falls back to
-  /// the plain HTTPS link on web or when Branch is unavailable).
-  ///
-  /// Pass [eventDateTime] and [eventLocation] to build the full message; if
-  /// omitted the message falls back to title + link only.
+  /// includes the formatted date, venue, and a deep link.
   static Future<void> shareEvent(
     BuildContext context, {
     required String eventId,
@@ -121,12 +80,8 @@ class DeepLinkService {
     DateTime? eventDateTime,
     String? eventLocation,
   }) async {
-    // Resolve the deep link — try Branch first, fall back to HTTPS.
-    final link = await branchEventLink(
-      eventId: eventId,
-      eventTitle: eventTitle,
-      isUserEvent: isUserEvent,
-    );
+    final link =
+        isUserEvent ? userEventLink(eventId) : eventLink(eventId);
 
     final message = _buildShareMessage(
       title: eventTitle,
@@ -136,7 +91,7 @@ class DeepLinkService {
     );
 
     if (kIsWeb) {
-      // Web: copy to clipboard (Share.share is not supported in all browsers)
+      // Web: copy to clipboard (Share.share is not supported in all browsers).
       await Clipboard.setData(ClipboardData(text: message));
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -176,16 +131,14 @@ class DeepLinkService {
   }
 
   /// Copies the event deep link to the clipboard and shows a confirmation
-  /// SnackBar. Use this as a lightweight fallback when full share UI is
-  /// not desired.
+  /// SnackBar. Lightweight fallback when full share UI is not desired.
   static Future<void> copyEventLink(
     BuildContext context, {
     required String eventId,
     required String eventTitle,
     required bool isUserEvent,
   }) async {
-    final link =
-        isUserEvent ? userEventLink(eventId) : eventLink(eventId);
+    final link = isUserEvent ? userEventLink(eventId) : eventLink(eventId);
     await Clipboard.setData(ClipboardData(text: link));
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -200,77 +153,5 @@ class DeepLinkService {
         ),
       );
     }
-  }
-}
-
-/// Thin wrapper around [FlutterBranchSdk] that isolates all Branch calls and
-/// keeps the rest of the app free of direct SDK imports.
-///
-/// All public methods are no-ops on web ([kIsWeb] guard) so the app compiles
-/// and runs without Branch on Flutter Web.
-class BranchService {
-  bool _initialized = false;
-
-  /// Initialises the Branch SDK.  Must be called once before [runApp], after
-  /// [WidgetsFlutterBinding.ensureInitialized].
-  Future<void> initialize() async {
-    if (kIsWeb) return;
-    try {
-      await FlutterBranchSdk.initSession();
-      _initialized = true;
-    } catch (_) {}
-  }
-
-  /// Returns the GoRouter path that Branch recovered from before/during this
-  /// session's cold start, or `null` if Branch delivered no link.
-  ///
-  /// Branch fires the deferred link on the *first* open after a fresh install,
-  /// which is the scenario that [app_links] + [SharedPreferences] cannot cover.
-  Future<String?> getInitialLink() async {
-    if (kIsWeb || !_initialized) return null;
-    try {
-      final completer = Completer<String?>();
-      // initSession fires once immediately with the session data on cold
-      // start, then stays live for foreground links.  We only want the first
-      // event here — the runtime stream is handled separately in SpotVibeApp.
-      StreamSubscription<Map<dynamic, dynamic>>? sub;
-      sub = FlutterBranchSdk.initSession().listen((data) {
-        sub?.cancel();
-        final url = data['\$canonical_url'] as String? ??
-            data['~referring_link'] as String?;
-        final path = url != null ? DeepLinkService.pathFromUri(url) : null;
-        if (!completer.isCompleted) completer.complete(path);
-      }, onError: (_) {
-        if (!completer.isCompleted) completer.complete(null);
-      });
-      // Timeout: if Branch doesn't respond within 4 s, give up gracefully.
-      return await completer.future.timeout(
-        const Duration(seconds: 4),
-        onTimeout: () {
-          sub?.cancel();
-          return null;
-        },
-      );
-    } catch (_) {
-      return null;
-    }
-  }
-
-  /// A broadcast stream of GoRouter paths derived from Branch links that
-  /// arrive while the app is running (foreground / background resume).
-  /// Yields only non-null paths that map to a recognised event route.
-  Stream<String> get linkStream {
-    if (kIsWeb || !_initialized) return const Stream.empty();
-    return FlutterBranchSdk.initSession()
-        .where((data) =>
-            data['\$canonical_url'] != null ||
-            data['~referring_link'] != null)
-        .map((data) {
-          final url = data['\$canonical_url'] as String? ??
-              data['~referring_link'] as String?;
-          return url != null ? DeepLinkService.pathFromUri(url) : null;
-        })
-        .where((path) => path != null)
-        .cast<String>();
   }
 }
