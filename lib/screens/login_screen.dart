@@ -406,6 +406,42 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: AppTheme.spacingLg),
+                    Text.rich(
+                      TextSpan(
+                        style: text.labelSmall?.copyWith(color: colors.onSurfaceVariant),
+                        children: [
+                          const TextSpan(text: 'By continuing you agree to our '),
+                          WidgetSpan(
+                            child: GestureDetector(
+                              onTap: () => context.push('/terms'),
+                              child: Text(
+                                'Terms of Use',
+                                style: text.labelSmall?.copyWith(
+                                  color: colors.primary,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const TextSpan(text: ' and '),
+                          WidgetSpan(
+                            child: GestureDetector(
+                              onTap: () => context.push('/privacy'),
+                              child: Text(
+                                'Privacy Policy',
+                                style: text.labelSmall?.copyWith(
+                                  color: colors.primary,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const TextSpan(text: '.'),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppTheme.spacingLg),
                   ],
                 ),
               ),

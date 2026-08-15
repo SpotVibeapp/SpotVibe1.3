@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
+import '../data/pricing.dart';
+
 /// Replace these with your real RevenueCat API keys from the RevenueCat dashboard.
 /// https://app.revenuecat.com → Project → API Keys
 const _kRevenueCatAndroidKey = 'YOUR_REVENUECAT_ANDROID_API_KEY';

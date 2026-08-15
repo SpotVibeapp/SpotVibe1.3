@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../data/pricing.dart';
 import '../providers/subscription_provider.dart';
@@ -401,9 +402,17 @@ class _TermsRow extends StatelessWidget {
           style: style,
           children: [
             const TextSpan(text: 'By subscribing you agree to our '),
-            TextSpan(text: 'Terms of Service', style: linkStyle, recognizer: TapGestureRecognizer()..onTap = () {}),
+            TextSpan(
+              text: 'Terms of Use',
+              style: linkStyle,
+              recognizer: TapGestureRecognizer()..onTap = () => context.push('/terms'),
+            ),
             const TextSpan(text: ' and '),
-            TextSpan(text: 'Privacy Policy', style: linkStyle, recognizer: TapGestureRecognizer()..onTap = () {}),
+            TextSpan(
+              text: 'Privacy Policy',
+              style: linkStyle,
+              recognizer: TapGestureRecognizer()..onTap = () => context.push('/privacy'),
+            ),
           ],
         ),
         textAlign: TextAlign.center,

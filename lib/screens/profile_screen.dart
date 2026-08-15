@@ -93,6 +93,16 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   onTap: null,
                 ),
+                _SettingsTile(
+                  icon: Icons.privacy_tip_outlined,
+                  label: 'Privacy Policy',
+                  onTap: () => context.push('/privacy'),
+                ),
+                _SettingsTile(
+                  icon: Icons.gavel_rounded,
+                  label: 'Terms of Use',
+                  onTap: () => context.push('/terms'),
+                ),
               ],
             ),
           ),
@@ -149,6 +159,16 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             _SettingsTile(icon: Icons.bookmark_rounded, label: 'Saved Events', onTap: () => context.push('/saved-events')),
+            _SettingsTile(
+              icon: Icons.privacy_tip_outlined,
+              label: 'Privacy Policy',
+              onTap: () => context.push('/privacy'),
+            ),
+            _SettingsTile(
+              icon: Icons.gavel_rounded,
+              label: 'Terms of Use',
+              onTap: () => context.push('/terms'),
+            ),
             const SizedBox(height: AppTheme.spacingLg),
             OutlinedButton.icon(
               onPressed: () async {
@@ -223,7 +243,7 @@ class _ProTile extends StatelessWidget {
               ),
             ),
             Icon(
-              isSubscribed ? Icons.check_circle_rounded : Icons.chevron_right_rounded,
+              sub.isSubscribed ? Icons.check_circle_rounded : Icons.chevron_right_rounded,
               color: appColors.proGold,
             ),
           ],
