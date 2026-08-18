@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../config/app_config.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 import '../theme/theme.dart';
+import '../widgets/common/spotvibe_logo.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -31,21 +33,24 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   String? _validateEmail(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Email is required';
+    final l10n = AppLocalizations.of(context)!;
+    if (v == null || v.trim().isEmpty) return l10n.emailRequired;
     final re = RegExp(r'^[\w\.\-]+@[\w\-]+\.\w{2,}$');
-    if (!re.hasMatch(v.trim())) return 'Enter a valid email address';
+    if (!re.hasMatch(v.trim())) return l10n.validEmail;
     return null;
   }
 
   String? _validatePassword(String? v) {
-    if (v == null || v.isEmpty) return 'Password is required';
-    if (v.length < 6) return 'Password must be at least 6 characters';
+    final l10n = AppLocalizations.of(context)!;
+    if (v == null || v.isEmpty) return l10n.passwordRequired;
+    if (v.length < 6) return l10n.passwordMinChars;
     return null;
   }
 
   String? _validateName(String? v) {
     if (!_isRegister) return null;
-    if (v == null || v.trim().isEmpty) return 'Full name is required';
+    final l10n = AppLocalizations.of(context)!;
+    if (v == null || v.trim().isEmpty) return l10n.fullNameRequired;
     return null;
   }
 
@@ -105,6 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final auth = context.watch<AuthProvider>();
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: CustomScrollView(
@@ -130,19 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const SizedBox(height: AppTheme.spacingLg),
-                      Container(
-                        width: 64,
-                        height: 64,
-                        decoration: BoxDecoration(
-                          color: colors.onPrimary.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.celebration_rounded,
-                          size: AppTheme.iconLg + 4,
-                          color: colors.onPrimary,
-                        ),
-                      ),
+                      const SpotVibeLogo(size: 64),
                       const SizedBox(height: AppTheme.spacingSm),
                       Text(
                         'SpotVibe',
@@ -224,8 +218,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           if (AppConfig.enableGoogleSignIn) ...[
                             Expanded(
                               child: _SocialButton(
-                                label: 'Google',
-                                icon: Icons.g_mobiledata_rounded,
+                            label: l10n.google,
+                            icon: Icons.g_mobiledata_rounded,
                                 color: const Color(0xFF4285F4),
                                 isLoading: _socialLoading == 'google',
                                 onTap: () => _socialLogin('Google'),
@@ -236,7 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           if (AppConfig.enableFacebookSignIn && !kIsWeb) ...[
                             Expanded(
                               child: _SocialButton(
-                                label: 'Facebook',
+                                label: l10n.facebook,
                                 icon: Icons.facebook_rounded,
                                 color: const Color(0xFF1877F2),
                                 isLoading: _socialLoading == 'facebook',
@@ -252,7 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       TargetPlatform.macOS)) ...[
                             Expanded(
                               child: _SocialButton(
-                                label: 'Apple',
+                                label: l10n.apple,
                                 icon: Icons.apple_rounded,
                                 color: colors.onSurface,
                                 isLoading: _socialLoading == 'apple',
@@ -271,7 +265,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(
                               horizontal: AppTheme.spacingSm),
-                          child: Text('or continue with email',
+                          child: Text(l10n.orContinueWithEmail,
                               style: text.labelSmall),
                         ),
                         const Expanded(child: Divider()),
@@ -284,8 +278,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextFormField(
                         controller: _nameController,
                         validator: _validateName,
-                        decoration: const InputDecoration(
-                          labelText: 'Full Name',
+                        decoration: InputDecoration(
+                          labelText: l10n.fullNameLabel,
                           prefixIcon: Icon(Icons.person_outline_rounded),
                         ),
                         textInputAction: TextInputAction.next,
@@ -298,8 +292,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextFormField(
                       controller: _emailController,
                       validator: _validateEmail,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
+                      decoration: InputDecoration(
+                        labelText: l10n.emailLabel,
                         prefixIcon: Icon(Icons.email_outlined),
                       ),
                       keyboardType: TextInputType.emailAddress,
@@ -313,7 +307,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _passwordController,
                       validator: _validatePassword,
                       decoration: InputDecoration(
-                        labelText: 'Password',
+                        labelText: l10n.passwordLabel,
                         prefixIcon: const Icon(Icons.lock_outline_rounded),
                         suffixIcon: IconButton(
                           onPressed: () =>
@@ -338,9 +332,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: TextButton(
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    'Password reset requires a backend integration.'),
+                              SnackBar(
+                                content: Text(l10n.passwordResetBackend),
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
@@ -350,7 +343,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             minimumSize: const Size(0, 32),
                           ),
                           child: Text(
-                            'Forgot password?',
+                            l10n.forgotPassword,
                             style: text.labelMedium?.copyWith(
                                 color: colors.primary),
                           ),
@@ -373,7 +366,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             )
                           : Text(
-                              _isRegister ? 'Create Account' : 'Sign In'),
+                              _isRegister ? l10n.createAccount : l10n.signIn),
                     ),
                     const SizedBox(height: AppTheme.spacingMd),
 
@@ -386,8 +379,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       }),
                       child: Text(
                         _isRegister
-                            ? 'Already have an account? Sign in'
-                            : "Don't have an account? Create one",
+                            ? l10n.alreadyHaveAccount
+                            : l10n.noAccountCreate,
                         style:
                             text.labelMedium?.copyWith(color: colors.primary),
                       ),
@@ -413,7 +406,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         context.go('/');
                       },
                       icon: const Icon(Icons.person_outline_rounded),
-                      label: const Text('Continue as Guest'),
+                      label: Text(l10n.continueAsGuest),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 48),
                         foregroundColor: colors.onSurfaceVariant,
@@ -426,12 +419,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextSpan(
                         style: text.labelSmall?.copyWith(color: colors.onSurfaceVariant),
                         children: [
-                          const TextSpan(text: 'By continuing you agree to our '),
+                          TextSpan(text: l10n.agreeToTermsPrefix),
                           WidgetSpan(
                             child: GestureDetector(
                               onTap: () => context.push('/terms'),
                               child: Text(
-                                'Terms of Use',
+                                l10n.termsOfUse,
                                 style: text.labelSmall?.copyWith(
                                   color: colors.primary,
                                   decoration: TextDecoration.underline,
@@ -444,7 +437,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: GestureDetector(
                               onTap: () => context.push('/privacy'),
                               child: Text(
-                                'Privacy Policy',
+                                l10n.privacyPolicy,
                                 style: text.labelSmall?.copyWith(
                                   color: colors.primary,
                                   decoration: TextDecoration.underline,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
 import '../../services/event_analytics_service.dart';
 import '../../services/maps_service.dart';
@@ -18,6 +19,7 @@ class GetTicketsButton extends StatelessWidget {
     if (url == null || url.isEmpty) return const SizedBox.shrink();
 
     final colors = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final isTicketmaster = event.source == EventSource.ticketmaster;
 
     return SizedBox(
@@ -28,12 +30,12 @@ class GetTicketsButton extends StatelessWidget {
           if (!context.mounted) return;
           if (!ok) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Could not open tickets.')),
+              SnackBar(content: Text(l10n.couldNotOpenTickets)),
             );
           }
         },
         icon: const Icon(Icons.confirmation_number_rounded),
-        label: Text(isTicketmaster ? 'Get tickets on Ticketmaster' : 'Get tickets'),
+        label: Text(isTicketmaster ? l10n.getTicketsOnTm : l10n.getTickets),
         style: FilledButton.styleFrom(
           minimumSize: const Size(double.infinity, AppTheme.buttonHeight),
           backgroundColor:

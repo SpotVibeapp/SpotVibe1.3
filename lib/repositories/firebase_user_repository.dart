@@ -208,53 +208,88 @@ class FirebaseUserRepository implements UserRepository {
   }
 
   /// Best-effort client-side cleanup of all Firestore docs owned by [uid].
-  /// Runs before the auth user is deleted. The `deleteUser` Cloud Function
-  /// (see functions/) performs the same cleanup server-side with Admin SDK.
+  /// Runs before the auth user is deleted. Each collection is purged in its
+  /// own guard so a missing index (collection-group queries need one) never
+  /// aborts the rest of the batch. The `deleteUser` Cloud Function
+  /// (see functions/) performs the authoritative cleanup server-side.
   Future<void> _purgeUserData(String uid) async {
     final batch = _db.batch();
 
     batch.delete(_users.doc(uid));
     batch.delete(_db.collection('blocks').doc(uid));
 
-    final saves = await _users.doc(uid).collection('saved_events').get();
-    for (final d in saves.docs) {
-      batch.delete(d.reference);
+    try {
+      final saves = await _users.doc(uid).collection('saved_events').get();
+      for (final d in saves.docs) {
+        batch.delete(d.reference);
+      }
+    } catch (e) {
+      debugPrint('saved_events purge failed: $e');
     }
 
-    final blocked = await _db
-        .collection('blocks')
-        .doc(uid)
-        .collection('blocked')
-        .get();
-    for (final d in blocked.docs) {
-      batch.delete(d.reference);
+    try {
+      final blocked = await _db
+          .collection('blocks')
+          .doc(uid)
+          .collection('blocked')
+          .get();
+      for (final d in blocked.docs) {
+        batch.delete(d.reference);
+      }
+    } catch (e) {
+      debugPrint('blocks purge failed: $e');
     }
 
-    final userEvents =
-        await _db.collection('user_events').where('creatorId', isEqualTo: uid).get();
-    for (final d in userEvents.docs) {
-      batch.delete(d.reference);
-      batch.delete(_db.collection('events').doc(d.id));
+    try {
+      final userEvents = await _db
+          .collection('user_events')
+          .where('creatorId', isEqualTo: uid)
+          .get();
+      for (final d in userEvents.docs) {
+        batch.delete(d.reference);
+        batch.delete(_db.collection('events').doc(d.id));
+      }
+    } catch (e) {
+      debugPrint('user_events purge failed: $e');
     }
 
-    final rsvps =
-        await _db.collectionGroup('rsvps').where('userId', isEqualTo: uid).get();
-    for (final d in rsvps.docs) {
-      batch.delete(d.reference);
+    // Collection-group queries require composite indexes (see
+    // firestore.indexes.json). If the index is missing, log and continue —
+    // the deleteUser Cloud Function performs authoritative cleanup.
+    try {
+      final rsvps = await _db
+          .collectionGroup('rsvps')
+          .where('userId', isEqualTo: uid)
+          .get();
+      for (final d in rsvps.docs) {
+        batch.delete(d.reference);
+      }
+    } catch (e) {
+      debugPrint('rsvps purge skipped (deploy firestore.indexes.json): $e');
     }
 
-    final comments = await _db
-        .collectionGroup('comments')
-        .where('authorId', isEqualTo: uid)
-        .get();
-    for (final d in comments.docs) {
-      batch.delete(d.reference);
+    try {
+      final comments = await _db
+          .collectionGroup('comments')
+          .where('authorId', isEqualTo: uid)
+          .get();
+      for (final d in comments.docs) {
+        batch.delete(d.reference);
+      }
+    } catch (e) {
+      debugPrint('comments purge skipped (deploy firestore.indexes.json): $e');
     }
 
-    final claims =
-        await _db.collection('event_claims').where('userId', isEqualTo: uid).get();
-    for (final d in claims.docs) {
-      batch.delete(d.reference);
+    try {
+      final claims = await _db
+          .collection('event_claims')
+          .where('userId', isEqualTo: uid)
+          .get();
+      for (final d in claims.docs) {
+        batch.delete(d.reference);
+      }
+    } catch (e) {
+      debugPrint('event_claims purge failed: $e');
     }
 
     await batch.commit();
@@ -293,7 +328,19 @@ class FirebaseUserRepository implements UserRepository {
       displayName: displayName,
       email: email,
       avatarUrl: avatar,
+      isAdmin: await _isAdmin(user.uid),
     );
+  }
+
+  /// Whether [uid] is listed in the `admins/{uid}` collection.
+  /// Best-effort: any failure resolves to `false`.
+  Future<bool> _isAdmin(String uid) async {
+    try {
+      final snap = await _db.collection('admins').doc(uid).get();
+      return snap.exists;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Creates `users/{uid}` on first sign-in; refreshes it afterwards.

@@ -2,13 +2,16 @@ import 'package:app_links/app_links.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'firebase_options.dart';
+import 'l10n/app_localizations.dart';
 import 'providers/auth_provider.dart';
 import 'providers/subscription_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/locale_provider.dart';
 import 'providers/notification_provider.dart';
 import 'repositories/firebase_event_repository.dart';
 import 'repositories/firebase_rsvp_repository.dart';
@@ -16,6 +19,7 @@ import 'repositories/firebase_user_event_repository.dart';
 import 'repositories/firebase_user_repository.dart';
 import 'repositories/follow_repository.dart';
 import 'repositories/mock_user_repository.dart';
+import 'repositories/moderation_repository.dart';
 import 'repositories/onboarding_repository.dart';
 import 'repositories/event_claim_repository.dart';
 import 'repositories/founding_member_repository.dart';
@@ -102,6 +106,7 @@ void main() async {
     userEventRepository: backend.userEvents,
     claimRepository: backend.claims,
     foundingRepository: backend.founding,
+    moderationRepository: backend.moderation,
     revenueCatService: revenueCatService,
     notificationService: notificationService,
     permissionService: permissionService,
@@ -116,6 +121,7 @@ class _AppBackend {
   final UserEventRepository userEvents;
   final EventClaimRepository claims;
   final FoundingMemberRepository founding;
+  final ModerationRepository moderation;
   const _AppBackend({
     required this.users,
     required this.events,
@@ -123,7 +129,22 @@ class _AppBackend {
     required this.userEvents,
     required this.claims,
     required this.founding,
+    required this.moderation,
   });
+}
+
+/// Resolves the active app locale: the user's manual choice when set,
+/// otherwise any Spanish device locale → `es`, everything else → `en`.
+Locale _resolveLocale(Locale? manual, Locale? device) {
+  if (manual != null) return manual;
+  if (device != null && device.languageCode == 'es') return const Locale('es');
+  return const Locale('en');
+}
+
+/// Effective locale for non-widget code (e.g. SubscriptionProvider labels).
+Locale _effectiveLocale(LocaleProvider provider) {
+  final device = WidgetsBinding.instance.platformDispatcher.locale;
+  return _resolveLocale(provider.locale, device);
 }
 
 /// Initializes Firebase and returns real repos, in-memory mocks (debug only),
@@ -143,6 +164,7 @@ Future<_AppBackend?> _createBackend() async {
       userEvents: FirebaseUserEventRepository(),
       claims: FirebaseEventClaimRepository(),
       founding: FirebaseFoundingMemberRepository(),
+      moderation: FirebaseModerationRepository(),
     );
   } catch (e) {
     debugPrint('Firebase unavailable ($e).');
@@ -158,6 +180,7 @@ Future<_AppBackend?> _createBackend() async {
       userEvents: UserEventRepository(),
       claims: MockEventClaimRepository(),
       founding: MockFoundingMemberRepository(),
+      moderation: MockModerationRepository(),
     );
   }
 }
@@ -208,6 +231,7 @@ class SpotVibeApp extends StatefulWidget {
   final UserEventRepository userEventRepository;
   final EventClaimRepository claimRepository;
   final FoundingMemberRepository foundingRepository;
+  final ModerationRepository moderationRepository;
   final RevenueCatService revenueCatService;
   final NotificationService notificationService;
   final PermissionService permissionService;
@@ -221,6 +245,7 @@ class SpotVibeApp extends StatefulWidget {
     required this.userEventRepository,
     required this.claimRepository,
     required this.foundingRepository,
+    required this.moderationRepository,
     required this.revenueCatService,
     required this.notificationService,
     required this.permissionService,
@@ -264,6 +289,7 @@ class _SpotVibeAppState extends State<SpotVibeApp> {
         Provider<UserEventRepository>(create: (_) => widget.userEventRepository),
         Provider<EventClaimRepository>(create: (_) => widget.claimRepository),
         Provider<FoundingMemberRepository>(create: (_) => widget.foundingRepository),
+        Provider<ModerationRepository>(create: (_) => widget.moderationRepository),
         Provider(
           create: (ctx) => EventAnalyticsService(
             repository: ctx.read<UserEventRepository>(),
@@ -292,6 +318,7 @@ class _SpotVibeAppState extends State<SpotVibeApp> {
         Provider(create: (_) => widget.notificationService),
         Provider(create: (_) => widget.permissionService),
         ChangeNotifierProvider(create: (_) => ThemeProvider()..loadTheme()),
+        ChangeNotifierProvider(create: (_) => LocaleProvider()..load()),
         ChangeNotifierProvider(
           create: (ctx) => AuthProvider(
             service: AuthService(repository: ctx.read<UserRepository>()),
@@ -299,21 +326,39 @@ class _SpotVibeAppState extends State<SpotVibeApp> {
           )..restoreSession(),
         ),
         ChangeNotifierProvider(
-          create: (ctx) => SubscriptionProvider(
-            service: ctx.read<RevenueCatService>(),
-            founding: ctx.read<FoundingMemberRepository>(),
-            currentUserId: () => ctx.read<AuthProvider>().user?.id,
-          )..initialize(),
+          create: (ctx) {
+            final sub = SubscriptionProvider(
+              service: ctx.read<RevenueCatService>(),
+              founding: ctx.read<FoundingMemberRepository>(),
+              currentUserId: () => ctx.read<AuthProvider>().user?.id,
+            );
+            // Keep the subscription labels in the active language.
+            final localeProvider = ctx.read<LocaleProvider>();
+            sub.setLocale(_effectiveLocale(localeProvider));
+            localeProvider.addListener(() {
+              sub.setLocale(_effectiveLocale(localeProvider));
+            });
+            sub.initialize();
+            return sub;
+          },
         ),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
+          final localeProvider = context.watch<LocaleProvider>();
           return MaterialApp.router(
             title: 'SpotVibe',
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
             routerConfig: _router,
+            locale: localeProvider.locale,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localeResolutionCallback: (deviceLocale, supportedLocales) {
+              return _resolveLocale(localeProvider.locale, deviceLocale);
+            },
+            onGenerateTitle: (ctx) => AppLocalizations.of(ctx)!.appTitle,
           );
         },
       ),

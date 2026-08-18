@@ -23,6 +23,12 @@ abstract class RsvpRepository {
     required bool isPrivate,
   });
   Future<void> removeRsvp({required String eventId, required String userId});
+
+  /// Removes a comment (admins/moderators, and comment authors).
+  Future<void> deleteComment({
+    required String eventId,
+    required String commentId,
+  });
 }
 
 class MockRsvpRepository implements RsvpRepository {
@@ -86,5 +92,13 @@ class MockRsvpRepository implements RsvpRepository {
   @override
   Future<void> removeRsvp({required String eventId, required String userId}) async {
     _rsvps[eventId]?.removeWhere((r) => r.userId == userId);
+  }
+
+  @override
+  Future<void> deleteComment({
+    required String eventId,
+    required String commentId,
+  }) async {
+    _comments[eventId]?.removeWhere((c) => c.id == commentId);
   }
 }

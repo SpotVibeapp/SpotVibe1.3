@@ -1,23 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../l10n/app_localizations.dart';
 import '../../providers/rsvp_provider.dart';
 import '../../theme/theme.dart';
 import '../common/app_avatar.dart';
+import '../common/section_title.dart';
 
 class AttendeesSection extends StatelessWidget {
-  const AttendeesSection({super.key});
+  /// Accent color for the section header bar (usually the event's category
+  /// color). Defaults to the brand violet when not supplied.
+  final Color accent;
+
+  const AttendeesSection({super.key, this.accent = AppTheme.brandViolet});
 
   @override
   Widget build(BuildContext context) {
     final rsvp = context.watch<RsvpProvider>();
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     if (rsvp.totalRsvpCount == 0) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Who\'s going', style: text.titleMedium),
+          SectionTitle(title: l10n.whosGoing, accent: accent),
           const SizedBox(height: AppTheme.spacingSm),
           Container(
             width: double.infinity,
@@ -33,12 +40,12 @@ class AttendeesSection extends StatelessWidget {
                     size: AppTheme.iconLg, color: colors.onSurfaceVariant),
                 const SizedBox(height: AppTheme.spacingSm),
                 Text(
-                  'No one has RSVP\'d yet',
+                  l10n.noRsvpsYet,
                   style: text.titleSmall,
                 ),
                 const SizedBox(height: AppTheme.spacingXs),
                 Text(
-                  'Be the first to say you\'re going.',
+                  l10n.beFirstToGo,
                   style: text.bodySmall?.copyWith(color: colors.onSurfaceVariant),
                   textAlign: TextAlign.center,
                 ),
@@ -55,7 +62,7 @@ class AttendeesSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Who\'s going', style: text.titleMedium),
+        SectionTitle(title: l10n.whosGoing, accent: accent),
         const SizedBox(height: AppTheme.spacingSm),
         _SocialProofHeader(
           publicList: publicList,
@@ -65,7 +72,7 @@ class AttendeesSection extends StatelessWidget {
         // Full grid below
         if (publicList.isEmpty)
           Text(
-            'Attendees are keeping their RSVPs private.',
+            l10n.attendeesPrivate,
             style: text.bodySmall?.copyWith(color: colors.onSurfaceVariant),
           )
         else ...[
@@ -101,6 +108,7 @@ class _SocialProofHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
     final stackList = publicList.take(5).toList();
     final extraCount = totalCount - stackList.length;
     // Width of the entire stack: first avatar full width + each additional shifted left by _overlap
@@ -170,11 +178,11 @@ class _SocialProofHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '$totalCount ${totalCount == 1 ? 'person is' : 'people are'} going',
+                l10n.peopleGoing(totalCount),
                 style: text.titleSmall?.copyWith(color: colors.onSurface),
               ),
               Text(
-                'Be part of the experience',
+                l10n.bePartOfExperience,
                 style: text.labelSmall?.copyWith(color: colors.onSurfaceVariant),
               ),
             ],
@@ -244,7 +252,7 @@ class _PrivateCountTile extends StatelessWidget {
           ),
           const SizedBox(height: AppTheme.spacingXs),
           Text(
-            '+$count private',
+            AppLocalizations.of(context)!.privateCount(count),
             style: text.labelSmall?.copyWith(color: colors.onSurfaceVariant),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

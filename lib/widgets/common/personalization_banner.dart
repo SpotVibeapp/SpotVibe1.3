@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/theme.dart';
 
 /// Subtle animated banner shown above the event feed when personalization is
@@ -48,6 +49,7 @@ class _PersonalizationBannerState extends State<PersonalizationBanner>
   void _showExplanation(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     showModalBottomSheet(
       context: context,
@@ -67,22 +69,20 @@ class _PersonalizationBannerState extends State<PersonalizationBanner>
                 Icon(Icons.auto_awesome_rounded,
                     color: colors.primary, size: AppTheme.iconMd),
                 const SizedBox(width: AppTheme.spacingSm),
-                Text('Why am I seeing this?',
+                Text(l10n.whyAmISeeing,
                     style: text.titleMedium
                         ?.copyWith(fontWeight: FontWeight.w700)),
               ],
             ),
             const SizedBox(height: AppTheme.spacingMd),
             Text(
-              'SpotVibe learns from how you interact with events — what you view, '
-              'save, and RSVP to. Over time, the feed re-orders to show more of '
-              'what you enjoy.',
+              l10n.personalizationBody,
               style: text.bodyMedium
                   ?.copyWith(color: colors.onSurfaceVariant),
             ),
             if (widget.topCategories.isNotEmpty) ...[
               const SizedBox(height: AppTheme.spacingMd),
-              Text('Your top interests right now:',
+              Text(l10n.topInterests,
                   style: text.labelLarge
                       ?.copyWith(color: colors.onSurface)),
               const SizedBox(height: AppTheme.spacingSm),
@@ -109,7 +109,7 @@ class _PersonalizationBannerState extends State<PersonalizationBanner>
                     widget.onReset!();
                   },
                   icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('Reset my preferences'),
+                  label: Text(l10n.resetMyPreferences),
                 ),
               ),
             const SizedBox(height: AppTheme.spacingSm),
@@ -117,7 +117,7 @@ class _PersonalizationBannerState extends State<PersonalizationBanner>
               width: double.infinity,
               child: TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Got it'),
+                child: Text(l10n.gotIt),
               ),
             ),
           ],
@@ -130,6 +130,7 @@ class _PersonalizationBannerState extends State<PersonalizationBanner>
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
     final cats = widget.topCategories;
 
     return SlideTransition(
@@ -164,7 +165,7 @@ class _PersonalizationBannerState extends State<PersonalizationBanner>
                 Expanded(
                   child: cats.isEmpty
                       ? Text(
-                          'Personalizing your feed…',
+                          l10n.personalizingFeed,
                           style: text.bodySmall
                               ?.copyWith(color: colors.onSurfaceVariant),
                         )
@@ -173,7 +174,7 @@ class _PersonalizationBannerState extends State<PersonalizationBanner>
                             style: text.bodySmall
                                 ?.copyWith(color: colors.onSurfaceVariant),
                             children: [
-                              const TextSpan(text: 'Showing more '),
+                              TextSpan(text: l10n.showingMore),
                               TextSpan(
                                 text: cats.take(2).join(' & '),
                                 style: TextStyle(
@@ -181,7 +182,7 @@ class _PersonalizationBannerState extends State<PersonalizationBanner>
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              const TextSpan(text: ' for you'),
+                              TextSpan(text: l10n.forYou),
                             ],
                           ),
                         ),

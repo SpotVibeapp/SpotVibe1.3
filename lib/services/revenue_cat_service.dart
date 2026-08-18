@@ -30,6 +30,12 @@ class RevenueCatService {
         : _kRevenueCatAppleKey;
     if (apiKey.isEmpty) return; // Keys not supplied yet — local trial fallback.
     try {
+      await Purchases.setLogLevel(LogLevel.error);
+      final configuration = PurchasesConfiguration(apiKey);
+      await Purchases.configure(configuration);
+      _initialized = true;
+    } catch (_) {}
+  }
 
   /// Log in a known user so their purchases are associated with their account.
   Future<void> logIn(String userId) async {

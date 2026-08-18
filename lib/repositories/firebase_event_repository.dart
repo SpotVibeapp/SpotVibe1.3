@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../data/el_paso_events.dart';
 import '../data/event_codec.dart';
 import '../models/event.dart';
+import '../services/ban_service.dart';
 import 'event_repository.dart';
 
 /// Firestore-backed [EventRepository].
@@ -93,7 +94,12 @@ class FirebaseEventRepository implements EventRepository {
     return _guard(() async {
       await ensureSeeded();
       final snap = await _events.limit(400).get();
+      final banned = await BanService.bannedIds(_db);
       var events = snap.docs
+          .where((d) {
+            final cid = d.data()['creatorId'] as String?;
+            return cid == null || !banned.contains(cid);
+          })
           .map((doc) => eventFromMap(doc.id, doc.data()))
           .toList();
       if (events.isEmpty) {
@@ -111,6 +117,11 @@ class FirebaseEventRepository implements EventRepository {
       final doc = await _events.doc(id).get();
       if (!doc.exists || doc.data() == null) {
         return _fallback.getEventById(id);
+      }
+      final banned = await BanService.bannedIds(_db);
+      final creatorId = doc.data()!['creatorId'] as String?;
+      if (creatorId != null && banned.contains(creatorId)) {
+        return null; // hidden from banned users' content
       }
       final overlaid = await _overlaySaves([eventFromMap(doc.id, doc.data()!)]);
       return overlaid.first;
@@ -133,7 +144,12 @@ class FirebaseEventRepository implements EventRepository {
         // cityKey index may be missing — filter client-side.
         snap = await _events.limit(400).get();
       }
+      final banned = await BanService.bannedIds(_db);
       var events = snap.docs
+          .where((d) {
+            final cid = d.data()['creatorId'] as String?;
+            return cid == null || !banned.contains(cid);
+          })
           .map((doc) => eventFromMap(doc.id, doc.data()))
           .where((e) => e.city.toLowerCase() == key)
           .toList();

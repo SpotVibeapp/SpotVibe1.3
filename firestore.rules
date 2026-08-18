@@ -32,6 +32,19 @@ service cloud.firestore {
     function isOwner(uid) {
       return isSignedIn() && request.auth.uid == uid;
     }
+    // Admins are listed in the `admins/{uid}` collection (created via the
+    // Firebase console or the `promoteAdmin` Cloud Function — never by clients).
+    function isAdmin() {
+      return isSignedIn()
+             && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // ── Admin roster (read by the admin themself; write only via console /
+    //    Admin SDK / Cloud Functions) ──────────────────────────────────────
+    match /admins/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
 
     // ── User profiles ─────────────────────────────────────────────────────
     match /users/{uid} {
@@ -46,6 +59,13 @@ service cloud.firestore {
       match /saved_events/{eventId} {
         allow read, write: if isOwner(uid);
       }
+    }
+
+    // ── Bans (doc ids = banned UIDs; readable by all so clients can hide
+    //    banned users' content; written only by admins) ────────────────────
+    match /bans/{uid} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // ── Blocks ────────────────────────────────────────────────────────────
@@ -75,12 +95,13 @@ service cloud.firestore {
                             'analyticsClicks'
                           ])
                     );
-      allow delete: if isSignedIn()
-                    && resource.data.creatorId == request.auth.uid;
+      allow delete: if isAdmin()
+                    || (isSignedIn()
+                        && resource.data.creatorId == request.auth.uid);
 
       match /rsvps/{userId} {
         allow read: if true;
-        allow create, update, delete: if isOwner(userId);
+        allow create, update, delete: if isOwner(userId) || isAdmin();
       }
 
       match /comments/{commentId} {
@@ -89,8 +110,9 @@ service cloud.firestore {
                       && request.resource.data.authorId == request.auth.uid
                       && request.resource.data.text is string
                       && request.resource.data.text.size() <= 2000;
-        allow update, delete: if isSignedIn()
-                              && resource.data.authorId == request.auth.uid;
+        allow update, delete: if isAdmin()
+                              || (isSignedIn()
+                                  && resource.data.authorId == request.auth.uid);
       }
     }
 
@@ -112,8 +134,9 @@ service cloud.firestore {
                             'interestedCount'
                           ])
                     );
-      allow delete: if isSignedIn()
-                    && resource.data.creatorId == request.auth.uid;
+      allow delete: if isAdmin()
+                    || (isSignedIn()
+                        && resource.data.creatorId == request.auth.uid);
     }
 
     // ── Founding member roster (counter only — no other meta writes) ──────
@@ -135,29 +158,33 @@ service cloud.firestore {
 
     // ── Venue claims ──────────────────────────────────────────────────────
     match /event_claims/{claimId} {
-      allow read: if isSignedIn()
-                  && resource.data.userId == request.auth.uid;
+      allow read: if isAdmin()
+                  || (isSignedIn()
+                      && resource.data.userId == request.auth.uid);
       allow create: if isSignedIn()
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.eventId is string
                     && request.resource.data.email is string
                     && request.resource.data.statement is string
                     && request.resource.data.statement.size() <= 2000;
-      allow update: if isSignedIn()
-                    && resource.data.userId == request.auth.uid
-                    && request.resource.data.diff(resource.data).affectedKeys()
-                        .hasOnly(['unlocked']);
-      allow delete: if isSignedIn()
-                    && resource.data.userId == request.auth.uid;
+      allow update: if isAdmin()
+                    || (isSignedIn()
+                        && resource.data.userId == request.auth.uid
+                        && request.resource.data.diff(resource.data).affectedKeys()
+                            .hasOnly(['unlocked']));
+      allow delete: if isAdmin()
+                    || (isSignedIn()
+                        && resource.data.userId == request.auth.uid);
     }
 
-    // ── User reports (write-only from clients; read by staff) ────────────
+    // ── User reports (write-only from clients; read/resolve by admins) ───
     match /user_reports/{reportId} {
       allow create: if isSignedIn()
                     && request.resource.data.reportedUserId is string
                     && request.resource.data.reason is string
                     && request.resource.data.reason.size() <= 1000;
-      allow read, update, delete: if false;
+      allow read, delete: if isAdmin();
+      allow update: if false;
     }
 
     // ── Deny everything else ──────────────────────────────────────────────

@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/event_time.dart';
+import '../../theme/category_colors.dart';
 import '../../theme/theme.dart';
 import '../common/event_image_placeholder.dart';
 
@@ -317,7 +318,7 @@ class _StoryCardContent extends StatelessWidget {
             ),
           ),
 
-          // ── top: SpotVibe brand watermark ──────────────────────────────
+          // ── top: SpotVibe brand watermark + category chip ──────────────
           Positioned(
             top: AppTheme.spacingMd,
             left: AppTheme.spacingMd,
@@ -330,8 +331,15 @@ class _StoryCardContent extends StatelessWidget {
                     vertical: AppTheme.spacingXs,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6C5CE7),
+                    gradient: AppTheme.brandGradient,
                     borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.brandViolet.withValues(alpha: 0.45),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
                   child: const Text(
                     'SpotVibe',
@@ -340,6 +348,26 @@ class _StoryCardContent extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                       fontSize: 11,
                       letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppTheme.spacingSm,
+                    vertical: AppTheme.spacingXs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: categoryAccent(category).withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                  ),
+                  child: Text(
+                    category.toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.0,
                     ),
                   ),
                 ),

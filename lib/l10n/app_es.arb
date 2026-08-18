@@ -1,0 +1,729 @@
+{
+  "@@locale": "es",
+  "appTitle": "SpotVibe",
+  "continueBtn": "Continuar",
+  "skipForNow": "Omitir por ahora",
+  "cancel": "Cancelar",
+  "delete": "Eliminar",
+  "allow": "Permitir",
+  "allowed": "Permitido",
+  "denied": "Denegado",
+  "close": "Cerrar",
+  "optional": "Opcional",
+  "fullNameLabel": "Nombre completo",
+  "emailLabel": "Correo electrónico",
+  "passwordLabel": "Contraseña",
+  "createAccount": "Crear cuenta",
+  "signIn": "Iniciar sesión",
+  "forgotPassword": "¿Olvidaste tu contraseña?",
+  "passwordResetBackend": "Restablecer la contraseña requiere una integración con el servidor.",
+  "emailRequired": "El correo es obligatorio",
+  "validEmail": "Ingresa un correo electrónico válido",
+  "passwordRequired": "La contraseña es obligatoria",
+  "passwordMinChars": "La contraseña debe tener al menos 6 caracteres",
+  "fullNameRequired": "El nombre completo es obligatorio",
+  "alreadyHaveAccount": "¿Ya tienes una cuenta? Inicia sesión",
+  "noAccountCreate": "¿No tienes una cuenta? Crea una",
+  "orContinueWithEmail": "o continúa con tu correo",
+  "continueAsGuest": "Continuar como invitado",
+  "agreeToTermsPrefix": "Al continuar aceptas nuestros ",
+  "termsOfUse": "Términos de uso",
+  "privacyPolicy": "Política de privacidad",
+  "google": "Google",
+  "facebook": "Facebook",
+  "apple": "Apple",
+  "discoverTitle": "Descubre eventos\ncerca de ti",
+  "discoverBody": "SpotVibe te muestra los mejores eventos locales: conciertos, festivales gastronómicos, reuniones comunitarias y más, personalizados según lo que te gusta.",
+  "nearYou": "Cerca de ti",
+  "personalised": "Personalizado",
+  "social": "Social",
+  "reminders": "Recordatorios",
+  "quickPermsTitle": "Un par de\npermisos rápidos",
+  "quickPermsBody": "Concederlos hace que SpotVibe sea mucho más útil. Puedes cambiarlos cuando quieras en Configuración.",
+  "location": "Ubicación",
+  "locationDesc": "Encuentra eventos cerca de ti. Solo se usa mientras la app está abierta; nunca en segundo plano.",
+  "notifications": "Notificaciones",
+  "notifDesc": "Recibe alertas de eventos que te interesan, recordatorios de RSVP y novedades sociales.",
+  "whatAreYouInto": "¿Qué te gusta?",
+  "pickInterestsBody": "Elige tus intereses y te mostraremos eventos que de verdad te importan.",
+  "selectAtLeastOne": "Selecciona al menos uno para personalizar tu feed.",
+  "allSetTitle": "¡Todo listo! 🎉",
+  "allSetBody": "Tu feed de eventos personalizado está listo.\nToca Explorar para ver qué está pasando cerca de ti.",
+  "browseNearYou": "Explora eventos cerca de ti",
+  "filterByDatePrice": "Filtra por fecha, precio y categoría",
+  "seeWhosGoing": "Mira quién más va a ir",
+  "exploreSpotVibe": "Explorar SpotVibe",
+  "interestMusic": "Música",
+  "interestSports": "Deportes",
+  "interestFoodDrink": "Comida y bebida",
+  "interestArts": "Arte",
+  "interestNightlife": "Vida nocturna",
+  "interestComedy": "Comedia",
+  "interestCommunity": "Comunidad",
+  "interestTech": "Tecnología",
+  "interestFitness": "Fitness",
+  "interestFamily": "Familia",
+  "interestOutdoor": "Aire libre",
+  "interestFilm": "Cine",
+  "setupTitle": "Configuremos SpotVibe",
+  "setupBody": "Un par de permisos rápidos hacen la experiencia\nmucho mejor.",
+  "locationCardDesc": "Encuentra eventos cerca de ti. SpotVibe usa tu ubicación solo mientras la app está abierta; nunca en segundo plano.",
+  "notifCardDesc": "Recibe alertas de nuevos eventos cerca de ti, mensajes de amigos y novedades de los eventos a los que asistirás.",
+  "changeSettingsAnytime": "Puedes cambiar estos ajustes cuando quieras en la app de Configuración de tu dispositivo.",
+  "profile": "Perfil",
+  "browsingAsGuest": "Navegando como invitado",
+  "guestPrompt": "Crea una cuenta para confirmar asistencia, dejar comentarios, crear eventos y conectar con otros.",
+  "signInOrCreate": "Iniciar sesión o crear cuenta",
+  "notificationsSettings": "Notificaciones",
+  "darkMode": "Modo oscuro",
+  "map": "Mapa",
+  "myEvents": "Mis eventos",
+  "savedEvents": "Eventos guardados",
+  "signOut": "Cerrar sesión",
+  "deleteAccount": "Eliminar cuenta",
+  "language": "Idioma",
+  "languageSystemDefault": "Predeterminado del sistema",
+  "english": "English",
+  "spanish": "Español (México)",
+  "deleteAccountTitle": "¿Eliminar cuenta?",
+  "deleteAccountBody": "Esto elimina permanentemente tu cuenta, perfil, eventos, confirmaciones y comentarios. No se puede deshacer.",
+  "passwordEmailAccounts": "Contraseña (cuentas de correo)",
+  "accountDeletedMsg": "Tu cuenta y tus datos han sido eliminados.",
+  "forPromoters": "Para promotores, venues y organizadores",
+  "thenPrice": "después {price}",
+  "@thenPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "foundingLock": "Los venues fundadores aseguran {price}: quedan {remaining} de {limit}",
+  "@foundingLock": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      },
+      "remaining": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "freeTier": "Gratis — $0",
+  "premiumTier": "Premium — {price}",
+  "@premiumTier": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "everythingPlus": "Todo lo de Gratis, más las herramientas a continuación.",
+  "welcomePremium": "Bienvenido a SpotVibe Premium.",
+  "restorePurchases": "Restaurar compras",
+  "noSubscriptionFound": "No se encontró ninguna suscripción para restaurar.",
+  "bySubscribingPrefix": "Al suscribirte aceptas nuestros ",
+  "youAreOnPremium": "Tienes Premium",
+  "premiumUnlockedBody": "Eventos recurrentes, analíticas, marca y reclamaciones verificadas están desbloqueados.",
+  "freePerk1": "Publica hasta 2 eventos únicos próximos a la vez",
+  "freePerk2": "Página de evento básica: título, descripción, foto, ubicación y hora",
+  "freePerk3": "Tu evento aparece en el feed público",
+  "premiumPerk1Title": "Eventos recurrentes",
+  "premiumPerk1Subtitle": "Publica una vez y repite semanal o mensualmente",
+  "premiumPerk2Title": "Posicionamiento destacado",
+  "premiumPerk2Subtitle": "Arriba del feed de la categoría 1 vez por semana",
+  "premiumPerk3Title": "Panel de analíticas",
+  "premiumPerk3Subtitle": "Vistas, guardados y clics en vivo",
+  "premiumPerk4Title": "Marca personalizada",
+  "premiumPerk4Subtitle": "Logo y colores de marca en la página de tu evento",
+  "premiumPerk5Title": "Botón de contacto",
+  "premiumPerk5Subtitle": "Teléfono, sitio web y enlaces sociales",
+  "premiumPerk6Title": "Sin anuncios",
+  "premiumPerk6Subtitle": "Páginas de evento limpias y sin anuncios",
+  "premiumPerk7Title": "Reclama eventos existentes",
+  "premiumPerk7Subtitle": "Verifica primero. Tu primer reclamo es gratis",
+  "trialLabel": "prueba gratuita de 7 días",
+  "startFreeTrial": "Comienza tu prueba gratuita de 7 días",
+  "perMonth": "{price}/mes",
+  "@perMonth": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "afterTrial": "después de una {trial}",
+  "@afterTrial": {
+    "placeholders": {
+      "trial": {
+        "type": "String"
+      }
+    }
+  },
+  "billingFoundingOpen": "{trial}, después {price} con precio asegurado para venues fundadores · quedan {remaining} de {limit} · cancela cuando quieras",
+  "@billingFoundingOpen": {
+    "placeholders": {
+      "trial": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      },
+      "remaining": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "billingFoundingLocked": "Precio fundador asegurado en {price} · cobro mensual · cancela cuando quieras",
+  "@billingFoundingLocked": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "billingStandard": "{trial}, después {price} · cobro mensual · cancela cuando quieras",
+  "@billingStandard": {
+    "placeholders": {
+      "trial": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "purchaseFailed": "La compra falló. Inténtalo de nuevo.",
+  "noActiveSubscription": "No se encontró una suscripción activa para restaurar.",
+  "restoreFailed": "La restauración falló. Inténtalo de nuevo.",
+  "filtersTooltip": "Filtros",
+  "couldNotGetLocation": "No pudimos obtener tu ubicación. Permite el acceso a la ubicación.",
+  "showingEventsIn": "Mostrando eventos en \"{area}\"",
+  "@showingEventsIn": {
+    "placeholders": {
+      "area": {
+        "type": "String"
+      }
+    }
+  },
+  "clear": "Limpiar",
+  "searchResults": "{count, plural, =1{1 resultado para \"{query}\"} other{{count} resultados para \"{query}\"}}",
+  "@searchResults": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "nearestFirst": "Más cercanos primero",
+  "byDate": "Por fecha",
+  "errorTitle": "No se pudieron cargar los eventos",
+  "errorSubtitle": "Revisa tu conexión e inténtalo de nuevo. Tus eventos guardados siguen disponibles.",
+  "tryAgain": "Reintentar",
+  "viewSavedEvents": "Ver eventos guardados",
+  "noMatchesTitle": "No hay resultados con estos filtros",
+  "noMatchesSubtitle": "Intenta ampliar tu búsqueda: ajusta los filtros de fecha, precio o categoría para ver más eventos.",
+  "clearFilters": "Limpiar filtros",
+  "noEventsNear": "No hay eventos cerca de \"{area}\"",
+  "@noEventsNear": {
+    "placeholders": {
+      "area": {
+        "type": "String"
+      }
+    }
+  },
+  "noEventsNearSubtitle": "Prueba con otra ciudad o código postal, o aumenta el radio de búsqueda en las opciones de filtro.",
+  "increaseRadius": "Aumentar radio",
+  "clearLocation": "Quitar ubicación",
+  "locationNeededTitle": "Se necesita ubicación",
+  "locationNeededSubtitle": "Activa la ubicación para que SpotVibe encuentre eventos cerca de ti ahora mismo.",
+  "enableLocation": "Activar ubicación",
+  "browseAllEvents": "Ver todos los eventos",
+  "noEventsFoundTitle": "No se encontraron eventos cerca",
+  "noEventsFoundSubtitle": "Prueba aumentar el radio de búsqueda o vuelve más tarde: se agregan eventos nuevos todos los días.",
+  "shareEventTooltip": "Compartir evento",
+  "featuredThisWeek": "DESTACADO ESTA SEMANA",
+  "tickets": "Boletos",
+  "aboutThisEvent": "Acerca de este evento",
+  "organizer": "Organizador",
+  "bookmarkedCountLabel": "{count, plural, =1{1 Guardado} other{{count} Guardados}}",
+  "@bookmarkedCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "interestedCountLabel": "{count, plural, =1{1 Interesado} other{{count} Interesados}}",
+  "@interestedCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "followingName": "Siguiendo a {name}",
+  "@followingName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "unfollowedName": "Dejaste de seguir a {name}",
+  "@unfollowedName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "userBlocked": "Usuario bloqueado",
+  "reportUser": "Reportar usuario",
+  "reasonForReporting": "Motivo del reporte...",
+  "reportSubmitted": "Reporte enviado",
+  "submit": "Enviar",
+  "freePlanLimit": "Límite del plan gratis",
+  "freePlanLimitBody": "Las cuentas gratis pueden tener 2 eventos únicos próximos a la vez. Comienza una {trial} para eventos ilimitados y recurrentes.",
+  "@freePlanLimitBody": {
+    "placeholders": {
+      "trial": {
+        "type": "String"
+      }
+    }
+  },
+  "notNow": "Ahora no",
+  "goPremium": "Ir a Premium",
+  "policyViolation": "Violación de la política de {category}: {reason}",
+  "@policyViolation": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "contentWarning": "Advertencia de {category}: {reason} Tu evento se enviará de todos modos.",
+  "@contentWarning": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "content": "Contenido",
+  "eventUpdated": "¡Evento actualizado!",
+  "eventCreated": "¡Evento creado!",
+  "editEvent": "Editar evento",
+  "createEvent": "Crear evento",
+  "save": "Guardar",
+  "publish": "Publicar",
+  "eventPublishing": "Publicación del evento",
+  "eventDetails": "Detalles del evento",
+  "eventTitle": "Título del evento",
+  "eventTitleHint": "p. ej. Mercado Nocturno de Verano",
+  "titleRequired": "El título es obligatorio",
+  "description": "Descripción",
+  "descriptionHint": "Cuéntale a la gente de qué trata tu evento...",
+  "descriptionRequired": "La descripción es obligatoria",
+  "dateAndTime": "Fecha y hora",
+  "date": "Fecha",
+  "time": "Hora",
+  "locationSection": "Ubicación",
+  "venueName": "Nombre del venue",
+  "venueNameHint": "p. ej. Parque Riverside",
+  "venueNameRequired": "El nombre del venue es obligatorio",
+  "streetAddress": "Dirección",
+  "streetAddressHint": "Calle Principal 123",
+  "city": "Ciudad",
+  "cityHint": "El Paso",
+  "state": "Estado",
+  "stateHint": "TX",
+  "zip": "C.P.",
+  "zipHint": "79901",
+  "mapLinkOptional": "Enlace de mapa (opcional)",
+  "extras": "Extras",
+  "ticketPriceLabel": "Precio del boleto (deja en blanco si es gratis)",
+  "enterValidPrice": "Ingresa un precio válido",
+  "eventImageUrl": "URL de la imagen del evento (opcional)",
+  "eventVideoUrl": "URL del video del evento (opcional)",
+  "chatLink": "Enlace de chat comunitario (opcional)",
+  "saveChanges": "Guardar cambios",
+  "publishPremium": "Publicar evento — Premium",
+  "publishFree": "Publicar evento — Gratis",
+  "premium": "Premium",
+  "premiumFeaturesSubtitle": "Eventos recurrentes · analíticas · marca personalizada · botón de contacto",
+  "premiumFeaturesUnlocked": "Funciones Premium desbloqueadas",
+  "recurringSchedule": "Calendario recurrente",
+  "contactInfo": "Información de contacto",
+  "phoneOptional": "Teléfono (opcional)",
+  "websiteOptional": "Sitio web (opcional)",
+  "socialHandleOptional": "Red social (opcional)",
+  "customBranding": "Marca personalizada",
+  "brandAccentColor": "Color de acento de marca",
+  "brandLogoUrl": "URL del logo de marca (opcional)",
+  "oneTime": "Único",
+  "weekly": "Semanal",
+  "monthly": "Mensual",
+  "category": "Categoría",
+  "premiumUnlimited": "Premium — eventos ilimitados",
+  "premiumIncludes": "Incluye eventos recurrentes, analíticas, marca y reclamaciones.",
+  "freePlan": "Plan gratis",
+  "freePlanBody": "Un evento único próximo a la vez. Página básica (título, descripción, foto, ubicación y hora) en el feed público.",
+  "upgradeToPremium": "Mejora a Premium — {price}",
+  "@upgradeToPremium": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "searchHint": "Busca eventos, artistas, venues...",
+  "areaHint": "Código postal, ciudad o estado...",
+  "usingYourLocation": "Usando tu ubicación",
+  "useMyLocation": "Usar mi ubicación",
+  "featured": "DESTACADO",
+  "byOrganizer": "por {name}",
+  "@byOrganizer": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "underTenthMi": "<0.1 millas",
+  "miShort": "{value} millas",
+  "@miShort": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotOpenTickets": "No se pudieron abrir los boletos.",
+  "getTicketsOnTm": "Consigue boletos en Ticketmaster",
+  "getTickets": "Conseguir boletos",
+  "logInToRsvp": "Inicia sesión para confirmar",
+  "rsvpToThisEvent": "Confirmar asistencia a este evento",
+  "youAreAttending": "¡Vas a asistir!",
+  "privateRsvp": "RSVP privado",
+  "publicRsvp": "RSVP público",
+  "cancelRsvp": "Cancelar RSVP",
+  "rsvpSubtitle": "Haz saber a los demás que irás, o mantenlo privado.",
+  "keepPrivate": "Mantener mi RSVP privado",
+  "onlyCountVisible": "Solo se verá el número, no tu nombre.",
+  "nameWillAppear": "Tu nombre aparecerá en la lista de asistentes.",
+  "confirmRsvp": "Confirmar RSVP",
+  "claimPromo": "¿Promotor? Verifica este evento: el primer reclamo es gratis.",
+  "calendarError": "No se pudo abrir el calendario. Agrega el evento manualmente.",
+  "googleCalendarError": "No se pudo abrir Google Calendar.",
+  "addToGoogleCalendar": "Agregar a Google Calendar",
+  "addToAppleCalendar": "Agregar a Apple Calendar",
+  "sponsored": "Patrocinado",
+  "goingOutThisWeek": "¿Sales esta semana?",
+  "pageAdBody": "SpotVibe te muestra música en vivo, comida y vida nocturna cerca de ti, sin buscar por toda la ciudad.",
+  "browseEvents": "Explorar eventos",
+  "comments": "Comentarios",
+  "noCommentsYet": "Aún no hay comentarios. ¡Sé el primero!",
+  "logInToComment": "Inicia sesión para dejar un comentario",
+  "justNow": "justo ahora",
+  "minutesAgo": "hace {minutes} min",
+  "@minutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "hace {hours} h",
+  "@hoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "you": "Tú",
+  "detectedLabel": "{category} detectado",
+  "@detectedLabel": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "warningLabel": "Advertencia de {category}",
+  "@warningLabel": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewComment": "Revisa tu comentario por favor.",
+  "addCommentHint": "Agrega un comentario…",
+  "whosGoing": "Quién va",
+  "noRsvpsYet": "Nadie ha confirmado aún",
+  "beFirstToGo": "Sé el primero en decir que irás.",
+  "attendeesPrivate": "Los asistentes mantienen sus RSVP privados.",
+  "peopleGoing": "{count, plural, =1{1 persona va a asistir} other{{count} personas van a asistir}}",
+  "@peopleGoing": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bePartOfExperience": "Sé parte de la experiencia",
+  "privateCount": "+{count} privados",
+  "@privateCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mapsError": "No se pudieron abrir los mapas para este venue.",
+  "reportEvent": "Reportar evento",
+  "whatsWrong": "¿Qué está mal con este evento?",
+  "reportSubmittedThanks": "Reporte enviado. ¡Gracias!",
+  "calendar": "Calendario",
+  "directions": "Cómo llegar",
+  "share": "Compartir",
+  "story": "Historia",
+  "reportThisEvent": "Reportar este evento",
+  "practicalInfo": "Información práctica",
+  "weather": "Clima",
+  "weatherValue": "Revisa el pronóstico cerca de la fecha",
+  "parking": "Estacionamiento",
+  "parkingValue": "Estacionamiento en la calle y lotes cercanos disponibles",
+  "duration": "Duración",
+  "age": "Edad",
+  "accessible": "Accesible",
+  "accessibleValue": "Venue accesible para silla de ruedas",
+  "dur2to3": "2–3 horas",
+  "dur2to4": "2–4 horas",
+  "dur1to2": "1–2 horas",
+  "dur1to3": "1–3 horas",
+  "dur15to25": "1.5–2.5 horas",
+  "dur3to5": "3–5 horas",
+  "age21plus": "Solo 21+",
+  "age18plus": "18+",
+  "moreLikeThis": "Más como esto",
+  "seeAll": "Ver todo",
+  "whyAmISeeing": "¿Por qué veo esto?",
+  "personalizationBody": "SpotVibe aprende de cómo interactúas con los eventos: lo que ves, guardas y a lo que confirmas asistencia. Con el tiempo, el feed se reordena para mostrar más de lo que disfrutas.",
+  "topInterests": "Tus principales intereses ahora:",
+  "resetMyPreferences": "Restablecer mis preferencias",
+  "gotIt": "Entendido",
+  "personalizingFeed": "Personalizando tu feed…",
+  "showingMore": "Mostrando más ",
+  "forYou": " para ti",
+  "showingAll": "Mostrando los {total} eventos",
+  "@showingAll": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "showingRange": "Mostrando {start}–{end} de {total} eventos",
+  "@showingRange": {
+    "placeholders": {
+      "start": {
+        "type": "int"
+      },
+      "end": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "previous": "Anterior",
+  "pageXOfY": "Página {page} de {total}",
+  "@pageXOfY": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "next": "Siguiente",
+  "allDates": "Todas las fechas",
+  "today": "Hoy",
+  "tomorrow": "Mañana",
+  "thisWeekend": "Este fin de semana",
+  "thisWeek": "Esta semana",
+  "customRange": "Rango personalizado",
+  "anyPrice": "Cualquier precio",
+  "free": "Gratis",
+  "under20": "Menos de $20",
+  "under50": "Menos de $50",
+  "anyTime": "Cualquier hora",
+  "morning": "Mañana",
+  "afternoon": "Tarde",
+  "evening": "Noche (temprano)",
+  "night": "Noche",
+  "anyDate": "Cualquier fecha",
+  "anyDistance": "Cualquier distancia",
+  "filterEvents": "Filtrar eventos",
+  "clearAll": "Limpiar todo",
+  "from": "Desde",
+  "to": "Hasta",
+  "price": "Precio",
+  "timeOfDay": "Hora del día",
+  "distance": "Distancia",
+  "any": "Cualquiera",
+  "locationHint": "p. ej. Brooklyn, Manhattan...",
+  "eventSources": "Fuentes de eventos",
+  "showResults": "Ver resultados",
+  "catAll": "Todo",
+  "catMusic": "Música",
+  "catFood": "Comida",
+  "catFoodDrink": "Comida y bebida",
+  "catArts": "Arte",
+  "catSports": "Deportes",
+  "catTech": "Tecnología",
+  "catCommunity": "Comunidad",
+  "catFamily": "Familia",
+  "catWellness": "Bienestar",
+  "catSocial": "Social",
+  "catMarkets": "Mercados",
+  "catDance": "Baile",
+  "catFunGames": "Diversión y juegos",
+  "catHealth": "Salud",
+  "catOther": "Otro",
+  "catNightlife": "Vida nocturna",
+  "catComedy": "Comedia",
+  "catFitness": "Fitness",
+  "catOutdoor": "Aire libre",
+  "catFilm": "Cine",
+  "activeLabel": "Activo — {price}",
+  "@activeLabel": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "trialActiveLabel": "Prueba activa — después {price}",
+  "@trialActiveLabel": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "and": " y ",
+  "tourNext": "Siguiente",
+  "tourDone": "Listo",
+  "tourSkip": "Omitir",
+  "takeTheTour": "Hacer el recorrido",
+  "tourRestarted": "Recorrido reiniciado. Se reproducirá de nuevo en las próximas pantallas que abras.",
+  "tourHome1Title": "Bienvenido a SpotVibe",
+  "tourHome1Body": "Encuentra eventos reales cerca de ti: conciertos, comida, vida nocturna y más.",
+  "tourHome2Title": "Busca eventos",
+  "tourHome2Body": "Busca por evento, artista o venue, o por código postal, ciudad o estado.",
+  "tourHome3Title": "Filtra los resultados",
+  "tourHome3Body": "Acota los resultados por fecha, precio, hora del día, distancia y más.",
+  "tourHome4Title": "Explora categorías",
+  "tourHome4Body": "Toca una categoría para enfocar tu feed en lo que te gusta.",
+  "tourHome5Title": "Tu feed de eventos",
+  "tourHome5Body": "Desplázate para descubrir eventos. Toca una tarjeta para ver detalles, boletos y confirmar asistencia.",
+  "tourEvent1Title": "Confirma tu asistencia",
+  "tourEvent1Body": "Toca aquí para decir que asistirás, en público o en privado: tú decides.",
+  "tourEvent2Title": "Guarda y sigue",
+  "tourEvent2Body": "Guarda eventos o marca los que te interesan.",
+  "tourEvent3Title": "Comparte",
+  "tourEvent3Body": "Envía el evento a tus amigos como enlace o tarjeta para compartir.",
+  "tourProfile1Title": "SpotVibe Premium",
+  "tourProfile1Body": "Desbloquea eventos recurrentes, analíticas y marca personalizada.",
+  "tourProfile2Title": "Idioma",
+  "tourProfile2Body": "Cambia entre inglés y español cuando quieras.",
+  "tourProfile3Title": "Tus eventos",
+  "tourProfile3Body": "Administra los eventos que has creado y guardado.",
+  "adminDashboard": "Panel de administración",
+  "adminReports": "Reportes",
+  "adminEvents": "Eventos",
+  "adminNoReports": "No hay reportes pendientes: todo está al día.",
+  "adminResolve": "Marcar resuelto",
+  "adminRemove": "Eliminar",
+  "adminRemoveEvent": "Eliminar evento",
+  "adminRemoveEventTitle": "¿Eliminar este evento?",
+  "adminRemoveEventBody": "Esto elimina permanentemente el evento, sus comentarios y confirmaciones del feed público.",
+  "adminEventRemoved": "Evento eliminado.",
+  "adminReportResolved": "Reporte resuelto.",
+  "adminSearchEvents": "Buscar eventos…",
+  "adminNoEvents": "No se encontraron eventos.",
+  "adminReason": "Motivo: {reason}",
+  "@adminReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "adminReportedUser": "Usuario reportado: {id}",
+  "@adminReportedUser": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "adminReportedBy": "Reportado por: {id}",
+  "@adminReportedBy": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "adminAccess": "Administrador",
+  "adminDeleteComment": "Eliminar comentario",
+  "adminCommentRemoved": "Comentario eliminado.",
+  "adminPostUnlimited": "Cuenta oficial: eventos únicos ilimitados",
+  "adminSearchHint": "Busca por título, venue u organizador…",
+  "adminDeleteCommentBody": "Esto elimina permanentemente el comentario de la página del evento.",
+  "adminClaims": "Reclamos",
+  "adminNoClaims": "Aún no hay reclamos de venues.",
+  "adminApprove": "Aprobar",
+  "adminReject": "Rechazar",
+  "adminClaimApproved": "Reclamo aprobado: el venue ya puede editar este evento.",
+  "adminClaimRejected": "Reclamo rechazado.",
+  "adminPending": "Pendiente",
+  "adminApproved": "Aprobado",
+  "adminRejected": "Rechazado",
+  "adminBanUser": "Bloquear usuario",
+  "adminUnban": "Desbloquear",
+  "adminBannedUsers": "Usuarios bloqueados",
+  "adminNoBanned": "No hay usuarios bloqueados.",
+  "adminUserBanned": "Usuario bloqueado: su contenido ahora está oculto.",
+  "adminUserUnbanned": "Usuario desbloqueado.",
+  "adminBanConfirmTitle": "¿Bloquear a este usuario?",
+  "adminBanConfirmBody": "Esto oculta todos sus eventos, comentarios y confirmaciones de la app. Puedes deshacerlo cuando quieras.",
+  "claimRoleOwner": "Dueño / operador",
+  "claimRolePromoter": "Promotor autorizado",
+  "claimRoleBookingAgent": "Agente de reservas",
+  "claimRoleMarketing": "Marketing / RRPP",
+  "claimRoleOther": "Otro representante autorizado"
+}

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../l10n/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/rsvp_provider.dart';
 import '../../theme/theme.dart';
@@ -23,7 +24,7 @@ class RsvpButton extends StatelessWidget {
         child: OutlinedButton.icon(
           onPressed: () => context.push('/login'),
           icon: const Icon(Icons.login_rounded),
-          label: const Text('Log in to RSVP'),
+          label: Text(AppLocalizations.of(context)!.logInToRsvp),
           style: OutlinedButton.styleFrom(
             minimumSize: const Size(double.infinity, 48),
           ),
@@ -51,7 +52,7 @@ class RsvpButton extends StatelessWidget {
                 ),
               )
             : const Icon(Icons.event_available_rounded),
-        label: const Text('RSVP to this Event'),
+        label: Text(AppLocalizations.of(context)!.rsvpToThisEvent),
         style: FilledButton.styleFrom(
           minimumSize: const Size(double.infinity, 48),
         ),
@@ -89,6 +90,7 @@ class _AttendingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppTheme.spacingMd,
@@ -108,14 +110,14 @@ class _AttendingTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'You\'re attending!',
+                  l10n.youAreAttending,
                   style: text.labelLarge?.copyWith(
                     color: colors.primary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 Text(
-                  rsvp.myRsvpIsPrivate ? 'Private RSVP' : 'Public RSVP',
+                  rsvp.myRsvpIsPrivate ? l10n.privateRsvp : l10n.publicRsvp,
                   style: text.labelSmall?.copyWith(color: colors.onPrimaryContainer),
                 ),
               ],
@@ -124,7 +126,7 @@ class _AttendingTile extends StatelessWidget {
           TextButton(
             onPressed: rsvp.isSubmitting ? null : () => rsvp.cancelRsvp(),
             child: Text(
-              'Cancel RSVP',
+              l10n.cancelRsvp,
               style: text.labelMedium?.copyWith(color: colors.error),
             ),
           ),
@@ -151,6 +153,7 @@ class _RsvpSheetState extends State<_RsvpSheet> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return SafeArea(
       child: Padding(
@@ -170,10 +173,10 @@ class _RsvpSheetState extends State<_RsvpSheet> {
               ),
             ),
             const SizedBox(height: AppTheme.spacingLg),
-            Text('RSVP to this Event', style: text.titleLarge),
+            Text(l10n.rsvpToThisEvent, style: text.titleLarge),
             const SizedBox(height: AppTheme.spacingXs),
             Text(
-              'Let others know you\'re going, or keep it private.',
+              l10n.rsvpSubtitle,
               style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
             ),
             const SizedBox(height: AppTheme.spacingLg),
@@ -187,11 +190,11 @@ class _RsvpSheetState extends State<_RsvpSheet> {
               child: SwitchListTile(
                 value: _isPrivate,
                 onChanged: (v) => setState(() => _isPrivate = v),
-                title: Text('Keep my RSVP private', style: text.bodyMedium),
+                title: Text(l10n.keepPrivate, style: text.bodyMedium),
                 subtitle: Text(
                   _isPrivate
-                      ? 'Only the count will be visible — not your name.'
-                      : 'Your name will appear in the attendees list.',
+                      ? l10n.onlyCountVisible
+                      : l10n.nameWillAppear,
                   style: text.bodySmall?.copyWith(color: colors.onSurfaceVariant),
                 ),
                 secondary: Icon(
@@ -214,7 +217,7 @@ class _RsvpSheetState extends State<_RsvpSheet> {
                   );
                 },
                 icon: const Icon(Icons.event_available_rounded),
-                label: const Text('Confirm RSVP'),
+                label: Text(l10n.confirmRsvp),
                 style: FilledButton.styleFrom(
                   minimumSize: const Size(double.infinity, 48),
                 ),

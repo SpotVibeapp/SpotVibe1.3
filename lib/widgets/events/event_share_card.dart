@@ -12,6 +12,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../models/event.dart';
 import '../../services/deep_link_service.dart';
 import '../../services/share_analytics_service.dart';
+import '../../theme/category_colors.dart';
 import '../../theme/theme.dart';
 import '../common/event_image_placeholder.dart';
 
@@ -379,15 +380,22 @@ class _ShareCardGraphic extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // SpotVibe brand pill
+                // SpotVibe brand pill (gradient to match the logo)
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppTheme.spacingSm,
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6C5CE7),
+                    gradient: AppTheme.brandGradient,
                     borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.brandViolet.withValues(alpha: 0.45),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
                   child: const Text(
                     'SpotVibe',
@@ -401,20 +409,20 @@ class _ShareCardGraphic extends StatelessWidget {
                 ),
                 const Spacer(),
 
-                // Category chip
+                // Category chip in the event's accent color
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppTheme.spacingXs + 2,
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: categoryAccent(event.category).withValues(alpha: 0.85),
                     borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                   ),
                   child: Text(
                     event.category.toUpperCase(),
                     style: const TextStyle(
-                      color: Colors.white70,
+                      color: Colors.white,
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.0,
@@ -475,16 +483,19 @@ class _ShareCardGraphic extends StatelessWidget {
                 ],
                 const SizedBox(height: AppTheme.spacingXs),
 
-                // Cost badge
+                // Cost badge — green for free, brand gradient for paid
                 Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: AppTheme.spacingXs + 2, vertical: 2),
                       decoration: BoxDecoration(
+                        gradient: event.isFree
+                            ? null
+                            : AppTheme.brandGradient,
                         color: event.isFree
                             ? const Color(0xFF00B894)
-                            : const Color(0xFF6C5CE7),
+                            : null,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(

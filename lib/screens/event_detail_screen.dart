@@ -2,18 +2,23 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../data/event_time.dart';
+import '../l10n/app_localizations.dart';
 import '../models/event.dart';
 import '../providers/auth_provider.dart';
 import '../providers/follow_provider.dart';
 import '../providers/event_provider.dart';
+import '../repositories/moderation_repository.dart';
 import '../services/deep_link_service.dart';
 import '../services/maps_service.dart';
+import '../theme/category_colors.dart';
 import '../theme/theme.dart';
 import '../services/event_analytics_service.dart';
 import '../widgets/events/claim_venue_banner.dart';
 import '../widgets/events/event_page_ad.dart';
 import '../widgets/common/app_avatar.dart';
 import '../widgets/common/event_image_placeholder.dart';
+import '../widgets/common/guided_tour.dart';
+import '../widgets/common/section_title.dart';
 import '../widgets/common/source_badge.dart';
 import '../widgets/common/user_action_sheet.dart';
 import '../widgets/events/attendees_section.dart';
@@ -33,6 +38,11 @@ class EventDetailScreen extends StatefulWidget {
 }
 
 class _EventDetailScreenState extends State<EventDetailScreen> {
+  // Guided-tour target keys (stable across rebuilds).
+  final GlobalKey _tourKeyShare = GlobalKey();
+  final GlobalKey _tourKeyRsvp = GlobalKey();
+  final GlobalKey _tourKeyCounters = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -49,31 +59,51 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return _DetailContent(event: widget.event, eventIndex: 0);
+    return _DetailContent(
+      event: widget.event,
+      eventIndex: 0,
+      shareKey: _tourKeyShare,
+      rsvpKey: _tourKeyRsvp,
+      countersKey: _tourKeyCounters,
+    );
   }
 }
 
 class _DetailContent extends StatelessWidget {
   final Event event;
   final int eventIndex;
-  const _DetailContent({required this.event, required this.eventIndex});
+  final GlobalKey? shareKey;
+  final GlobalKey? rsvpKey;
+  final GlobalKey? countersKey;
+  const _DetailContent({
+    required this.event,
+    required this.eventIndex,
+    this.shareKey,
+    this.rsvpKey,
+    this.countersKey,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final appColors = Theme.of(context).extension<AppColorsExtension>()!;
+    final l10n = AppLocalizations.of(context)!;
+    final catColor = categoryAccent(event.category);
 
     return Scaffold(
-      body: CustomScrollView(
+      body: Stack(
+        children: [
+          CustomScrollView(
         slivers: [
           SliverAppBar(
             expandedHeight: 260,
             pinned: true,
             actions: [
               IconButton(
+                key: shareKey,
                 icon: const Icon(Icons.share_rounded),
-                tooltip: 'Share event',
+                tooltip: l10n.shareEventTooltip,
                 onPressed: () => DeepLinkService.shareEvent(
                   context,
                   eventId: event.id,
@@ -81,6 +111,12 @@ class _DetailContent extends StatelessWidget {
                   isUserEvent: false,
                 ),
               ),
+              if (context.read<AuthProvider>().isAdmin)
+                IconButton(
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  tooltip: l10n.adminRemoveEvent,
+                  onPressed: () => _removeEvent(context, event),
+                ),
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: CachedNetworkImage(
@@ -108,9 +144,9 @@ class _DetailContent extends StatelessWidget {
                         gradient: LinearGradient(colors: [appColors.proGold, appColors.proGoldLight]),
                         borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                       ),
-                      child: const Text(
-                        'FEATURED THIS WEEK',
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
+                      child: Text(
+                        l10n.featuredThisWeek,
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
                       ),
                     ),
                   ],
@@ -165,7 +201,7 @@ class _DetailContent extends StatelessWidget {
                               const SizedBox(width: AppTheme.spacingSm),
                               Expanded(
                                 child: Text(
-                                  'Tickets',
+                                  l10n.tickets,
                                   style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -186,15 +222,15 @@ class _DetailContent extends StatelessWidget {
                   const SizedBox(height: AppTheme.spacingLg),
                   PracticalDetailsSection(event: event),
                   const SizedBox(height: AppTheme.spacingLg),
-                  _CounterRow(event: event, eventIndex: eventIndex),
+                  _CounterRow(key: countersKey, event: event, eventIndex: eventIndex),
                   const SizedBox(height: AppTheme.spacingLg),
-                  const RsvpButton(),
+                  RsvpButton(key: rsvpKey),
                   const SizedBox(height: AppTheme.spacingLg),
-                  Text('About this Event', style: text.titleMedium),
+                  SectionTitle(title: l10n.aboutThisEvent, accent: catColor),
                   const SizedBox(height: AppTheme.spacingSm),
                   Text(event.description, style: text.bodyMedium),
                   const SizedBox(height: AppTheme.spacingLg),
-                  Text('Organizer', style: text.titleMedium),
+                  SectionTitle(title: l10n.organizer, accent: catColor),
                   const SizedBox(height: AppTheme.spacingSm),
                   _OrganizerRow(event: event),
                   const SizedBox(height: AppTheme.spacingLg),
@@ -204,19 +240,82 @@ class _DetailContent extends StatelessWidget {
                     const EventPageAd(),
                   ],
                   const SizedBox(height: AppTheme.spacingLg),
-                  const AttendeesSection(),
+                  AttendeesSection(accent: catColor),
                   const SizedBox(height: AppTheme.spacingLg),
                   SimilarEventsSection(currentEvent: event),
                   const SizedBox(height: AppTheme.spacingLg),
-                  const CommentSection(),
+                  CommentSection(
+                    accent: catColor,
+                    canModerate: context.read<AuthProvider>().isAdmin,
+                  ),
                   const SizedBox(height: AppTheme.spacingXl),
                 ],
               ),
             ),
           ),
         ],
+          ),
+          GuidedTour(
+            tourId: 'event_detail',
+            steps: [
+              TourStep(
+                targetKey: rsvpKey ?? GlobalKey(),
+                title: l10n.tourEvent1Title,
+                description: l10n.tourEvent1Body,
+              ),
+              TourStep(
+                targetKey: countersKey ?? GlobalKey(),
+                title: l10n.tourEvent2Title,
+                description: l10n.tourEvent2Body,
+              ),
+              TourStep(
+                targetKey: shareKey ?? GlobalKey(),
+                title: l10n.tourEvent3Title,
+                description: l10n.tourEvent3Body,
+              ),
+            ],
+          ),
+        ],
       ),
     );
+  }
+
+  /// Admin-only: confirm and permanently remove this event from the feed.
+  Future<void> _removeEvent(BuildContext context, Event event) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.adminRemoveEventTitle),
+        content: Text(l10n.adminRemoveEventBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.adminRemove),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await context.read<ModerationRepository>().deleteEvent(event.id);
+    } catch (_) {}
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.adminEventRemoved)),
+    );
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/');
+    }
   }
 }
 
@@ -229,15 +328,16 @@ class _CategoryAndCost extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final catColor = categoryAccent(event.category);
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: colors.primaryContainer,
+            color: catColor.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
           ),
-          child: Text(event.category, style: text.labelMedium?.copyWith(color: colors.onPrimaryContainer, fontWeight: FontWeight.w600)),
+          child: Text(event.category, style: text.labelMedium?.copyWith(color: catColor, fontWeight: FontWeight.w600)),
         ),
         const SizedBox(width: AppTheme.spacingSm),
         Container(
@@ -288,17 +388,18 @@ class _InfoRow extends StatelessWidget {
 class _CounterRow extends StatelessWidget {
   final Event event;
   final int eventIndex;
-  const _CounterRow({required this.event, required this.eventIndex});
+  const _CounterRow({super.key, required this.event, required this.eventIndex});
 
   @override
   Widget build(BuildContext context) {
     final eventProvider = context.read<EventProvider>();
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
           child: _CounterButton(
             icon: event.isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-            label: '${event.bookmarkedCount} Bookmarked',
+            label: l10n.bookmarkedCountLabel(event.bookmarkedCount),
             isActive: event.isBookmarked,
             onTap: () => eventProvider.toggleBookmark(eventIndex),
           ),
@@ -307,7 +408,7 @@ class _CounterRow extends StatelessWidget {
         Expanded(
           child: _CounterButton(
             icon: event.isInterested ? Icons.star_rounded : Icons.star_border_rounded,
-            label: '${event.interestedCount} Interested',
+            label: l10n.interestedCountLabel(event.interestedCount),
             isActive: event.isInterested,
             onTap: () => eventProvider.toggleInterested(eventIndex),
           ),
@@ -362,6 +463,7 @@ class _OrganizerRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
     final auth = context.read<AuthProvider>();
     final follow = context.read<FollowProvider>();
     const organizerId = 'organizer_1';
@@ -374,7 +476,7 @@ class _OrganizerRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(event.organizerName, style: text.titleSmall),
-              Text('Organizer', style: text.labelSmall),
+              Text(l10n.organizer, style: text.labelSmall),
             ],
           ),
         ),
@@ -389,14 +491,14 @@ class _OrganizerRow extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(nowFollowing
-                        ? 'Following ${event.organizerName}'
-                        : 'Unfollowed ${event.organizerName}'),
+                        ? l10n.followingName(event.organizerName)
+                        : l10n.unfollowedName(event.organizerName)),
                   ),
                 );
               },
               onBlock: () {
                 auth.blockUser(organizerId);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('User blocked')));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.userBlocked)));
               },
               onReport: () => _showReportDialog(context, auth),
             ),
@@ -407,26 +509,25 @@ class _OrganizerRow extends StatelessWidget {
   }
 
   void _showReportDialog(BuildContext context, AuthProvider auth) {
+    final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Report User'),
-        content: TextField(controller: controller, decoration: const InputDecoration(hintText: 'Reason for reporting...'), maxLines: 3),
+        title: Text(l10n.reportUser),
+        content: TextField(controller: controller, decoration: InputDecoration(hintText: l10n.reasonForReporting), maxLines: 3),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
           ElevatedButton(
             onPressed: () {
               auth.reportUser('organizer_1', controller.text);
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report submitted')));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.reportSubmitted)));
             },
-            child: const Text('Submit'),
+            child: Text(l10n.submit),
           ),
         ],
       ),
     );
   }
 }
-
-

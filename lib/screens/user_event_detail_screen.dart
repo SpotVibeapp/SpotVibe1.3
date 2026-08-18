@@ -9,6 +9,7 @@ import '../providers/auth_provider.dart';
 import '../services/deep_link_service.dart';
 import '../services/event_analytics_service.dart';
 import '../widgets/events/event_page_ad.dart';
+import '../theme/category_colors.dart';
 import '../theme/theme.dart';
 import '../widgets/events/add_to_calendar_button.dart';
 import '../widgets/events/story_card.dart';
@@ -307,9 +308,9 @@ class _UserEventDetailContent extends StatelessWidget {
                   const Divider(height: AppTheme.spacingXl),
                   const RsvpButton(),
                   const SizedBox(height: AppTheme.spacingLg),
-                  const AttendeesSection(),
+                  AttendeesSection(accent: categoryAccent(event.category)),
                   const SizedBox(height: AppTheme.spacingLg),
-                  const CommentSection(),
+                  CommentSection(accent: categoryAccent(event.category)),
                   if (!event.isCreatorPro) ...[
                     const SizedBox(height: AppTheme.spacingLg),
                     const EventPageAd(),

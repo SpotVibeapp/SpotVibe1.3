@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../data/event_time.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
+import '../../theme/category_colors.dart';
 import '../../theme/theme.dart';
 import '../common/event_image_placeholder.dart';
 import '../common/source_badge.dart';
@@ -74,6 +76,8 @@ class _EventImage extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
+    final catColor = categoryAccent(event.category);
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(AppTheme.radiusLarge)),
       child: SizedBox(
@@ -88,19 +92,40 @@ class _EventImage extends StatelessWidget {
               placeholder: (_, __) => Container(color: appColors.shimmer),
               errorWidget: (_, __, ___) => EventImagePlaceholder(category: event.category, height: 180),
             ),
+            // Category-tinted scrim fading up from the bottom of the photo.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 46,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        catColor.withValues(alpha: 0.55),
+                        catColor.withValues(alpha: 0.0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
             Positioned(
               top: AppTheme.spacingSm,
               left: AppTheme.spacingSm,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: colors.surface.withValues(alpha: 0.92),
+                  color: catColor,
                   borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                 ),
                 child: Text(
                   formatEventDayChip(event.dateTime),
                   style: text.labelMedium?.copyWith(
-                    color: colors.primary,
+                    color: Colors.white,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -134,9 +159,9 @@ class _EventImage extends StatelessWidget {
                     gradient: LinearGradient(colors: [appColors.proGold, appColors.proGoldLight]),
                     borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                   ),
-                  child: const Text(
-                    'FEATURED',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
+                  child: Text(
+                    l10n.featured,
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
                   ),
                 ),
               ),
@@ -171,6 +196,8 @@ class _EventDetails extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final appColors = Theme.of(context).extension<AppColorsExtension>()!;
+    final l10n = AppLocalizations.of(context)!;
+    final catColor = categoryAccent(event.category);
     return Padding(
       padding: const EdgeInsets.all(AppTheme.spacingMd),
       child: Column(
@@ -182,13 +209,13 @@ class _EventDetails extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: colors.primaryContainer,
+                    color: catColor.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                   ),
                   child: Text(
                     event.category,
                     style: text.labelSmall?.copyWith(
-                      color: colors.onPrimaryContainer,
+                      color: catColor,
                       fontWeight: FontWeight.w600,
                     ),
                     maxLines: 1,
@@ -245,8 +272,8 @@ class _EventDetails extends StatelessWidget {
                       const SizedBox(width: 2),
                       Text(
                         distanceMiles! < 0.1
-                            ? '<0.1 mi'
-                            : '${distanceMiles!.toStringAsFixed(1)} mi',
+                            ? l10n.underTenthMi
+                            : l10n.miShort(distanceMiles!.toStringAsFixed(1)),
                         style: text.labelSmall?.copyWith(
                           color: colors.onPrimaryContainer,
                           fontSize: 10,
@@ -266,6 +293,7 @@ class _EventDetails extends StatelessWidget {
                 icon: event.isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
                 label: '${event.bookmarkedCount}',
                 isActive: event.isBookmarked,
+                activeColor: catColor,
                 onTap: onBookmark,
               ),
               const SizedBox(width: AppTheme.spacingSm),
@@ -273,12 +301,13 @@ class _EventDetails extends StatelessWidget {
                 icon: event.isInterested ? Icons.star_rounded : Icons.star_border_rounded,
                 label: '${event.interestedCount}',
                 isActive: event.isInterested,
+                activeColor: catColor,
                 onTap: onInterested,
               ),
               const Spacer(),
               Flexible(
                 child: Text(
-                  'by ${event.organizerName}',
+                  AppLocalizations.of(context)!.byOrganizer(event.organizerName),
                   style: text.labelSmall?.copyWith(color: appColors.subtleText),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -296,12 +325,16 @@ class _ActionChip extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isActive;
+
+  /// Tint applied to the chip when active (the event's category color).
+  final Color activeColor;
   final VoidCallback onTap;
 
   const _ActionChip({
     required this.icon,
     required this.label,
     required this.isActive,
+    required this.activeColor,
     required this.onTap,
   });
 
@@ -315,8 +348,16 @@ class _ActionChip extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive ? colors.primaryContainer : colors.surfaceContainerHighest,
+          color: isActive
+              ? activeColor.withValues(alpha: 0.15)
+              : colors.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+          border: Border.all(
+            color: isActive
+                ? activeColor.withValues(alpha: 0.45)
+                : Colors.transparent,
+            width: 1,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -324,13 +365,13 @@ class _ActionChip extends StatelessWidget {
             Icon(
               icon,
               size: AppTheme.iconSm,
-              color: isActive ? colors.primary : colors.onSurfaceVariant,
+              color: isActive ? activeColor : colors.onSurfaceVariant,
             ),
             const SizedBox(width: AppTheme.spacingXs),
             Text(
               label,
               style: text.labelSmall?.copyWith(
-                color: isActive ? colors.primary : colors.onSurfaceVariant,
+                color: isActive ? activeColor : colors.onSurfaceVariant,
                 fontWeight: FontWeight.w600,
               ),
             ),

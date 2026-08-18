@@ -12,12 +12,16 @@ import '../providers/auth_provider.dart';
 import '../providers/create_event_provider.dart';
 import '../providers/event_provider.dart';
 import '../providers/personalization_provider.dart';
+import '../providers/moderation_provider.dart';
 import '../providers/rsvp_provider.dart';
 import '../providers/user_events_provider.dart';
+import '../repositories/event_claim_repository.dart';
 import '../repositories/event_repository.dart';
+import '../repositories/moderation_repository.dart';
 import '../repositories/rsvp_repository.dart';
 import '../repositories/user_event_repository.dart';
 import '../screens/create_event_screen.dart';
+import '../screens/admin_dashboard_screen.dart';
 import '../screens/creator_analytics_screen.dart';
 import '../screens/creator_dashboard_screen.dart';
 
@@ -220,6 +224,25 @@ class AppRouter {
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/admin',
+        builder: (context, state) {
+          final auth = context.read<AuthProvider>();
+          if (!auth.isAdmin) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (context.mounted) context.go('/');
+            });
+            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          }
+          return ChangeNotifierProvider(
+            create: (_) => ModerationProvider(
+              repository: context.read<ModerationRepository>(),
+              claimsRepository: context.read<EventClaimRepository>(),
+            ),
+            child: const AdminDashboardScreen(),
+          );
+        },
       ),
 
       GoRoute(

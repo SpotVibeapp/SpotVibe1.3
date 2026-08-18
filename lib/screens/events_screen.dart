@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/personalization_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/event_provider.dart';
@@ -9,7 +10,9 @@ import '../theme/theme.dart';
 import '../widgets/common/category_chips.dart';
 import '../widgets/common/empty_state_view.dart';
 import '../widgets/common/event_card_skeleton.dart';
+import '../widgets/common/guided_tour.dart';
 import '../widgets/common/paginated_events_list.dart';
+import '../widgets/common/spotvibe_logo.dart';
 import '../widgets/events/filter_sheet.dart';
 import '../widgets/events/search_header.dart';
 
@@ -24,6 +27,13 @@ class _EventsScreenState extends State<EventsScreen> {
   final _areaController = TextEditingController();
   final _locationService = LocationService();
   bool _fetchingLocation = false;
+
+  // Guided-tour target keys (stable across rebuilds).
+  final GlobalKey _tourKeyHeader = GlobalKey();
+  final GlobalKey _tourKeySearch = GlobalKey();
+  final GlobalKey _tourKeyFilter = GlobalKey();
+  final GlobalKey _tourKeyCategories = GlobalKey();
+  final GlobalKey _tourKeyCard = GlobalKey();
 
   @override
   void dispose() {
@@ -74,7 +84,7 @@ class _EventsScreenState extends State<EventsScreen> {
       eventProvider.setUserLocation(coords.lat, coords.lng);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not get your location. Please allow location access.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.couldNotGetLocation)),
       );
     }
   }
@@ -86,6 +96,7 @@ class _EventsScreenState extends State<EventsScreen> {
     final authProvider = context.watch<AuthProvider>();
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
     final activeFilters = eventProvider.activeFilterCount;
     final hasAreaQuery = eventProvider.areaQuery.isNotEmpty;
 
@@ -95,16 +106,24 @@ class _EventsScreenState extends State<EventsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: AppTheme.spacingMd),
-            Padding(
+            _HomeHeaderGlow(
+              child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
               child: Row(
                 children: [
-                  Text('SpotVibe', style: text.headlineMedium?.copyWith(color: colors.primary)),
+                  SpotVibeWordmark(
+                    key: _tourKeyHeader,
+                    style: text.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
                   const Spacer(),
                   Stack(
                     clipBehavior: Clip.none,
                     children: [
                       IconButton(
+                        key: _tourKeyFilter,
                         onPressed: () => FilterSheet.show(
                           context,
                           initialDatePreset: eventProvider.filterDate,
@@ -143,7 +162,7 @@ class _EventsScreenState extends State<EventsScreen> {
                         ),
                         icon: Icon(Icons.tune_rounded,
                             color: activeFilters > 0 ? colors.primary : colors.onSurfaceVariant),
-                        tooltip: 'Filters',
+                        tooltip: l10n.filtersTooltip,
                       ),
                       if (activeFilters > 0)
                         Positioned(
@@ -169,9 +188,11 @@ class _EventsScreenState extends State<EventsScreen> {
                   ),
                 ],
               ),
+              ),
             ),
             const SizedBox(height: AppTheme.spacingSm),
             SearchHeader(
+              key: _tourKeySearch,
               areaController: _areaController,
               onSearch: eventProvider.search,
               onAreaSearch: (area) {
@@ -192,6 +213,7 @@ class _EventsScreenState extends State<EventsScreen> {
             ),
             const SizedBox(height: AppTheme.spacingMd),
             CategoryChips(
+              key: _tourKeyCategories,
               categories: eventProvider.categories,
               selected: eventProvider.selectedCategory,
               onSelected: eventProvider.selectCategory,
@@ -213,7 +235,38 @@ class _EventsScreenState extends State<EventsScreen> {
                 eventProvider: eventProvider,
                 areaQuery: eventProvider.areaQuery,
                 personalization: personalization,
+                firstCardKey: _tourKeyCard,
               ),
+            ),
+            GuidedTour(
+              tourId: 'home',
+              steps: [
+                TourStep(
+                  targetKey: _tourKeyHeader,
+                  title: l10n.tourHome1Title,
+                  description: l10n.tourHome1Body,
+                ),
+                TourStep(
+                  targetKey: _tourKeySearch,
+                  title: l10n.tourHome2Title,
+                  description: l10n.tourHome2Body,
+                ),
+                TourStep(
+                  targetKey: _tourKeyFilter,
+                  title: l10n.tourHome3Title,
+                  description: l10n.tourHome3Body,
+                ),
+                TourStep(
+                  targetKey: _tourKeyCategories,
+                  title: l10n.tourHome4Title,
+                  description: l10n.tourHome4Body,
+                ),
+                TourStep(
+                  targetKey: _tourKeyCard,
+                  title: l10n.tourHome5Title,
+                  description: l10n.tourHome5Body,
+                ),
+              ],
             ),
           ],
         ),
@@ -236,6 +289,7 @@ class _ActiveAreaStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
           AppTheme.spacingMd, 0, AppTheme.spacingMd, AppTheme.spacingSm),
@@ -253,7 +307,7 @@ class _ActiveAreaStrip extends StatelessWidget {
             const SizedBox(width: AppTheme.spacingXs),
             Expanded(
               child: Text(
-                'Showing events in "$areaQuery"',
+                l10n.showingEventsIn(areaQuery),
                 style: text.labelSmall?.copyWith(color: colors.primary),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -262,7 +316,7 @@ class _ActiveAreaStrip extends StatelessWidget {
             GestureDetector(
               onTap: onClear,
               child: Text(
-                'Clear',
+                l10n.clear,
                 style: text.labelSmall?.copyWith(
                   color: colors.primary,
                   fontWeight: FontWeight.w700,
@@ -285,6 +339,7 @@ class _SearchResultsHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
     final count = eventProvider.events.length;
     final query = eventProvider.searchQuery;
     final sortingByDistance =
@@ -299,7 +354,7 @@ class _SearchResultsHeader extends StatelessWidget {
           const SizedBox(width: AppTheme.spacingXs),
           Expanded(
             child: Text(
-              '$count result${count == 1 ? '' : 's'} for "$query"',
+              l10n.searchResults(count, query),
               style: text.labelSmall?.copyWith(color: colors.onSurfaceVariant),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -320,7 +375,7 @@ class _SearchResultsHeader extends StatelessWidget {
                   ),
                   const SizedBox(width: AppTheme.spacingXs),
                   Text(
-                    sortingByDistance ? 'Nearest first' : 'By date',
+                    sortingByDistance ? l10n.nearestFirst : l10n.byDate,
                     style: text.labelSmall?.copyWith(
                       color: colors.primary,
                       fontWeight: FontWeight.w700,
@@ -339,15 +394,18 @@ class _EventsList extends StatelessWidget {
   final EventProvider eventProvider;
   final String areaQuery;
   final PersonalizationProvider personalization;
+  final GlobalKey? firstCardKey;
 
   const _EventsList({
     required this.eventProvider,
     required this.areaQuery,
     required this.personalization,
+    this.firstCardKey,
   });
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (eventProvider.isLoading) {
       return const EventFeedSkeleton();
     }
@@ -356,12 +414,11 @@ class _EventsList extends StatelessWidget {
       return EmptyStateView(
         variant: EmptyStateVariant.apiError,
         icon: Icons.cloud_off_rounded,
-        title: 'Couldn\'t load events',
-        subtitle:
-            'Check your connection and try again. Your saved events are still available.',
-        actionLabel: 'Try Again',
+        title: l10n.errorTitle,
+        subtitle: l10n.errorSubtitle,
+        actionLabel: l10n.tryAgain,
         onAction: eventProvider.loadEvents,
-        secondaryActionLabel: 'View Saved Events',
+        secondaryActionLabel: l10n.viewSavedEvents,
         onSecondaryAction: () => context.push('/saved-events'),
       );
     }
@@ -376,10 +433,9 @@ class _EventsList extends StatelessWidget {
         return EmptyStateView(
           variant: EmptyStateVariant.filtersTooStrict,
           icon: Icons.manage_search_rounded,
-          title: 'No matches for these filters',
-          subtitle:
-              'Try broadening your search — adjust the date, price, or category filters to see more events.',
-          actionLabel: 'Clear Filters',
+          title: l10n.noMatchesTitle,
+          subtitle: l10n.noMatchesSubtitle,
+          actionLabel: l10n.clearFilters,
           onAction: () {
             eventProvider.clearFilters();
             eventProvider.search('');
@@ -391,10 +447,9 @@ class _EventsList extends StatelessWidget {
         return EmptyStateView(
           variant: EmptyStateVariant.noEventsNearby,
           icon: Icons.location_off_rounded,
-          title: 'No events near "$areaQuery"',
-          subtitle:
-              'Try a different city, zip code, or increase your search radius in the filter options.',
-          actionLabel: 'Increase Radius',
+          title: l10n.noEventsNear(areaQuery),
+          subtitle: l10n.noEventsNearSubtitle,
+          actionLabel: l10n.increaseRadius,
           onAction: () => FilterSheet.show(
             context,
             initialRadius: eventProvider.searchRadius,
@@ -426,7 +481,7 @@ class _EventsList extends StatelessWidget {
             ),
             onClear: eventProvider.clearFilters,
           ),
-          secondaryActionLabel: 'Clear Location',
+          secondaryActionLabel: l10n.clearLocation,
           onSecondaryAction: () => eventProvider.searchArea(''),
         );
       }
@@ -435,14 +490,13 @@ class _EventsList extends StatelessWidget {
         return EmptyStateView(
           variant: EmptyStateVariant.noLocation,
           icon: Icons.location_searching_rounded,
-          title: 'Location needed',
-          subtitle:
-              'Enable location so SpotVibe can find events happening near you right now.',
-          actionLabel: 'Enable Location',
+          title: l10n.locationNeededTitle,
+          subtitle: l10n.locationNeededSubtitle,
+          actionLabel: l10n.enableLocation,
           onAction: () => context
               .findAncestorStateOfType<_EventsScreenState>()
               ?._requestUserLocation(),
-          secondaryActionLabel: 'Browse All Events',
+          secondaryActionLabel: l10n.browseAllEvents,
           onSecondaryAction: () => eventProvider.selectCategory('All'),
         );
       }
@@ -450,10 +504,9 @@ class _EventsList extends StatelessWidget {
       return EmptyStateView(
         variant: EmptyStateVariant.generic,
         icon: Icons.event_busy_rounded,
-        title: 'No events found nearby',
-        subtitle:
-            'Try increasing your search radius or check back later — new events are added every day.',
-        actionLabel: 'Increase Radius',
+        title: l10n.noEventsFoundTitle,
+        subtitle: l10n.noEventsFoundSubtitle,
+        actionLabel: l10n.increaseRadius,
         onAction: () => FilterSheet.show(
           context,
           initialRadius: eventProvider.searchRadius,
@@ -491,10 +544,94 @@ class _EventsList extends StatelessWidget {
     return PaginatedEventsList(
       eventProvider: eventProvider,
       personalization: personalization,
+      firstCardKey: firstCardKey,
       onEventTap: (event, globalIndex) {
         personalization.recordView(event);
         context.push('/event/${event.id}', extra: event);
       },
+    );
+  }
+}
+
+// ── Animated header glow ──────────────────────────────────────────────────────
+
+/// A soft, slowly drifting brand-colored aura behind the home header. Very low
+/// opacity and content sits on top, so contrast and usability are unaffected —
+/// it just gives the top of the feed a gentle, living feel.
+class _HomeHeaderGlow extends StatefulWidget {
+  final Widget child;
+
+  const _HomeHeaderGlow({required this.child});
+
+  @override
+  State<_HomeHeaderGlow> createState() => _HomeHeaderGlowState();
+}
+
+class _HomeHeaderGlowState extends State<_HomeHeaderGlow>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 9),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          top: -52,
+          left: -24,
+          right: -24,
+          bottom: -12,
+          child: IgnorePointer(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (_, __) {
+                final t = _controller.value; // 0..1, ping-pongs
+                final c1 = Color.lerp(
+                  AppTheme.brandViolet,
+                  AppTheme.brandCyan,
+                  t * 0.6,
+                )!;
+                final c2 = Color.lerp(
+                  AppTheme.brandPink,
+                  AppTheme.brandViolet,
+                  t * 0.8,
+                )!;
+                return DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: const Alignment(-0.85, -0.7),
+                      radius: 1.25,
+                      colors: [
+                        c1.withValues(alpha: isDark ? 0.22 : 0.13),
+                        c2.withValues(alpha: isDark ? 0.13 : 0.06),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.0, 0.55, 1.0],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        widget.child,
+      ],
     );
   }
 }

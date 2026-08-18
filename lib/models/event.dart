@@ -178,4 +178,11 @@ class Event {
   String get costLabel => isFree ? 'Free' : '\$${cost!.toStringAsFixed(2)}';
 
   String get fullLocation => [location, city, state].where((s) => s.isNotEmpty).join(', ');
+
+  /// True when this event holds the current week's "featured" slot.
+  bool get isFeaturedThisWeek => isFeaturedInCurrentWeek(featuredWeekKey);
+
+  /// True when the event page should show the in-feed promo — i.e. the
+  /// listing owner hasn't paid for Premium (which removes ads).
+  bool get showsAds => !isPremiumListing;
 }

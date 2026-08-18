@@ -1,7 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
 import '../../theme/theme.dart';
+
+// ── Localized label lookups (values are stored as stable keys) ────────────────
+
+String _dateLabel(AppLocalizations l, String v) {
+  switch (v) {
+    case 'today':
+      return l.today;
+    case 'tomorrow':
+      return l.tomorrow;
+    case 'this_weekend':
+      return l.thisWeekend;
+    case 'this_week':
+      return l.thisWeek;
+    case 'custom':
+      return l.customRange;
+    default:
+      return l.allDates;
+  }
+}
+
+String _priceLabel(AppLocalizations l, String v) {
+  switch (v) {
+    case 'free':
+      return l.free;
+    case 'under_20':
+      return l.under20;
+    case 'under_50':
+      return l.under50;
+    default:
+      return l.anyPrice;
+  }
+}
+
+String _timeLabel(AppLocalizations l, String v) {
+  switch (v) {
+    case 'morning':
+      return l.morning;
+    case 'afternoon':
+      return l.afternoon;
+    case 'evening':
+      return l.evening;
+    case 'night':
+      return l.night;
+    default:
+      return l.anyTime;
+  }
+}
 
 // ── Data models ───────────────────────────────────────────────────────────────
 
@@ -174,11 +222,11 @@ class _FilterSheetState extends State<FilterSheet> {
     });
   }
 
-  String _fmt(DateTime? dt) =>
-      dt == null ? 'Any date' : DateFormat('MMM d, yyyy').format(dt);
+  String _fmt(AppLocalizations l10n, DateTime? dt) =>
+      dt == null ? l10n.anyDate : DateFormat('MMM d, yyyy').format(dt);
 
-  String get _radiusLabel =>
-      _radius >= _maxRadius ? 'Any distance' : '${_radius.round()} mi';
+  String _radiusLabel(AppLocalizations l10n) =>
+      _radius >= _maxRadius ? l10n.anyDistance : l10n.miShort(_radius.round().toString());
 
   bool get _hasAnyFilter =>
       _datePreset != 'all' ||
@@ -207,6 +255,7 @@ class _FilterSheetState extends State<FilterSheet> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
     return DraggableScrollableSheet(
@@ -241,13 +290,13 @@ class _FilterSheetState extends State<FilterSheet> {
                     ),
                     Row(
                       children: [
-                        Text('Filter Events', style: text.titleLarge),
+                        Text(l10n.filterEvents, style: text.titleLarge),
                         const Spacer(),
                         if (_hasAnyFilter)
                           TextButton(
                             onPressed: _clearAll,
                             child: Text(
-                              'Clear all',
+                              l10n.clearAll,
                               style: text.labelMedium?.copyWith(color: colors.primary),
                             ),
                           ),
@@ -267,12 +316,12 @@ class _FilterSheetState extends State<FilterSheet> {
                   ),
                   children: [
                     // ── Date section ─────────────────────────────────────
-                    _SectionHeader(label: 'Date', text: text),
+                    _SectionHeader(label: l10n.date, text: text),
                     _HorizontalChipRow(
                       children: kDatePresets.map((p) {
                         final selected = _datePreset == p.value;
                         return _FilterChip(
-                          label: p.label,
+                          label: _dateLabel(l10n, p.value),
                           icon: p.icon,
                           isSelected: selected,
                           onTap: () => setState(() {
@@ -297,8 +346,8 @@ class _FilterSheetState extends State<FilterSheet> {
                           children: [
                             Expanded(
                               child: _DateButton(
-                                label: 'From',
-                                value: _fmt(_dateFrom),
+                                label: l10n.from,
+                                value: _fmt(l10n, _dateFrom),
                                 isSet: _dateFrom != null,
                                 onTap: () => _pickDate(isFrom: true),
                                 colors: colors,
@@ -308,8 +357,8 @@ class _FilterSheetState extends State<FilterSheet> {
                             const SizedBox(width: AppTheme.spacingSm),
                             Expanded(
                               child: _DateButton(
-                                label: 'To',
-                                value: _fmt(_dateTo),
+                                label: l10n.to,
+                                value: _fmt(l10n, _dateTo),
                                 isSet: _dateTo != null,
                                 onTap: () => _pickDate(isFrom: false),
                                 colors: colors,
@@ -323,12 +372,12 @@ class _FilterSheetState extends State<FilterSheet> {
                     const SizedBox(height: AppTheme.spacingLg),
 
                     // ── Price section ────────────────────────────────────
-                    _SectionHeader(label: 'Price', text: text),
+                    _SectionHeader(label: l10n.price, text: text),
                     _HorizontalChipRow(
                       children: kPriceOptions.map((p) {
                         final selected = _price == p.value;
                         return _FilterChip(
-                          label: p.label,
+                          label: _priceLabel(l10n, p.value),
                           isSelected: selected,
                           onTap: () => setState(() => _price = p.value),
                           colors: colors,
@@ -339,12 +388,12 @@ class _FilterSheetState extends State<FilterSheet> {
                     const SizedBox(height: AppTheme.spacingLg),
 
                     // ── Time of Day section ──────────────────────────────
-                    _SectionHeader(label: 'Time of Day', text: text),
+                    _SectionHeader(label: l10n.timeOfDay, text: text),
                     _HorizontalChipRow(
                       children: kTimeSlots.map((t) {
                         final selected = _timeOfDay == t.value;
                         return _FilterChip(
-                          label: t.label,
+                          label: _timeLabel(l10n, t.value),
                           icon: t.icon,
                           isSelected: selected,
                           onTap: () => setState(() => _timeOfDay = t.value),
@@ -360,12 +409,12 @@ class _FilterSheetState extends State<FilterSheet> {
                       padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
                       child: Row(
                         children: [
-                          Text('Distance', style: text.titleSmall),
+                          Text(l10n.distance, style: text.titleSmall),
                           const Spacer(),
                           AnimatedSwitcher(
                             duration: const Duration(milliseconds: 150),
                             child: Container(
-                              key: ValueKey(_radiusLabel),
+                              key: ValueKey(_radiusLabel(l10n)),
                               padding: const EdgeInsets.symmetric(
                                   horizontal: AppTheme.spacingSm, vertical: 3),
                               decoration: BoxDecoration(
@@ -373,7 +422,7 @@ class _FilterSheetState extends State<FilterSheet> {
                                 borderRadius: BorderRadius.circular(AppTheme.radiusXl),
                               ),
                               child: Text(
-                                _radiusLabel,
+                                _radiusLabel(l10n),
                                 style: text.labelSmall?.copyWith(
                                   color: colors.onPrimaryContainer,
                                   fontWeight: FontWeight.w700,
@@ -411,8 +460,8 @@ class _FilterSheetState extends State<FilterSheet> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('5 mi', style: text.labelSmall),
-                                Text('Any', style: text.labelSmall),
+                                Text(l10n.miShort('5'), style: text.labelSmall),
+                                Text(l10n.any, style: text.labelSmall),
                               ],
                             ),
                           ),
@@ -422,13 +471,13 @@ class _FilterSheetState extends State<FilterSheet> {
                     const SizedBox(height: AppTheme.spacingLg),
 
                     // ── Location text field ──────────────────────────────
-                    _SectionHeader(label: 'Location', text: text),
+                    _SectionHeader(label: l10n.locationSection, text: text),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
                       child: TextField(
                         controller: _locationController,
                         decoration: InputDecoration(
-                          hintText: 'e.g. Brooklyn, Manhattan...',
+                          hintText: l10n.locationHint,
                           prefixIcon: Icon(Icons.location_on_outlined,
                               color: colors.onSurfaceVariant),
                           suffixIcon: _locationController.text.isNotEmpty
@@ -447,7 +496,7 @@ class _FilterSheetState extends State<FilterSheet> {
                     const SizedBox(height: AppTheme.spacingLg),
 
                     // ── Event Sources ────────────────────────────────────
-                    _SectionHeader(label: 'Event Sources', text: text),
+                    _SectionHeader(label: l10n.eventSources, text: text),
                     SizedBox(
                       height: 48,
                       child: ListView(
@@ -535,7 +584,7 @@ class _FilterSheetState extends State<FilterSheet> {
                             radius: _radius,
                           );
                         },
-                        child: const Text('Show Results'),
+                        child: Text(l10n.showResults),
                       ),
                     ),
                   ],

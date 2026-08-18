@@ -1,11 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../l10n/app_localizations.dart';
 import '../repositories/onboarding_repository.dart';
 import '../services/deep_link_service.dart';
 import '../services/permission_service.dart';
 import '../theme/theme.dart';
+import '../widgets/common/spotvibe_logo.dart';
 
 // ── Interest category data ─────────────────────────────────────────────────────
+
+/// Maps an English interest key (stored as data) to its localized label.
+String _interestLabel(BuildContext context, String key) {
+  final l10n = AppLocalizations.of(context)!;
+  switch (key) {
+    case 'Music':
+      return l10n.interestMusic;
+    case 'Sports':
+      return l10n.interestSports;
+    case 'Food & Drink':
+      return l10n.interestFoodDrink;
+    case 'Arts':
+      return l10n.interestArts;
+    case 'Nightlife':
+      return l10n.interestNightlife;
+    case 'Comedy':
+      return l10n.interestComedy;
+    case 'Community':
+      return l10n.interestCommunity;
+    case 'Tech':
+      return l10n.interestTech;
+    case 'Fitness':
+      return l10n.interestFitness;
+    case 'Family':
+      return l10n.interestFamily;
+    case 'Outdoor':
+      return l10n.interestOutdoor;
+    case 'Film':
+      return l10n.interestFilm;
+    default:
+      return key;
+  }
+}
 
 class _InterestOption {
   final String label;
@@ -210,6 +245,7 @@ class _WelcomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return FadeTransition(
       opacity: heroFade,
@@ -224,39 +260,16 @@ class _WelcomePage extends StatelessWidget {
           children: [
             const SizedBox(height: AppTheme.spacingXl),
 
-            // Hero graphic
+            // Hero graphic with a slowly breathing brand-colored aura
             ScaleTransition(
               scale: heroScale,
-              child: Container(
-                width: 148,
-                height: 148,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [colors.primary, colors.tertiary],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.primary.withValues(alpha: 0.30),
-                      blurRadius: 40,
-                      offset: const Offset(0, 16),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.celebration_rounded,
-                  size: 72,
-                  color: colors.onPrimary,
-                ),
-              ),
+              child: const _WelcomeHero(),
             ),
 
             const SizedBox(height: AppTheme.spacingXl),
 
             Text(
-              'Discover events\nhappening near you',
+              l10n.discoverTitle,
               textAlign: TextAlign.center,
               style: text.headlineMedium?.copyWith(
                 fontWeight: FontWeight.w800,
@@ -267,8 +280,7 @@ class _WelcomePage extends StatelessWidget {
             const SizedBox(height: AppTheme.spacingMd),
 
             Text(
-              'SpotVibe surfaces the best local events — concerts, food festivals, '
-              'community meetups and more — personalised to what you love.',
+              l10n.discoverBody,
               textAlign: TextAlign.center,
               style: text.bodyLarge?.copyWith(
                 color: colors.onSurfaceVariant,
@@ -285,14 +297,14 @@ class _WelcomePage extends StatelessWidget {
               alignment: WrapAlignment.center,
               children: [
                 _FeaturePill(
-                    icon: Icons.location_on_rounded, label: 'Near you'),
+                    icon: Icons.location_on_rounded, label: l10n.nearYou),
                 _FeaturePill(
-                    icon: Icons.tune_rounded, label: 'Personalised'),
+                    icon: Icons.tune_rounded, label: l10n.personalised),
                 _FeaturePill(
-                    icon: Icons.group_rounded, label: 'Social'),
+                    icon: Icons.group_rounded, label: l10n.social),
                 _FeaturePill(
                     icon: Icons.notifications_active_rounded,
-                    label: 'Reminders'),
+                    label: l10n.reminders),
               ],
             ),
           ],
@@ -366,6 +378,7 @@ class _PermissionsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppTheme.spacingLg),
@@ -387,13 +400,12 @@ class _PermissionsPage extends StatelessWidget {
           ),
           const SizedBox(height: AppTheme.spacingMd),
           Text(
-            'A couple of quick\npermissions',
+            l10n.quickPermsTitle,
             style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: AppTheme.spacingXs),
           Text(
-            'Granting these makes SpotVibe way more useful. '
-            'You can change them at any time in Settings.',
+            l10n.quickPermsBody,
             style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
           ),
 
@@ -403,9 +415,8 @@ class _PermissionsPage extends StatelessWidget {
           _OnboardingPermCard(
             icon: Icons.location_on_rounded,
             iconColor: colors.primary,
-            title: 'Location',
-            description:
-                'Find events happening right near you. Only used while the app is open — never in the background.',
+            title: l10n.location,
+            description: l10n.locationDesc,
             granted: locationGranted,
             done: locationDone,
             loading: locationLoading,
@@ -418,9 +429,8 @@ class _PermissionsPage extends StatelessWidget {
           _OnboardingPermCard(
             icon: Icons.notifications_rounded,
             iconColor: colors.tertiary,
-            title: 'Notifications',
-            description:
-                'Get alerts for events you care about, RSVP reminders, and social updates.',
+            title: l10n.notifications,
+            description: l10n.notifDesc,
             granted: notifGranted,
             done: notifDone,
             loading: notifLoading,
@@ -518,7 +528,9 @@ class _OnboardingPermCard extends StatelessWidget {
                               BorderRadius.circular(AppTheme.radiusSmall),
                         ),
                         child: Text(
-                          granted ? 'Allowed' : 'Denied',
+                          granted
+                              ? AppLocalizations.of(context)!.allowed
+                              : AppLocalizations.of(context)!.denied,
                           style: text.labelSmall?.copyWith(
                             color: granted
                                 ? colors.onPrimaryContainer
@@ -551,7 +563,7 @@ class _OnboardingPermCard extends StatelessWidget {
                               child: CircularProgressIndicator(
                                   strokeWidth: 2, color: iconColor),
                             )
-                          : const Text('Allow'),
+                          : Text(AppLocalizations.of(context)!.allow),
                     ),
                   ),
                 ],
@@ -576,6 +588,7 @@ class _InterestsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppTheme.spacingLg),
@@ -596,12 +609,12 @@ class _InterestsPage extends StatelessWidget {
           ),
           const SizedBox(height: AppTheme.spacingMd),
           Text(
-            'What are you into?',
+            l10n.whatAreYouInto,
             style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: AppTheme.spacingXs),
           Text(
-            'Pick your interests and we\'ll show you events you\'ll actually care about.',
+            l10n.pickInterestsBody,
             style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
           ),
 
@@ -613,7 +626,7 @@ class _InterestsPage extends StatelessWidget {
             children: _kInterests.map((interest) {
               final isSelected = selected.contains(interest.label);
               return _InterestChip(
-                label: interest.label,
+                label: _interestLabel(context, interest.label),
                 icon: interest.icon,
                 isSelected: isSelected,
                 onTap: () => onToggle(interest.label),
@@ -625,7 +638,7 @@ class _InterestsPage extends StatelessWidget {
 
           if (selected.isEmpty)
             Text(
-              'Select at least one to personalise your feed.',
+              l10n.selectAtLeastOne,
               style: text.bodySmall?.copyWith(
                 color: colors.onSurfaceVariant
                     .withValues(alpha: AppTheme.opacityHint),
@@ -739,6 +752,7 @@ class _ReadyPageState extends State<_ReadyPage>
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return FadeTransition(
       opacity: _fade,
@@ -779,7 +793,7 @@ class _ReadyPageState extends State<_ReadyPage>
               const SizedBox(height: AppTheme.spacingXl),
 
               Text(
-                'You\'re all set! 🎉',
+                l10n.allSetTitle,
                 style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
                 textAlign: TextAlign.center,
               ),
@@ -787,8 +801,7 @@ class _ReadyPageState extends State<_ReadyPage>
               const SizedBox(height: AppTheme.spacingMd),
 
               Text(
-                'Your personalised event feed is ready.\n'
-                'Tap Explore to see what\'s happening near you.',
+                l10n.allSetBody,
                 textAlign: TextAlign.center,
                 style: text.bodyLarge?.copyWith(
                   color: colors.onSurfaceVariant,
@@ -801,21 +814,21 @@ class _ReadyPageState extends State<_ReadyPage>
               // Three value reminders
               _CheckItem(
                 icon: Icons.search_rounded,
-                label: 'Browse events near you',
+                label: l10n.browseNearYou,
                 colors: colors,
                 text: text,
               ),
               const SizedBox(height: AppTheme.spacingSm),
               _CheckItem(
                 icon: Icons.tune_rounded,
-                label: 'Filter by date, price & category',
+                label: l10n.filterByDatePrice,
                 colors: colors,
                 text: text,
               ),
               const SizedBox(height: AppTheme.spacingSm),
               _CheckItem(
                 icon: Icons.group_rounded,
-                label: 'See who else is going',
+                label: l10n.seeWhosGoing,
                 colors: colors,
                 text: text,
               ),
@@ -889,6 +902,7 @@ class _OnboardingFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -927,7 +941,7 @@ class _OnboardingFooter extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: isLastPage ? onFinish : onNext,
-              child: Text(isLastPage ? 'Explore SpotVibe' : 'Continue'),
+              child: Text(isLastPage ? l10n.exploreSpotVibe : l10n.continueBtn),
             ),
           ),
 
@@ -937,12 +951,90 @@ class _OnboardingFooter extends StatelessWidget {
             TextButton(
               onPressed: onSkip,
               child: Text(
-                'Skip for now',
+                l10n.skipForNow,
                 style: text.labelMedium?.copyWith(
                     color: colors.onSurfaceVariant),
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+// ── Welcome hero with animated glow ───────────────────────────────────────────
+
+/// The onboarding logo mark with a soft, slowly drifting brand-colored aura
+/// behind it. The logo stays crisp on top; the glow is a low-opacity,
+/// IgnorePointer background so it never affects readability or taps.
+class _WelcomeHero extends StatefulWidget {
+  const _WelcomeHero();
+
+  @override
+  State<_WelcomeHero> createState() => _WelcomeHeroState();
+}
+
+class _WelcomeHeroState extends State<_WelcomeHero>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 8),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return SizedBox(
+      width: 220,
+      height: 220,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          AnimatedBuilder(
+            animation: _controller,
+            builder: (_, __) {
+              final t = _controller.value;
+              final c1 = Color.lerp(
+                AppTheme.brandViolet,
+                AppTheme.brandPink,
+                t,
+              )!;
+              final c2 = Color.lerp(
+                AppTheme.brandCyan,
+                AppTheme.brandViolet,
+                1 - t,
+              )!;
+              return IgnorePointer(
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        c1.withValues(alpha: isDark ? 0.30 : 0.20),
+                        c2.withValues(alpha: isDark ? 0.16 : 0.08),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.0, 0.6, 1.0],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SpotVibeLogo(size: 148, glow: false),
         ],
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
 import '../../theme/theme.dart';
 
@@ -36,7 +37,7 @@ class ClaimVenueBanner extends StatelessWidget {
             const SizedBox(width: AppTheme.spacingSm),
             Expanded(
               child: Text(
-                'Promoter? Verify this listing — first claim is free.',
+                AppLocalizations.of(context)!.claimPromo,
                 style: text.labelMedium?.copyWith(
                   color: colors.onSurfaceVariant,
                 ),

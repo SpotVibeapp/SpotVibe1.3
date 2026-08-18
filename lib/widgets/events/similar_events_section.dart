@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
 import '../../providers/event_provider.dart';
 import '../../theme/theme.dart';
@@ -25,16 +26,17 @@ class SimilarEventsSection extends StatelessWidget {
     if (similar.isEmpty) return const SizedBox.shrink();
 
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Expanded(child: Text('More like this', style: text.titleMedium)),
+            Expanded(child: Text(l10n.moreLikeThis, style: text.titleMedium)),
             TextButton(
               onPressed: () => context.go('/'),
-              child: const Text('See all'),
+              child: Text(l10n.seeAll),
             ),
           ],
         ),

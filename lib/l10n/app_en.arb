@@ -1,0 +1,729 @@
+{
+  "@@locale": "en",
+  "appTitle": "SpotVibe",
+  "continueBtn": "Continue",
+  "skipForNow": "Skip for now",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "allow": "Allow",
+  "allowed": "Allowed",
+  "denied": "Denied",
+  "close": "Close",
+  "optional": "Optional",
+  "fullNameLabel": "Full Name",
+  "emailLabel": "Email",
+  "passwordLabel": "Password",
+  "createAccount": "Create Account",
+  "signIn": "Sign In",
+  "forgotPassword": "Forgot password?",
+  "passwordResetBackend": "Password reset requires a backend integration.",
+  "emailRequired": "Email is required",
+  "validEmail": "Enter a valid email address",
+  "passwordRequired": "Password is required",
+  "passwordMinChars": "Password must be at least 6 characters",
+  "fullNameRequired": "Full name is required",
+  "alreadyHaveAccount": "Already have an account? Sign in",
+  "noAccountCreate": "Don't have an account? Create one",
+  "orContinueWithEmail": "or continue with email",
+  "continueAsGuest": "Continue as Guest",
+  "agreeToTermsPrefix": "By continuing you agree to our ",
+  "termsOfUse": "Terms of Use",
+  "privacyPolicy": "Privacy Policy",
+  "google": "Google",
+  "facebook": "Facebook",
+  "apple": "Apple",
+  "discoverTitle": "Discover events\nhappening near you",
+  "discoverBody": "SpotVibe surfaces the best local events — concerts, food festivals, community meetups and more — personalised to what you love.",
+  "nearYou": "Near you",
+  "personalised": "Personalised",
+  "social": "Social",
+  "reminders": "Reminders",
+  "quickPermsTitle": "A couple of quick\npermissions",
+  "quickPermsBody": "Granting these makes SpotVibe way more useful. You can change them at any time in Settings.",
+  "location": "Location",
+  "locationDesc": "Find events happening right near you. Only used while the app is open — never in the background.",
+  "notifications": "Notifications",
+  "notifDesc": "Get alerts for events you care about, RSVP reminders, and social updates.",
+  "whatAreYouInto": "What are you into?",
+  "pickInterestsBody": "Pick your interests and we'll show you events you'll actually care about.",
+  "selectAtLeastOne": "Select at least one to personalise your feed.",
+  "allSetTitle": "You're all set! 🎉",
+  "allSetBody": "Your personalised event feed is ready.\nTap Explore to see what's happening near you.",
+  "browseNearYou": "Browse events near you",
+  "filterByDatePrice": "Filter by date, price & category",
+  "seeWhosGoing": "See who else is going",
+  "exploreSpotVibe": "Explore SpotVibe",
+  "interestMusic": "Music",
+  "interestSports": "Sports",
+  "interestFoodDrink": "Food & Drink",
+  "interestArts": "Arts",
+  "interestNightlife": "Nightlife",
+  "interestComedy": "Comedy",
+  "interestCommunity": "Community",
+  "interestTech": "Tech",
+  "interestFitness": "Fitness",
+  "interestFamily": "Family",
+  "interestOutdoor": "Outdoor",
+  "interestFilm": "Film",
+  "setupTitle": "Let's set up SpotVibe",
+  "setupBody": "A couple of quick permissions make the experience\nway better.",
+  "locationCardDesc": "Find events happening near you. SpotVibe uses your location only while the app is open — never in the background.",
+  "notifCardDesc": "Get alerts for new events near you, messages from friends, and updates on events you're attending.",
+  "changeSettingsAnytime": "You can change these settings at any time in your device's Settings app.",
+  "profile": "Profile",
+  "browsingAsGuest": "Browsing as Guest",
+  "guestPrompt": "Create an account to RSVP, leave comments, create events, and connect with others.",
+  "signInOrCreate": "Sign In or Create Account",
+  "notificationsSettings": "Notifications",
+  "darkMode": "Dark Mode",
+  "map": "Map",
+  "myEvents": "My Events",
+  "savedEvents": "Saved Events",
+  "signOut": "Sign Out",
+  "deleteAccount": "Delete Account",
+  "language": "Language",
+  "languageSystemDefault": "System default",
+  "english": "English",
+  "spanish": "Español (México)",
+  "deleteAccountTitle": "Delete account?",
+  "deleteAccountBody": "This permanently deletes your account, profile, events, RSVPs, and comments. This cannot be undone.",
+  "passwordEmailAccounts": "Password (email accounts)",
+  "accountDeletedMsg": "Your account and data have been deleted.",
+  "forPromoters": "For promoters, venues, and organizers",
+  "thenPrice": "then {price}",
+  "@thenPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "foundingLock": "Founding venues lock {price} — {remaining} of {limit} left",
+  "@foundingLock": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      },
+      "remaining": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "freeTier": "Free — $0",
+  "premiumTier": "Premium — {price}",
+  "@premiumTier": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "everythingPlus": "Everything in Free, plus the tools below.",
+  "welcomePremium": "Welcome to SpotVibe Premium.",
+  "restorePurchases": "Restore Purchases",
+  "noSubscriptionFound": "No subscription found to restore.",
+  "bySubscribingPrefix": "By subscribing you agree to our ",
+  "youAreOnPremium": "You're on Premium",
+  "premiumUnlockedBody": "Recurring events, analytics, branding, and verified claims are unlocked.",
+  "freePerk1": "Post up to 2 upcoming one-time events at a time",
+  "freePerk2": "Basic event page — title, description, photo, location, time",
+  "freePerk3": "Event appears in the public feed",
+  "premiumPerk1Title": "Recurring events",
+  "premiumPerk1Subtitle": "Post once — repeats weekly or monthly",
+  "premiumPerk2Title": "Featured placement",
+  "premiumPerk2Subtitle": "Top of the category feed 1× per week",
+  "premiumPerk3Title": "Analytics dashboard",
+  "premiumPerk3Subtitle": "Live views, saves, and click-throughs",
+  "premiumPerk4Title": "Custom branding",
+  "premiumPerk4Subtitle": "Logo and brand colors on your event page",
+  "premiumPerk5Title": "Contact button",
+  "premiumPerk5Subtitle": "Phone, website, and social links",
+  "premiumPerk6Title": "No ads",
+  "premiumPerk6Subtitle": "Clean event pages with no ads",
+  "premiumPerk7Title": "Claim existing events",
+  "premiumPerk7Subtitle": "Verify first. Your first claim is free",
+  "trialLabel": "7-day free trial",
+  "startFreeTrial": "Start 7-day free trial",
+  "perMonth": "{price}/month",
+  "@perMonth": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "afterTrial": "after a {trial}",
+  "@afterTrial": {
+    "placeholders": {
+      "trial": {
+        "type": "String"
+      }
+    }
+  },
+  "billingFoundingOpen": "{trial}, then {price} locked for founding venues · {remaining} of {limit} left · cancel anytime",
+  "@billingFoundingOpen": {
+    "placeholders": {
+      "trial": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      },
+      "remaining": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "billingFoundingLocked": "Founding price locked at {price} · billed monthly · cancel anytime",
+  "@billingFoundingLocked": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "billingStandard": "{trial}, then {price} · billed monthly · cancel anytime",
+  "@billingStandard": {
+    "placeholders": {
+      "trial": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "purchaseFailed": "Purchase failed. Please try again.",
+  "noActiveSubscription": "No active subscription found to restore.",
+  "restoreFailed": "Restore failed. Please try again.",
+  "filtersTooltip": "Filters",
+  "couldNotGetLocation": "Could not get your location. Please allow location access.",
+  "showingEventsIn": "Showing events in \"{area}\"",
+  "@showingEventsIn": {
+    "placeholders": {
+      "area": {
+        "type": "String"
+      }
+    }
+  },
+  "clear": "Clear",
+  "searchResults": "{count, plural, =1{1 result for \"{query}\"} other{{count} results for \"{query}\"}}",
+  "@searchResults": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "nearestFirst": "Nearest first",
+  "byDate": "By date",
+  "errorTitle": "Couldn't load events",
+  "errorSubtitle": "Check your connection and try again. Your saved events are still available.",
+  "tryAgain": "Try Again",
+  "viewSavedEvents": "View Saved Events",
+  "noMatchesTitle": "No matches for these filters",
+  "noMatchesSubtitle": "Try broadening your search — adjust the date, price, or category filters to see more events.",
+  "clearFilters": "Clear Filters",
+  "noEventsNear": "No events near \"{area}\"",
+  "@noEventsNear": {
+    "placeholders": {
+      "area": {
+        "type": "String"
+      }
+    }
+  },
+  "noEventsNearSubtitle": "Try a different city, zip code, or increase your search radius in the filter options.",
+  "increaseRadius": "Increase Radius",
+  "clearLocation": "Clear Location",
+  "locationNeededTitle": "Location needed",
+  "locationNeededSubtitle": "Enable location so SpotVibe can find events happening near you right now.",
+  "enableLocation": "Enable Location",
+  "browseAllEvents": "Browse All Events",
+  "noEventsFoundTitle": "No events found nearby",
+  "noEventsFoundSubtitle": "Try increasing your search radius or check back later — new events are added every day.",
+  "shareEventTooltip": "Share event",
+  "featuredThisWeek": "FEATURED THIS WEEK",
+  "tickets": "Tickets",
+  "aboutThisEvent": "About this Event",
+  "organizer": "Organizer",
+  "bookmarkedCountLabel": "{count, plural, =1{1 Bookmarked} other{{count} Bookmarked}}",
+  "@bookmarkedCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "interestedCountLabel": "{count, plural, =1{1 Interested} other{{count} Interested}}",
+  "@interestedCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "followingName": "Following {name}",
+  "@followingName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "unfollowedName": "Unfollowed {name}",
+  "@unfollowedName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "userBlocked": "User blocked",
+  "reportUser": "Report User",
+  "reasonForReporting": "Reason for reporting...",
+  "reportSubmitted": "Report submitted",
+  "submit": "Submit",
+  "freePlanLimit": "Free plan limit",
+  "freePlanLimitBody": "Free accounts can have 2 upcoming one-time events at a time. Start a {trial} for unlimited and recurring events.",
+  "@freePlanLimitBody": {
+    "placeholders": {
+      "trial": {
+        "type": "String"
+      }
+    }
+  },
+  "notNow": "Not now",
+  "goPremium": "Go Premium",
+  "policyViolation": "{category} policy violation: {reason}",
+  "@policyViolation": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "contentWarning": "{category} warning: {reason} Your event will still be submitted.",
+  "@contentWarning": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "content": "Content",
+  "eventUpdated": "Event updated!",
+  "eventCreated": "Event created!",
+  "editEvent": "Edit Event",
+  "createEvent": "Create Event",
+  "save": "Save",
+  "publish": "Publish",
+  "eventPublishing": "Event Publishing",
+  "eventDetails": "Event Details",
+  "eventTitle": "Event Title",
+  "eventTitleHint": "e.g. Summer Night Market",
+  "titleRequired": "Title is required",
+  "description": "Description",
+  "descriptionHint": "Tell people what your event is about...",
+  "descriptionRequired": "Description is required",
+  "dateAndTime": "Date & Time",
+  "date": "Date",
+  "time": "Time",
+  "locationSection": "Location",
+  "venueName": "Venue Name",
+  "venueNameHint": "e.g. Riverside Park",
+  "venueNameRequired": "Venue name is required",
+  "streetAddress": "Street Address",
+  "streetAddressHint": "123 Main St",
+  "city": "City",
+  "cityHint": "New York",
+  "state": "State",
+  "stateHint": "NY",
+  "zip": "ZIP",
+  "zipHint": "10001",
+  "mapLinkOptional": "Map Link (optional)",
+  "extras": "Extras",
+  "ticketPriceLabel": "Ticket Price (leave blank for free)",
+  "enterValidPrice": "Enter a valid price",
+  "eventImageUrl": "Event Image URL (optional)",
+  "eventVideoUrl": "Event Video URL (optional)",
+  "chatLink": "Community Chat Link (optional)",
+  "saveChanges": "Save Changes",
+  "publishPremium": "Publish Event — Premium",
+  "publishFree": "Publish Event — Free",
+  "premium": "Premium",
+  "premiumFeaturesSubtitle": "Recurring events · analytics · custom branding · contact button",
+  "premiumFeaturesUnlocked": "Premium features unlocked",
+  "recurringSchedule": "Recurring Schedule",
+  "contactInfo": "Contact Info",
+  "phoneOptional": "Phone (optional)",
+  "websiteOptional": "Website (optional)",
+  "socialHandleOptional": "Social Handle (optional)",
+  "customBranding": "Custom Branding",
+  "brandAccentColor": "Brand Accent Color",
+  "brandLogoUrl": "Brand Logo URL (optional)",
+  "oneTime": "One-time",
+  "weekly": "Weekly",
+  "monthly": "Monthly",
+  "category": "Category",
+  "premiumUnlimited": "Premium — unlimited events",
+  "premiumIncludes": "Recurring events, analytics, branding, and claims are included.",
+  "freePlan": "Free plan",
+  "freePlanBody": "One upcoming one-time event at a time. Basic page (title, description, photo, location, time) in the public feed.",
+  "upgradeToPremium": "Upgrade to Premium — {price}",
+  "@upgradeToPremium": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "searchHint": "Search events, artists, venues...",
+  "areaHint": "Zip code, city, or state...",
+  "usingYourLocation": "Using your location",
+  "useMyLocation": "Use my location",
+  "featured": "FEATURED",
+  "byOrganizer": "by {name}",
+  "@byOrganizer": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "underTenthMi": "<0.1 mi",
+  "miShort": "{value} mi",
+  "@miShort": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotOpenTickets": "Could not open tickets.",
+  "getTicketsOnTm": "Get tickets on Ticketmaster",
+  "getTickets": "Get tickets",
+  "logInToRsvp": "Log in to RSVP",
+  "rsvpToThisEvent": "RSVP to this Event",
+  "youAreAttending": "You're attending!",
+  "privateRsvp": "Private RSVP",
+  "publicRsvp": "Public RSVP",
+  "cancelRsvp": "Cancel RSVP",
+  "rsvpSubtitle": "Let others know you're going, or keep it private.",
+  "keepPrivate": "Keep my RSVP private",
+  "onlyCountVisible": "Only the count will be visible — not your name.",
+  "nameWillAppear": "Your name will appear in the attendees list.",
+  "confirmRsvp": "Confirm RSVP",
+  "claimPromo": "Promoter? Verify this listing — first claim is free.",
+  "calendarError": "Could not open calendar. Please add the event manually.",
+  "googleCalendarError": "Could not open Google Calendar.",
+  "addToGoogleCalendar": "Add to Google Calendar",
+  "addToAppleCalendar": "Add to Apple Calendar",
+  "sponsored": "Sponsored",
+  "goingOutThisWeek": "Going out this week?",
+  "pageAdBody": "SpotVibe shows live music, food, and nightlife near you — no hunting around town.",
+  "browseEvents": "Browse events",
+  "comments": "Comments",
+  "noCommentsYet": "No comments yet. Be the first!",
+  "logInToComment": "Log in to leave a comment",
+  "justNow": "just now",
+  "minutesAgo": "{minutes}m ago",
+  "@minutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "{hours}h ago",
+  "@hoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "you": "You",
+  "detectedLabel": "{category} Detected",
+  "@detectedLabel": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "warningLabel": "{category} Warning",
+  "@warningLabel": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewComment": "Please review your comment.",
+  "addCommentHint": "Add a comment…",
+  "whosGoing": "Who's going",
+  "noRsvpsYet": "No one has RSVP'd yet",
+  "beFirstToGo": "Be the first to say you're going.",
+  "attendeesPrivate": "Attendees are keeping their RSVPs private.",
+  "peopleGoing": "{count, plural, =1{1 person is going} other{{count} people are going}}",
+  "@peopleGoing": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bePartOfExperience": "Be part of the experience",
+  "privateCount": "+{count} private",
+  "@privateCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mapsError": "Could not open maps for this venue.",
+  "reportEvent": "Report Event",
+  "whatsWrong": "What's wrong with this event?",
+  "reportSubmittedThanks": "Report submitted. Thank you!",
+  "calendar": "Calendar",
+  "directions": "Directions",
+  "share": "Share",
+  "story": "Story",
+  "reportThisEvent": "Report this event",
+  "practicalInfo": "Practical Info",
+  "weather": "Weather",
+  "weatherValue": "Check forecast closer to the date",
+  "parking": "Parking",
+  "parkingValue": "Street parking & nearby lots available",
+  "duration": "Duration",
+  "age": "Age",
+  "accessible": "Accessible",
+  "accessibleValue": "Wheelchair accessible venue",
+  "dur2to3": "2–3 hours",
+  "dur2to4": "2–4 hours",
+  "dur1to2": "1–2 hours",
+  "dur1to3": "1–3 hours",
+  "dur15to25": "1.5–2.5 hours",
+  "dur3to5": "3–5 hours",
+  "age21plus": "21+ only",
+  "age18plus": "18+",
+  "moreLikeThis": "More like this",
+  "seeAll": "See all",
+  "whyAmISeeing": "Why am I seeing this?",
+  "personalizationBody": "SpotVibe learns from how you interact with events — what you view, save, and RSVP to. Over time, the feed re-orders to show more of what you enjoy.",
+  "topInterests": "Your top interests right now:",
+  "resetMyPreferences": "Reset my preferences",
+  "gotIt": "Got it",
+  "personalizingFeed": "Personalizing your feed…",
+  "showingMore": "Showing more ",
+  "forYou": " for you",
+  "showingAll": "Showing all {total} events",
+  "@showingAll": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "showingRange": "Showing {start}–{end} of {total} events",
+  "@showingRange": {
+    "placeholders": {
+      "start": {
+        "type": "int"
+      },
+      "end": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "previous": "Previous",
+  "pageXOfY": "Page {page} of {total}",
+  "@pageXOfY": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "next": "Next",
+  "allDates": "All dates",
+  "today": "Today",
+  "tomorrow": "Tomorrow",
+  "thisWeekend": "This weekend",
+  "thisWeek": "This week",
+  "customRange": "Custom range",
+  "anyPrice": "Any price",
+  "free": "Free",
+  "under20": "Under $20",
+  "under50": "Under $50",
+  "anyTime": "Any time",
+  "morning": "Morning",
+  "afternoon": "Afternoon",
+  "evening": "Evening",
+  "night": "Night",
+  "anyDate": "Any date",
+  "anyDistance": "Any distance",
+  "filterEvents": "Filter Events",
+  "clearAll": "Clear all",
+  "from": "From",
+  "to": "To",
+  "price": "Price",
+  "timeOfDay": "Time of Day",
+  "distance": "Distance",
+  "any": "Any",
+  "locationHint": "e.g. Brooklyn, Manhattan...",
+  "eventSources": "Event Sources",
+  "showResults": "Show Results",
+  "catAll": "All",
+  "catMusic": "Music",
+  "catFood": "Food",
+  "catFoodDrink": "Food & Drink",
+  "catArts": "Arts",
+  "catSports": "Sports",
+  "catTech": "Tech",
+  "catCommunity": "Community",
+  "catFamily": "Family",
+  "catWellness": "Wellness",
+  "catSocial": "Social",
+  "catMarkets": "Markets",
+  "catDance": "Dance",
+  "catFunGames": "Fun & Games",
+  "catHealth": "Health",
+  "catOther": "Other",
+  "catNightlife": "Nightlife",
+  "catComedy": "Comedy",
+  "catFitness": "Fitness",
+  "catOutdoor": "Outdoor",
+  "catFilm": "Film",
+  "activeLabel": "Active — {price}",
+  "@activeLabel": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "trialActiveLabel": "Trial active — then {price}",
+  "@trialActiveLabel": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "and": " and ",
+  "tourNext": "Next",
+  "tourDone": "Done",
+  "tourSkip": "Skip",
+  "takeTheTour": "Take the tour",
+  "tourRestarted": "Tour restarted. It will play again on the next screens you open.",
+  "tourHome1Title": "Welcome to SpotVibe",
+  "tourHome1Body": "Find real events near you — concerts, food, nightlife and more.",
+  "tourHome2Title": "Search events",
+  "tourHome2Body": "Search by event, artist, or venue — or by zip code, city, or state.",
+  "tourHome3Title": "Filter results",
+  "tourHome3Body": "Narrow things down by date, price, time of day, distance, and more.",
+  "tourHome4Title": "Browse categories",
+  "tourHome4Body": "Tap a category to focus your feed on what you love.",
+  "tourHome5Title": "Your event feed",
+  "tourHome5Body": "Scroll to discover events. Tap any card for details, tickets, and RSVP.",
+  "tourEvent1Title": "RSVP",
+  "tourEvent1Body": "Tap here to say you're going — public or private, it's your call.",
+  "tourEvent2Title": "Save & track",
+  "tourEvent2Body": "Bookmark events or mark the ones you're interested in.",
+  "tourEvent3Title": "Share",
+  "tourEvent3Body": "Send the event to friends as a link or a share card.",
+  "tourProfile1Title": "SpotVibe Premium",
+  "tourProfile1Body": "Unlock recurring events, analytics, and custom branding.",
+  "tourProfile2Title": "Language",
+  "tourProfile2Body": "Switch between English and Spanish anytime.",
+  "tourProfile3Title": "Your events",
+  "tourProfile3Body": "Manage the events you've created and saved.",
+  "adminDashboard": "Admin Dashboard",
+  "adminReports": "Reports",
+  "adminEvents": "Events",
+  "adminNoReports": "No open reports — you're all caught up.",
+  "adminResolve": "Mark resolved",
+  "adminRemove": "Remove",
+  "adminRemoveEvent": "Remove event",
+  "adminRemoveEventTitle": "Remove this event?",
+  "adminRemoveEventBody": "This permanently removes the event, its comments, and its RSVPs from the public feed.",
+  "adminEventRemoved": "Event removed.",
+  "adminReportResolved": "Report resolved.",
+  "adminSearchEvents": "Search events…",
+  "adminNoEvents": "No events found.",
+  "adminReason": "Reason: {reason}",
+  "@adminReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "adminReportedUser": "Reported user: {id}",
+  "@adminReportedUser": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "adminReportedBy": "Reported by: {id}",
+  "@adminReportedBy": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "adminAccess": "Admin",
+  "adminDeleteComment": "Delete comment",
+  "adminCommentRemoved": "Comment removed.",
+  "adminPostUnlimited": "Official account — unlimited one-time events",
+  "adminSearchHint": "Search by title, venue, or organizer…",
+  "adminDeleteCommentBody": "This permanently removes the comment from the event page.",
+  "adminClaims": "Claims",
+  "adminNoClaims": "No venue claims yet.",
+  "adminApprove": "Approve",
+  "adminReject": "Reject",
+  "adminClaimApproved": "Claim approved — the venue can now edit this listing.",
+  "adminClaimRejected": "Claim rejected.",
+  "adminPending": "Pending",
+  "adminApproved": "Approved",
+  "adminRejected": "Rejected",
+  "adminBanUser": "Ban user",
+  "adminUnban": "Unban",
+  "adminBannedUsers": "Banned users",
+  "adminNoBanned": "No banned users.",
+  "adminUserBanned": "User banned — their content is now hidden.",
+  "adminUserUnbanned": "User unbanned.",
+  "adminBanConfirmTitle": "Ban this user?",
+  "adminBanConfirmBody": "This hides all of their events, comments, and RSVPs from the app. You can undo this anytime.",
+  "claimRoleOwner": "Owner / operator",
+  "claimRolePromoter": "Authorized promoter",
+  "claimRoleBookingAgent": "Booking agent",
+  "claimRoleMarketing": "Marketing / PR",
+  "claimRoleOther": "Other authorized rep"
+}

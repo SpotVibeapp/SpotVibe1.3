@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../data/pricing.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/subscription_provider.dart';
 import '../theme/theme.dart';
 
@@ -72,6 +73,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Stack(
       children: [
         Container(
@@ -89,13 +91,30 @@ class _Header extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 72,
-                  height: 72,
+                  width: 88,
+                  height: 88,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.25),
                     shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.32),
+                        Colors.white.withValues(alpha: 0.06),
+                      ],
+                    ),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.55),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        blurRadius: 22,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                  child: const Icon(Icons.workspace_premium_rounded, size: 40, color: Colors.white),
+                  child: const Icon(Icons.workspace_premium_rounded,
+                      size: 44, color: Colors.white),
                 ),
                 const SizedBox(height: AppTheme.spacingMd),
                 const Text(
@@ -104,12 +123,19 @@ class _Header extends StatelessWidget {
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        color: Color(0x66000000),
+                        blurRadius: 10,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: AppTheme.spacingXs),
-                const Text(
-                  'For promoters, venues, and organizers',
-                  style: TextStyle(fontSize: 14, color: Colors.white70),
+                Text(
+                  l10n.forPromoters,
+                  style: const TextStyle(fontSize: 14, color: Colors.white70),
                 ),
               ],
             ),
@@ -139,13 +165,14 @@ class _PriceBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final package = sub.selectedPackage;
     final price = package?.storeProduct.priceString ?? sub.displayPriceLabel;
 
     return Column(
       children: [
         Text(
-          kPremiumTrialLabel,
+          l10n.trialLabel,
           style: text.titleMedium?.copyWith(
             fontWeight: FontWeight.w700,
             color: appColors.proGold,
@@ -153,7 +180,7 @@ class _PriceBlock extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'then $price',
+          l10n.thenPrice(price),
           style: text.headlineLarge?.copyWith(
             fontWeight: FontWeight.w800,
             color: appColors.proGold,
@@ -169,7 +196,11 @@ class _PriceBlock extends StatelessWidget {
         if (sub.offerFoundingPrice && !sub.isFoundingMember) ...[
           const SizedBox(height: 8),
           Text(
-            'Founding venues lock ${kFoundingMonthlyLabel} — ${sub.foundingSlotsRemaining} of $kFoundingMemberLimit left',
+            l10n.foundingLock(
+              l10n.perMonth('\$${kFoundingMonthlyPrice.toStringAsFixed(2)}'),
+              sub.foundingSlotsRemaining,
+              kFoundingMemberLimit,
+            ),
             style: text.labelSmall?.copyWith(
               color: appColors.proGold,
               fontWeight: FontWeight.w700,
@@ -196,6 +227,8 @@ class _FreeVsPremium extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final freePerks = [l10n.freePerk1, l10n.freePerk2, l10n.freePerk3];
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingMd),
       decoration: BoxDecoration(
@@ -206,9 +239,9 @@ class _FreeVsPremium extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Free — \$0', style: text.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+          Text(l10n.freeTier, style: text.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
           const SizedBox(height: AppTheme.spacingSm),
-          ...kFreePlanPerks.map(
+          ...freePerks.map(
             (perk) => Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Row(
@@ -223,7 +256,7 @@ class _FreeVsPremium extends StatelessWidget {
           ),
           const SizedBox(height: AppTheme.spacingSm),
           Text(
-            'Premium — ${sub.displayPriceLabel}',
+            l10n.premiumTier(sub.displayPriceLabel),
             style: text.titleSmall?.copyWith(
               fontWeight: FontWeight.w800,
               color: appColors.proGold,
@@ -231,7 +264,7 @@ class _FreeVsPremium extends StatelessWidget {
           ),
           const SizedBox(height: AppTheme.spacingXs),
           Text(
-            'Everything in Free, plus the tools below.',
+            l10n.everythingPlus,
             style: text.labelSmall?.copyWith(color: colors.onSurfaceVariant),
           ),
         ],
@@ -248,6 +281,16 @@ class _FeatureList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final premiumPerks = [
+      (l10n.premiumPerk1Title, l10n.premiumPerk1Subtitle),
+      (l10n.premiumPerk2Title, l10n.premiumPerk2Subtitle),
+      (l10n.premiumPerk3Title, l10n.premiumPerk3Subtitle),
+      (l10n.premiumPerk4Title, l10n.premiumPerk4Subtitle),
+      (l10n.premiumPerk5Title, l10n.premiumPerk5Subtitle),
+      (l10n.premiumPerk6Title, l10n.premiumPerk6Subtitle),
+      (l10n.premiumPerk7Title, l10n.premiumPerk7Subtitle),
+    ];
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
@@ -255,8 +298,8 @@ class _FeatureList extends StatelessWidget {
         border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Column(
-        children: List.generate(kPremiumPlanPerks.length, (i) {
-          final (title, subtitle) = kPremiumPlanPerks[i];
+        children: List.generate(premiumPerks.length, (i) {
+          final (title, subtitle) = premiumPerks[i];
           return Column(
             children: [
               Padding(
@@ -280,7 +323,7 @@ class _FeatureList extends StatelessWidget {
                   ],
                 ),
               ),
-              if (i < kPremiumPlanPerks.length - 1)
+              if (i < premiumPerks.length - 1)
                 Divider(height: 1, color: colors.outlineVariant.withValues(alpha: 0.2)),
             ],
           );
@@ -305,10 +348,15 @@ class _PurchaseButton extends StatelessWidget {
         child: Ink(
           height: AppTheme.buttonHeight + 6,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [appColors.proGold, appColors.proGoldLight],
-            ),
+            gradient: AppTheme.proGradient,
             borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+            boxShadow: [
+              BoxShadow(
+                color: appColors.proGold.withValues(alpha: 0.5),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
           child: Center(
             child: sub.isPurchasing
@@ -337,8 +385,8 @@ class _PurchaseButton extends StatelessWidget {
     if (!context.mounted) return;
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Welcome to SpotVibe Premium.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.welcomePremium),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -362,12 +410,16 @@ class _RestoreButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextButton(
       onPressed: sub.isPurchasing ? null : () => _handleRestore(context),
-      child: Text('Restore Purchases', style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant)),
+      child: Text(
+        AppLocalizations.of(context)!.restorePurchases,
+        style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
+      ),
     );
   }
 
   Future<void> _handleRestore(BuildContext context) async {
     final sub = context.read<SubscriptionProvider>();
+    final l10n = AppLocalizations.of(context)!;
     final restored = await sub.restorePurchases();
     if (!context.mounted) return;
     if (restored) {
@@ -375,7 +427,7 @@ class _RestoreButton extends StatelessWidget {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(sub.errorMessage ?? 'No subscription found to restore.'),
+          content: Text(sub.errorMessage ?? l10n.noSubscriptionFound),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -396,20 +448,21 @@ class _TermsRow extends StatelessWidget {
       color: colors.primary,
       decoration: TextDecoration.underline,
     );
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Text.rich(
         TextSpan(
           style: style,
           children: [
-            const TextSpan(text: 'By subscribing you agree to our '),
+            TextSpan(text: l10n.bySubscribingPrefix),
             TextSpan(
-              text: 'Terms of Use',
+              text: l10n.termsOfUse,
               style: linkStyle,
               recognizer: TapGestureRecognizer()..onTap = () => context.push('/terms'),
             ),
-            const TextSpan(text: ' and '),
+            TextSpan(text: l10n.and),
             TextSpan(
-              text: 'Privacy Policy',
+              text: l10n.privacyPolicy,
               style: linkStyle,
               recognizer: TapGestureRecognizer()..onTap = () => context.push('/privacy'),
             ),
@@ -430,6 +483,7 @@ class _AlreadySubscribedView extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final appColors = Theme.of(context).extension<AppColorsExtension>()!;
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -439,15 +493,15 @@ class _AlreadySubscribedView extends StatelessWidget {
             children: [
               Icon(Icons.workspace_premium_rounded, size: 72, color: appColors.proGold),
               const SizedBox(height: AppTheme.spacingLg),
-              Text('You\'re on Premium', style: text.headlineSmall),
+              Text(l10n.youAreOnPremium, style: text.headlineSmall),
               const SizedBox(height: AppTheme.spacingSm),
               Text(
-                'Recurring events, analytics, branding, and verified claims are unlocked.',
+                l10n.premiumUnlockedBody,
                 style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppTheme.spacingXl),
-              ElevatedButton(onPressed: onClose, child: const Text('Continue')),
+              ElevatedButton(onPressed: onClose, child: Text(l10n.continueBtn)),
             ],
           ),
         ),

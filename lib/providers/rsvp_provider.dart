@@ -110,4 +110,19 @@ class RsvpProvider extends ChangeNotifier {
     _isSubmitting = false;
     notifyListeners();
   }
+
+  /// Removes a comment (admin/moderation). Returns false on failure.
+  Future<bool> deleteComment(String commentId) async {
+    try {
+      await _repository.deleteComment(
+        eventId: eventId,
+        commentId: commentId,
+      );
+      _comments = _comments.where((c) => c.id != commentId).toList();
+      notifyListeners();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 }

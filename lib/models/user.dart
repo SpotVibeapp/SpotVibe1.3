@@ -7,6 +7,10 @@ class AppUser {
   final List<String> blockedIds;
   final bool isGuest;
 
+  /// True when this user is an app administrator / moderator (listed in the
+  /// `admins/{uid}` Firestore collection).
+  final bool isAdmin;
+
   const AppUser({
     required this.id,
     required this.displayName,
@@ -15,6 +19,7 @@ class AppUser {
     this.friendIds = const [],
     this.blockedIds = const [],
     this.isGuest = false,
+    this.isAdmin = false,
   });
 
   AppUser copyWith({
@@ -24,6 +29,7 @@ class AppUser {
     List<String>? friendIds,
     List<String>? blockedIds,
     bool? isGuest,
+    bool? isAdmin,
   }) =>
       AppUser(
         id: id,
@@ -33,5 +39,6 @@ class AppUser {
         friendIds: friendIds ?? this.friendIds,
         blockedIds: blockedIds ?? this.blockedIds,
         isGuest: isGuest ?? this.isGuest,
+        isAdmin: isAdmin ?? this.isAdmin,
       );
 }

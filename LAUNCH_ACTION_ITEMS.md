@@ -49,7 +49,11 @@ Your API key was committed to a **public** repo, so treat it as compromised.
    ```bash
    firebase deploy --only firestore:rules
    ```
-5. Register the native apps & generate configs **on your machine**:
+5. Deploy the **Firestore indexes** (needed by account deletion + queries):
+   ```bash
+   firebase deploy --only firestore:indexes
+   ```
+6. Register the native apps & generate configs **on your machine**:
    ```bash
    dart pub global activate flutterfire_cli
    flutterfire configure --project=spotvibe-cfa08
@@ -62,7 +66,7 @@ Your API key was committed to a **public** repo, so treat it as compromised.
    - Until you do this, a release build intentionally shows a
      "backend not configured" screen instead of fake auth (that's the new
      fail-loud behavior working as intended).
-6. (Recommended) **App Check:** enable Play Integrity + App Attest, and
+7. (Recommended) **App Check:** enable Play Integrity + App Attest, and
    enforce it, so your Firebase keys can't be abused.
 
 ---
@@ -196,7 +200,8 @@ re-test on device.
 ## 10. Optional — deploy Cloud Functions
 
 I added `functions/` with `deleteUser` (authoritative cleanup), comment/event
-moderation, and a seed stub:
+moderation, `promoteAdmin`, and `bannedUserCleanup` (purges a banned user's
+content the moment they're banned):
 
 ```bash
 cd functions && npm install
@@ -204,9 +209,29 @@ firebase deploy --only functions
 ```
 
 The in-app deletion already works without this; the function is a
-belt-and-suspenders fallback + the start of server-side moderation.
+belt-and-suspenders fallback + server-side moderation. Note that
+`bannedUserCleanup` permanently deletes content (not undone by "unban"), while
+the in-app ban list hiding is reversible.
 
 ---
+
+## 11. Make yourself an admin
+
+The app now supports an in-app admin role for moderation. To enable it:
+
+1. Deploy the updated security rules (required):
+   ```bash
+   firebase deploy --only firestore:rules
+   ```
+2. Find your Firebase Auth UID: Firebase console → **Authentication → Users**
+   → click your account → copy the **User UID**.
+3. Create the admin doc in the console (fastest):
+   Firestore → **Start collection** → id `admins` → document id = your UID,
+   fields `role: "admin"`, `email: <your email>`.
+   *(Alternatively, deploy functions and use `promoteAdmin` with an
+   `ADMIN_SECRET` — see `functions/`.)*
+4. Relaunch/sign back in — you'll now see **Profile → Admin Dashboard** with
+   reports + event removal, and delete buttons on event pages and comments.
 
 ## What I changed (for your commit message / review)
 

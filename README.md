@@ -69,6 +69,81 @@ test/             # unit tests
 tool/setup.sh     # reproducible environment setup
 ```
 
+## Localization (English + Mexican Spanish)
+
+Localization uses Flutter's built-in `gen-l10n` (`l10n.yaml` + ARB files in
+`lib/l10n/`). The app follows the device language automatically and offers a
+manual override in **Profile → Language** (persisted via
+`lib/providers/locale_provider.dart`). Any Spanish device locale maps to the
+app's Spanish, whose content is Mexican Spanish (`app_es.arb`).
+
+To add or edit strings: edit `lib/l10n/app_en.arb` (template) and
+`lib/l10n/app_es.arb`, then the Dart files are regenerated automatically on
+`flutter pub get` / `flutter run` (or run `flutter gen-l10n` manually). Use
+`AppLocalizations.of(context)!.someKey` in widgets (note the `!`).
+
+Translated so far: login, onboarding, permissions, profile/settings, paywall,
+**feed + search/filter**, **event detail** (incl. RSVP, comments, attendees,
+quick actions, practical info, calendar, tickets), and **create/edit event**.
+Pricing/subscription labels (paywall, profile, subscription provider) are now
+localized too — they follow the active locale via `SubscriptionProvider`.
+Still English: `my_events_screen.dart`, `venue_claim_screen.dart`,
+`notifications_screen.dart`, `notification_preferences_screen.dart`, and the
+Firebase auth error messages — same pattern.
+
+## Branding & icons
+
+The app icon lives at `assets/icons/app_icon.png` (1024×1024). After changing
+it, regenerate the native launcher icons (Android, iOS, web):
+
+```bash
+flutter pub run flutter_launcher_icons
+```
+
+The in-app logo mark (`lib/widgets/common/spotvibe_logo.dart`) and the gradient
+wordmark are code-based and share the brand gradient in
+`lib/theme/theme.dart` (`AppTheme.brandGradient`).
+
+## Guided tour
+
+New users get a spotlight coach-mark tour on first use — the home feed, the
+event detail page, and the profile screen each walk through their key actions.
+Seen state is persisted (`lib/services/tour_service.dart`), and the tour can be
+replayed anytime via **Profile → Take the tour**. The reusable overlay lives in
+`lib/widgets/common/guided_tour.dart`; add a `GuidedTour(tourId: '...', steps: [...])`
+to any screen to extend it.
+
+## Admin & moderation
+
+SpotVibe has a built-in admin role for moderating the feed directly:
+
+- **Who's an admin:** any Firebase Auth user listed in the `admins/{uid}`
+  Firestore collection. To create one, either add the doc by hand in the
+  Firebase console (Firestore → `admins` → doc id = the user's UID from
+  Authentication → Users, fields `{role: "admin", email: ...}`), or deploy the
+  `promoteAdmin` Cloud Function (see `functions/`) — it lets an existing admin
+  promote more admins, with no secrets required.
+- **What admins can do in-app:** a shield **Admin Dashboard** appears under
+  Profile with three tabs:
+  - **Reports** — review user reports, **ban a user** (hides all their events,
+    comments, and RSVPs), and manage the ban list.
+  - **Events** — search the feed and remove any event.
+  - **Claims** — approve or reject pending venue claims (approving unlocks the
+    listing for the claimer to edit).
+  On any event page admins also get a delete button, and can remove individual
+  comments.
+- **Banning is enforced two ways:** readers hide banned users' content via the
+  `bans/{uid}` list (reversible — "unban" restores visibility), and the
+  `bannedUserCleanup` Cloud Function (see `functions/`) permanently deletes a
+  banned user's content when the ban doc is created (hard cleanup — not
+  undone by unban).
+- **Posting as admin:** the create-event flow skips the free-plan cap for
+  admins and shows an "Official account" banner. Admin-posted events stay in
+  the public feed and remain claimable by venues via the normal claim flow.
+- Security rules gate all of this: only users in `admins/{uid}` can delete
+  events/comments/RSVPs or read/resolve reports. Deploy with
+  `firebase deploy --only firestore:rules`.
+
 ## Firebase authentication
 
 Project: **spotvibe-cfa08** · Code: `lib/repositories/firebase_user_repository.dart`,

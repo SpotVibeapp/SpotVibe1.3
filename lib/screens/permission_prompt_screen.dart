@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../l10n/app_localizations.dart';
 import '../services/deep_link_service.dart';
 import '../services/permission_service.dart';
 import '../theme/theme.dart';
+import '../widgets/common/spotvibe_logo.dart';
 
 /// Shown once on first launch to request location and notification permissions.
 /// After the user grants or skips both, they are sent to the main app.
@@ -68,6 +70,7 @@ class _PermissionPromptScreenState extends State<PermissionPromptScreen> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: SafeArea(
@@ -92,22 +95,10 @@ class _PermissionPromptScreenState extends State<PermissionPromptScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: colors.onPrimary.withValues(alpha: 0.18),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.celebration_rounded,
-                      color: colors.onPrimary,
-                      size: AppTheme.iconLg,
-                    ),
-                  ),
+                  const SpotVibeLogo(size: 56),
                   const SizedBox(height: AppTheme.spacingMd),
                   Text(
-                    'Let\'s set up SpotVibe',
+                    l10n.setupTitle,
                     style: text.headlineSmall?.copyWith(
                       color: colors.onPrimary,
                       fontWeight: FontWeight.w800,
@@ -115,7 +106,7 @@ class _PermissionPromptScreenState extends State<PermissionPromptScreen> {
                   ),
                   const SizedBox(height: AppTheme.spacingXs),
                   Text(
-                    'A couple of quick permissions make the experience\nway better.',
+                    l10n.setupBody,
                     style: text.bodyMedium?.copyWith(
                       color: colors.onPrimary.withValues(alpha: 0.85),
                     ),
@@ -136,9 +127,8 @@ class _PermissionPromptScreenState extends State<PermissionPromptScreen> {
                     _PermissionCard(
                       icon: Icons.location_on_rounded,
                       iconColor: colors.primary,
-                      title: 'Location',
-                      description:
-                          'Find events happening near you. SpotVibe uses your location only while the app is open — never in the background.',
+                      title: l10n.location,
+                      description: l10n.locationCardDesc,
                       granted: _locationGranted,
                       done: _locationDone,
                       loading: _locationLoading,
@@ -151,9 +141,8 @@ class _PermissionPromptScreenState extends State<PermissionPromptScreen> {
                     _PermissionCard(
                       icon: Icons.notifications_rounded,
                       iconColor: colors.tertiary,
-                      title: 'Notifications',
-                      description:
-                          'Get alerts for new events near you, messages from friends, and updates on events you\'re attending.',
+                      title: l10n.notifications,
+                      description: l10n.notifCardDesc,
                       granted: _notifGranted,
                       done: _notifDone,
                       loading: _notifLoading,
@@ -167,7 +156,7 @@ class _PermissionPromptScreenState extends State<PermissionPromptScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _canFinish ? _finish : null,
-                        child: const Text('Continue'),
+                        child: Text(l10n.continueBtn),
                       ),
                     ),
 
@@ -177,7 +166,7 @@ class _PermissionPromptScreenState extends State<PermissionPromptScreen> {
                     TextButton(
                       onPressed: _finish,
                       child: Text(
-                        'Skip for now',
+                        l10n.skipForNow,
                         style: text.labelMedium?.copyWith(
                           color: colors.onSurfaceVariant,
                         ),
@@ -188,7 +177,7 @@ class _PermissionPromptScreenState extends State<PermissionPromptScreen> {
 
                     // Fine-print
                     Text(
-                      'You can change these settings at any time in your device\'s Settings app.',
+                      l10n.changeSettingsAnytime,
                       textAlign: TextAlign.center,
                       style: text.bodySmall?.copyWith(
                         color: colors.onSurfaceVariant.withValues(
@@ -297,7 +286,7 @@ class _PermissionCard extends StatelessWidget {
                               BorderRadius.circular(AppTheme.radiusSmall),
                         ),
                         child: Text(
-                          'Denied',
+                          AppLocalizations.of(context)!.denied,
                           style: text.labelSmall?.copyWith(
                               color: colors.onSurfaceVariant),
                         ),
@@ -314,7 +303,7 @@ class _PermissionCard extends StatelessWidget {
                               BorderRadius.circular(AppTheme.radiusSmall),
                         ),
                         child: Text(
-                          'Allowed',
+                          AppLocalizations.of(context)!.allowed,
                           style: text.labelSmall?.copyWith(
                               color: colors.onPrimaryContainer),
                         ),
@@ -344,7 +333,7 @@ class _PermissionCard extends StatelessWidget {
                               child: CircularProgressIndicator(
                                   strokeWidth: 2, color: iconColor),
                             )
-                          : const Text('Allow'),
+                          : Text(AppLocalizations.of(context)!.allow),
                     ),
                   ),
                 ],

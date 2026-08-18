@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
 import '../../services/maps_service.dart';
 import '../../theme/theme.dart';
@@ -15,8 +16,8 @@ class QuickActionsSection extends StatelessWidget {
     if (!context.mounted) return;
     if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not open maps for this venue.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.mapsError),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -28,33 +29,34 @@ class QuickActionsSection extends StatelessWidget {
   }
 
   void _reportEvent(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) {
         final controller = TextEditingController();
         return AlertDialog(
-          title: const Text('Report Event'),
+          title: Text(l10n.reportEvent),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(hintText: 'What\'s wrong with this event?'),
+            decoration: InputDecoration(hintText: l10n.whatsWrong),
             maxLines: 3,
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Report submitted. Thank you!'),
+                  SnackBar(
+                    content: Text(l10n.reportSubmittedThanks),
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
               },
-              child: const Text('Submit'),
+              child: Text(l10n.submit),
             ),
           ],
         );
@@ -78,6 +80,7 @@ class QuickActionsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,7 +91,7 @@ class QuickActionsSection extends StatelessWidget {
             Expanded(
               child: _QuickActionButton(
                 icon: Icons.calendar_today_rounded,
-                label: 'Calendar',
+                label: l10n.calendar,
                 color: colors.primary,
                 backgroundColor: colors.primaryContainer,
                 onTap: () => _openCalendarSheet(context),
@@ -98,7 +101,7 @@ class QuickActionsSection extends StatelessWidget {
             Expanded(
               child: _QuickActionButton(
                 icon: Icons.navigation_rounded,
-                label: 'Directions',
+                label: l10n.directions,
                 color: colors.secondary,
                 backgroundColor: colors.secondaryContainer,
                 onTap: () => _getDirections(context),
@@ -108,7 +111,7 @@ class QuickActionsSection extends StatelessWidget {
             Expanded(
               child: _QuickActionButton(
                 icon: Icons.ios_share_rounded,
-                label: 'Share',
+                label: l10n.share,
                 color: colors.tertiary,
                 backgroundColor: colors.tertiaryContainer,
                 onTap: () => _shareEvent(context),
@@ -118,7 +121,7 @@ class QuickActionsSection extends StatelessWidget {
             Expanded(
               child: _QuickActionButton(
                 icon: Icons.camera_alt_rounded,
-                label: 'Story',
+                label: l10n.story,
                 color: colors.secondary,
                 backgroundColor: colors.secondaryContainer,
                 onTap: () => _shareStory(context),
@@ -140,7 +143,7 @@ class QuickActionsSection extends StatelessWidget {
           child: TextButton.icon(
             onPressed: () => _reportEvent(context),
             icon: Icon(Icons.flag_outlined, size: AppTheme.iconSm, color: colors.error),
-            label: Text('Report this event', style: TextStyle(color: colors.error)),
+            label: Text(l10n.reportThisEvent, style: TextStyle(color: colors.error)),
             style: TextButton.styleFrom(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppTheme.spacingMd,

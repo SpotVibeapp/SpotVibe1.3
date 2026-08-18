@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/theme.dart';
 
 class SearchHeader extends StatefulWidget {
@@ -137,6 +138,7 @@ class _SearchHeaderState extends State<SearchHeader> {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final appColors = Theme.of(context).extension<AppColorsExtension>()!;
+    final l10n = AppLocalizations.of(context)!;
     final hasArea = _areaController.text.isNotEmpty;
 
     return Padding(
@@ -161,7 +163,7 @@ class _SearchHeaderState extends State<SearchHeader> {
                     onSubmitted: (_) => _hideOverlay(),
                     textInputAction: TextInputAction.search,
                     decoration: InputDecoration(
-                      hintText: 'Search events, artists, venues...',
+                      hintText: l10n.searchHint,
                       prefixIcon: Icon(Icons.search_rounded, color: colors.onSurfaceVariant),
                       suffixIcon: _keywordController.text.isNotEmpty
                           ? IconButton(
@@ -190,7 +192,7 @@ class _SearchHeaderState extends State<SearchHeader> {
                   keyboardType: TextInputType.streetAddress,
                   textInputAction: TextInputAction.search,
                   decoration: InputDecoration(
-                    hintText: 'Zip code, city, or state...',
+                    hintText: l10n.areaHint,
                     prefixIcon: Icon(
                       hasArea ? Icons.location_on_rounded : Icons.my_location_rounded,
                       color: hasArea ? colors.primary : colors.onSurfaceVariant,
@@ -205,8 +207,8 @@ class _SearchHeaderState extends State<SearchHeader> {
                         : (widget.onUseMyLocation != null
                             ? Tooltip(
                                 message: widget.isUsingMyLocation
-                                    ? 'Using your location'
-                                    : 'Use my location',
+                                    ? l10n.usingYourLocation
+                                    : l10n.useMyLocation,
                                 child: IconButton(
                                   icon: Icon(
                                     widget.isUsingMyLocation

@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:ui' show Locale;
 
 import '../data/pricing.dart';
+import '../l10n/app_localizations.dart';
 import '../repositories/founding_member_repository.dart';
 import '../services/revenue_cat_service.dart';
 
@@ -53,6 +55,18 @@ class SubscriptionProvider extends ChangeNotifier {
 
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
+
+  /// Current display locale; drives localized labels. Update via [setLocale]
+  /// (wired to the LocaleProvider in main.dart).
+  Locale _locale = const Locale('en');
+  Locale get locale => _locale;
+  void setLocale(Locale locale) {
+    if (_locale == locale) return;
+    _locale = locale;
+    notifyListeners();
+  }
+
+  AppLocalizations get _l10n => lookupAppLocalizations(_locale);
 
   int get selectedPlanIndex => 0;
 
@@ -115,25 +129,33 @@ class SubscriptionProvider extends ChangeNotifier {
     }
   }
 
-  String get displayPriceLabel => priceLabel(founding: offerFoundingPrice);
+  String get displayPriceLabel {
+    final amount = '\$${priceAmount(founding: offerFoundingPrice).toStringAsFixed(2)}';
+    return _l10n.perMonth(amount);
+  }
 
   double get displayPriceAmount => priceAmount(founding: offerFoundingPrice);
 
   String get subscribeCtaLabel {
-    if (_isSubscribed) return 'You\'re on Premium';
-    return 'Start $kPremiumTrialLabel';
+    if (_isSubscribed) return _l10n.youAreOnPremium;
+    return _l10n.startFreeTrial;
   }
 
   String get billingFinePrint {
+    final l = _l10n;
     final after = displayPriceLabel;
     if (offerFoundingPrice && !_isFoundingMember) {
-      return '$kPremiumTrialLabel, then $after locked for founding venues · '
-          '$foundingSlotsRemaining of $kFoundingMemberLimit left · cancel anytime';
+      return l.billingFoundingOpen(
+        l.trialLabel,
+        after,
+        foundingSlotsRemaining,
+        kFoundingMemberLimit,
+      );
     }
     if (_isFoundingMember) {
-      return 'Founding price locked at $after · billed monthly · cancel anytime';
+      return l.billingFoundingLocked(after);
     }
-    return '$kPremiumTrialLabel, then $after · billed monthly · cancel anytime';
+    return l.billingStandard(l.trialLabel, after);
   }
 
   Future<void> initialize() async {
@@ -225,7 +247,7 @@ class SubscriptionProvider extends ChangeNotifier {
       return true;
     }
 
-    _errorMessage = 'Purchase failed. Please try again.';
+    _errorMessage = _l10n.purchaseFailed;
     _status = PurchaseStatus.error;
     notifyListeners();
     return false;
@@ -265,12 +287,12 @@ class SubscriptionProvider extends ChangeNotifier {
       if (!_isSubscribed) await _loadLocalPremium();
       _status = PurchaseStatus.idle;
       if (!_isSubscribed) {
-        _errorMessage = 'No active subscription found to restore.';
+        _errorMessage = _l10n.noActiveSubscription;
       }
       notifyListeners();
       return _isSubscribed;
     } catch (_) {
-      _errorMessage = 'Restore failed. Please try again.';
+      _errorMessage = _l10n.restoreFailed;
       _status = PurchaseStatus.error;
       notifyListeners();
       return false;

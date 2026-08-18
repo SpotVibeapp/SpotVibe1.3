@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/personalization_provider.dart';
@@ -18,6 +19,9 @@ class PaginatedEventsList extends StatefulWidget {
   final EventProvider eventProvider;
   final PersonalizationProvider personalization;
 
+  /// Attached to the first event card so the guided tour can spotlight it.
+  final GlobalKey? firstCardKey;
+
   /// Called when a card is tapped. Parent handles routing + view tracking.
   final void Function(Event event, int globalIndex) onEventTap;
 
@@ -26,6 +30,7 @@ class PaginatedEventsList extends StatefulWidget {
     required this.eventProvider,
     required this.personalization,
     required this.onEventTap,
+    this.firstCardKey,
   });
 
   @override
@@ -92,6 +97,7 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
               final event = page[i];
               final globalIndex = _currentPage * kEventsPerPage + i;
               return EventCard(
+                key: globalIndex == 0 ? widget.firstCardKey : null,
                 event: event,
                 onTap: () => widget.onEventTap(event, globalIndex),
                 onBookmark: () => provider.toggleBookmark(globalIndex),
@@ -135,14 +141,15 @@ class _EventCountBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     final start = currentPage * pageSize + 1;
     final end = ((currentPage + 1) * pageSize).clamp(0, total);
 
     // "Showing 1–15 of 47 events"  or  "Showing all 12 events" when ≤15
     final label = total <= pageSize
-        ? 'Showing all $total event${total == 1 ? '' : 's'}'
-        : 'Showing $start–$end of $total events';
+        ? l10n.showingAll(total)
+        : l10n.showingRange(start, end, total);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -193,6 +200,7 @@ class _PaginationBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -213,7 +221,7 @@ class _PaginationBar extends StatelessWidget {
           // ── Prev button ───────────────────────────────────────────────────
           _NavButton(
             icon: Icons.chevron_left_rounded,
-            label: 'Previous',
+            label: l10n.previous,
             onTap: onPrev,
           ),
           // ── Page indicator + dot row ──────────────────────────────────────
@@ -222,7 +230,7 @@ class _PaginationBar extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Page ${currentPage + 1} of $totalPages',
+                  l10n.pageXOfY(currentPage + 1, totalPages),
                   style: text.labelSmall?.copyWith(
                     color: colors.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
@@ -239,7 +247,7 @@ class _PaginationBar extends StatelessWidget {
           // ── Next button ───────────────────────────────────────────────────
           _NavButton(
             icon: Icons.chevron_right_rounded,
-            label: 'Next',
+            label: l10n.next,
             iconRight: true,
             onTap: onNext,
           ),

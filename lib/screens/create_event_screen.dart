@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../data/pricing.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/category_labels.dart';
 import '../models/user_event.dart';
 import '../providers/auth_provider.dart';
 import '../providers/create_event_provider.dart';
@@ -169,9 +171,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final l10n = AppLocalizations.of(context)!;
+    final auth = context.read<AuthProvider>();
     final subCheck = context.read<SubscriptionProvider>();
-    if (!_isEditing && !subCheck.isSubscribed) {
-      final auth = context.read<AuthProvider>();
+    // Admins post unlimited official events without the free-plan cap.
+    if (!_isEditing && !subCheck.isSubscribed && !auth.isAdmin) {
       final uid = auth.user?.id;
       if (uid != null) {
         final mine = await context.read<UserEventRepository>().getEventsForUser(uid);
@@ -181,14 +185,13 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           final upgrade = await showDialog<bool>(
             context: context,
             builder: (ctx) => AlertDialog(
-              title: const Text('Free plan limit'),
-              content: const Text(
-                'Free accounts can have 2 upcoming one-time events at a time. '
-                'Start a $kPremiumTrialLabel for unlimited and recurring events.',
+              title: Text(l10n.freePlanLimit),
+              content: Text(
+                l10n.freePlanLimitBody(l10n.trialLabel),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Not now')),
-                FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Go Premium')),
+                TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.notNow)),
+                FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.goPremium)),
               ],
             ),
           );
@@ -207,13 +210,17 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     ]);
     if (!mounted) return;
     if (modResult.isRejected) {
-      setState(() => _moderationError =
-          '${modResult.category ?? 'Content'} policy violation: ${modResult.reason}');
+      setState(() => _moderationError = l10n.policyViolation(
+            modResult.category ?? l10n.content,
+            modResult.reason ?? '',
+          ));
       return;
     }
     if (modResult.isFlagged) {
-      setState(() => _moderationError =
-          '${modResult.category ?? 'Content'} warning: ${modResult.reason} Your event will still be submitted.');
+      setState(() => _moderationError = l10n.contentWarning(
+            modResult.category ?? l10n.content,
+            modResult.reason ?? '',
+          ));
     }
     // ────────────────────────────────────────────────────────────────────────
 
@@ -257,7 +264,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         } catch (_) {}
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_isEditing ? 'Event updated!' : 'Event created!')),
+        SnackBar(content: Text(_isEditing ? l10n.eventUpdated : l10n.eventCreated)),
       );
       context.pop();
     }
@@ -267,10 +274,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   Widget build(BuildContext context) {
     final provider = context.watch<CreateEventProvider>();
     final sub = context.watch<SubscriptionProvider>();
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Edit Event' : 'Create Event'),
+        title: Text(_isEditing ? l10n.editEvent : l10n.createEvent),
         actions: [
           if (provider.isSubmitting)
             const Padding(
@@ -278,7 +286,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
             )
           else
-            TextButton(onPressed: _submit, child: Text(_isEditing ? 'Save' : 'Publish')),
+            TextButton(onPressed: _submit, child: Text(_isEditing ? l10n.save : l10n.publish)),
         ],
       ),
       body: Form(
@@ -296,30 +304,31 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
             // Access selector (only for new events)
             if (!_isEditing) ...[
-              _SectionHeader(title: 'Event Publishing'),
+              _SectionHeader(title: l10n.eventPublishing),
               _CreationAccessSelector(
                 isSubscribed: sub.isSubscribed,
+                isAdmin: context.read<AuthProvider>().isAdmin,
                 onUpgrade: _openPaywall,
               ),
               const SizedBox(height: AppTheme.spacingLg),
             ],
 
-            _SectionHeader(title: 'Event Details'),
+            _SectionHeader(title: l10n.eventDetails),
             _FormField(
               controller: _titleController,
-              label: 'Event Title',
-              hint: 'e.g. Summer Night Market',
+              label: l10n.eventTitle,
+              hint: l10n.eventTitleHint,
               icon: Icons.title_rounded,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Title is required' : null,
+              validator: (v) => (v == null || v.trim().isEmpty) ? l10n.titleRequired : null,
             ),
             const SizedBox(height: AppTheme.spacingMd),
             _FormField(
               controller: _descriptionController,
-              label: 'Description',
-              hint: 'Tell people what your event is about...',
+              label: l10n.description,
+              hint: l10n.descriptionHint,
               icon: Icons.description_rounded,
               maxLines: 4,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Description is required' : null,
+              validator: (v) => (v == null || v.trim().isEmpty) ? l10n.descriptionRequired : null,
             ),
             const SizedBox(height: AppTheme.spacingMd),
 
@@ -331,13 +340,13 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             ),
             const SizedBox(height: AppTheme.spacingLg),
 
-            _SectionHeader(title: 'Date & Time'),
+            _SectionHeader(title: l10n.dateAndTime),
             Row(
               children: [
                 Expanded(
                   child: _DateTimeTile(
                     icon: Icons.calendar_month_rounded,
-                    label: 'Date',
+                    label: l10n.date,
                     value: '${_selectedDate.month}/${_selectedDate.day}/${_selectedDate.year}',
                     onTap: _pickDate,
                   ),
@@ -346,7 +355,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 Expanded(
                   child: _DateTimeTile(
                     icon: Icons.access_time_rounded,
-                    label: 'Time',
+                    label: l10n.time,
                     value: _selectedTime.format(context),
                     onTap: _pickTime,
                   ),
@@ -355,19 +364,19 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             ),
             const SizedBox(height: AppTheme.spacingLg),
 
-            _SectionHeader(title: 'Location'),
+            _SectionHeader(title: l10n.locationSection),
             _FormField(
               controller: _locationController,
-              label: 'Venue Name',
-              hint: 'e.g. Riverside Park',
+              label: l10n.venueName,
+              hint: l10n.venueNameHint,
               icon: Icons.location_on_rounded,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Venue name is required' : null,
+              validator: (v) => (v == null || v.trim().isEmpty) ? l10n.venueNameRequired : null,
             ),
             const SizedBox(height: AppTheme.spacingMd),
             _FormField(
               controller: _addressController,
-              label: 'Street Address',
-              hint: '123 Main St',
+              label: l10n.streetAddress,
+              hint: l10n.streetAddressHint,
               icon: Icons.home_rounded,
             ),
             const SizedBox(height: AppTheme.spacingMd),
@@ -375,46 +384,46 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               children: [
                 Expanded(
                   flex: 2,
-                  child: _FormField(controller: _cityController, label: 'City', hint: 'New York', icon: Icons.location_city_rounded),
+                  child: _FormField(controller: _cityController, label: l10n.city, hint: l10n.cityHint, icon: Icons.location_city_rounded),
                 ),
                 const SizedBox(width: AppTheme.spacingSm),
                 Expanded(
-                  child: _FormField(controller: _stateController, label: 'State', hint: 'NY', icon: Icons.map_rounded),
+                  child: _FormField(controller: _stateController, label: l10n.state, hint: l10n.stateHint, icon: Icons.map_rounded),
                 ),
                 const SizedBox(width: AppTheme.spacingSm),
                 Expanded(
-                  child: _FormField(controller: _zipController, label: 'ZIP', hint: '10001', icon: Icons.numbers_rounded),
+                  child: _FormField(controller: _zipController, label: l10n.zip, hint: l10n.zipHint, icon: Icons.numbers_rounded),
                 ),
               ],
             ),
             const SizedBox(height: AppTheme.spacingMd),
             _FormField(
               controller: _mapLinkController,
-              label: 'Map Link (optional)',
+              label: l10n.mapLinkOptional,
               hint: 'https://maps.google.com/...',
               icon: Icons.map_outlined,
               keyboardType: TextInputType.url,
             ),
             const SizedBox(height: AppTheme.spacingLg),
 
-            _SectionHeader(title: 'Extras'),
+            _SectionHeader(title: l10n.extras),
             _FormField(
               controller: _costController,
-              label: 'Ticket Price (leave blank for free)',
+              label: l10n.ticketPriceLabel,
               hint: '0.00',
               icon: Icons.attach_money_rounded,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               validator: (v) {
                 if (v == null || v.trim().isEmpty) return null;
                 final parsed = double.tryParse(v.replaceAll('\$', ''));
-                if (parsed == null || parsed < 0) return 'Enter a valid price';
+                if (parsed == null || parsed < 0) return l10n.enterValidPrice;
                 return null;
               },
             ),
             const SizedBox(height: AppTheme.spacingMd),
             _FormField(
               controller: _imageUrlController,
-              label: 'Event Image URL (optional)',
+              label: l10n.eventImageUrl,
               hint: 'https://example.com/image.jpg',
               icon: Icons.image_rounded,
               keyboardType: TextInputType.url,
@@ -422,7 +431,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             const SizedBox(height: AppTheme.spacingMd),
             _FormField(
               controller: _videoUrlController,
-              label: 'Event Video URL (optional)',
+              label: l10n.eventVideoUrl,
               hint: 'https://youtube.com/watch?v=... or .mp4 link',
               icon: Icons.videocam_rounded,
               keyboardType: TextInputType.url,
@@ -430,7 +439,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             const SizedBox(height: AppTheme.spacingMd),
             _FormField(
               controller: _chatLinkController,
-              label: 'Community Chat Link (optional)',
+              label: l10n.chatLink,
               hint: 'https://discord.gg/... or WhatsApp, Telegram link',
               icon: Icons.forum_rounded,
               keyboardType: TextInputType.url,
@@ -455,10 +464,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               onPressed: provider.isSubmitting ? null : _submit,
               icon: const Icon(Icons.publish_rounded),
               label: Text(_isEditing
-                  ? 'Save Changes'
+                  ? l10n.saveChanges
                   : sub.isSubscribed
-                      ? 'Publish Event — Premium'
-                      : 'Publish Event — Free'),
+                      ? l10n.publishPremium
+                      : l10n.publishFree),
             ),
             const SizedBox(height: AppTheme.spacingXl),
           ],
@@ -500,6 +509,7 @@ class _CreatorProSection extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final appColors = Theme.of(context).extension<AppColorsExtension>()!;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     if (!isCreatorPro) {
       // Upgrade prompt card
@@ -520,8 +530,15 @@ class _CreatorProSection extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [appColors.creatorTeal, appColors.creatorTealLight]),
+                  gradient: AppTheme.tealGradient,
                   borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                  boxShadow: [
+                    BoxShadow(
+                      color: appColors.creatorTeal.withValues(alpha: 0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: const Icon(Icons.campaign_rounded, color: Colors.white, size: AppTheme.iconMd),
               ),
@@ -532,7 +549,7 @@ class _CreatorProSection extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text('Premium', style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
+                        Text(l10n.premium, style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
                         const SizedBox(width: AppTheme.spacingXs),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -541,7 +558,7 @@ class _CreatorProSection extends StatelessWidget {
                             borderRadius: BorderRadius.circular(AppTheme.radiusXl),
                           ),
                           child: Text(
-                            kPremiumMonthlyLabel,
+                            l10n.perMonth('\$${kPremiumMonthlyPrice.toStringAsFixed(2)}'),
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
@@ -552,7 +569,7 @@ class _CreatorProSection extends StatelessWidget {
                       ],
                     ),
                     Text(
-                      'Recurring events · analytics · custom branding · contact button',
+                      l10n.premiumFeaturesSubtitle,
                       style: text.labelSmall?.copyWith(color: colors.onSurfaceVariant),
                       maxLines: 2,
                     ),
@@ -574,8 +591,15 @@ class _CreatorProSection extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd, vertical: AppTheme.spacingSm),
           decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [appColors.creatorTeal, appColors.creatorTealLight]),
+            gradient: AppTheme.tealGradient,
             borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+            boxShadow: [
+              BoxShadow(
+                color: appColors.creatorTeal.withValues(alpha: 0.35),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -583,7 +607,7 @@ class _CreatorProSection extends StatelessWidget {
               const Icon(Icons.campaign_rounded, color: Colors.white, size: AppTheme.iconSm),
               const SizedBox(width: AppTheme.spacingXs),
               Text(
-                'Premium features unlocked',
+                l10n.premiumFeaturesUnlocked,
                 style: text.labelMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
               ),
             ],
@@ -592,24 +616,24 @@ class _CreatorProSection extends StatelessWidget {
         const SizedBox(height: AppTheme.spacingMd),
 
         // Recurring picker
-        _SectionHeader(title: 'Recurring Schedule'),
+        _SectionHeader(title: l10n.recurringSchedule),
         _RecurringPicker(value: recurringType, onChanged: onRecurringChanged, appColors: appColors, colors: colors, text: text),
         const SizedBox(height: AppTheme.spacingLg),
 
         // Contact info
-        _SectionHeader(title: 'Contact Info'),
-        _FormField(controller: contactPhoneController, label: 'Phone (optional)', hint: '+1 555-000-0000', icon: Icons.phone_rounded, keyboardType: TextInputType.phone),
+        _SectionHeader(title: l10n.contactInfo),
+        _FormField(controller: contactPhoneController, label: l10n.phoneOptional, hint: '+1 555-000-0000', icon: Icons.phone_rounded, keyboardType: TextInputType.phone),
         const SizedBox(height: AppTheme.spacingMd),
-        _FormField(controller: contactWebsiteController, label: 'Website (optional)', hint: 'https://yoursite.com', icon: Icons.language_rounded, keyboardType: TextInputType.url),
+        _FormField(controller: contactWebsiteController, label: l10n.websiteOptional, hint: 'https://yoursite.com', icon: Icons.language_rounded, keyboardType: TextInputType.url),
         const SizedBox(height: AppTheme.spacingMd),
-        _FormField(controller: contactSocialController, label: 'Social Handle (optional)', hint: '@yourhandle or full URL', icon: Icons.alternate_email_rounded),
+        _FormField(controller: contactSocialController, label: l10n.socialHandleOptional, hint: '@yourhandle or full URL', icon: Icons.alternate_email_rounded),
         const SizedBox(height: AppTheme.spacingLg),
 
         // Custom branding
-        _SectionHeader(title: 'Custom Branding'),
-        _FormField(controller: brandColorController, label: 'Brand Accent Color', hint: '#FF5733', icon: Icons.palette_rounded),
+        _SectionHeader(title: l10n.customBranding),
+        _FormField(controller: brandColorController, label: l10n.brandAccentColor, hint: '#FF5733', icon: Icons.palette_rounded),
         const SizedBox(height: AppTheme.spacingMd),
-        _FormField(controller: brandLogoController, label: 'Brand Logo URL (optional)', hint: 'https://yoursite.com/logo.png', icon: Icons.image_rounded, keyboardType: TextInputType.url),
+        _FormField(controller: brandLogoController, label: l10n.brandLogoUrl, hint: 'https://yoursite.com/logo.png', icon: Icons.image_rounded, keyboardType: TextInputType.url),
       ],
     );
   }
@@ -632,10 +656,11 @@ class _RecurringPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         _RecurringOption(
-          label: 'One-time',
+          label: l10n.oneTime,
           icon: Icons.event_rounded,
           type: RecurringType.none,
           selected: value == RecurringType.none,
@@ -646,7 +671,7 @@ class _RecurringPicker extends StatelessWidget {
         ),
         const SizedBox(width: AppTheme.spacingSm),
         _RecurringOption(
-          label: 'Weekly',
+          label: l10n.weekly,
           icon: Icons.repeat_rounded,
           type: RecurringType.weekly,
           selected: value == RecurringType.weekly,
@@ -657,7 +682,7 @@ class _RecurringPicker extends StatelessWidget {
         ),
         const SizedBox(width: AppTheme.spacingSm),
         _RecurringOption(
-          label: 'Monthly',
+          label: l10n.monthly,
           icon: Icons.calendar_month_rounded,
           type: RecurringType.monthly,
           selected: value == RecurringType.monthly,
@@ -794,11 +819,11 @@ class _CategoryDropdown extends StatelessWidget {
       initialValue: value,
       onChanged: onChanged,
       decoration: InputDecoration(
-        labelText: 'Category',
+        labelText: AppLocalizations.of(context)!.category,
         prefixIcon: Icon(Icons.category_rounded, size: AppTheme.iconSm, color: colors.onSurfaceVariant),
       ),
       items: categories
-          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+          .map((c) => DropdownMenuItem(value: c, child: Text(categoryLabel(context, c))))
           .toList(),
     );
   }
@@ -853,10 +878,12 @@ class _DateTimeTile extends StatelessWidget {
 
 class _CreationAccessSelector extends StatelessWidget {
   final bool isSubscribed;
+  final bool isAdmin;
   final VoidCallback onUpgrade;
 
   const _CreationAccessSelector({
     required this.isSubscribed,
+    this.isAdmin = false,
     required this.onUpgrade,
   });
 
@@ -865,6 +892,53 @@ class _CreationAccessSelector extends StatelessWidget {
     final appColors = Theme.of(context).extension<AppColorsExtension>()!;
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
+
+    if (isAdmin) {
+      return Container(
+        padding: const EdgeInsets.all(AppTheme.spacingMd),
+        decoration: BoxDecoration(
+          color: AppTheme.brandViolet.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+          border: Border.all(
+            color: AppTheme.brandViolet.withValues(alpha: 0.5),
+            width: AppTheme.borderSelected,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppTheme.spacingSm),
+              decoration: BoxDecoration(
+                gradient: AppTheme.brandGradient,
+                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+              ),
+              child: const Icon(Icons.shield_rounded,
+                  color: Colors.white, size: AppTheme.iconMd),
+            ),
+            const SizedBox(width: AppTheme.spacingSm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.adminAccess,
+                    style: text.titleSmall?.copyWith(
+                      color: AppTheme.brandViolet,
+                    ),
+                  ),
+                  Text(
+                    l10n.adminPostUnlimited,
+                    style: text.labelSmall
+                        ?.copyWith(color: colors.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     if (isSubscribed) {
       return Container(
@@ -883,11 +957,11 @@ class _CreationAccessSelector extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Premium — unlimited events',
+                    l10n.premiumUnlimited,
                     style: text.titleSmall?.copyWith(color: appColors.proGold),
                   ),
                   Text(
-                    'Recurring events, analytics, branding, and claims are included.',
+                    l10n.premiumIncludes,
                     style: text.labelSmall?.copyWith(color: colors.onSurfaceVariant),
                   ),
                 ],
@@ -909,17 +983,19 @@ class _CreationAccessSelector extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Free plan', style: text.titleSmall),
+          Text(l10n.freePlan, style: text.titleSmall),
           const SizedBox(height: AppTheme.spacingXs),
           Text(
-            'One upcoming one-time event at a time. Basic page (title, description, photo, location, time) in the public feed.',
+            l10n.freePlanBody,
             style: text.bodySmall?.copyWith(color: colors.onSurfaceVariant),
           ),
           const SizedBox(height: AppTheme.spacingMd),
           OutlinedButton.icon(
             onPressed: onUpgrade,
             icon: const Icon(Icons.workspace_premium_rounded),
-            label: const Text('Upgrade to Premium — $kPremiumMonthlyLabel'),
+            label: Text(l10n.upgradeToPremium(
+              l10n.perMonth('\$${kPremiumMonthlyPrice.toStringAsFixed(2)}'),
+            )),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../theme/theme.dart';
 
 /// In-feed promo shown on free event pages. Premium listings omit this.
@@ -11,6 +12,7 @@ class EventPageAd extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Container(
       width: double.infinity,
@@ -24,7 +26,7 @@ class EventPageAd extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Sponsored',
+            l10n.sponsored,
             style: text.labelSmall?.copyWith(
               color: colors.onSurfaceVariant,
               letterSpacing: 0.4,
@@ -33,12 +35,12 @@ class EventPageAd extends StatelessWidget {
           ),
           const SizedBox(height: AppTheme.spacingXs),
           Text(
-            'Going out this week?',
+            l10n.goingOutThisWeek,
             style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 2),
           Text(
-            'SpotVibe shows live music, food, and nightlife near you — no hunting around town.',
+            l10n.pageAdBody,
             style: text.bodySmall?.copyWith(color: colors.onSurfaceVariant),
           ),
           const SizedBox(height: AppTheme.spacingSm),
@@ -51,7 +53,7 @@ class EventPageAd extends StatelessWidget {
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-              child: const Text('Browse events'),
+              child: Text(l10n.browseEvents),
             ),
           ),
         ],

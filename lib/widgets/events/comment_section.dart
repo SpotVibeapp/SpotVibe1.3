@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/moderation_result.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/follow_provider.dart';
@@ -9,10 +10,22 @@ import '../../providers/rsvp_provider.dart';
 import '../../services/ai_moderation_service.dart';
 import '../../theme/theme.dart';
 import '../common/app_avatar.dart';
+import '../common/section_title.dart';
 import '../common/user_action_sheet.dart';
 
 class CommentSection extends StatelessWidget {
-  const CommentSection({super.key});
+  /// Accent color for the section header bar (usually the event's category
+  /// color). Defaults to the brand violet when not supplied.
+  final Color accent;
+
+  /// When true (admin/moderator), each comment gets a delete action.
+  final bool canModerate;
+
+  const CommentSection({
+    super.key,
+    this.accent = AppTheme.brandViolet,
+    this.canModerate = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,16 +33,15 @@ class CommentSection extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(Icons.comment_rounded, size: AppTheme.iconMd, color: colors.primary),
-            const SizedBox(width: AppTheme.spacingSm),
             Expanded(
-              child: Text('Comments', style: text.titleMedium, overflow: TextOverflow.ellipsis),
+              child: SectionTitle(title: l10n.comments, accent: accent),
             ),
             Text(
               '${rsvp.comments.length}',
@@ -65,7 +77,7 @@ class CommentSection extends StatelessWidget {
                         ),
                         const SizedBox(height: AppTheme.spacingSm),
                         Text(
-                          'No comments yet. Be the first!',
+                          l10n.noCommentsYet,
                           style: text.bodySmall?.copyWith(color: colors.onSurfaceVariant),
                         ),
                       ],
@@ -78,8 +90,11 @@ class CommentSection extends StatelessWidget {
                       authorName: c.authorName,
                       authorAvatar: c.authorAvatarUrl,
                       text: c.text,
-                      time: _formatTime(c.createdAt),
+                      time: _formatTime(context, c.createdAt),
                       isMe: c.authorId == auth.user?.id,
+                      onDelete: canModerate
+                          ? () => _deleteComment(context, c.id)
+                          : null,
                       onUserTap: auth.isLoggedIn && c.authorId != auth.user?.id
                           ? () {
                               final follow = context.read<FollowProvider>();
@@ -93,15 +108,15 @@ class CommentSection extends StatelessWidget {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(nowFollowing
-                                          ? 'Following ${c.authorName}'
-                                          : 'Unfollowed ${c.authorName}'),
+                                          ? l10n.followingName(c.authorName)
+                                          : l10n.unfollowedName(c.authorName)),
                                     ),
                                   );
                                 },
                                 onBlock: () {
                                   auth.blockUser(c.authorId);
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('User blocked')),
+                                    SnackBar(content: Text(l10n.userBlocked)),
                                   );
                                 },
                                 onReport: () {},
@@ -118,19 +133,51 @@ class CommentSection extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: () => context.push('/login'),
             icon: const Icon(Icons.login_rounded),
-            label: const Text('Log in to leave a comment'),
+            label: Text(l10n.logInToComment),
           ),
         ],
       ],
     );
   }
 
-  String _formatTime(DateTime dt) {
+  String _formatTime(BuildContext context, DateTime dt) {
+    final l10n = AppLocalizations.of(context)!;
     final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inMinutes < 1) return l10n.justNow;
+    if (diff.inMinutes < 60) return l10n.minutesAgo(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.hoursAgo(diff.inHours);
     return DateFormat('MMM d').format(dt);
+  }
+
+  /// Admin-only comment removal.
+  Future<void> _deleteComment(BuildContext context, String commentId) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.adminDeleteComment),
+        content: Text(l10n.adminDeleteCommentBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.adminRemove),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    final ok = await context.read<RsvpProvider>().deleteComment(commentId);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ok ? l10n.adminCommentRemoved : '…')),
+    );
   }
 }
 
@@ -144,6 +191,7 @@ class _CommentBubble extends StatelessWidget {
   final String time;
   final bool isMe;
   final VoidCallback? onUserTap;
+  final VoidCallback? onDelete;
 
   const _CommentBubble({
     required this.authorId,
@@ -153,6 +201,7 @@ class _CommentBubble extends StatelessWidget {
     required this.time,
     required this.isMe,
     this.onUserTap,
+    this.onDelete,
   });
 
   @override
@@ -184,7 +233,7 @@ class _CommentBubble extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        isMe ? 'You' : authorName,
+                        isMe ? AppLocalizations.of(context)!.you : authorName,
                         style: textTheme.labelMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: isMe ? colors.primary : colors.onSurface,
@@ -206,6 +255,14 @@ class _CommentBubble extends StatelessWidget {
               ],
             ),
           ),
+          if (onDelete != null)
+            IconButton(
+              onPressed: onDelete,
+              icon: const Icon(Icons.delete_outline_rounded, size: AppTheme.iconSm),
+              color: colors.error,
+              tooltip: AppLocalizations.of(context)!.adminDeleteComment,
+              visualDensity: VisualDensity.compact,
+            ),
         ],
       ),
     );
@@ -280,6 +337,7 @@ class _CommentInputState extends State<_CommentInput> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
     final isRejected = _moderationResult?.isRejected ?? false;
 
     return Column(
@@ -322,8 +380,8 @@ class _CommentInputState extends State<_CommentInput> {
                     children: [
                       Text(
                         isRejected
-                            ? '${_moderationResult!.category ?? 'Content'} Detected'
-                            : '${_moderationResult!.category ?? 'Content'} Warning',
+                            ? l10n.detectedLabel(_moderationResult!.category ?? l10n.content)
+                            : l10n.warningLabel(_moderationResult!.category ?? l10n.content),
                         style: text.labelSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: isRejected
@@ -333,7 +391,7 @@ class _CommentInputState extends State<_CommentInput> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        _moderationResult!.reason ?? 'Please review your comment.',
+                        _moderationResult!.reason ?? l10n.reviewComment,
                         style: text.labelSmall?.copyWith(
                           color: isRejected
                               ? colors.onErrorContainer
@@ -373,7 +431,7 @@ class _CommentInputState extends State<_CommentInput> {
                   textInputAction: TextInputAction.send,
                   enabled: !_isChecking,
                   decoration: InputDecoration(
-                    hintText: 'Add a comment…',
+                    hintText: l10n.addCommentHint,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: AppTheme.spacingMd,
                       vertical: AppTheme.spacingSm,

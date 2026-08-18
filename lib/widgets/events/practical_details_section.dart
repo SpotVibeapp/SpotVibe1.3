@@ -1,44 +1,47 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
+import '../../theme/category_colors.dart';
 import '../../theme/theme.dart';
+import '../common/section_title.dart';
 
 class PracticalDetailsSection extends StatelessWidget {
   final Event event;
   const PracticalDetailsSection({super.key, required this.event});
 
   // Derive duration from category since Event has no explicit end time.
-  String _duration() {
+  String _duration(AppLocalizations l10n) {
     switch (event.category.toLowerCase()) {
       case 'music':
       case 'concerts':
-        return '2–3 hours';
+        return l10n.dur2to3;
       case 'sports':
-        return '2–4 hours';
+        return l10n.dur2to4;
       case 'comedy':
-        return '1–2 hours';
+        return l10n.dur1to2;
       case 'food & drink':
       case 'food':
-        return '1–3 hours';
+        return l10n.dur1to3;
       case 'arts':
       case 'film':
-        return '1.5–2.5 hours';
+        return l10n.dur15to25;
       case 'nightlife':
-        return '3–5 hours';
+        return l10n.dur3to5;
       case 'fitness':
-        return '1–2 hours';
+        return l10n.dur1to2;
       case 'community':
       case 'family':
-        return '2–4 hours';
+        return l10n.dur2to4;
       default:
-        return '2–3 hours';
+        return l10n.dur2to3;
     }
   }
 
   // Derive an age label from category and cost heuristics.
-  String? _ageRestriction() {
+  String? _ageRestriction(AppLocalizations l10n) {
     final cat = event.category.toLowerCase();
-    if (cat == 'nightlife') return '21+ only';
-    if (cat == 'music' && (event.cost ?? 0) > 30) return '18+';
+    if (cat == 'nightlife') return l10n.age21plus;
+    if (cat == 'music' && (event.cost ?? 0) > 30) return l10n.age18plus;
     return null;
   }
 
@@ -46,12 +49,13 @@ class PracticalDetailsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final ageLabel = _ageRestriction();
+    final l10n = AppLocalizations.of(context)!;
+    final ageLabel = _ageRestriction(l10n);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Practical Info', style: text.titleMedium),
+        SectionTitle(title: l10n.practicalInfo, accent: categoryAccent(event.category)),
         const SizedBox(height: AppTheme.spacingSm),
         Container(
           decoration: BoxDecoration(
@@ -64,29 +68,29 @@ class PracticalDetailsSection extends StatelessWidget {
               _DetailRow(
                 icon: Icons.wb_sunny_outlined,
                 iconColor: const Color(0xFFF59E0B),
-                label: 'Weather',
-                value: 'Check forecast closer to the date',
+                label: l10n.weather,
+                value: l10n.weatherValue,
               ),
               _divider(colors),
               _DetailRow(
                 icon: Icons.local_parking_rounded,
                 iconColor: colors.primary,
-                label: 'Parking',
-                value: 'Street parking & nearby lots available',
+                label: l10n.parking,
+                value: l10n.parkingValue,
               ),
               _divider(colors),
               _DetailRow(
                 icon: Icons.timer_outlined,
                 iconColor: colors.secondary,
-                label: 'Duration',
-                value: _duration(),
+                label: l10n.duration,
+                value: _duration(l10n),
               ),
               if (ageLabel != null) ...[
                 _divider(colors),
                 _DetailRow(
                   icon: Icons.person_outlined,
                   iconColor: colors.error,
-                  label: 'Age',
+                  label: l10n.age,
                   value: ageLabel,
                 ),
               ],
@@ -94,8 +98,8 @@ class PracticalDetailsSection extends StatelessWidget {
               _DetailRow(
                 icon: Icons.accessible_rounded,
                 iconColor: appColors(context).success,
-                label: 'Accessible',
-                value: 'Wheelchair accessible venue',
+                label: l10n.accessible,
+                value: l10n.accessibleValue,
               ),
             ],
           ),

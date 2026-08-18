@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/theme.dart';
 
 /// Adds a calendar event to Apple Calendar (iOS) or Google Calendar (Android).
@@ -38,7 +39,7 @@ class AddToCalendarButton extends StatelessWidget {
     final added = await Add2Calendar.addEvent2Cal(event);
     if (!added && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open calendar. Please add the event manually.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.calendarError)),
       );
     }
   }
@@ -62,7 +63,7 @@ class AddToCalendarButton extends StatelessWidget {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open Google Calendar.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.googleCalendarError)),
       );
     }
   }
@@ -82,11 +83,12 @@ class AddToCalendarButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final calLabel = kIsWeb
-        ? 'Add to Google Calendar'
+        ? l10n.addToGoogleCalendar
         : defaultTargetPlatform == TargetPlatform.iOS
-            ? 'Add to Apple Calendar'
-            : 'Add to Google Calendar';
+            ? l10n.addToAppleCalendar
+            : l10n.addToGoogleCalendar;
 
     return SizedBox(
       width: double.infinity,

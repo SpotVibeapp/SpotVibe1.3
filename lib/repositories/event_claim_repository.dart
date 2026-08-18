@@ -20,6 +20,12 @@ abstract class EventClaimRepository {
   });
   Future<int> countUnlockedForUser(String userId);
   Future<int> unlockEligibleForUser(String userId);
+
+  /// All claims, newest first (admin moderation).
+  Future<List<EventClaim>> getClaims();
+
+  /// Approve (unlock for editing) or reject a claim (admin moderation).
+  Future<void> updateClaimStatus(String claimId, {required bool approve});
 }
 
 class MockEventClaimRepository implements EventClaimRepository {
@@ -104,6 +110,23 @@ class MockEventClaimRepository implements EventClaimRepository {
       count++;
     }
     return count;
+  }
+
+  @override
+  Future<List<EventClaim>> getClaims() async {
+    final list = _byId.values.toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  }
+
+  @override
+  Future<void> updateClaimStatus(String claimId, {required bool approve}) async {
+    final claim = _byId[claimId];
+    if (claim == null) return;
+    _byId[claimId] = claim.copyWith(
+      status: approve ? ClaimStatus.approved : ClaimStatus.rejected,
+      unlocked: approve ? true : claim.unlocked,
+    );
   }
 }
 
@@ -247,6 +270,28 @@ class FirebaseEventClaimRepository implements EventClaimRepository {
       if (count > 0) await batch.commit();
       return count;
     }, () => _fallback.unlockEligibleForUser(userId));
+  }
+
+  @override
+  Future<List<EventClaim>> getClaims() {
+    return _guard(() async {
+      final snap = await _claims.limit(200).get();
+      final list = snap.docs
+          .map((d) => _fromMap(d.id, d.data()))
+          .toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return list;
+    }, () => _fallback.getClaims());
+  }
+
+  @override
+  Future<void> updateClaimStatus(String claimId, {required bool approve}) {
+    return _guard(() async {
+      await _claims.doc(claimId).update({
+        'status': approve ? ClaimStatus.approved.name : ClaimStatus.rejected.name,
+        'unlocked': approve,
+      });
+    }, () => _fallback.updateClaimStatus(claimId, approve: approve));
   }
 
   EventClaim _fromMap(String id, Map<String, dynamic> data) {

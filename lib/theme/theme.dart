@@ -79,6 +79,33 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
 class AppTheme {
   AppTheme._();
 
+  // ── Brand palette ─────────────────────────────────────────────────────────
+  static const Color brandViolet = Color(0xFF6C5CE7);
+  static const Color brandVioletDeep = Color(0xFF5A4BD1);
+  static const Color brandPink = Color(0xFFE84393);
+  static const Color brandCyan = Color(0xFF0FA3C8);
+  static const Color brandGold = Color(0xFFF0B23C);
+
+  /// The signature SpotVibe gradient — violet into magenta-pink. Used for
+  /// headers, the logo, and brand accents.
+  static const LinearGradient brandGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [brandViolet, brandPink],
+  );
+
+  static const LinearGradient proGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [brandGold, Color(0xFFF6C94E)],
+  );
+
+  static const LinearGradient tealGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF00B4A2), Color(0xFF00CEC9)],
+  );
+
   static const double spacingXs = 4.0;
   static const double spacingSm = 8.0;
   static const double spacingMd = 16.0;
@@ -109,8 +136,22 @@ class AppTheme {
 
   static final ThemeData lightTheme = _buildTheme(
     colorScheme: ColorScheme.fromSeed(
-      seedColor: const Color(0xFF6C5CE7),
+      seedColor: brandViolet,
       brightness: Brightness.light,
+    ).copyWith(
+      primary: brandViolet,
+      onPrimary: Colors.white,
+      secondary: brandCyan,
+      onSecondary: Colors.white,
+      secondaryContainer: const Color(0xFFD6F1F7),
+      onSecondaryContainer: const Color(0xFF06303A),
+      tertiary: brandPink,
+      onTertiary: Colors.white,
+      tertiaryContainer: const Color(0xFFFFE0EC),
+      onTertiaryContainer: const Color(0xFF5C1233),
+      surface: const Color(0xFFFDFBFF),
+      surfaceContainerLow: const Color(0xFFF5F2FC),
+      surfaceContainerHighest: const Color(0xFFECE8F7),
     ),
     appColors: const AppColorsExtension(
       success: Color(0xFF00B894),
@@ -129,8 +170,19 @@ class AppTheme {
 
   static final ThemeData darkTheme = _buildTheme(
     colorScheme: ColorScheme.fromSeed(
-      seedColor: const Color(0xFF6C5CE7),
+      seedColor: brandViolet,
       brightness: Brightness.dark,
+    ).copyWith(
+      primary: const Color(0xFFA99BFF),
+      onPrimary: const Color(0xFF241B54),
+      secondary: const Color(0xFF5AD1E8),
+      onSecondary: const Color(0xFF002B33),
+      secondaryContainer: const Color(0xFF16424B),
+      onSecondaryContainer: const Color(0xFFBCEDF6),
+      tertiary: const Color(0xFFFF79B0),
+      onTertiary: const Color(0xFF5C0F2E),
+      tertiaryContainer: const Color(0xFF4A1030),
+      onTertiaryContainer: const Color(0xFFFFD9E6),
     ),
     appColors: const AppColorsExtension(
       success: Color(0xFF55EFC4),
@@ -167,27 +219,45 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: colorScheme.surface,
-        elevation: 0,
+        elevation: 1.5,
+        shadowColor: colorScheme.shadow.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusLarge),
-          side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
+          side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.25)),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(double.infinity, 48),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMedium)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusLarge)),
           backgroundColor: colorScheme.primary,
           foregroundColor: colorScheme.onPrimary,
-          textStyle: textTheme.labelLarge,
+          elevation: 1,
+          shadowColor: colorScheme.primary.withValues(alpha: 0.28),
+          textStyle: textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.2,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(double.infinity, 48),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMedium)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusLarge)),
           side: BorderSide(color: colorScheme.outline),
-          textStyle: textTheme.labelLarge,
+          textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusLarge)),
+          textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMedium)),
+          textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -199,11 +269,19 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMedium),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.35)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMedium),
           borderSide: BorderSide(color: colorScheme.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+          borderSide: BorderSide(color: colorScheme.error, width: 1.2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+          borderSide: BorderSide(color: colorScheme.error, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         labelStyle: textTheme.bodyMedium,
@@ -211,6 +289,11 @@ class AppTheme {
       chipTheme: ChipThemeData(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusXl)),
         labelStyle: textTheme.labelMedium,
+        side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.4)),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMedium)),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: colorScheme.surface,

@@ -18,6 +18,9 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoggedIn => _user != null;
   bool get isGuest => _user?.isGuest ?? false;
 
+  /// Whether the signed-in user is an app administrator / moderator.
+  bool get isAdmin => _user?.isAdmin ?? false;
+
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 

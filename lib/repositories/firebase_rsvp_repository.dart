@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../data/event_codec.dart';
 import '../models/rsvp.dart';
+import '../services/ban_service.dart';
 import 'rsvp_repository.dart';
 
 /// Firestore RSVPs + comments.
@@ -47,7 +48,12 @@ class FirebaseRsvpRepository implements RsvpRepository {
     return _guard(() async {
       final snap =
           await _comments(eventId).orderBy('createdAtMs').limit(200).get();
+      final banned = await BanService.bannedIds(_db);
       return snap.docs
+          .where((d) {
+            final author = d.data()['authorId'] as String?;
+            return author == null || !banned.contains(author);
+          })
           .map((doc) => commentFromMap(doc.id, doc.data()))
           .toList();
     }, () => _fallback.getComments(eventId));
@@ -88,7 +94,14 @@ class FirebaseRsvpRepository implements RsvpRepository {
   Future<List<RsvpEntry>> getRsvps(String eventId) {
     return _guard(() async {
       final snap = await _rsvps(eventId).get();
-      return snap.docs.map((doc) => rsvpFromMap(doc.data())).toList()
+      final banned = await BanService.bannedIds(_db);
+      return snap.docs
+          .where((d) {
+            final uid = d.data()['userId'] as String?;
+            return uid == null || !banned.contains(uid);
+          })
+          .map((doc) => rsvpFromMap(doc.data()))
+          .toList()
         ..sort((a, b) => a.rsvpAt.compareTo(b.rsvpAt));
     }, () => _fallback.getRsvps(eventId));
   }
@@ -128,5 +141,15 @@ class FirebaseRsvpRepository implements RsvpRepository {
     return _guard(() async {
       await _rsvps(eventId).doc(userId).delete();
     }, () => _fallback.removeRsvp(eventId: eventId, userId: userId));
+  }
+
+  @override
+  Future<void> deleteComment({
+    required String eventId,
+    required String commentId,
+  }) {
+    return _guard(() async {
+      await _comments(eventId).doc(commentId).delete();
+    }, () => _fallback.deleteComment(eventId: eventId, commentId: commentId));
   }
 }

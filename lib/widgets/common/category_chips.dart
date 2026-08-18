@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../l10n/category_labels.dart';
+import '../../theme/category_colors.dart';
 import '../../theme/theme.dart';
 
 class CategoryChips extends StatelessWidget {
@@ -40,14 +42,24 @@ class CategoryChips extends StatelessWidget {
         itemBuilder: (context, index) {
           final cat = categories[index];
           final isSelected = cat == selected;
+          final catColor = categoryAccent(cat);
           return GestureDetector(
             onTap: () => onSelected(cat),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppTheme.spacingSm),
               decoration: BoxDecoration(
-                color: isSelected ? colors.primary : colors.surfaceContainerHighest,
+                color: isSelected ? catColor : colors.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: catColor.withValues(alpha: 0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ]
+                    : null,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -55,13 +67,13 @@ class CategoryChips extends StatelessWidget {
                   Icon(
                     _categoryIcons[cat] ?? Icons.event,
                     size: AppTheme.iconSm,
-                    color: isSelected ? colors.onPrimary : colors.onSurfaceVariant,
+                    color: isSelected ? Colors.white : colors.onSurfaceVariant,
                   ),
                   const SizedBox(width: AppTheme.spacingXs),
                   Text(
-                    cat,
+                    categoryLabel(context, cat),
                     style: text.labelMedium?.copyWith(
-                      color: isSelected ? colors.onPrimary : colors.onSurfaceVariant,
+                      color: isSelected ? Colors.white : colors.onSurfaceVariant,
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
