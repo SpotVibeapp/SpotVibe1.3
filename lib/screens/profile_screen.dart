@@ -11,6 +11,8 @@ import '../providers/theme_provider.dart';
 import '../theme/theme.dart';
 import '../widgets/common/editable_avatar.dart';
 import '../widgets/common/app_icon_mark.dart';
+import '../widgets/common/app_avatar.dart';
+import '../widgets/common/app_icon_mark.dart';
 import '../widgets/common/follow_stats_row.dart';
 import '../widgets/common/guided_tour.dart';
 import '../widgets/common/pro_badge.dart';
@@ -51,6 +53,13 @@ class ProfileScreen extends StatelessWidget {
             child: AppIconMark(size: 30, glow: false),
           ),
         ),
+        appBar: AppBar(
+          title: Text(l10n.profile),
+          leading: const Padding(
+            padding: EdgeInsets.all(8),
+            child: AppIconMark(size: 30, glow: false),
+          ),
+        ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(AppTheme.spacingXl),
@@ -83,9 +92,7 @@ class ProfileScreen extends StatelessWidget {
                   onPressed: () => context.push('/login'),
                   icon: const Icon(Icons.login_rounded),
                   label: Text(l10n.signInOrCreate),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 48),
-                  ),
+                  style: FilledButton.styleFrom(minimumSize: const Size(double.infinity, 48)),
                 ),
                 const SizedBox(height: AppTheme.spacingMd),
                 _SettingsTile(
@@ -99,9 +106,8 @@ class ProfileScreen extends StatelessWidget {
                   onTap: () => context.push('/notifications'),
                 ),
                 _SettingsTile(
-                  icon: themeProvider.isDarkMode
-                      ? Icons.light_mode_rounded
-                      : Icons.dark_mode_rounded,
+                  icon:
+                      themeProvider.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
                   label: l10n.darkMode,
                   trailing: Switch(
                     value: themeProvider.isDarkMode,
@@ -149,114 +155,126 @@ class ProfileScreen extends StatelessWidget {
           child: AppIconMark(size: 30, glow: false),
         ),
       ),
+      appBar: AppBar(
+        title: Text(l10n.profile),
+        leading: const Padding(
+          padding: EdgeInsets.all(8),
+          child: AppIconMark(size: 30, glow: false),
+        ),
+      ),
       body: Stack(
         children: [
           SingleChildScrollView(
-        padding: const EdgeInsets.all(AppTheme.spacingLg),
-        child: Column(
-          children: [
-            EditableAvatar(
-              imageUrl: user.avatarUrl,
-              fallbackName: user.displayName,
-              size: AppTheme.avatarLg,
-            ),
-            const SizedBox(height: AppTheme.spacingXs),
-            Text(
-              'Tap to change photo',
-              style: text.labelSmall?.copyWith(color: colors.onSurfaceVariant),
-            ),
-            const SizedBox(height: AppTheme.spacingMd),
-            Text(user.displayName, style: text.headlineSmall),
-            const SizedBox(height: AppTheme.spacingXs),
-            Text(user.email, style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant)),
-            const SizedBox(height: AppTheme.spacingLg),
+            padding: const EdgeInsets.all(AppTheme.spacingLg),
+            child: Column(
+              children: [
+                EditableAvatar(
+                  imageUrl: user.avatarUrl,
+                  fallbackName: user.displayName,
+                  size: AppTheme.avatarLg,
+                ),
+                const SizedBox(height: AppTheme.spacingXs),
+                Text(
+                  'Tap to change photo',
+                  style: text.labelSmall?.copyWith(color: colors.onSurfaceVariant),
+                ),
+                const SizedBox(height: AppTheme.spacingMd),
+                Text(user.displayName, style: text.headlineSmall),
+                const SizedBox(height: AppTheme.spacingXs),
+                Text(user.email, style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant)),
+                const SizedBox(height: AppTheme.spacingLg),
 
-            // ── Follower / Following stats ─────────────────────────────────
-            FollowStatsRow(
-              followerCount: followers,
-              followingCount: following,
-            ),
-            const SizedBox(height: AppTheme.spacingXl),
+                // ── Follower / Following stats ─────────────────────────────────
+                FollowStatsRow(followerCount: followers, followingCount: following),
+                const SizedBox(height: AppTheme.spacingXl),
 
-            KeyedSubtree(
-              key: _tourKeyPremium,
-              child: _ProTile(sub: sub, appColors: appColors, text: text),
+                KeyedSubtree(
+                  key: _tourKeyPremium,
+                  child: _ProTile(sub: sub, appColors: appColors, text: text),
+                ),
+                KeyedSubtree(
+                  key: _tourKeyMyEvents,
+                  child: _SettingsTile(
+                    icon: Icons.event_rounded,
+                    label: l10n.myEvents,
+                    onTap: () => context.push('/my-events'),
+                  ),
+                ),
+                _SettingsTile(
+                  icon: Icons.map_outlined,
+                  label: l10n.map,
+                  onTap: () => context.push('/map'),
+                ),
+                _SettingsTile(
+                  icon: Icons.notifications_none_rounded,
+                  label: l10n.notificationsSettings,
+                  onTap: () => context.push('/notifications'),
+                ),
+                _SettingsTile(
+                  icon:
+                      themeProvider.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                  label: l10n.darkMode,
+                  trailing: Switch(
+                    value: themeProvider.isDarkMode,
+                    onChanged: (_) => themeProvider.toggleTheme(),
+                  ),
+                ),
+                _SettingsTile(
+                  icon: Icons.bookmark_rounded,
+                  label: l10n.savedEvents,
+                  onTap: () => context.push('/saved-events'),
+                ),
+                KeyedSubtree(
+                  key: _tourKeyLanguage,
+                  child: _SettingsTile(
+                    icon: Icons.language_rounded,
+                    label: l10n.language,
+                    trailing: Text(_currentLanguageLabel(context)),
+                    onTap: () => _showLanguageDialog(context),
+                  ),
+                ),
+                _SettingsTile(
+                  icon: Icons.explore_rounded,
+                  label: l10n.takeTheTour,
+                  onTap: () => _replayTour(context),
+                ),
+                if (auth.isAdmin)
+                  _SettingsTile(
+                    icon: Icons.shield_rounded,
+                    label: l10n.adminDashboard,
+                    onTap: () => context.push('/admin'),
+                  ),
+                _SettingsTile(
+                  icon: Icons.privacy_tip_outlined,
+                  label: l10n.privacyPolicy,
+                  onTap: () => context.push('/privacy'),
+                ),
+                _SettingsTile(
+                  icon: Icons.gavel_rounded,
+                  label: l10n.termsOfUse,
+                  onTap: () => context.push('/terms'),
+                ),
+                _SettingsTile(
+                  icon: Icons.delete_forever_rounded,
+                  label: l10n.deleteAccount,
+                  onTap: () => _confirmDeleteAccount(context),
+                ),
+                const SizedBox(height: AppTheme.spacingLg),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await auth.logout();
+                    if (context.mounted) context.go('/');
+                  },
+                  icon: const Icon(Icons.logout_rounded),
+                  label: Text(l10n.signOut),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colors.error,
+                    side: BorderSide(color: colors.error),
+                  ),
+                ),
+              ],
             ),
-            KeyedSubtree(
-              key: _tourKeyMyEvents,
-              child: _SettingsTile(
-                icon: Icons.event_rounded,
-                label: l10n.myEvents,
-                onTap: () => context.push('/my-events'),
-              ),
-            ),
-            _SettingsTile(
-              icon: Icons.map_outlined,
-              label: l10n.map,
-              onTap: () => context.push('/map'),
-            ),
-            _SettingsTile(
-              icon: Icons.notifications_none_rounded,
-              label: l10n.notificationsSettings,
-              onTap: () => context.push('/notifications'),
-            ),
-            _SettingsTile(
-              icon: themeProvider.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-              label: l10n.darkMode,
-              trailing: Switch(
-                value: themeProvider.isDarkMode,
-                onChanged: (_) => themeProvider.toggleTheme(),
-              ),
-            ),
-            _SettingsTile(icon: Icons.bookmark_rounded, label: l10n.savedEvents, onTap: () => context.push('/saved-events')),
-            KeyedSubtree(
-              key: _tourKeyLanguage,
-              child: _SettingsTile(
-                icon: Icons.language_rounded,
-                label: l10n.language,
-                trailing: Text(_currentLanguageLabel(context)),
-                onTap: () => _showLanguageDialog(context),
-              ),
-            ),
-            _SettingsTile(
-              icon: Icons.explore_rounded,
-              label: l10n.takeTheTour,
-              onTap: () => _replayTour(context),
-            ),
-            if (auth.isAdmin)
-              _SettingsTile(
-                icon: Icons.shield_rounded,
-                label: l10n.adminDashboard,
-                onTap: () => context.push('/admin'),
-              ),
-            _SettingsTile(
-              icon: Icons.privacy_tip_outlined,
-              label: l10n.privacyPolicy,
-              onTap: () => context.push('/privacy'),
-            ),
-            _SettingsTile(
-              icon: Icons.gavel_rounded,
-              label: l10n.termsOfUse,
-              onTap: () => context.push('/terms'),
-            ),
-            _SettingsTile(
-              icon: Icons.delete_forever_rounded,
-              label: l10n.deleteAccount,
-              onTap: () => _confirmDeleteAccount(context),
-            ),
-            const SizedBox(height: AppTheme.spacingLg),
-            OutlinedButton.icon(
-              onPressed: () async {
-                await auth.logout();
-                if (context.mounted) context.go('/');
-              },
-              icon: const Icon(Icons.logout_rounded),
-              label: Text(l10n.signOut),
-              style: OutlinedButton.styleFrom(foregroundColor: colors.error, side: BorderSide(color: colors.error)),
-            ),
-          ],
-        ),
-      ),
+          ),
           GuidedTour(
             tourId: 'profile',
             steps: [
@@ -286,9 +304,9 @@ class ProfileScreen extends StatelessWidget {
   Future<void> _replayTour(BuildContext context) async {
     await TourService.resetAll();
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppLocalizations.of(context)!.tourRestarted)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.tourRestarted)));
     context.go('/');
   }
 
@@ -307,10 +325,7 @@ class ProfileScreen extends StatelessWidget {
     try {
       await auth.deleteAccount(password: password.isEmpty ? null : password);
       messenger.showSnackBar(
-        SnackBar(
-          content: Text(l10n.accountDeletedMsg),
-          behavior: SnackBarBehavior.floating,
-        ),
+        SnackBar(content: Text(l10n.accountDeletedMsg), behavior: SnackBarBehavior.floating),
       );
       if (context.mounted) context.go('/');
     } catch (e) {
@@ -359,8 +374,7 @@ class ProfileScreen extends StatelessWidget {
                   option.$1 == current
                       ? Icons.radio_button_checked_rounded
                       : Icons.radio_button_off_rounded,
-                  color:
-                      option.$1 == current ? colors.primary : colors.onSurfaceVariant,
+                  color: option.$1 == current ? colors.primary : colors.onSurfaceVariant,
                 ),
                 title: Text(option.$2),
                 onTap: () => Navigator.pop(dialogContext, option.$1),
@@ -401,10 +415,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.deleteAccountBody,
-            style: text.bodyMedium,
-          ),
+          Text(l10n.deleteAccountBody, style: text.bodyMedium),
           const SizedBox(height: AppTheme.spacingMd),
           TextField(
             controller: _controller,
@@ -417,10 +428,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
         ],
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(l10n.cancel),
-        ),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel)),
         FilledButton(
           style: FilledButton.styleFrom(backgroundColor: colors.error),
           onPressed: () => Navigator.pop(context, _controller.text),
@@ -445,10 +453,16 @@ class _ProTile extends StatelessWidget {
       onTap: () => context.push('/paywall'),
       child: Container(
         margin: const EdgeInsets.only(bottom: AppTheme.spacingSm),
-        padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd, vertical: AppTheme.spacingMd),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppTheme.spacingMd,
+          vertical: AppTheme.spacingMd,
+        ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [appColors.proGold.withValues(alpha: 0.15), appColors.proGoldLight.withValues(alpha: 0.08)],
+            colors: [
+              appColors.proGold.withValues(alpha: 0.15),
+              appColors.proGoldLight.withValues(alpha: 0.08),
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -477,7 +491,11 @@ class _ProTile extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Icon(Icons.workspace_premium_rounded, size: AppTheme.iconMd, color: Colors.white),
+              child: const Icon(
+                Icons.workspace_premium_rounded,
+                size: AppTheme.iconMd,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(width: AppTheme.spacingMd),
             Expanded(
@@ -486,7 +504,10 @@ class _ProTile extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text('SpotVibe Premium', style: text.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
+                      Text(
+                        'SpotVibe Premium',
+                        style: text.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+                      ),
                       const SizedBox(width: AppTheme.spacingSm),
                       if (sub.isSubscribed) const ProBadge(),
                     ],
@@ -535,7 +556,11 @@ class _SettingsTile extends StatelessWidget {
         child: Icon(icon, size: AppTheme.iconMd, color: colors.primary),
       ),
       title: Text(label, style: text.bodyLarge),
-      trailing: trailing ?? (onTap != null ? Icon(Icons.chevron_right_rounded, color: colors.onSurfaceVariant) : null),
+      trailing:
+          trailing ??
+          (onTap != null
+              ? Icon(Icons.chevron_right_rounded, color: colors.onSurfaceVariant)
+              : null),
       onTap: onTap,
     );
   }
