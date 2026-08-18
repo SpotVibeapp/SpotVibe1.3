@@ -93,6 +93,7 @@ class UserEventRepository {
   }
 
   Future<UserCreatedEvent> createEvent({
+    String? id,
     required String creatorId,
     required String title,
     required String description,
@@ -121,7 +122,7 @@ class UserEventRepository {
   }) async {
     await Future.delayed(const Duration(milliseconds: 300));
     final event = UserCreatedEvent(
-      id: _uuid.v4(),
+      id: id ?? _uuid.v4(),
       creatorId: creatorId,
       title: title,
       description: description,

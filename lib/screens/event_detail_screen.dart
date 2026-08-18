@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -120,11 +119,9 @@ class _DetailContent extends StatelessWidget {
                 ),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background: CachedNetworkImage(
-                imageUrl: event.imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => Container(color: appColors.shimmer),
-                errorWidget: (_, __, ___) => EventImagePlaceholder(category: event.category),
+              background: EventCoverImage.fromEvent(
+                event,
+                placeholderColor: appColors.shimmer,
               ),
             ),
           ),

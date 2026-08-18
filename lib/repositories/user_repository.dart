@@ -54,4 +54,7 @@ abstract class UserRepository {
   /// if Firebase still requires a recent login, implementations throw a
   /// friendly error telling the user to sign out and back in and retry.
   Future<void> deleteAccount({String? password});
+
+  /// Replaces the signed-in user's avatar URL (Firestore + Auth photoURL).
+  Future<AppUser> updateAvatarUrl(String avatarUrl);
 }

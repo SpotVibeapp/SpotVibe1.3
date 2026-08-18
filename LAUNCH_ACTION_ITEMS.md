@@ -66,7 +66,14 @@ Your API key was committed to a **public** repo, so treat it as compromised.
    - Until you do this, a release build intentionally shows a
      "backend not configured" screen instead of fake auth (that's the new
      fail-loud behavior working as intended).
-7. (Recommended) **App Check:** enable Play Integrity + App Attest, and
+7. **Storage (required for profile photos + event videos):**
+   Console → **Build → Storage → Get started** (production rules).
+   Then deploy the rules already in this repo:
+   ```bash
+   firebase deploy --only storage
+   ```
+   Uploads fail with a clear message until this is done.
+8. (Recommended) **App Check:** enable Play Integrity + App Attest, and
    enforce it, so your Firebase keys can't be abused.
 
 ---
@@ -122,8 +129,8 @@ share sheet.
 
 ## 6. Android release signing
 
-`android/app/build.gradle.kts` falls back to debug signing when
-`android/key.properties` is absent. For Play you need a real upload key:
+Release builds now **fail** if `android/key.properties` is missing (no
+debug-signing fallback). For Play you need a real upload key:
 
 1. Create a keystore (keep it OUT of the repo).
 2. Create `android/key.properties`:

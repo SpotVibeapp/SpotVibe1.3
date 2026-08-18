@@ -1,0 +1,30 @@
+rules_version = '2';
+
+// Deploy: firebase deploy --only storage
+//
+//   users/{uid}/avatar.jpg          profile photos
+//   events/{uid}/{eventId}/cover.*  event cover photos
+//   events/{uid}/{eventId}/promo.*  short operator videos
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    match /users/{uid}/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(uid)
+                   && request.resource.size < 6 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    match /events/{uid}/{eventId}/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(uid)
+                   && request.resource.size < 60 * 1024 * 1024
+                   && (request.resource.contentType.matches('image/.*')
+                       || request.resource.contentType.matches('video/.*'));
+    }
+  }
+}

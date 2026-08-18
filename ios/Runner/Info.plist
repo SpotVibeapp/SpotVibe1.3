@@ -62,6 +62,12 @@
         </array>
       </dict>
     </array>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>SpotVibe needs photo access so you can set a profile picture and so event operators can add a cover photo.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>SpotVibe uses the camera so you can take a profile picture or a short event video.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>SpotVibe uses the microphone only when you record a short event video.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>SpotVibe uses your location to show events happening near you while the app is open.</string>
     <key>NSUserNotificationsUsageDescription</key>

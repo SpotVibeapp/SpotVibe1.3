@@ -9,7 +9,7 @@ import '../providers/locale_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/theme_provider.dart';
 import '../theme/theme.dart';
-import '../widgets/common/app_avatar.dart';
+import '../widgets/common/editable_avatar.dart';
 import '../widgets/common/app_icon_mark.dart';
 import '../widgets/common/follow_stats_row.dart';
 import '../widgets/common/guided_tour.dart';
@@ -155,7 +155,16 @@ class ProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.all(AppTheme.spacingLg),
         child: Column(
           children: [
-            AppAvatar(imageUrl: user.avatarUrl, size: AppTheme.avatarLg, fallbackName: user.displayName),
+            EditableAvatar(
+              imageUrl: user.avatarUrl,
+              fallbackName: user.displayName,
+              size: AppTheme.avatarLg,
+            ),
+            const SizedBox(height: AppTheme.spacingXs),
+            Text(
+              'Tap to change photo',
+              style: text.labelSmall?.copyWith(color: colors.onSurfaceVariant),
+            ),
             const SizedBox(height: AppTheme.spacingMd),
             Text(user.displayName, style: text.headlineSmall),
             const SizedBox(height: AppTheme.spacingXs),

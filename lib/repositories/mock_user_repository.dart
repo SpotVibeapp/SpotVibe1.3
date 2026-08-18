@@ -91,4 +91,12 @@ class MockUserRepository implements UserRepository {
     await Future.delayed(const Duration(milliseconds: 400));
     _currentUser = null;
   }
+
+  @override
+  Future<AppUser> updateAvatarUrl(String avatarUrl) async {
+    final user = _currentUser;
+    if (user == null) throw Exception('Sign in to change your photo.');
+    _currentUser = user.copyWith(avatarUrl: avatarUrl);
+    return _currentUser!;
+  }
 }

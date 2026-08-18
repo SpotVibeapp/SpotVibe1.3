@@ -1,6 +1,10 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 import '../data/pricing.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/category_labels.dart';
@@ -11,6 +15,7 @@ import '../providers/subscription_provider.dart';
 import '../providers/user_events_provider.dart';
 import '../repositories/user_event_repository.dart';
 import '../services/ai_moderation_service.dart';
+import '../services/media_upload_service.dart';
 import '../services/user_event_service.dart';
 import '../theme/theme.dart';
 
@@ -44,6 +49,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   String _selectedCategory = 'Music';
   bool _isPremiumListing = false;
   String? _moderationError;
+  late final String _eventMediaId;
+  String? _localCoverPath;
+  String? _localVideoPath;
+  bool _uploadingMedia = false;
 
   // ── Premium fields ────────────────────────────────────────────────────────
   bool _isCreatorPro = false;
@@ -63,6 +72,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   @override
   void initState() {
     super.initState();
+    _eventMediaId = widget.editingEvent?.id ?? const Uuid().v4();
     final e = widget.editingEvent;
     if (e != null) {
       _titleController.text = e.title;
@@ -153,6 +163,30 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     if (picked != null) setState(() => _selectedTime = picked);
   }
 
+  Future<void> _pickCover({required bool camera}) async {
+    try {
+      final path = await MediaUploadService().pickImage(fromCamera: camera);
+      if (path != null && mounted) setState(() => _localCoverPath = path);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
+  Future<void> _pickVideo({required bool camera}) async {
+    try {
+      final path = await MediaUploadService().pickVideo(fromCamera: camera);
+      if (path != null && mounted) setState(() => _localVideoPath = path);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
   Future<void> _openPaywall() async {
     final result = await context.push<bool>('/paywall');
     if (result == true && mounted) {
@@ -218,8 +252,38 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     }
     // ────────────────────────────────────────────────────────────────────────
 
+    var imageUrl = _imageUrlController.text.trim();
+    var videoUrl = _videoUrlController.text.trim();
+    if (_localCoverPath != null || _localVideoPath != null) {
+      setState(() => _uploadingMedia = true);
+      try {
+        final media = MediaUploadService();
+        if (_localCoverPath != null) {
+          imageUrl = await media.uploadEventImage(
+            eventId: _eventMediaId,
+            localPath: _localCoverPath!,
+          );
+        }
+        if (_localVideoPath != null) {
+          videoUrl = await media.uploadEventVideo(
+            eventId: _eventMediaId,
+            localPath: _localVideoPath!,
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _uploadingMedia = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        );
+        return;
+      }
+      if (mounted) setState(() => _uploadingMedia = false);
+    }
+
     final provider = context.read<CreateEventProvider>();
     final result = await provider.submit(
+      id: _eventMediaId,
       title: _titleController.text,
       description: _descriptionController.text,
       dateTime: _combinedDateTime,
@@ -229,8 +293,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       state: _stateController.text,
       zipCode: _zipController.text,
       cost: _parsedCost,
-      imageUrl: _imageUrlController.text.trim(),
-      videoUrl: _videoUrlController.text.trim().isEmpty ? null : _videoUrlController.text.trim(),
+      imageUrl: imageUrl,
+      videoUrl: videoUrl.isEmpty ? null : videoUrl,
       category: _selectedCategory,
       mapLink: _mapLinkController.text.trim().isEmpty ? null : _mapLinkController.text.trim(),
       chatLink: _chatLinkController.text.trim().isEmpty ? null : _chatLinkController.text.trim(),
@@ -274,7 +338,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       appBar: AppBar(
         title: Text(_isEditing ? l10n.editEvent : l10n.createEvent),
         actions: [
-          if (provider.isSubmitting)
+          if (provider.isSubmitting || _uploadingMedia)
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
               child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
@@ -401,6 +465,46 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             const SizedBox(height: AppTheme.spacingLg),
 
             _SectionHeader(title: l10n.extras),
+            _MediaPickRow(
+              label: 'Cover photo',
+              subtitle: _localCoverPath != null
+                  ? 'Photo selected'
+                  : (_imageUrlController.text.isNotEmpty
+                      ? 'Using image URL'
+                      : 'Upload a photo of this event or venue'),
+              icon: Icons.add_photo_alternate_rounded,
+              preview: _localCoverPath != null && !kIsWeb
+                  ? Image.file(File(_localCoverPath!), fit: BoxFit.cover)
+                  : null,
+              onLibrary: () => _pickCover(camera: false),
+              onCamera: () => _pickCover(camera: true),
+              onClear: _localCoverPath == null
+                  ? null
+                  : () => setState(() => _localCoverPath = null),
+            ),
+            const SizedBox(height: AppTheme.spacingMd),
+            _MediaPickRow(
+              label: 'Short video',
+              subtitle: _localVideoPath != null
+                  ? 'Video selected (max 30 seconds)'
+                  : 'Operators can add a 30-second promo clip',
+              icon: Icons.videocam_rounded,
+              onLibrary: () => _pickVideo(camera: false),
+              onCamera: () => _pickVideo(camera: true),
+              onClear: _localVideoPath == null
+                  ? null
+                  : () => setState(() => _localVideoPath = null),
+            ),
+            if (_uploadingMedia) ...[
+              const SizedBox(height: AppTheme.spacingSm),
+              const LinearProgressIndicator(),
+              const SizedBox(height: AppTheme.spacingXs),
+              Text(
+                'Uploading media…',
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+            ],
+            const SizedBox(height: AppTheme.spacingMd),
             _FormField(
               controller: _costController,
               label: l10n.ticketPriceLabel,
@@ -455,7 +559,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
             const SizedBox(height: AppTheme.spacingXl),
             FilledButton.icon(
-              onPressed: provider.isSubmitting ? null : _submit,
+              onPressed: (provider.isSubmitting || _uploadingMedia) ? null : _submit,
               icon: const Icon(Icons.publish_rounded),
               label: Text(_isEditing
                   ? l10n.saveChanges
@@ -747,6 +851,82 @@ class _RecurringOption extends StatelessWidget {
 }
 
 // ── Section Header ─────────────────────────────────────────────────────────────
+
+class _MediaPickRow extends StatelessWidget {
+  final String label;
+  final String subtitle;
+  final IconData icon;
+  final Widget? preview;
+  final VoidCallback onLibrary;
+  final VoidCallback onCamera;
+  final VoidCallback? onClear;
+
+  const _MediaPickRow({
+    required this.label,
+    required this.subtitle,
+    required this.icon,
+    this.preview,
+    required this.onLibrary,
+    required this.onCamera,
+    this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacingMd),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+            child: SizedBox(
+              width: 56,
+              height: 56,
+              child: preview ??
+                  Container(
+                    color: colors.primaryContainer,
+                    child: Icon(icon, color: colors.primary),
+                  ),
+            ),
+          ),
+          const SizedBox(width: AppTheme.spacingMd),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: text.titleSmall),
+                Text(subtitle, style: text.labelSmall),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Library',
+            onPressed: onLibrary,
+            icon: const Icon(Icons.photo_library_rounded),
+          ),
+          IconButton(
+            tooltip: 'Camera',
+            onPressed: onCamera,
+            icon: const Icon(Icons.photo_camera_rounded),
+          ),
+          if (onClear != null)
+            IconButton(
+              tooltip: 'Remove',
+              onPressed: onClear,
+              icon: const Icon(Icons.close_rounded),
+            ),
+        ],
+      ),
+    );
+  }
+}
 
 class _SectionHeader extends StatelessWidget {
   final String title;

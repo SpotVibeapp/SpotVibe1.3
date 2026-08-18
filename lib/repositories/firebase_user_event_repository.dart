@@ -71,6 +71,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
 
   @override
   Future<UserCreatedEvent> createEvent({
+    String? id,
     required String creatorId,
     required String title,
     required String description,
@@ -99,7 +100,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
   }) {
     return _guard(() async {
       final event = UserCreatedEvent(
-        id: _uuid.v4(),
+        id: id ?? _uuid.v4(),
         creatorId: creatorId,
         title: title,
         description: description,
@@ -138,6 +139,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
       await batch.commit();
       return event;
     }, () => super.createEvent(
+          id: id,
           creatorId: creatorId,
           title: title,
           description: description,

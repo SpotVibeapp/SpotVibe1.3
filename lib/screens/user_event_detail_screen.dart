@@ -12,6 +12,7 @@ import '../widgets/events/event_page_ad.dart';
 import '../theme/category_colors.dart';
 import '../theme/theme.dart';
 import '../widgets/events/add_to_calendar_button.dart';
+import '../widgets/events/event_video_player.dart';
 import '../widgets/events/story_card.dart';
 import '../widgets/common/app_avatar.dart';
 import '../widgets/common/event_image_placeholder.dart';
@@ -302,7 +303,7 @@ class _UserEventDetailContent extends StatelessWidget {
                   // Video (optional)
                   if (event.videoUrl != null && event.videoUrl!.isNotEmpty) ...[
                     const Divider(height: AppTheme.spacingXl),
-                    _VideoSection(videoUrl: event.videoUrl!),
+                    EventVideoPlayer(videoUrl: event.videoUrl!),
                   ],
 
                   const Divider(height: AppTheme.spacingXl),
@@ -493,143 +494,3 @@ class _FeaturedBadge extends StatelessWidget {
     );
   }
 }
-
-// ── Chat Section ─────────────────────────────────────────────────────────────
-
-class _VideoSection extends StatelessWidget {
-  final String videoUrl;
-  const _VideoSection({required this.videoUrl});
-
-  bool get _isYouTube {
-    final host = Uri.tryParse(videoUrl)?.host ?? '';
-    return host.contains('youtube.com') || host.contains('youtu.be');
-  }
-
-  bool get _isVimeo {
-    final host = Uri.tryParse(videoUrl)?.host ?? '';
-    return host.contains('vimeo.com');
-  }
-
-  String get _sourceName {
-    if (_isYouTube) return 'YouTube';
-    if (_isVimeo) return 'Vimeo';
-    return 'Video';
-  }
-
-  IconData get _sourceIcon {
-    if (_isYouTube) return Icons.smart_display_rounded;
-    if (_isVimeo) return Icons.video_library_rounded;
-    return Icons.videocam_rounded;
-  }
-
-  Future<void> _open() async {
-    final uri = Uri.tryParse(videoUrl);
-    if (uri == null) return;
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Event Video', style: text.titleSmall),
-        const SizedBox(height: AppTheme.spacingSm),
-        GestureDetector(
-          onTap: _open,
-          child: Container(
-            height: 180,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  colors.primaryContainer,
-                  colors.secondaryContainer,
-                ],
-              ),
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Play button
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: colors.primary,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: colors.primary.withValues(alpha: 0.4),
-                        blurRadius: 16,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Icon(Icons.play_arrow_rounded, color: colors.onPrimary, size: AppTheme.iconLg),
-                ),
-                // Source label bottom-left
-                Positioned(
-                  bottom: AppTheme.spacingSm,
-                  left: AppTheme.spacingSm,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppTheme.spacingSm,
-                      vertical: AppTheme.spacingXs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.surface.withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(_sourceIcon, size: AppTheme.iconSm, color: colors.primary),
-                        const SizedBox(width: AppTheme.spacingXs),
-                        Text(
-                          _sourceName,
-                          style: text.labelSmall?.copyWith(
-                            color: colors.onSurface,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Tap to open label bottom-right
-                Positioned(
-                  bottom: AppTheme.spacingSm,
-                  right: AppTheme.spacingSm,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppTheme.spacingSm,
-                      vertical: AppTheme.spacingXs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.surface.withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-                    ),
-                    child: Text(
-                      'Tap to watch',
-                      style: text.labelSmall?.copyWith(color: colors.onSurfaceVariant),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-

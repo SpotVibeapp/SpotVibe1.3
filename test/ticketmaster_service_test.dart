@@ -20,6 +20,140 @@ void main() {
     expect(url, 'https://s1.ticketm.net/wide.jpg');
   });
 
+  test('prefers team art over a huge baseball-glove stock image', () {
+    final url = pickTicketmasterImage([
+      {
+        'url':
+            'https://s1.ticketm.net/dam/c/fbc/baseball-glove_TABLET_LANDSCAPE_LARGE_16_9.jpg',
+        'width': 2048,
+        'ratio': '16_9',
+        'fallback': true,
+      },
+      {
+        'url':
+            'https://s1.ticketm.net/dam/a/e67/chihuahuas-logo_RETINA_PORTRAIT_16_9.jpg',
+        'width': 640,
+        'ratio': '16_9',
+        'fallback': true,
+      },
+    ]);
+    expect(url, contains('chihuahuas-logo'));
+  });
+
+  test('uses the ballpark photo when Ticketmaster only sent stock art', () {
+    final event = eventFromTicketmaster({
+      'id': 'G5vYZglove',
+      'name': 'El Paso Chihuahuas vs. Round Rock Express',
+      'images': [
+        {
+          'url': 'https://s1.ticketm.net/dam/c/aaa/baseball-glove_16_9.jpg',
+          'width': 2048,
+          'ratio': '16_9',
+          'fallback': true,
+        },
+      ],
+      'dates': {
+        'start': {'dateTime': '2026-08-20T01:05:00Z'},
+      },
+      '_embedded': {
+        'venues': [
+          {
+            'name': 'Southwest University Park',
+            'city': {'name': 'El Paso'},
+            'state': {'stateCode': 'TX'},
+          },
+        ],
+      },
+    });
+    expect(event, isNotNull);
+    expect(event!.imageUrl, contains('southwest_university_park'));
+    expect(event.imageUrl.startsWith('assets/venues/'), isTrue);
+  });
+
+  test('prefers unique attraction art over fallback and /dam/c/ stock', () {
+    final url = pickTicketmasterImage([
+      {
+        'url':
+            'https://s1.ticketm.net/dam/c/fbc/genre-stock_TABLET_LANDSCAPE_LARGE_16_9.jpg',
+        'width': 2048,
+        'ratio': '16_9',
+        'fallback': false,
+      },
+      {
+        'url': 'https://s1.ticketm.net/dam/a/e67/artist_RETINA_PORTRAIT_16_9.jpg',
+        'width': 640,
+        'ratio': '16_9',
+        'fallback': true,
+      },
+      {
+        'url': 'https://s1.ticketm.net/dam/a/e67/artist_TABLET_LANDSCAPE_16_9.jpg',
+        'width': 1024,
+        'ratio': '16_9',
+        'fallback': false,
+      },
+    ]);
+    expect(url, 'https://s1.ticketm.net/dam/a/e67/artist_TABLET_LANDSCAPE_16_9.jpg');
+  });
+
+  test('falls back to stock art when that is all Ticketmaster sent', () {
+    expect(
+      pickTicketmasterImage([
+        {
+          'url': 'https://s1.ticketm.net/dam/c/aaa/music_16_9.jpg',
+          'width': 2048,
+          'ratio': '16_9',
+          'fallback': true,
+        },
+      ]),
+      'https://s1.ticketm.net/dam/c/aaa/music_16_9.jpg',
+    );
+  });
+
+  test('uses attraction art when the event only has stock images', () {
+    final event = eventFromTicketmaster({
+      'id': 'G5vYZ9xyz',
+      'name': 'Bad Bunny',
+      'url': 'https://www.ticketmaster.com/event/G5vYZ9xyz',
+      'images': [
+        {
+          'url': 'https://s1.ticketm.net/dam/c/fbc/music-stock_16_9.jpg',
+          'width': 2048,
+          'ratio': '16_9',
+          'fallback': true,
+        },
+      ],
+      'dates': {
+        'start': {'dateTime': '2026-09-20T01:05:00Z'},
+      },
+      '_embedded': {
+        'attractions': [
+          {
+            'name': 'Bad Bunny',
+            'images': [
+              {
+                'url':
+                    'https://s1.ticketm.net/dam/a/bbb/bad-bunny_TABLET_LANDSCAPE_LARGE_16_9.jpg',
+                'width': 2048,
+                'ratio': '16_9',
+                'fallback': false,
+              },
+            ],
+          },
+        ],
+        'venues': [
+          {
+            'name': 'Don Haskins Center',
+            'city': {'name': 'El Paso'},
+            'state': {'stateCode': 'TX'},
+          },
+        ],
+      },
+    });
+    expect(event, isNotNull);
+    expect(event!.imageUrl, contains('bad-bunny'));
+    expect(isGenericEventImage(event.imageUrl), isFalse);
+  });
+
   test('maps a Discovery API event to Event with official image', () {
     final event = eventFromTicketmaster({
       'id': 'G5vYZ9abc',

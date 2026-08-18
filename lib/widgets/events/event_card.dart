@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../data/event_time.dart';
 import '../../l10n/app_localizations.dart';
@@ -86,11 +85,10 @@ class _EventImage extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            CachedNetworkImage(
-              imageUrl: event.imageUrl,
-              fit: BoxFit.cover,
-              placeholder: (_, __) => Container(color: appColors.shimmer),
-              errorWidget: (_, __, ___) => EventImagePlaceholder(category: event.category, height: 180),
+            EventCoverImage.fromEvent(
+              event,
+              height: 180,
+              placeholderColor: appColors.shimmer,
             ),
             // Category-tinted scrim fading up from the bottom of the photo.
             Positioned(

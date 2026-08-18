@@ -141,6 +141,10 @@ class AuthService {
     await _repository.addFriend(userId);
   }
 
+  Future<AppUser> updateAvatarUrl(String avatarUrl) {
+    return _repository.updateAvatarUrl(avatarUrl);
+  }
+
   /// Cryptographically secure random nonce for Apple Sign-In.
   static String _generateNonce([int length = 32]) {
     const charset =

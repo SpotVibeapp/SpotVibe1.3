@@ -144,4 +144,9 @@ class AuthProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
   }
+
+  Future<void> updateAvatarUrl(String avatarUrl) async {
+    _user = await _service.updateAvatarUrl(avatarUrl);
+    notifyListeners();
+  }
 }

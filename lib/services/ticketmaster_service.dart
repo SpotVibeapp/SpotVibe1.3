@@ -1,7 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+import '../data/el_paso_events.dart';
+import '../data/event_dedupe.dart';
+import '../data/event_images.dart';
 import '../models/event.dart';
+
+export '../data/event_images.dart';
 
 /// Live Ticketmaster Discovery API.
 ///
@@ -57,6 +62,9 @@ class TicketmasterService {
         'sort': 'date,asc',
         'radius': radiusMiles.round().clamp(1, 200),
         'unit': 'miles',
+        'includeTBA': 'no',
+        'includeTBD': 'no',
+        'includeTest': 'no',
       };
       if (lat != null && lng != null) {
         params['latlong'] = '${lat.toStringAsFixed(4)},${lng.toStringAsFixed(4)}';
@@ -82,6 +90,7 @@ class TicketmasterService {
         if (item is! Map) continue;
         final event = eventFromTicketmaster(Map<String, dynamic>.from(item));
         if (event == null) continue;
+        if (looksLikeStandaloneAddon(event.title)) continue;
         if (!event.dateTime.isAfter(DateTime.now().subtract(const Duration(hours: 2)))) {
           continue;
         }
@@ -117,25 +126,104 @@ class TicketmasterService {
   }
 }
 
-/// Picks the most useful Ticketmaster image (wide, reasonably large).
+bool _isTmFallbackFlag(dynamic value) => value == true || value == 'true';
+
+bool _isAttractionPath(String url) {
+  final lower = url.toLowerCase();
+  return lower.contains('/dam/a/') || lower.contains('/dam/t/');
+}
+
+bool _isUniqueTmImage(Map raw) {
+  final url = raw['url'] as String? ?? '';
+  if (url.isEmpty || isStockTicketmasterImage(url)) return false;
+  // Team / artist art is unique even when TM marks it fallback:true.
+  if (_isAttractionPath(url)) return true;
+  if (_isTmFallbackFlag(raw['fallback'])) return false;
+  return true;
+}
+
+int _imageScore(Map raw, {required bool preferLarge}) {
+  final url = raw['url'] as String? ?? '';
+  final width = (raw['width'] as num?)?.toInt() ?? 0;
+  if (preferLarge && width > 0 && width < 400) return -1;
+  final ratio = (raw['ratio'] as String? ?? '').toLowerCase();
+  var score = width;
+  // Cards are wide. A 16:9 crop should beat a same-size square, but a much
+  // larger 3:2 artist photo can still win.
+  if (ratio == '16_9') score += 1500;
+  if (ratio == '3_2' || ratio == '4_3') score += 150;
+  if (_isAttractionPath(url)) score += 2500;
+  // Genre stock (baseball glove, concert crowd) must never beat team art.
+  if (isStockTicketmasterImage(url)) score -= 10000;
+  if (_isTmFallbackFlag(raw['fallback']) && !_isAttractionPath(url)) {
+    score -= 2000;
+  }
+  return score;
+}
+
+String _bestUrl(List<Map> pool) {
+  if (pool.isEmpty) return '';
+  String pickFrom(List<Map> images, {required bool preferLarge}) {
+    String best = '';
+    var bestScore = -1;
+    for (final raw in images) {
+      final score = _imageScore(raw, preferLarge: preferLarge);
+      if (score > bestScore) {
+        bestScore = score;
+        best = raw['url'] as String? ?? '';
+      }
+    }
+    return best;
+  }
+
+  final large = pickFrom(pool, preferLarge: true);
+  if (large.isNotEmpty) return large;
+  return pickFrom(pool, preferLarge: false);
+}
+
+/// Picks a Ticketmaster image.
+///
+/// Prefer unique attraction art (`/dam/a/`, `fallback: false`). If that's all
+/// the event has, still return the best stock / fallback photo — a repeated
+/// concert shot is better than a blank card. El Paso listings are often
+/// stock-only.
 String pickTicketmasterImage(List images) {
-  String best = '';
-  var bestScore = -1;
+  final unique = <Map>[];
+  final any = <Map>[];
   for (final raw in images) {
     if (raw is! Map) continue;
     final url = raw['url'] as String? ?? '';
     if (url.isEmpty) continue;
-    final width = (raw['width'] as num?)?.toInt() ?? 0;
-    final ratio = (raw['ratio'] as String? ?? '').toLowerCase();
-    var score = width;
-    if (ratio == '16_9') score += 400;
-    if (ratio == '3_2' || ratio == '4_3') score += 150;
-    if (score > bestScore) {
-      bestScore = score;
-      best = url;
+    any.add(raw);
+    if (_isUniqueTmImage(raw)) unique.add(raw);
+  }
+  final preferred = _bestUrl(unique);
+  if (preferred.isNotEmpty) return preferred;
+  return _bestUrl(any);
+}
+
+/// Event images first, then attractions (artist), then venues.
+List<Map<String, dynamic>> collectTicketmasterImages(Map<String, dynamic> json) {
+  final out = <Map<String, dynamic>>[];
+  void addAll(dynamic raw) {
+    if (raw is! List) return;
+    for (final item in raw) {
+      if (item is Map) out.add(Map<String, dynamic>.from(item));
     }
   }
-  return best;
+
+  addAll(json['images']);
+  final embedded = json['_embedded'];
+  if (embedded is Map) {
+    for (final key in const ['attractions', 'venues']) {
+      final list = embedded[key];
+      if (list is! List) continue;
+      for (final entity in list) {
+        if (entity is Map) addAll(entity['images']);
+      }
+    }
+  }
+  return out;
 }
 
 String _mapClassification(Map<String, dynamic> json) {
@@ -219,8 +307,11 @@ Event? eventFromTicketmaster(Map<String, dynamic> json) {
     }
   }
 
-  final images = json['images'];
-  final imageUrl = images is List ? pickTicketmasterImage(images) : '';
+  var imageUrl = pickTicketmasterImage(collectTicketmasterImages(json));
+  if (isGenericEventImage(imageUrl)) {
+    final venuePhoto = venueImageFor(venueName, title: name);
+    if (venuePhoto != null) imageUrl = venuePhoto;
+  }
 
   double? cost;
   final priceRanges = json['priceRanges'];

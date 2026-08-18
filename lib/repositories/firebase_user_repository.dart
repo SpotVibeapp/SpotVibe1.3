@@ -308,12 +308,23 @@ class FirebaseUserRepository implements UserRepository {
     final displayName = (user.displayName?.isNotEmpty ?? false)
         ? user.displayName!
         : (fallbackName ?? user.email?.split('@').first ?? 'User');
-    final avatar = (user.photoURL?.isNotEmpty ?? false)
+    var avatar = (user.photoURL?.isNotEmpty ?? false)
         ? user.photoURL!
         : (fallbackAvatar?.isNotEmpty == true
             ? fallbackAvatar!
             : _generatedAvatar(displayName));
     final email = user.email ?? '';
+
+    // Prefer a photo the user already uploaded — never clobber it on login.
+    try {
+      final existing = await _users.doc(user.uid).get();
+      final stored = existing.data()?['avatarUrl'] as String?;
+      if (stored != null &&
+          stored.isNotEmpty &&
+          !stored.contains('ui-avatars.com')) {
+        avatar = stored;
+      }
+    } catch (_) {}
 
     await _syncProfileDoc(
       uid: user.uid,
@@ -330,6 +341,27 @@ class FirebaseUserRepository implements UserRepository {
       avatarUrl: avatar,
       isAdmin: await _isAdmin(user.uid),
     );
+  }
+
+  @override
+  Future<AppUser> updateAvatarUrl(String avatarUrl) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('Sign in to change your photo.');
+    try {
+      await user.updatePhotoURL(avatarUrl);
+    } catch (e) {
+      debugPrint('Auth photoURL update skipped: $e');
+    }
+    try {
+      await _users.doc(user.uid).set({
+        'avatarUrl': avatarUrl,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Firestore avatar update failed: $e');
+      throw Exception('Could not save your photo. Try again.');
+    }
+    return _appUserFor(user);
   }
 
   /// Whether [uid] is listed in the `admins/{uid}` collection.
@@ -366,9 +398,9 @@ class FirebaseUserRepository implements UserRepository {
           'updatedAt': FieldValue.serverTimestamp(),
         });
       } else {
+        // Do not overwrite avatarUrl — the user may have uploaded a photo.
         await ref.update({
           'email': email,
-          'avatarUrl': avatarUrl,
           'updatedAt': FieldValue.serverTimestamp(),
         });
       }

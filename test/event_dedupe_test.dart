@@ -111,4 +111,67 @@ void main() {
     expect(out, hasLength(1));
     expect(out.single.id, 'tm_plaza');
   });
+
+  test('same-day Chihuahuas matchup listings collapse to one game', () {
+    final listings = [
+      _event(
+        id: 'tm_main',
+        title: 'El Paso Chihuahuas vs. Round Rock Express',
+        location: 'Southwest University Park',
+        dateTime: night,
+        source: EventSource.ticketmaster,
+        sourceUrl: 'https://ticketmaster.com/event/main',
+        description: 'Official listing with tickets and seating chart.',
+      ),
+      _event(
+        id: 'tm_vip',
+        title: 'El Paso Chihuahuas vs. Round Rock Express - VIP Picnic',
+        location: 'Southwest University Park',
+        dateTime: night.add(const Duration(minutes: 30)),
+        source: EventSource.ticketmaster,
+      ),
+      _event(
+        id: 'tm_park',
+        title: 'El Paso Chihuahuas vs Round Rock Express Parking',
+        location: 'Southwest University Park',
+        dateTime: night,
+        source: EventSource.ticketmaster,
+      ),
+      _event(
+        id: 'tm_theme',
+        title: 'El Paso Chihuahuas vs. Round Rock Express - Fireworks Night',
+        location: 'Southwest University Park',
+        dateTime: night,
+        source: EventSource.ticketmaster,
+      ),
+    ];
+    final out = dedupeEvents(listings);
+    expect(out, hasLength(1));
+    expect(out.single.id, 'tm_main');
+    expect(out.single.title, 'El Paso Chihuahuas vs. Round Rock Express');
+  });
+
+  test('Ticketmaster listing keeps a curated venue photo when TM art is stock', () {
+    final local = _event(
+      id: 'evt_ep_coliseum',
+      title: 'Live at El Paso County Coliseum',
+      location: 'El Paso County Coliseum',
+      dateTime: night,
+      imageUrl: 'assets/venues/county_coliseum.jpg',
+    );
+    final tm = _event(
+      id: 'tm_abc123',
+      title: 'Live at El Paso County Coliseum',
+      location: 'El Paso County Coliseum',
+      dateTime: night,
+      imageUrl: 'https://s1.ticketm.net/dam/c/fbc/music-stock_16_9.jpg',
+      source: EventSource.ticketmaster,
+      sourceUrl: 'https://ticketmaster.com/event/abc',
+      description: 'Official Ticketmaster listing with tickets and seating.',
+    );
+    final out = dedupeEvents([local, tm]);
+    expect(out, hasLength(1));
+    expect(out.single.id, 'tm_abc123');
+    expect(out.single.imageUrl, contains('county_coliseum'));
+  });
 }

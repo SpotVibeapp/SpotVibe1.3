@@ -11,9 +11,66 @@ const String kElPasoZip = '79901';
 const int kElPasoSeedVersion = 3;
 
 /// Wikimedia Commons photo of the actual venue (redirects to a sized file).
+/// Prefer a bundled asset when we have one — Flutter often fails Wikimedia's
+/// multi-hop FilePath redirects, which is why Chihuahuas cards went blank.
 String venuePhoto(String filename) =>
+    _kBundledVenueFiles[filename] ??
     'https://commons.wikimedia.org/wiki/Special:FilePath/'
-    '${Uri.encodeComponent(filename)}?width=1200';
+        '${Uri.encodeComponent(filename)}?width=1200';
+
+const Map<String, String> _kBundledVenueFiles = {
+  'Southwest University Park.jpg':
+      'assets/venues/southwest_university_park.jpg',
+  'El Paso County Coliseum 2.jpg': 'assets/venues/county_coliseum.jpg',
+  'The Plaza Theatre.JPG': 'assets/venues/plaza_theatre.jpg',
+  'El Paso San Jacinto Plaza.jpg': 'assets/venues/san_jacinto.jpg',
+  'El Paso Sun Bowl Stadium.jpg': 'assets/venues/sun_bowl.jpg',
+  'Abraham Chavez Theater.jpg': 'assets/venues/abraham_chavez.jpg',
+  'Don Haskins Center.jpg': 'assets/venues/don_haskins.jpg',
+  'El Paso Franklin Mountains and Scenic Drive aerial.jpg':
+      'assets/venues/scenic_drive.jpg',
+};
+
+/// Real venue photos used when Ticketmaster only has genre stock art.
+String? venueImageFor(String venueName, {String title = ''}) {
+  final key = '$venueName $title'
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+      .trim();
+  if (key.isEmpty) return null;
+  // Team / nickname aliases first so a missing TM venue name still works.
+  if (key.contains('chihuahua') ||
+      key.contains('southwest university') ||
+      key.contains('southwest stadium')) {
+    return venuePhoto('Southwest University Park.jpg');
+  }
+  for (final entry in _kVenuePhotos.entries) {
+    if (key.contains(entry.key) || entry.key.contains(key)) {
+      return entry.value;
+    }
+  }
+  return null;
+}
+
+final Map<String, String> _kVenuePhotos = {
+  'southwest university park': venuePhoto('Southwest University Park.jpg'),
+  'el paso county coliseum': venuePhoto('El Paso County Coliseum 2.jpg'),
+  'plaza theatre': venuePhoto('The Plaza Theatre.JPG'),
+  'san jacinto plaza': venuePhoto('El Paso San Jacinto Plaza.jpg'),
+  'sun bowl': venuePhoto('El Paso Sun Bowl Stadium.jpg'),
+  'abraham chavez': venuePhoto('Abraham Chavez Theater.jpg'),
+  'don haskins': venuePhoto('Don Haskins Center.jpg'),
+  'el paso museum of art':
+      venuePhoto('El Paso Museum of Art. El Paso, Texas.jpg'),
+  'franklin mountains': venuePhoto('Franklin Mountains State Park Cactus.jpg'),
+  'hueco tanks': venuePhoto('Hueco-tanks-east-mtn-tx1.jpg'),
+  'ascarate':
+      venuePhoto('AscaratePark-US-MexicoBorderAerial (24086868608).jpg'),
+  'concordia cemetery': venuePhoto('Concordia cemetery section 1.jpg'),
+  'ysleta mission': venuePhoto('YsletaMission.JPG'),
+  'keystone heritage': venuePhoto('El Paso Desert Botanical Garden.jpg'),
+  'union plaza': venuePhoto('Rofo Union Plaza 20220430-01.jpg'),
+};
 
 String _avatar(String name, String hex) =>
     'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}'

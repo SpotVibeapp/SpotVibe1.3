@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
 import '../../providers/event_provider.dart';
@@ -86,13 +85,9 @@ class _SimilarEventCard extends StatelessWidget {
             // Image
             SizedBox(
               height: 100,
-              child: CachedNetworkImage(
-                imageUrl: event.imageUrl,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                placeholder: (_, __) => Container(color: appColors.shimmer),
-                errorWidget: (_, __, ___) =>
-                    EventImagePlaceholder(category: event.category),
+              child: EventCoverImage.fromEvent(
+                event,
+                placeholderColor: appColors.shimmer,
               ),
             ),
             // Info

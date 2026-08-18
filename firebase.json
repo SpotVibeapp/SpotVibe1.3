@@ -1,4 +1,7 @@
 {
+  "storage": {
+    "rules": "storage.rules"
+  },
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
@@ -10,7 +13,6 @@
     "public": "legal_site",
     "ignore": [
       "firebase.json",
-      "**/.*",
       "**/node_modules/**"
     ]
   }

@@ -39,6 +39,7 @@ class CreateEventProvider extends ChangeNotifier {
   }
 
   Future<UserCreatedEvent?> submit({
+    String? id,
     required String title,
     required String description,
     required DateTime dateTime,
@@ -104,6 +105,7 @@ class CreateEventProvider extends ChangeNotifier {
         result = await _service.updateEvent(updated);
       } else {
         result = await _service.createEvent(
+          id: id,
           creatorId: _creatorId,
           title: title,
           description: description,

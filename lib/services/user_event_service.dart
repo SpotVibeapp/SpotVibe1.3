@@ -24,6 +24,7 @@ class UserEventService {
   Future<UserCreatedEvent?> getEventById(String id) => _repository.getEventById(id);
 
   Future<UserCreatedEvent> createEvent({
+    String? id,
     required String creatorId,
     required String title,
     required String description,
@@ -70,6 +71,7 @@ class UserEventService {
     }
 
     return _repository.createEvent(
+      id: id,
       creatorId: creatorId,
       title: title.trim(),
       description: description.trim(),

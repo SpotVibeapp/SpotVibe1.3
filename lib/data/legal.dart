@@ -37,8 +37,8 @@ const LegalDocument kPrivacyPolicy = LegalDocument(
     ),
     LegalSection(
       'Information you give us',
-      'Account: name, email, password (stored by Firebase Authentication, not in plain text), and profile photo if you sign in with Google, Apple, or Facebook.\n\n'
-          'Events you create: title, description, photos or image URLs, location, time, ticket price, and optional contact or branding fields.\n\n'
+      'Account: name, email, password (stored by Firebase Authentication, not in plain text), and a profile photo if you upload one or sign in with Google, Apple, or Facebook.\n\n'
+          'Events you create: title, description, cover photos, optional short videos (up to 30 seconds), location, time, ticket price, and optional contact or branding fields.\n\n'
           'RSVPs and comments: whether you are going, and any text you post.\n\n'
           'Venue / event claims: your name, work email, phone, organization, role, and any proof you submit so we can verify you are authorized.\n\n'
           'Support: anything you email us.',
@@ -65,7 +65,7 @@ const LegalDocument kPrivacyPolicy = LegalDocument(
     ),
     LegalSection(
       'When we share information',
-      'Service providers that host or process data for us: Google Firebase (auth, database), Apple and Google (app stores and in-app purchases), RevenueCat (subscription status), and Ticketmaster (outbound event search only).\n\n'
+      'Service providers that host or process data for us: Google Firebase (auth, database, file storage for photos and short videos), Apple and Google (app stores and in-app purchases), RevenueCat (subscription status), and Ticketmaster (outbound event search only).\n\n'
           'The public: events you publish, public RSVPs, and comments are visible to other users.\n\n'
           'Legal: if required by law, to protect people, or in a sale of the business.\n\n'
           'We do not sell your personal information.',
@@ -120,7 +120,7 @@ const LegalDocument kTermsOfUse = LegalDocument(
     ),
     LegalSection(
       'Your content',
-      'You keep ownership of events, photos, comments, and claim materials you submit. You grant SpotVibe a worldwide, non-exclusive license to host, display, and distribute that content in the app and in shares or previews so the service can work.\n\n'
+      'You keep ownership of events, photos, short videos, comments, and claim materials you submit. You grant SpotVibe a worldwide, non-exclusive license to host, display, and distribute that content in the app and in shares or previews so the service can work.\n\n'
           'Events must be real, not duplicates, and use accurate images of that event or venue. Do not post spam, illegal activity, hate, harassment, sexual content involving minors, or anyone’s private information.\n\n'
           'We may remove content or suspend accounts that break these rules, including false venue claims.',
     ),

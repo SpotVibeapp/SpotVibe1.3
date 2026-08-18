@@ -35,8 +35,12 @@ void main() {
     final events = buildElPasoSeedEvents(DateTime(2026, 8, 12));
     expect(events.every((e) => !e.imageUrl.contains('unsplash.com')), isTrue);
     final withPhotos = events.where((e) => e.imageUrl.isNotEmpty);
-    expect(withPhotos.every((e) => e.imageUrl.contains('commons.wikimedia.org')),
-        isTrue);
+    expect(
+      withPhotos.every((e) =>
+          e.imageUrl.startsWith('assets/venues/') ||
+          e.imageUrl.contains('commons.wikimedia.org')),
+      isTrue,
+    );
   });
 
   test('mock feed is only the El Paso seed — no invented national events',
