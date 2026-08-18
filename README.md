@@ -222,14 +222,14 @@ signs returning users in automatically at launch.
 - **Deep links:** `https://spotvibe.app/event/*` + custom scheme `spotvibe://`
   (AndroidManifest.xml / Info.plist). Base URL constant:
   `kDeepLinkBase` in `lib/services/deep_link_service.dart`. Legacy
-  `vibely.app` / `vibely://` links still resolve.
+  `vibely.app` / `vibely://` links were removed.
 - **Deep links:** App Links / universal links / `spotvibe://` custom scheme via
   `app_links` (the Branch SDK was removed). Serve `.well-known/assetlinks.json`
   and `.well-known/apple-app-site-association` from `legal_site/` — templates
   are included; fill in your Android signing-cert SHA-256 and Apple Team ID.
 - **Android signing:** create `android/key.properties` (see Flutter docs);
-  release builds fall back to debug signing when it's absent. Never commit
-  `key.properties` or keystores.
+  release builds now fail loudly if it's absent (no debug-signing fallback).
+  Never commit `key.properties` or keystores.
 - **Subscriptions:** RevenueCat entitlement id `pro`; public SDK keys are
   passed via `--dart-define=REVENUECAT_ANDROID_KEY=…` / `REVENUECAT_APPLE_KEY=…`
   (`lib/services/revenue_cat_service.dart`).

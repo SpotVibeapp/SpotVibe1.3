@@ -725,5 +725,28 @@
   "claimRolePromoter": "Authorized promoter",
   "claimRoleBookingAgent": "Booking agent",
   "claimRoleMarketing": "Marketing / PR",
-  "claimRoleOther": "Other authorized rep"
+  "claimRoleOther": "Other authorized rep",
+
+  "authInvalidEmail": "That email address is invalid.",
+  "authWrongCredentials": "Incorrect email or password.",
+  "authEmailInUse": "That email is already in use.",
+  "authWeakPassword": "That password is too weak.",
+  "authTooManyRequests": "Too many attempts. Please try again later.",
+  "authNetworkError": "Network error. Check your connection and try again.",
+  "authMethodDisabled": "This sign-in method is currently disabled.",
+  "authDifferentCredential": "That email is already linked to a different sign-in method.",
+  "authCancelled": "Sign-in cancelled.",
+  "authLoginFailed": "Sign-in failed. Please try again.",
+  "authRegisterFailed": "Couldn't create your account. Please try again.",
+  "authNoAccountToDelete": "No signed-in account to delete.",
+  "authNoEmailToVerify": "No email address to verify.",
+  "authRequiresRecentLogin": "Please sign in again to continue.",
+  "authFacebookMissingToken": "Facebook sign-in failed. Please try again.",
+  "authAppleMissingToken": "Apple sign-in failed. Please try again.",
+  "authFailed": "Authentication failed. Please try again.",
+
+  "claimProofOfficialEmail": "Official email (matches the venue's domain)",
+  "claimProofVenueWebsite": "Venue website link",
+  "claimProofContract": "Contract or booking confirmation",
+  "claimProofPressContact": "Press contact"
 }

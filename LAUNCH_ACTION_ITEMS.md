@@ -169,7 +169,8 @@ See `STORE_PRODUCTS.md` for full details. Summary:
 3. **Account deletion:** provide the in-app path (already built) **and** the
    web URL `https://spotvibe-cfa08.web.app/delete_account.html`.
 4. Complete app content ratings (note: UGC — user events/comments/RSVPs), and
-   run a **closed test** (≥ 20 testers for personal accounts) before production.
+   run a **closed test** (≥ 12 opted-in testers, 14 consecutive days, for
+   personal developer accounts) before production.
 
 **App Store Connect**
 1. Create the app (bundle id `app.spotvibe`), set up **App Privacy** answers

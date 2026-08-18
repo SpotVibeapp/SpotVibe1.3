@@ -2772,6 +2772,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Other authorized rep'**
   String get claimRoleOther;
+
+  /// No description provided for @authInvalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'That email address is invalid.'**
+  String get authInvalidEmail;
+
+  /// No description provided for @authWrongCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect email or password.'**
+  String get authWrongCredentials;
+
+  /// No description provided for @authEmailInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'That email is already in use.'**
+  String get authEmailInUse;
+
+  /// No description provided for @authWeakPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'That password is too weak.'**
+  String get authWeakPassword;
+
+  /// No description provided for @authTooManyRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Please try again later.'**
+  String get authTooManyRequests;
+
+  /// No description provided for @authNetworkError.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error. Check your connection and try again.'**
+  String get authNetworkError;
+
+  /// No description provided for @authMethodDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'This sign-in method is currently disabled.'**
+  String get authMethodDisabled;
+
+  /// No description provided for @authDifferentCredential.
+  ///
+  /// In en, this message translates to:
+  /// **'That email is already linked to a different sign-in method.'**
+  String get authDifferentCredential;
+
+  /// No description provided for @authCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in cancelled.'**
+  String get authCancelled;
+
+  /// No description provided for @authLoginFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in failed. Please try again.'**
+  String get authLoginFailed;
+
+  /// No description provided for @authRegisterFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t create your account. Please try again.'**
+  String get authRegisterFailed;
+
+  /// No description provided for @authNoAccountToDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'No signed-in account to delete.'**
+  String get authNoAccountToDelete;
+
+  /// No description provided for @authNoEmailToVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'No email address to verify.'**
+  String get authNoEmailToVerify;
+
+  /// No description provided for @authRequiresRecentLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to continue.'**
+  String get authRequiresRecentLogin;
+
+  /// No description provided for @authFacebookMissingToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Facebook sign-in failed. Please try again.'**
+  String get authFacebookMissingToken;
+
+  /// No description provided for @authAppleMissingToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple sign-in failed. Please try again.'**
+  String get authAppleMissingToken;
+
+  /// No description provided for @authFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication failed. Please try again.'**
+  String get authFailed;
+
+  /// No description provided for @claimProofOfficialEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Official email (matches the venue\'s domain)'**
+  String get claimProofOfficialEmail;
+
+  /// No description provided for @claimProofVenueWebsite.
+  ///
+  /// In en, this message translates to:
+  /// **'Venue website link'**
+  String get claimProofVenueWebsite;
+
+  /// No description provided for @claimProofContract.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract or booking confirmation'**
+  String get claimProofContract;
+
+  /// No description provided for @claimProofPressContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Press contact'**
+  String get claimProofPressContact;
 }
 
 class _AppLocalizationsDelegate

@@ -12,6 +12,7 @@ import '../widgets/common/empty_state_view.dart';
 import '../widgets/common/event_card_skeleton.dart';
 import '../widgets/common/guided_tour.dart';
 import '../widgets/common/paginated_events_list.dart';
+import '../widgets/common/app_icon_mark.dart';
 import '../widgets/common/spotvibe_logo.dart';
 import '../widgets/events/filter_sheet.dart';
 import '../widgets/events/search_header.dart';
@@ -111,6 +112,8 @@ class _EventsScreenState extends State<EventsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
               child: Row(
                 children: [
+                  const AppIconMark(size: 34, glow: false),
+                  const SizedBox(width: AppTheme.spacingSm),
                   SpotVibeWordmark(
                     key: _tourKeyHeader,
                     style: text.headlineMedium?.copyWith(

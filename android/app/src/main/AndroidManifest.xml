@@ -23,32 +23,12 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="https" android:host="spotvibe.app" android:pathPattern="/user-event/.*"/>
             </intent-filter>
-            <!-- Legacy Vibely HTTPS links still open in the app -->
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="https" android:host="vibely.app" android:pathPattern="/event/.*"/>
-            </intent-filter>
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="https" android:host="vibely.app" android:pathPattern="/user-event/.*"/>
-            </intent-filter>
             <!-- PRIMIO_ADDED: app_links — custom spotvibe:// scheme for app_links runtime URI delivery -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="spotvibe"/>
-            </intent-filter>
-            <!-- Legacy vibely:// custom scheme -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="vibely"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

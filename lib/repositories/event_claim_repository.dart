@@ -31,8 +31,6 @@ abstract class EventClaimRepository {
 class MockEventClaimRepository implements EventClaimRepository {
   final _byId = <String, EventClaim>{};
 
-  String _key(String eventId, String userId) => '$eventId|$userId';
-
   EventClaim? _latest(String eventId, String userId) {
     EventClaim? match;
     for (final claim in _byId.values) {

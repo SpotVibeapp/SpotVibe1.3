@@ -6,7 +6,7 @@ import '../config/app_config.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 import '../theme/theme.dart';
-import '../widgets/common/spotvibe_logo.dart';
+import '../widgets/common/app_icon_mark.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -136,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const SizedBox(height: AppTheme.spacingLg),
-                      const SpotVibeLogo(size: 64),
+                      const AppIconMark(size: 64),
                       const SizedBox(height: AppTheme.spacingSm),
                       Text(
                         'SpotVibe',

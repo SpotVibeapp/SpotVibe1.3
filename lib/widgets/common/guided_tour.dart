@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../services/tour_service.dart';

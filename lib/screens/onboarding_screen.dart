@@ -5,7 +5,7 @@ import '../repositories/onboarding_repository.dart';
 import '../services/deep_link_service.dart';
 import '../services/permission_service.dart';
 import '../theme/theme.dart';
-import '../widgets/common/spotvibe_logo.dart';
+import '../widgets/common/app_icon_mark.dart';
 
 // ── Interest category data ─────────────────────────────────────────────────────
 
@@ -1034,7 +1034,7 @@ class _WelcomeHeroState extends State<_WelcomeHero>
               );
             },
           ),
-          const SpotVibeLogo(size: 148, glow: false),
+          const AppIconMark(size: 148, glow: false),
         ],
       ),
     );

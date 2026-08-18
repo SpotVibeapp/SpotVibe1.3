@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../data/event_time.dart';
 import '../l10n/app_localizations.dart';
@@ -7,7 +8,7 @@ import '../models/event.dart';
 import '../providers/auth_provider.dart';
 import '../providers/follow_provider.dart';
 import '../providers/event_provider.dart';
-import '../repositories/moderation_repository.dart';
+import '../providers/moderation_provider.dart';
 import '../services/deep_link_service.dart';
 import '../services/maps_service.dart';
 import '../theme/category_colors.dart';
@@ -305,7 +306,7 @@ class _DetailContent extends StatelessWidget {
     );
     if (confirmed != true || !context.mounted) return;
     try {
-      await context.read<ModerationRepository>().deleteEvent(event.id);
+      await context.read<ModerationProvider>().deleteEvent(event.id);
     } catch (_) {}
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(

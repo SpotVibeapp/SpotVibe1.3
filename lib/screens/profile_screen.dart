@@ -10,6 +10,7 @@ import '../providers/subscription_provider.dart';
 import '../providers/theme_provider.dart';
 import '../theme/theme.dart';
 import '../widgets/common/app_avatar.dart';
+import '../widgets/common/app_icon_mark.dart';
 import '../widgets/common/follow_stats_row.dart';
 import '../widgets/common/guided_tour.dart';
 import '../widgets/common/pro_badge.dart';
@@ -43,7 +44,13 @@ class ProfileScreen extends StatelessWidget {
     // ── Guest Profile ────────────────────────────────────────────────────────
     if (auth.isGuest) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.profile)),
+        appBar: AppBar(
+          title: Text(l10n.profile),
+          leading: const Padding(
+            padding: EdgeInsets.all(8),
+            child: AppIconMark(size: 30, glow: false),
+          ),
+        ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(AppTheme.spacingXl),
@@ -135,7 +142,13 @@ class ProfileScreen extends StatelessWidget {
     final following = follow.followingCount(user.id);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.profile)),
+      appBar: AppBar(
+        title: Text(l10n.profile),
+        leading: const Padding(
+          padding: EdgeInsets.all(8),
+          child: AppIconMark(size: 30, glow: false),
+        ),
+      ),
       body: Stack(
         children: [
           SingleChildScrollView(

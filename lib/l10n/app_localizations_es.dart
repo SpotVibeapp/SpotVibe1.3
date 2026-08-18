@@ -1497,4 +1497,78 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get claimRoleOther => 'Otro representante autorizado';
+
+  @override
+  String get authInvalidEmail => 'Esa dirección de correo no es válida.';
+
+  @override
+  String get authWrongCredentials => 'Correo o contraseña incorrectos.';
+
+  @override
+  String get authEmailInUse => 'Ese correo ya está en uso.';
+
+  @override
+  String get authWeakPassword => 'Esa contraseña es demasiado débil.';
+
+  @override
+  String get authTooManyRequests =>
+      'Demasiados intentos. Inténtalo de nuevo más tarde.';
+
+  @override
+  String get authNetworkError =>
+      'Error de red. Revisa tu conexión e inténtalo de nuevo.';
+
+  @override
+  String get authMethodDisabled =>
+      'Este método de inicio de sesión está deshabilitado.';
+
+  @override
+  String get authDifferentCredential =>
+      'Ese correo ya está vinculado a otro método de inicio de sesión.';
+
+  @override
+  String get authCancelled => 'Inicio de sesión cancelado.';
+
+  @override
+  String get authLoginFailed =>
+      'No se pudo iniciar sesión. Inténtalo de nuevo.';
+
+  @override
+  String get authRegisterFailed =>
+      'No se pudo crear tu cuenta. Inténtalo de nuevo.';
+
+  @override
+  String get authNoAccountToDelete =>
+      'No hay una cuenta con sesión iniciada para eliminar.';
+
+  @override
+  String get authNoEmailToVerify => 'No hay un correo para verificar.';
+
+  @override
+  String get authRequiresRecentLogin =>
+      'Vuelve a iniciar sesión para continuar.';
+
+  @override
+  String get authFacebookMissingToken =>
+      'No se pudo iniciar sesión con Facebook. Inténtalo de nuevo.';
+
+  @override
+  String get authAppleMissingToken =>
+      'No se pudo iniciar sesión con Apple. Inténtalo de nuevo.';
+
+  @override
+  String get authFailed => 'Error de autenticación. Inténtalo de nuevo.';
+
+  @override
+  String get claimProofOfficialEmail =>
+      'Correo oficial (coincide con el dominio del lugar)';
+
+  @override
+  String get claimProofVenueWebsite => 'Enlace al sitio web del lugar';
+
+  @override
+  String get claimProofContract => 'Contrato o confirmación de reserva';
+
+  @override
+  String get claimProofPressContact => 'Contacto de prensa';
 }

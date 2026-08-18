@@ -51,13 +51,15 @@ Paid Apps Agreement + banking + tax must be active or products stay missing in R
 
 ## 3. RevenueCat
 
-1. [RevenueCat](https://app.revenuecat.com) → Project → **API keys**. Paste the iOS and Android public SDK keys into:
+1. [RevenueCat](https://app.revenuecat.com) → Project → **API keys**. Get the iOS and Android **public SDK keys** and pass them at build time via dart-define (they are read from `String.fromEnvironment` in `lib/services/revenue_cat_service.dart`):
 
+```bash
+flutter build appbundle --release \
+  --dart-define=REVENUECAT_ANDROID_KEY=goog_xxx \
+  --dart-define=REVENUECAT_APPLE_KEY=appl_xxx
 ```
-lib/services/revenue_cat_service.dart
-  _kRevenueCatAppleKey
-  _kRevenueCatAndroidKey
-```
+
+Never hardcode the keys in source.
 
 2. **Products** → import / add both store products. Identifiers must match the table above.
 3. **Entitlements** → create **`pro`**. Attach **both** products to `pro`.

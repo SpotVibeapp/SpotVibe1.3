@@ -34,7 +34,9 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 26 // Android 8.0
-        targetSdk = flutter.targetSdkVersion
+        // Google Play requires new submissions to target Android 16 (API 36)
+        // from 2026-08-31. Pin it so the build can never silently target lower.
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -51,14 +53,19 @@ android {
 
     buildTypes {
         release {
-            // Use the release keystore when key.properties is present (kept out of
-            // version control); otherwise fall back to debug signing so
-            // `flutter run --release` still works.
+            // Release builds MUST be signed with the real upload keystore
+            // (android/key.properties). Fail loudly if it's missing instead of
+            // silently falling back to debug signing — a debug-signed AAB is
+            // rejected by Google Play and all too easy to ship by mistake.
             signingConfig =
                 if (keystorePropertiesFile.exists()) {
                     signingConfigs.getByName("release")
                 } else {
-                    signingConfigs.getByName("debug")
+                    throw GradleException(
+                        "Release signing is not configured. Create " +
+                            "android/key.properties with your upload keystore before " +
+                            "building a release artifact (flutter build appbundle)."
+                    )
                 }
         }
     }

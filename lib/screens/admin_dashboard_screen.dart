@@ -580,7 +580,7 @@ class _EventsTabState extends State<_EventsTab> {
       ),
     );
     if (confirmed != true || !context.mounted) return;
-    final ok = await provider.deleteEvent(event.id);
+    final ok = await widget.provider.deleteEvent(event.id);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(ok ? l10n.adminEventRemoved : '…')),

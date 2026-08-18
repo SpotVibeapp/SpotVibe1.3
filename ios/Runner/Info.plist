@@ -59,7 +59,6 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>spotvibe</string>
-          <string>vibely</string>
         </array>
       </dict>
     </array>

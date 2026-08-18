@@ -48,7 +48,6 @@ class PracticalDetailsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context)!;
     final ageLabel = _ageRestriction(l10n);
 

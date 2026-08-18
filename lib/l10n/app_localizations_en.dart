@@ -1487,4 +1487,73 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get claimRoleOther => 'Other authorized rep';
+
+  @override
+  String get authInvalidEmail => 'That email address is invalid.';
+
+  @override
+  String get authWrongCredentials => 'Incorrect email or password.';
+
+  @override
+  String get authEmailInUse => 'That email is already in use.';
+
+  @override
+  String get authWeakPassword => 'That password is too weak.';
+
+  @override
+  String get authTooManyRequests =>
+      'Too many attempts. Please try again later.';
+
+  @override
+  String get authNetworkError =>
+      'Network error. Check your connection and try again.';
+
+  @override
+  String get authMethodDisabled => 'This sign-in method is currently disabled.';
+
+  @override
+  String get authDifferentCredential =>
+      'That email is already linked to a different sign-in method.';
+
+  @override
+  String get authCancelled => 'Sign-in cancelled.';
+
+  @override
+  String get authLoginFailed => 'Sign-in failed. Please try again.';
+
+  @override
+  String get authRegisterFailed =>
+      'Couldn\'t create your account. Please try again.';
+
+  @override
+  String get authNoAccountToDelete => 'No signed-in account to delete.';
+
+  @override
+  String get authNoEmailToVerify => 'No email address to verify.';
+
+  @override
+  String get authRequiresRecentLogin => 'Please sign in again to continue.';
+
+  @override
+  String get authFacebookMissingToken =>
+      'Facebook sign-in failed. Please try again.';
+
+  @override
+  String get authAppleMissingToken => 'Apple sign-in failed. Please try again.';
+
+  @override
+  String get authFailed => 'Authentication failed. Please try again.';
+
+  @override
+  String get claimProofOfficialEmail =>
+      'Official email (matches the venue\'s domain)';
+
+  @override
+  String get claimProofVenueWebsite => 'Venue website link';
+
+  @override
+  String get claimProofContract => 'Contract or booking confirmation';
+
+  @override
+  String get claimProofPressContact => 'Press contact';
 }

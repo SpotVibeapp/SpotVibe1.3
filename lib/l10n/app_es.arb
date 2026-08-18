@@ -725,5 +725,28 @@
   "claimRolePromoter": "Promotor autorizado",
   "claimRoleBookingAgent": "Agente de reservas",
   "claimRoleMarketing": "Marketing / RRPP",
-  "claimRoleOther": "Otro representante autorizado"
+  "claimRoleOther": "Otro representante autorizado",
+
+  "authInvalidEmail": "Esa dirección de correo no es válida.",
+  "authWrongCredentials": "Correo o contraseña incorrectos.",
+  "authEmailInUse": "Ese correo ya está en uso.",
+  "authWeakPassword": "Esa contraseña es demasiado débil.",
+  "authTooManyRequests": "Demasiados intentos. Inténtalo de nuevo más tarde.",
+  "authNetworkError": "Error de red. Revisa tu conexión e inténtalo de nuevo.",
+  "authMethodDisabled": "Este método de inicio de sesión está deshabilitado.",
+  "authDifferentCredential": "Ese correo ya está vinculado a otro método de inicio de sesión.",
+  "authCancelled": "Inicio de sesión cancelado.",
+  "authLoginFailed": "No se pudo iniciar sesión. Inténtalo de nuevo.",
+  "authRegisterFailed": "No se pudo crear tu cuenta. Inténtalo de nuevo.",
+  "authNoAccountToDelete": "No hay una cuenta con sesión iniciada para eliminar.",
+  "authNoEmailToVerify": "No hay un correo para verificar.",
+  "authRequiresRecentLogin": "Vuelve a iniciar sesión para continuar.",
+  "authFacebookMissingToken": "No se pudo iniciar sesión con Facebook. Inténtalo de nuevo.",
+  "authAppleMissingToken": "No se pudo iniciar sesión con Apple. Inténtalo de nuevo.",
+  "authFailed": "Error de autenticación. Inténtalo de nuevo.",
+
+  "claimProofOfficialEmail": "Correo oficial (coincide con el dominio del lugar)",
+  "claimProofVenueWebsite": "Enlace al sitio web del lugar",
+  "claimProofContract": "Contrato o confirmación de reserva",
+  "claimProofPressContact": "Contacto de prensa"
 }

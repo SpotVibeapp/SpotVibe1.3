@@ -43,7 +43,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   TimeOfDay _selectedTime = const TimeOfDay(hour: 18, minute: 0);
   String _selectedCategory = 'Music';
   bool _isPremiumListing = false;
-  bool _purchaseConfirmed = false;
   String? _moderationError;
 
   // ── Premium fields ────────────────────────────────────────────────────────
@@ -82,7 +81,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       _selectedTime = TimeOfDay(hour: e.dateTime.hour, minute: e.dateTime.minute);
       _selectedCategory = e.category;
       _isPremiumListing = e.isPremiumListing;
-      _purchaseConfirmed = true; // editing — already paid/confirmed
       // Restore Premium fields if the event was created on Premium
       _isCreatorPro = e.isCreatorPro;
       _recurringType = e.recurringType;
@@ -98,11 +96,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       final sub = context.read<SubscriptionProvider>();
       if (sub.isSubscribed) {
         setState(() {
-          _purchaseConfirmed = true;
           _isCreatorPro = true;
         });
-      } else {
-        setState(() => _purchaseConfirmed = true);
       }
     });
   }
@@ -163,7 +158,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     if (result == true && mounted) {
       setState(() {
         _isCreatorPro = true;
-        _purchaseConfirmed = true;
       });
     }
   }

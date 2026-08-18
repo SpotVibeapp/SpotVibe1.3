@@ -21,15 +21,9 @@ void main() {
       );
     });
 
-    test('still accepts legacy Vibely links', () {
-      expect(
-        DeepLinkService.pathFromUri('https://vibely.app/event/evt_1'),
-        '/event/evt_1',
-      );
-      expect(
-        DeepLinkService.pathFromUri('vibely://user-event/99'),
-        '/user-event/99',
-      );
+    test('does not route legacy Vibely links', () {
+      expect(DeepLinkService.pathFromUri('https://vibely.app/event/evt_1'), isNull);
+      expect(DeepLinkService.pathFromUri('vibely://user-event/99'), isNull);
     });
 
     test('rejects unknown hosts and paths', () {

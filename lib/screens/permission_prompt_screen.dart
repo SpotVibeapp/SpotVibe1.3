@@ -4,7 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../services/deep_link_service.dart';
 import '../services/permission_service.dart';
 import '../theme/theme.dart';
-import '../widgets/common/spotvibe_logo.dart';
+import '../widgets/common/app_icon_mark.dart';
 
 /// Shown once on first launch to request location and notification permissions.
 /// After the user grants or skips both, they are sent to the main app.
@@ -95,7 +95,7 @@ class _PermissionPromptScreenState extends State<PermissionPromptScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SpotVibeLogo(size: 56),
+                  const AppIconMark(size: 56),
                   const SizedBox(height: AppTheme.spacingMd),
                   Text(
                     l10n.setupTitle,

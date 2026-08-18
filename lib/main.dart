@@ -2,7 +2,6 @@ import 'package:app_links/app_links.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -13,6 +12,7 @@ import 'providers/subscription_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/notification_provider.dart';
+import 'providers/moderation_provider.dart';
 import 'repositories/firebase_event_repository.dart';
 import 'repositories/firebase_rsvp_repository.dart';
 import 'repositories/firebase_user_event_repository.dart';
@@ -290,6 +290,12 @@ class _SpotVibeAppState extends State<SpotVibeApp> {
         Provider<EventClaimRepository>(create: (_) => widget.claimRepository),
         Provider<FoundingMemberRepository>(create: (_) => widget.foundingRepository),
         Provider<ModerationRepository>(create: (_) => widget.moderationRepository),
+        ChangeNotifierProvider(
+          create: (ctx) => ModerationProvider(
+            repository: ctx.read<ModerationRepository>(),
+            claimsRepository: ctx.read<EventClaimRepository>(),
+          ),
+        ),
         Provider(
           create: (ctx) => EventAnalyticsService(
             repository: ctx.read<UserEventRepository>(),
