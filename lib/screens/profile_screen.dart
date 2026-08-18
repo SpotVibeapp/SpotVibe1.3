@@ -11,8 +11,6 @@ import '../providers/theme_provider.dart';
 import '../theme/theme.dart';
 import '../widgets/common/editable_avatar.dart';
 import '../widgets/common/app_icon_mark.dart';
-import '../widgets/common/app_avatar.dart';
-import '../widgets/common/app_icon_mark.dart';
 import '../widgets/common/follow_stats_row.dart';
 import '../widgets/common/guided_tour.dart';
 import '../widgets/common/pro_badge.dart';

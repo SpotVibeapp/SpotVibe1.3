@@ -18,10 +18,10 @@ class AppConfig {
   ///  - Firebase Authentication → Sign-in method → Facebook enabled
   ///  - Facebook app id, Android key hashes, iOS FacebookAppID +
   ///    CFBundleURLSchemes in Info.plist
-  static const bool enableFacebookSignIn = false;
+  static const bool enableFacebookSignIn = true;
 
   /// Sign in with Apple is enabled:
   ///  - iOS "Sign in with Apple" capability + entitlements file
   ///  - Firebase Authentication → Sign-in method → Apple enabled
-  static const bool enableAppleSignIn = false;
+  static const bool enableAppleSignIn = true;
 }
