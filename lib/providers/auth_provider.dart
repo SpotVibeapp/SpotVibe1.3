@@ -1,17 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
 import '../services/notification_service.dart';
+import '../services/revenue_cat_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _service;
   final NotificationService? _notifications;
+  final RevenueCatService? _revenueCat;
 
   AuthProvider({
     required AuthService service,
     NotificationService? notificationService,
+    RevenueCatService? revenueCatService,
   })  : _service = service,
-        _notifications = notificationService;
+        _notifications = notificationService,
+        _revenueCat = revenueCatService;
 
   AppUser? _user;
   AppUser? get user => _user;
@@ -35,6 +41,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (_) {
       _user = null;
     }
+    await _syncRevenueCatIdentity();
     notifyListeners();
   }
 
@@ -48,6 +55,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       _user = await call();
+      await _syncRevenueCatIdentity();
       _isLoading = false;
       notifyListeners();
       return true;
@@ -66,6 +74,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       _user = await _service.login(email, password);
+      await _syncRevenueCatIdentity();
       _isLoading = false;
       notifyListeners();
       return true;
@@ -83,6 +92,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       _user = await _service.register(name, email, password);
+      await _syncRevenueCatIdentity();
       _isLoading = false;
       notifyListeners();
       return true;
@@ -102,12 +112,14 @@ class AuthProvider extends ChangeNotifier {
       avatarUrl: '',
       isGuest: true,
     );
+    unawaited(_syncRevenueCatIdentity());
     notifyListeners();
   }
 
   Future<void> logout() async {
     await _service.logout();
     _user = null;
+    await _syncRevenueCatIdentity();
     notifyListeners();
   }
 
@@ -115,6 +127,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> deleteAccount({String? password}) async {
     await _service.deleteAccount(password: password);
     _user = null;
+    await _syncRevenueCatIdentity();
     notifyListeners();
   }
 
@@ -138,6 +151,19 @@ class AuthProvider extends ChangeNotifier {
         isSentByMe: true,
       );
     } catch (_) {}
+  }
+
+  /// Keeps RevenueCat tied to the Firebase UID, so a store purchase or
+  /// partner offer follows the same SpotVibe account across devices.
+  Future<void> _syncRevenueCatIdentity() async {
+    final revenueCat = _revenueCat;
+    final user = _user;
+    if (revenueCat == null) return;
+    if (user == null || user.isGuest) {
+      await revenueCat.logOut();
+    } else {
+      await revenueCat.logIn(user.id);
+    }
   }
 
   void clearError() {

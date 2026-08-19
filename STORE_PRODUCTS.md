@@ -51,7 +51,14 @@ Paid Apps Agreement + banking + tax must be active or products stay missing in R
 
 ## 3. RevenueCat
 
-1. [RevenueCat](https://app.revenuecat.com) → Project → **API keys**. Get the iOS and Android **public SDK keys** and pass them at build time via dart-define (they are read from `String.fromEnvironment` in `lib/services/revenue_cat_service.dart`):
+1. Upgrade/install dependencies first:
+   ```bash
+   flutter pub get
+   ```
+   SpotVibe uses `purchases_flutter` 9+ for current Google Play Billing support
+   and automatically identifies RevenueCat customers with their Firebase UID at
+   sign-in, so a partner's entitlement follows their SpotVibe account.
+2. [RevenueCat](https://app.revenuecat.com) → Project → **API keys**. Get the iOS and Android **public SDK keys** and pass them at build time via dart-define (they are read from `String.fromEnvironment` in `lib/services/revenue_cat_service.dart`):
 
 ```bash
 flutter build appbundle --release \
@@ -61,14 +68,14 @@ flutter build appbundle --release \
 
 Never hardcode the keys in source.
 
-2. **Products** → import / add both store products. Identifiers must match the table above.
-3. **Entitlements** → create **`pro`**. Attach **both** products to `pro`.
-4. **Offerings**
+3. **Products** → import / add both store products. Identifiers must match the table above.
+4. **Entitlements** → create **`pro`**. Attach **both** products to `pro`.
+5. **Offerings**
    - Current offering identifier: `default`
      - Package type **Monthly** → `spotvibe_premium_monthly`
    - Second offering identifier: `founding`
      - Package type **Custom** or Monthly → `spotvibe_premium_founding_monthly`
-5. The app reads every offering, so founding does not need to be “current.”
+6. The app reads every offering, so founding does not need to be “current.”
 
 ---
 
