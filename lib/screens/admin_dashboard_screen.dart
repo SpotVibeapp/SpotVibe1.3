@@ -8,6 +8,8 @@ import '../models/event.dart';
 import '../models/event_claim.dart';
 import '../models/user_report.dart';
 import '../providers/moderation_provider.dart';
+import '../providers/partner_promo_provider.dart';
+import 'admin_partner_promo_codes_tab.dart';
 import '../theme/category_colors.dart';
 import '../theme/theme.dart';
 
@@ -29,6 +31,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ModerationProvider>().load();
+      context.read<PartnerPromoProvider>().load();
     });
   }
 
@@ -43,9 +46,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final mod = context.watch<ModerationProvider>();
+    final promoCodes = context.watch<PartnerPromoProvider>();
 
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: Text(l10n.adminDashboard),
@@ -63,16 +67,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 icon: const Icon(Icons.store_rounded),
                 text: l10n.adminClaims,
               ),
+              const Tab(
+                icon: Icon(Icons.sell_rounded),
+                text: 'Partner codes',
+              ),
             ],
           ),
         ),
-        body: mod.loading
+        body: mod.loading || promoCodes.loading
             ? const Center(child: CircularProgressIndicator())
             : TabBarView(
                 children: [
                   _ReportsTab(provider: mod),
                   _EventsTab(provider: mod, search: _search),
                   _ClaimsTab(provider: mod),
+                  AdminPartnerPromoCodesTab(provider: promoCodes),
                 ],
               ),
         backgroundColor: colors.surface,

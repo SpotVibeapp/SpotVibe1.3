@@ -87,7 +87,30 @@ Debug/profile builds can use a local 7-day trial to exercise the Premium UI befo
 
 ---
 
-## 5. Checklist before launch
+## 5. One-time partner offer codes
+
+Do **not** create an app-owned code that directly grants Premium. Apple and
+Google must issue the code and process the free or discounted subscription.
+
+1. In **App Store Connect**, create the appropriate subscription offer-code
+   batch for a free period supported by that subscription offer.
+2. In **Google Play Console**, create the matching one-time subscription promo
+   code batch using a supported free-trial duration.
+3. In SpotVibe, sign in as an admin → **Profile → Admin Dashboard → Partner
+   codes**. Paste each store-issued code into the private inventory, including
+   its platform and offer-duration label.
+4. When meeting a business partner, tap **Issue** on one available code, record
+   the partner, then copy/share that code. An issued code can never be assigned
+   to another partner in SpotVibe.
+
+The dashboard is an issuance ledger, not a storefront: it cannot change a
+store offer's price or duration, and revoking a record in SpotVibe does not
+revoke the code at Apple or Google. Deactivate an unused code in that matching
+store console as well.
+
+---
+
+## 6. Checklist before launch
 
 - [ ] Both products Approved / Active in App Store Connect and Play Console
 - [ ] 7-day free intro on `spotvibe_premium_monthly`

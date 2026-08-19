@@ -244,7 +244,12 @@ The app now supports an in-app admin role for moderation. To enable it:
    *(Alternatively, deploy functions and use `promoteAdmin` with an
    `ADMIN_SECRET` — see `functions/`.)*
 4. Relaunch/sign back in — you'll now see **Profile → Admin Dashboard** with
-   reports + event removal, and delete buttons on event pages and comments.
+   reports + event removal, claim moderation, partner-code issuance, and delete
+   buttons on event pages and comments.
+5. For partner offers, create the actual one-time code batches in App Store
+   Connect / Google Play Console first. Then use **Admin Dashboard → Partner
+   codes** to stock and issue one store-issued code to one partner. See
+   `STORE_PRODUCTS.md` for the required workflow.
 
 ## What I changed (for your commit message / review)
 
