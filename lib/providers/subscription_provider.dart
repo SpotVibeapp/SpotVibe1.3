@@ -164,7 +164,9 @@ class SubscriptionProvider extends ChangeNotifier {
     await _loadEntitlement();
     await _loadOfferings();
     await _loadFounding();
-    await _loadLocalPremium();
+    // A local trial exists only to make debug/profile UI testing possible.
+    // Store builds must receive Premium only from an active store entitlement.
+    if (!kReleaseMode) await _loadLocalPremium();
     _status = PurchaseStatus.idle;
     notifyListeners();
   }
@@ -182,7 +184,7 @@ class SubscriptionProvider extends ChangeNotifier {
     final snap = await _founding.load(userId: _currentUserId?.call());
     _foundingClaimed = snap.claimedCount;
     _isFoundingMember = snap.userIsMember;
-    if (!_isFoundingMember) {
+    if (!_isFoundingMember && !kReleaseMode) {
       final prefs = await SharedPreferences.getInstance();
       _isFoundingMember = prefs.getBool(_kLocalFounding) ?? false;
     }
@@ -195,8 +197,10 @@ class SubscriptionProvider extends ChangeNotifier {
       } else {
         _isFoundingMember = true;
       }
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_kLocalFounding, _isFoundingMember);
+      if (!kReleaseMode) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool(_kLocalFounding, _isFoundingMember);
+      }
     }
   }
 
@@ -235,10 +239,23 @@ class SubscriptionProvider extends ChangeNotifier {
           return true;
         }
       } catch (_) {
-        // Fall through to local trial when the store is not configured.
+        // A release build must not substitute a local trial for a failed
+        // store purchase. Fall through to the clear failure below instead.
       }
     }
 
+    if (kReleaseMode) {
+      // Missing RevenueCat keys, inactive products, or a store error must not
+      // grant paid features. This prevents a release build from claiming a
+      // purchase succeeded when Apple/Google never charged the customer.
+      _errorMessage = _l10n.purchaseFailed;
+      _status = PurchaseStatus.error;
+      notifyListeners();
+      return false;
+    }
+
+    // Debug/profile only: keep a local trial so the Premium UI can be tested
+    // before store products and RevenueCat are available.
     final started = await _startLocalTrial();
     if (started) {
       await _lockFoundingIfOffered();
@@ -254,6 +271,7 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   Future<bool> _startLocalTrial() async {
+    if (kReleaseMode) return false;
     final prefs = await SharedPreferences.getInstance();
     final until = DateTime.now().add(const Duration(days: kPremiumTrialDays));
     await prefs.setInt(_kLocalPremiumUntil, until.millisecondsSinceEpoch);
@@ -274,8 +292,10 @@ class SubscriptionProvider extends ChangeNotifier {
     } else {
       _isFoundingMember = true;
     }
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_kLocalFounding, _isFoundingMember);
+    if (!kReleaseMode) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_kLocalFounding, _isFoundingMember);
+    }
   }
 
   Future<bool> restorePurchases() async {
@@ -284,7 +304,7 @@ class SubscriptionProvider extends ChangeNotifier {
     notifyListeners();
     try {
       _isSubscribed = await _service.restorePurchases();
-      if (!_isSubscribed) await _loadLocalPremium();
+      if (!_isSubscribed && !kReleaseMode) await _loadLocalPremium();
       _status = PurchaseStatus.idle;
       if (!_isSubscribed) {
         _errorMessage = _l10n.noActiveSubscription;

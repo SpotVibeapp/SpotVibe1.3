@@ -111,7 +111,7 @@ IDs are hardcoded in `lib/data/pricing.dart`:
 
 RevenueCat: entitlement `pro`, offerings `default` + `founding`. Paid Apps Agreement + Play payments profile must be active or the products stay invisible.
 
-If you ship without keys, the app silently runs a **local 7-day trial and never charges**. Reviewers and founding venues will notice.
+Release builds now fail a purchase safely if RevenueCat keys, active products, or an entitlement are missing. Configure and sandbox-test the products anyway; a working paywall is still required before launch.
 
 ### 6. Deploy the legal site
 

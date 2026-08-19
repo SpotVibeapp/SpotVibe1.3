@@ -8,20 +8,20 @@
 class AppConfig {
   AppConfig._();
 
-  /// Google Sign-In is fully configured:
+  /// Enable only after Google Sign-In is fully configured:
   ///  - Firebase Authentication → Sign-in method → Google enabled
   ///  - Android: google-services.json with the web client ID + SHA-1/SHA-256
   ///  - iOS: GoogleService-Info.plist + reversed client ID URL scheme
   static const bool enableGoogleSignIn = false;
 
-  /// Facebook Login is fully configured:
+  /// Enable only after Facebook Login is fully configured:
   ///  - Firebase Authentication → Sign-in method → Facebook enabled
   ///  - Facebook app id, Android key hashes, iOS FacebookAppID +
   ///    CFBundleURLSchemes in Info.plist
-  static const bool enableFacebookSignIn = true;
+  static const bool enableFacebookSignIn = false;
 
-  /// Sign in with Apple is enabled:
+  /// Enable only after Sign in with Apple is configured:
   ///  - iOS "Sign in with Apple" capability + entitlements file
   ///  - Firebase Authentication → Sign-in method → Apple enabled
-  static const bool enableAppleSignIn = true;
+  static const bool enableAppleSignIn = false;
 }

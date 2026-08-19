@@ -28,7 +28,7 @@ class RevenueCatService {
     final apiKey = defaultTargetPlatform == TargetPlatform.android
         ? _kRevenueCatAndroidKey
         : _kRevenueCatAppleKey;
-    if (apiKey.isEmpty) return; // Keys not supplied yet — local trial fallback.
+    if (apiKey.isEmpty) return; // Debug/profile can use a local UI trial; release fails closed.
     try {
       await Purchases.setLogLevel(LogLevel.error);
       final configuration = PurchasesConfiguration(apiKey);
