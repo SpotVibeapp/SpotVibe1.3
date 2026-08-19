@@ -7,8 +7,11 @@ class NotificationRepository {
 
   // ── Read ───────────────────────────────────────────────────────────────────
 
-  List<NotificationItem> getAll() =>
-      List.unmodifiable(_items)..toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  List<NotificationItem> getAll() {
+    final sorted = List<NotificationItem>.from(_items)
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return List.unmodifiable(sorted);
+  }
 
   List<NotificationItem> getByType(NotificationType type) =>
       _items.where((n) => n.type == type).toList()

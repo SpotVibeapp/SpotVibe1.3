@@ -78,9 +78,9 @@ class UserEventRepository {
 
   Future<List<UserCreatedEvent>> getAllUserEvents() async {
     await Future.delayed(const Duration(milliseconds: 200));
-    return List.unmodifiable(_events)
-      ..toList()
+    final sorted = List<UserCreatedEvent>.from(_events)
       ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+    return List.unmodifiable(sorted);
   }
 
   Future<UserCreatedEvent?> getEventById(String id) async {
