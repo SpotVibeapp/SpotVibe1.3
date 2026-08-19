@@ -51,13 +51,6 @@ class ProfileScreen extends StatelessWidget {
             child: AppIconMark(size: 30, glow: false),
           ),
         ),
-        appBar: AppBar(
-          title: Text(l10n.profile),
-          leading: const Padding(
-            padding: EdgeInsets.all(8),
-            child: AppIconMark(size: 30, glow: false),
-          ),
-        ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(AppTheme.spacingXl),
@@ -146,13 +139,6 @@ class ProfileScreen extends StatelessWidget {
     final following = follow.followingCount(user.id);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.profile),
-        leading: const Padding(
-          padding: EdgeInsets.all(8),
-          child: AppIconMark(size: 30, glow: false),
-        ),
-      ),
       appBar: AppBar(
         title: Text(l10n.profile),
         leading: const Padding(

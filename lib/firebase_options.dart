@@ -26,11 +26,7 @@ class DefaultFirebaseOptions {
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        throw UnsupportedError(
-          'Firebase Android is not configured yet.\n'
-          'Run on your machine:  flutterfire configure --project=spotvibe-cfa08\n'
-          '(registers package app.spotvibe and rewrites this file)',
-        );
+        return android;
       case TargetPlatform.iOS:
         throw UnsupportedError(
           'Firebase iOS is not configured yet.\n'
@@ -52,5 +48,14 @@ class DefaultFirebaseOptions {
     authDomain: 'spotvibe-cfa08.firebaseapp.com',
     storageBucket: 'spotvibe-cfa08.firebasestorage.app',
     measurementId: 'G-EH93TGPPS1',
+  );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyA_PY333saq2ipHSPeOGyCPrUQHVVt0Tz0',
+    appId: '1:626183324233:android:5d94d7c955711aedd8f598',
+    messagingSenderId: '626183324233',
+    projectId: 'spotvibe-cfa08',
+    databaseURL: 'https://spotvibe-cfa08-default-rtdb.firebaseio.com',
+    storageBucket: 'spotvibe-cfa08.firebasestorage.app',
   );
 }

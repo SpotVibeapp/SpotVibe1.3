@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../data/el_paso_events.dart';
 import '../../data/event_images.dart';
 import '../../models/event.dart';
-import '../../theme/theme.dart';
 
 /// Cover photo for an event card / detail hero.
 ///
@@ -68,8 +67,7 @@ class EventCoverImage extends StatelessWidget {
   }
 
   static const _kImageHeaders = {
-    'User-Agent':
-        'SpotVibe/1.0 (https://spotvibe.app; blakejohnson@spotvibeapp.com)',
+    'User-Agent': 'SpotVibe/1.0 (https://spotvibe.app; blakejohnson@spotvibeapp.com)',
     'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
   };
 
@@ -92,8 +90,7 @@ class EventCoverImage extends StatelessWidget {
       fit: fit,
       width: double.infinity,
       height: height,
-      placeholder: (_, __) =>
-          Container(color: placeholderColor, height: height),
+      placeholder: (_, __) => Container(color: placeholderColor, height: height),
       errorWidget: (_, __, ___) => _poster(),
     );
   }
@@ -140,20 +137,22 @@ class UniqueEventCover extends StatelessWidget {
   }
 
   static String _monogram(String title) {
-    final words = title
-        .replaceAll(RegExp(r'[^A-Za-z0-9 ]'), ' ')
-        .split(RegExp(r'\s+'))
-        .where((w) => w.isNotEmpty)
-        .where((w) {
-      final lower = w.toLowerCase();
-      return lower != 'the' &&
-          lower != 'el' &&
-          lower != 'la' &&
-          lower != 'a' &&
-          lower != 'an' &&
-          lower != 'vs' &&
-          lower != 'v';
-    }).toList();
+    final words =
+        title
+            .replaceAll(RegExp(r'[^A-Za-z0-9 ]'), ' ')
+            .split(RegExp(r'\s+'))
+            .where((w) => w.isNotEmpty)
+            .where((w) {
+              final lower = w.toLowerCase();
+              return lower != 'the' &&
+                  lower != 'el' &&
+                  lower != 'la' &&
+                  lower != 'a' &&
+                  lower != 'an' &&
+                  lower != 'vs' &&
+                  lower != 'v';
+            })
+            .toList();
     if (words.isEmpty) return 'SV';
     if (words.length == 1) {
       final w = words.first.toUpperCase();
@@ -196,9 +195,7 @@ class UniqueEventCover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final seed = eventId.isNotEmpty
-        ? eventId
-        : '$title|$venue|$category';
+    final seed = eventId.isNotEmpty ? eventId : '$title|$venue|$category';
     final hash = _hash(seed);
     final palette = _palettes[hash % _palettes.length];
     final monogram = _monogram(title.isNotEmpty ? title : category);
@@ -218,11 +215,7 @@ class UniqueEventCover extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _CoverPatternPainter(seed: hash),
-            ),
-          ),
+          Positioned.fill(child: CustomPaint(painter: _CoverPatternPainter(seed: hash))),
           Padding(
             padding: EdgeInsets.all(compact ? 10 : 16),
             child: Column(
@@ -294,11 +287,7 @@ class EventImagePlaceholder extends StatelessWidget {
   final String category;
   final double? height;
 
-  const EventImagePlaceholder({
-    super.key,
-    required this.category,
-    this.height,
-  });
+  const EventImagePlaceholder({super.key, required this.category, this.height});
 
   @override
   Widget build(BuildContext context) {
@@ -312,24 +301,25 @@ class _CoverPatternPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.07)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
+    final paint =
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.07)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2;
     final step = 18.0 + (seed % 10);
     final offset = (seed % 12).toDouble();
     for (double x = -size.height + offset; x < size.width + size.height; x += step) {
       canvas.drawLine(Offset(x, 0), Offset(x + size.height, size.height), paint);
     }
-    final fill = Paint()
-      ..color = Colors.white.withValues(alpha: 0.05)
-      ..style = PaintingStyle.fill;
+    final fill =
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.05)
+          ..style = PaintingStyle.fill;
     final r = 28.0 + (seed % 20);
     canvas.drawCircle(Offset(size.width * 0.85, size.height * 0.2), r, fill);
     canvas.drawCircle(Offset(size.width * 0.1, size.height * 0.75), r * 0.6, fill);
   }
 
   @override
-  bool shouldRepaint(_CoverPatternPainter oldDelegate) =>
-      oldDelegate.seed != seed;
+  bool shouldRepaint(_CoverPatternPainter oldDelegate) => oldDelegate.seed != seed;
 }

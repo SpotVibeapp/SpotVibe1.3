@@ -29,13 +29,8 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "app.spotvibe"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 26 // Android 8.0
-        // Google Play requires new submissions to target Android 16 (API 36)
-        // from 2026-08-31. Pin it so the build can never silently target lower.
+        minSdk = 26
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -43,7 +38,6 @@ android {
 
     signingConfigs {
         create("release") {
-            // Use safe casts so a missing key.properties doesn't crash the build.
             keyAlias = keystoreProperties["keyAlias"] as String?
             keyPassword = keystoreProperties["keyPassword"] as String?
             storeFile = keystoreProperties["storeFile"]?.let { file(it) }
@@ -53,21 +47,41 @@ android {
 
     buildTypes {
         release {
-            // Release builds MUST be signed with the real upload keystore
-            // (android/key.properties). Fail loudly if it's missing instead of
-            // silently falling back to debug signing — a debug-signed AAB is
-            // rejected by Google Play and all too easy to ship by mistake.
-            signingConfig =
-                if (keystorePropertiesFile.exists()) {
-                    signingConfigs.getByName("release")
-                } else {
-                    throw GradleException(
-                        "Release signing is not configured. Create " +
-                            "android/key.properties with your upload keystore before " +
-                            "building a release artifact (flutter build appbundle)."
-                    )
-                }
+            // Attach the upload key only when it exists. The verification task
+            // below stops release builds clearly when it does not.
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
+    }
+}
+
+// Debug builds do not need a Play upload key. Release builds still fail clearly
+// unless android/key.properties contains a real upload-keystore configuration.
+val verifyReleaseSigning = tasks.register("verifyReleaseSigning") {
+    group = "verification"
+    description = "Verifies that the Android upload keystore is configured for release builds."
+
+    doLast {
+        val required = listOf("storePassword", "keyPassword", "keyAlias", "storeFile")
+        val missing = required.filter { keystoreProperties.getProperty(it).isNullOrBlank() }
+
+        if (!keystorePropertiesFile.exists() || missing.isNotEmpty()) {
+            val missingHint =
+                if (missing.isEmpty()) "" else " Missing: ${missing.joinToString()}."
+
+            throw GradleException(
+                "Release signing is not configured. Create android/key.properties " +
+                    "with your upload keystore before building a release artifact " +
+                    "(flutter build appbundle).$missingHint"
+            )
+        }
+    }
+}
+
+tasks.configureEach {
+    if (name == "preReleaseBuild" || name == "assembleRelease" || name == "bundleRelease") {
+        dependsOn(verifyReleaseSigning)
     }
 }
 

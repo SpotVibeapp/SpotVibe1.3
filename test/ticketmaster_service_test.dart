@@ -6,16 +6,8 @@ void main() {
   test('picks the widest 16:9 Ticketmaster image', () {
     final url = pickTicketmasterImage([
       {'url': 'https://s1.ticketm.net/small.jpg', 'width': 100, 'ratio': '4_3'},
-      {
-        'url': 'https://s1.ticketm.net/wide.jpg',
-        'width': 640,
-        'ratio': '16_9',
-      },
-      {
-        'url': 'https://s1.ticketm.net/huge_square.jpg',
-        'width': 2000,
-        'ratio': '1_1',
-      },
+      {'url': 'https://s1.ticketm.net/wide.jpg', 'width': 640, 'ratio': '16_9'},
+      {'url': 'https://s1.ticketm.net/huge_square.jpg', 'width': 2000, 'ratio': '1_1'},
     ]);
     expect(url, 'https://s1.ticketm.net/wide.jpg');
   });
@@ -23,15 +15,13 @@ void main() {
   test('prefers team art over a huge baseball-glove stock image', () {
     final url = pickTicketmasterImage([
       {
-        'url':
-            'https://s1.ticketm.net/dam/c/fbc/baseball-glove_TABLET_LANDSCAPE_LARGE_16_9.jpg',
+        'url': 'https://s1.ticketm.net/dam/c/fbc/baseball-glove_TABLET_LANDSCAPE_LARGE_16_9.jpg',
         'width': 2048,
         'ratio': '16_9',
         'fallback': true,
       },
       {
-        'url':
-            'https://s1.ticketm.net/dam/a/e67/chihuahuas-logo_RETINA_PORTRAIT_16_9.jpg',
+        'url': 'https://s1.ticketm.net/dam/a/e67/chihuahuas-logo_RETINA_PORTRAIT_16_9.jpg',
         'width': 640,
         'ratio': '16_9',
         'fallback': true,
@@ -73,8 +63,7 @@ void main() {
   test('prefers unique attraction art over fallback and /dam/c/ stock', () {
     final url = pickTicketmasterImage([
       {
-        'url':
-            'https://s1.ticketm.net/dam/c/fbc/genre-stock_TABLET_LANDSCAPE_LARGE_16_9.jpg',
+        'url': 'https://s1.ticketm.net/dam/c/fbc/genre-stock_TABLET_LANDSCAPE_LARGE_16_9.jpg',
         'width': 2048,
         'ratio': '16_9',
         'fallback': false,
@@ -95,7 +84,7 @@ void main() {
     expect(url, 'https://s1.ticketm.net/dam/a/e67/artist_TABLET_LANDSCAPE_16_9.jpg');
   });
 
-  test('falls back to stock art when that is all Ticketmaster sent', () {
+  test('returns empty when every image is generic stock', () {
     expect(
       pickTicketmasterImage([
         {
@@ -105,7 +94,7 @@ void main() {
           'fallback': true,
         },
       ]),
-      'https://s1.ticketm.net/dam/c/aaa/music_16_9.jpg',
+      isEmpty,
     );
   });
 
@@ -131,8 +120,7 @@ void main() {
             'name': 'Bad Bunny',
             'images': [
               {
-                'url':
-                    'https://s1.ticketm.net/dam/a/bbb/bad-bunny_TABLET_LANDSCAPE_LARGE_16_9.jpg',
+                'url': 'https://s1.ticketm.net/dam/a/bbb/bad-bunny_TABLET_LANDSCAPE_LARGE_16_9.jpg',
                 'width': 2048,
                 'ratio': '16_9',
                 'fallback': false,
@@ -161,11 +149,7 @@ void main() {
       'url': 'https://www.ticketmaster.com/event/G5vYZ9abc',
       'info': 'Gates open one hour before first pitch.',
       'images': [
-        {
-          'url': 'https://s1.ticketm.net/dam/chihuahuas.jpg',
-          'width': 1024,
-          'ratio': '16_9',
-        },
+        {'url': 'https://s1.ticketm.net/dam/chihuahuas.jpg', 'width': 1024, 'ratio': '16_9'},
       ],
       'dates': {
         'start': {'dateTime': '2026-08-20T01:05:00Z'},
@@ -208,10 +192,7 @@ void main() {
   });
 
   test('returns null when start date is missing', () {
-    expect(
-      eventFromTicketmaster({'id': 'x', 'name': 'No Date'}),
-      isNull,
-    );
+    expect(eventFromTicketmaster({'id': 'x', 'name': 'No Date'}), isNull);
   });
 
   test('unconfigured client does not hit the network', () async {
