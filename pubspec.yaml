@@ -49,7 +49,8 @@ dependencies:
   share_plus: ^10.1.4
 
   # Subscriptions
-  purchases_flutter: ^8.11.0
+  # v9+ uses Google Play Billing Library 8, required for new Play submissions.
+  purchases_flutter: ^9.10.2
 
   # Social sign-in (buttons hidden until each provider is configured —
   # see lib/config/app_config.dart)

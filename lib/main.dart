@@ -344,6 +344,7 @@ class _SpotVibeAppState extends State<SpotVibeApp> {
           create: (ctx) => AuthProvider(
             service: AuthService(repository: ctx.read<UserRepository>()),
             notificationService: ctx.read<NotificationService>(),
+            revenueCatService: ctx.read<RevenueCatService>(),
           )..restoreSession(),
         ),
         ChangeNotifierProvider(
