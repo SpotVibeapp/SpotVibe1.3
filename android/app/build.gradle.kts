@@ -53,21 +53,41 @@ android {
 
     buildTypes {
         release {
-            // Release builds MUST be signed with the real upload keystore
-            // (android/key.properties). Fail loudly if it's missing instead of
-            // silently falling back to debug signing — a debug-signed AAB is
-            // rejected by Google Play and all too easy to ship by mistake.
-            signingConfig =
-                if (keystorePropertiesFile.exists()) {
-                    signingConfigs.getByName("release")
-                } else {
-                    throw GradleException(
-                        "Release signing is not configured. Create " +
-                            "android/key.properties with your upload keystore before " +
-                            "building a release artifact (flutter build appbundle)."
-                    )
-                }
+            // Only attach the upload key when it exists. The verification task
+            // below fails *release* builds clearly when it does not. Do not
+            // throw here: Gradle configures every build type for `flutter run`,
+            // including a debug build that does not need release signing.
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
+    }
+}
+
+// Release signing must fail loudly, but only when a release artifact is being
+// built. `preReleaseBuild` is not part of `assembleDebug`, so this preserves
+// normal device testing via `flutter run` without permitting unsigned releases.
+val verifyReleaseSigning = tasks.register("verifyReleaseSigning") {
+    group = "verification"
+    description = "Verifies that the Android upload keystore is configured for release builds."
+
+    doLast {
+        val required = listOf("storePassword", "keyPassword", "keyAlias", "storeFile")
+        val missing = required.filter { keystoreProperties.getProperty(it).isNullOrBlank() }
+        if (!keystorePropertiesFile.exists() || missing.isNotEmpty()) {
+            val missingHint = if (missing.isEmpty()) "" else " Missing: ${missing.joinToString()}."
+            throw GradleException(
+                "Release signing is not configured. Create android/key.properties " +
+                    "with your upload keystore before building a release artifact " +
+                    "(flutter build appbundle).$missingHint"
+            )
+        }
+    }
+}
+
+tasks.configureEach {
+    if (name == "preReleaseBuild" || name == "assembleRelease" || name == "bundleRelease") {
+        dependsOn(verifyReleaseSigning)
     }
 }
 
