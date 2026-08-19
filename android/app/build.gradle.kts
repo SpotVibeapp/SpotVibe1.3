@@ -29,8 +29,13 @@ android {
     }
 
     defaultConfig {
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "app.spotvibe"
-        minSdk = 26
+        // You can update the following values to match your application needs.
+        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        minSdk = 26 // Android 8.0
+        // Google Play requires new submissions to target Android 16 (API 36)
+        // from 2026-08-31. Pin it so the build can never silently target lower.
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -38,6 +43,7 @@ android {
 
     signingConfigs {
         create("release") {
+            // Use safe casts so a missing key.properties doesn't crash the build.
             keyAlias = keystoreProperties["keyAlias"] as String?
             keyPassword = keystoreProperties["keyPassword"] as String?
             storeFile = keystoreProperties["storeFile"]?.let { file(it) }
@@ -47,8 +53,10 @@ android {
 
     buildTypes {
         release {
-            // Attach the upload key only when it exists. The verification task
-            // below stops release builds clearly when it does not.
+            // Only attach the upload key when it exists. The verification task
+            // below fails *release* builds clearly when it does not. Do not
+            // throw here: Gradle configures every build type for `flutter run`,
+            // including a debug build that does not need release signing.
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
             }
@@ -56,8 +64,9 @@ android {
     }
 }
 
-// Debug builds do not need a Play upload key. Release builds still fail clearly
-// unless android/key.properties contains a real upload-keystore configuration.
+// Release signing must fail loudly, but only when a release artifact is being
+// built. `preReleaseBuild` is not part of `assembleDebug`, so this preserves
+// normal device testing via `flutter run` without permitting unsigned releases.
 val verifyReleaseSigning = tasks.register("verifyReleaseSigning") {
     group = "verification"
     description = "Verifies that the Android upload keystore is configured for release builds."
@@ -65,11 +74,8 @@ val verifyReleaseSigning = tasks.register("verifyReleaseSigning") {
     doLast {
         val required = listOf("storePassword", "keyPassword", "keyAlias", "storeFile")
         val missing = required.filter { keystoreProperties.getProperty(it).isNullOrBlank() }
-
         if (!keystorePropertiesFile.exists() || missing.isNotEmpty()) {
-            val missingHint =
-                if (missing.isEmpty()) "" else " Missing: ${missing.joinToString()}."
-
+            val missingHint = if (missing.isEmpty()) "" else " Missing: ${missing.joinToString()}."
             throw GradleException(
                 "Release signing is not configured. Create android/key.properties " +
                     "with your upload keystore before building a release artifact " +
