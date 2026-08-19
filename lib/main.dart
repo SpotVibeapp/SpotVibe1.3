@@ -13,6 +13,7 @@ import 'providers/theme_provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/moderation_provider.dart';
+import 'providers/partner_promo_provider.dart';
 import 'repositories/firebase_event_repository.dart';
 import 'repositories/firebase_rsvp_repository.dart';
 import 'repositories/firebase_user_event_repository.dart';
@@ -26,6 +27,7 @@ import 'repositories/founding_member_repository.dart';
 import 'repositories/event_repository.dart';
 import 'repositories/notification_preferences_repository.dart';
 import 'repositories/notification_repository.dart';
+import 'repositories/partner_promo_repository.dart';
 import 'repositories/personalization_repository.dart';
 import 'repositories/rsvp_repository.dart';
 import 'repositories/user_event_repository.dart';
@@ -107,6 +109,7 @@ void main() async {
     claimRepository: backend.claims,
     foundingRepository: backend.founding,
     moderationRepository: backend.moderation,
+    partnerPromoRepository: backend.partnerPromoCodes,
     revenueCatService: revenueCatService,
     notificationService: notificationService,
     permissionService: permissionService,
@@ -122,6 +125,7 @@ class _AppBackend {
   final EventClaimRepository claims;
   final FoundingMemberRepository founding;
   final ModerationRepository moderation;
+  final PartnerPromoRepository partnerPromoCodes;
   const _AppBackend({
     required this.users,
     required this.events,
@@ -130,6 +134,7 @@ class _AppBackend {
     required this.claims,
     required this.founding,
     required this.moderation,
+    required this.partnerPromoCodes,
   });
 }
 
@@ -165,6 +170,7 @@ Future<_AppBackend?> _createBackend() async {
       claims: FirebaseEventClaimRepository(),
       founding: FirebaseFoundingMemberRepository(),
       moderation: FirebaseModerationRepository(),
+      partnerPromoCodes: FirebasePartnerPromoRepository(),
     );
   } catch (e) {
     debugPrint('Firebase unavailable ($e).');
@@ -181,6 +187,7 @@ Future<_AppBackend?> _createBackend() async {
       claims: MockEventClaimRepository(),
       founding: MockFoundingMemberRepository(),
       moderation: MockModerationRepository(),
+      partnerPromoCodes: MockPartnerPromoRepository(),
     );
   }
 }
@@ -232,6 +239,7 @@ class SpotVibeApp extends StatefulWidget {
   final EventClaimRepository claimRepository;
   final FoundingMemberRepository foundingRepository;
   final ModerationRepository moderationRepository;
+  final PartnerPromoRepository partnerPromoRepository;
   final RevenueCatService revenueCatService;
   final NotificationService notificationService;
   final PermissionService permissionService;
@@ -246,6 +254,7 @@ class SpotVibeApp extends StatefulWidget {
     required this.claimRepository,
     required this.foundingRepository,
     required this.moderationRepository,
+    required this.partnerPromoRepository,
     required this.revenueCatService,
     required this.notificationService,
     required this.permissionService,
@@ -290,10 +299,16 @@ class _SpotVibeAppState extends State<SpotVibeApp> {
         Provider<EventClaimRepository>(create: (_) => widget.claimRepository),
         Provider<FoundingMemberRepository>(create: (_) => widget.foundingRepository),
         Provider<ModerationRepository>(create: (_) => widget.moderationRepository),
+        Provider<PartnerPromoRepository>(create: (_) => widget.partnerPromoRepository),
         ChangeNotifierProvider(
           create: (ctx) => ModerationProvider(
             repository: ctx.read<ModerationRepository>(),
             claimsRepository: ctx.read<EventClaimRepository>(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (ctx) => PartnerPromoProvider(
+            repository: ctx.read<PartnerPromoRepository>(),
           ),
         ),
         Provider(
