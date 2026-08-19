@@ -195,9 +195,12 @@ class _NotificationListView extends StatelessWidget {
                 style: text.titleMedium
                     ?.copyWith(color: colors.onSurface)),
             const SizedBox(height: AppTheme.spacingSm),
-            Text("You're all caught up!",
-                style: text.bodyMedium
-                    ?.copyWith(color: colors.onSurfaceVariant)),
+            Text(
+              'Notifications about your saved events and activity will appear here.',
+              style: text.bodyMedium
+                  ?.copyWith(color: colors.onSurfaceVariant),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       );
