@@ -67,6 +67,8 @@ Your API key was committed to a **public** repo, so treat it as compromised.
    - Until you do this, a release build intentionally shows a
      "backend not configured" screen instead of fake auth (that's the new
      fail-loud behavior working as intended).
+   - Keep all social-login flags `false` until the provider is configured
+     end-to-end; the checked-in release-safe defaults hide those buttons.
 7. **Storage (required for profile photos + event videos):**
    Console → **Build → Storage → Get started** (production rules).
    Then deploy the rules already in this repo:
@@ -153,7 +155,9 @@ debug-signing fallback). For Play you need a real upload key:
 See `STORE_PRODUCTS.md` for full details. Summary:
 
 1. **RevenueCat:** create project → copy the **public SDK keys** → pass them at
-   build time (they are no longer placeholders in code):
+   build time (they are no longer placeholders in code). A release build now
+   fails a purchase safely rather than granting a local trial when these are
+   absent:
    ```bash
    flutter build appbundle --release \
      --dart-define=REVENUECAT_ANDROID_KEY=goog_xxx \

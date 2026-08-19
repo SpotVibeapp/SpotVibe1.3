@@ -83,7 +83,7 @@ else
 
 A successful founding purchase also writes the uid into Firestore `meta/founding` so the 25-slot cap stays in sync. Restoring an Apple/Google founding purchase re-claims that slot.
 
-If RevenueCat keys are still placeholders (this sandbox / web), the app falls back to a local 7-day trial and still records founding slots — it will **not** charge $12.99 when a founding price was promised.
+Debug/profile builds can use a local 7-day trial to exercise the Premium UI before store products are available. A **release** build never grants Premium from that fallback: if RevenueCat keys, active products, or a store entitlement are missing, the purchase fails instead of claiming the customer was charged.
 
 ---
 
@@ -91,7 +91,7 @@ If RevenueCat keys are still placeholders (this sandbox / web), the app falls ba
 
 - [ ] Both products Approved / Active in App Store Connect and Play Console
 - [ ] 7-day free intro on `spotvibe_premium_monthly`
-- [ ] RevenueCat public SDK keys in `revenue_cat_service.dart`
+- [ ] RevenueCat public SDK keys supplied as release-build `--dart-define` values (not committed)
 - [ ] Entitlement `pro` includes both products
 - [ ] Offerings `default` + `founding` exist
 - [ ] Sandbox / license-tester purchase of each SKU
