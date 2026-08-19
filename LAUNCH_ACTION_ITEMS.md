@@ -49,7 +49,8 @@ Your API key was committed to a **public** repo, so treat it as compromised.
    ```bash
    firebase deploy --only firestore:rules
    ```
-5. Deploy the **Firestore indexes** (needed by account deletion + queries):
+5. Deploy the **Firestore indexes** (the file contains single-field
+   collection-group controls needed by account deletion queries):
    ```bash
    firebase deploy --only firestore:indexes
    ```

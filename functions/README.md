@@ -35,9 +35,9 @@ can promote more admins with the `promoteAdmin` callable.
   cleanup on top of it.
 - `deleteUser` and `bannedUserCleanup` both delete via chunked batches
   (Firestore caps batches at 500 ops).
-- `bannedUserCleanup` needs the collection-group indexes in
-  `firestore.indexes.json` (`rsvps.userId`, `comments.authorId`). Deploy them
-  with `firebase deploy --only firestore:indexes`.
+- `bannedUserCleanup` needs the single-field collection-group index controls
+  in `firestore.indexes.json` (`rsvps.userId`, `comments.authorId`). Deploy
+  them with `firebase deploy --only firestore:indexes`.
 - The `BANNED_WORDS` list is a starter. Swap in a real moderation provider
   (e.g. Perspective API, OpenAI moderation, or a stricter blocklist) before a
   broad launch.

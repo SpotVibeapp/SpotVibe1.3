@@ -1,19 +1,19 @@
 {
-  "indexes": [
+  "indexes": [],
+  "fieldOverrides": [
     {
       "collectionGroup": "rsvps",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        { "fieldPath": "userId", "order": "ASCENDING" }
+      "fieldPath": "userId",
+      "indexes": [
+        { "queryScope": "COLLECTION_GROUP", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "comments",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        { "fieldPath": "authorId", "order": "ASCENDING" }
+      "fieldPath": "authorId",
+      "indexes": [
+        { "queryScope": "COLLECTION_GROUP", "order": "ASCENDING" }
       ]
     }
-  ],
-  "fieldOverrides": []
+  ]
 }
