@@ -5,20 +5,14 @@
       "collectionGroup": "rsvps",
       "fieldPath": "userId",
       "indexes": [
-        {
-          "queryScope": "COLLECTION_GROUP",
-          "order": "ASCENDING"
-        }
+        { "queryScope": "COLLECTION_GROUP", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "comments",
       "fieldPath": "authorId",
       "indexes": [
-        {
-          "queryScope": "COLLECTION_GROUP",
-          "order": "ASCENDING"
-        }
+        { "queryScope": "COLLECTION_GROUP", "order": "ASCENDING" }
       ]
     }
   ]

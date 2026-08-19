@@ -115,7 +115,8 @@ async function collectUserDeletions(uid) {
     refs.push(db.collection('user_events').doc(d.id));
   });
 
-  // Collection-group queries (indexes in firestore.indexes.json).
+  // Collection-group equality queries (single-field index controls in
+  // firestore.indexes.json).
   push(await db.collectionGroup('rsvps').where('userId', '==', uid).get());
   push(await db.collectionGroup('comments').where('authorId', '==', uid).get());
 

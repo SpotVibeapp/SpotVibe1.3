@@ -253,9 +253,10 @@ class FirebaseUserRepository implements UserRepository {
       debugPrint('user_events purge failed: $e');
     }
 
-    // Collection-group queries require composite indexes (see
-    // firestore.indexes.json). If the index is missing, log and continue —
-    // the deleteUser Cloud Function performs authoritative cleanup.
+    // Collection-group equality queries require the single-field
+    // collection-group index controls in firestore.indexes.json. If an index
+    // is missing, log and continue — the deleteUser Cloud Function performs
+    // authoritative cleanup.
     try {
       final rsvps = await _db
           .collectionGroup('rsvps')
