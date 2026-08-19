@@ -122,7 +122,9 @@ class RevenueCatService {
   Future<CustomerInfo?> purchasePackage(Package package) async {
     if (kIsWeb || !_initialized) return null;
     try {
-      final result = await Purchases.purchasePackage(package);
+      final result = await Purchases.purchase(
+        PurchaseParams.package(package),
+      );
       return result.customerInfo;
     } on PurchasesErrorCode catch (e) {
       if (e == PurchasesErrorCode.purchaseCancelledError) return null;
