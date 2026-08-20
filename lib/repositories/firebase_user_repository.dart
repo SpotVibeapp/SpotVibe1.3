@@ -78,6 +78,19 @@ class FirebaseUserRepository implements UserRepository {
     }
   }
 
+  @override
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+    } on FirebaseAuthException catch (e) {
+      // Do not reveal whether an email address is registered. Firebase may
+      // already suppress this distinction when email-enumeration protection is
+      // enabled, but this keeps the app response safe in either configuration.
+      if (e.code == 'user-not-found') return;
+      throw Exception(messageForAuthException(e));
+    }
+  }
+
   // ── Social sign-in ────────────────────────────────────────────────────────
 
   @override

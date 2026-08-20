@@ -2,14 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
-import '../data/pricing.dart';
 import '../models/event_claim.dart';
 
 abstract class EventClaimRepository {
-  Future<EventClaim> submit(
-    EventClaim claim, {
-    required bool isPremium,
-  });
+  Future<EventClaim> submit(EventClaim claim);
   Future<EventClaim?> latestFor({
     required String eventId,
     required String userId,
@@ -44,15 +40,9 @@ class MockEventClaimRepository implements EventClaimRepository {
   }
 
   @override
-  Future<EventClaim> submit(EventClaim claim, {required bool isPremium}) async {
-    final prior = await countUnlockedForUser(claim.userId);
-    final firstFree = claimUnlocksWithoutPay(
-      priorUnlockedClaims: prior,
-      isPremium: isPremium,
-    );
-    final workEmail = isValidEmail(claim.email) && !isPersonalEmail(claim.email);
-    final approved = workEmail;
-    final unlocked = approved && (firstFree || isPremium);
+  Future<EventClaim> submit(EventClaim claim) async {
+    // Claims must be approved by an admin. Client-side email and plan checks
+    // are not an authorization boundary and must never auto-grant edit access.
     final stored = EventClaim(
       id: claim.id.isEmpty ? const Uuid().v4() : claim.id,
       eventId: claim.eventId,
@@ -67,10 +57,10 @@ class MockEventClaimRepository implements EventClaimRepository {
       proofMethod: claim.proofMethod,
       proofUrl: claim.proofUrl,
       statement: claim.statement,
-      status: approved ? ClaimStatus.approved : ClaimStatus.pending,
+      status: ClaimStatus.pending,
       createdAt: claim.createdAt,
-      firstClaimFree: firstFree,
-      unlocked: unlocked,
+      firstClaimFree: false,
+      unlocked: false,
     );
     _byId[stored.id] = stored;
     return stored;
@@ -99,15 +89,9 @@ class MockEventClaimRepository implements EventClaimRepository {
 
   @override
   Future<int> unlockEligibleForUser(String userId) async {
-    var count = 0;
-    for (final entry in _byId.entries.toList()) {
-      final claim = entry.value;
-      if (claim.userId != userId) continue;
-      if (claim.status != ClaimStatus.approved || claim.unlocked) continue;
-      _byId[entry.key] = claim.copyWith(unlocked: true);
-      count++;
-    }
-    return count;
+    // Only an admin approval can grant listing ownership. A client-side
+    // purchase result must never flip an arbitrary claim to editable.
+    return 0;
   }
 
   @override
@@ -178,16 +162,11 @@ class FirebaseEventClaimRepository implements EventClaimRepository {
   }
 
   @override
-  Future<EventClaim> submit(EventClaim claim, {required bool isPremium}) {
+  Future<EventClaim> submit(EventClaim claim) {
     return _guard(() async {
-      final prior = await countUnlockedForUser(claim.userId);
-      final firstFree = claimUnlocksWithoutPay(
-        priorUnlockedClaims: prior,
-        isPremium: isPremium,
-      );
-      final workEmail = isValidEmail(claim.email) && !isPersonalEmail(claim.email);
-      final approved = workEmail;
-      final unlocked = approved && (firstFree || isPremium);
+      // A claimant can submit proof, but only an admin can approve it and hand
+      // the listing to the verified venue/promoter. Never trust client-side
+      // subscription/email checks to unlock an event.
       final id = claim.id.isEmpty ? const Uuid().v4() : claim.id;
       final stored = EventClaim(
         id: id,
@@ -203,14 +182,14 @@ class FirebaseEventClaimRepository implements EventClaimRepository {
         proofMethod: claim.proofMethod,
         proofUrl: claim.proofUrl,
         statement: claim.statement,
-        status: approved ? ClaimStatus.approved : ClaimStatus.pending,
+        status: ClaimStatus.pending,
         createdAt: claim.createdAt,
-        firstClaimFree: firstFree,
-        unlocked: unlocked,
+        firstClaimFree: false,
+        unlocked: false,
       );
       await _claims.doc(id).set(_toMap(stored));
       return stored;
-    }, () => _fallback.submit(claim, isPremium: isPremium));
+    }, () => _fallback.submit(claim));
   }
 
   @override
@@ -253,21 +232,10 @@ class FirebaseEventClaimRepository implements EventClaimRepository {
   }
 
   @override
-  Future<int> unlockEligibleForUser(String userId) {
-    return _guard(() async {
-      final snap = await _claims.where('userId', isEqualTo: userId).limit(50).get();
-      var count = 0;
-      final batch = _db.batch();
-      for (final doc in snap.docs) {
-        final data = doc.data();
-        if (data['status'] != ClaimStatus.approved.name) continue;
-        if (data['unlocked'] == true) continue;
-        batch.update(doc.reference, {'unlocked': true});
-        count++;
-      }
-      if (count > 0) await batch.commit();
-      return count;
-    }, () => _fallback.unlockEligibleForUser(userId));
+  Future<int> unlockEligibleForUser(String userId) async {
+    // See the mock implementation: claim ownership is granted only by the
+    // admin approval transaction below, never by an untrusted client update.
+    return 0;
   }
 
   @override
@@ -283,13 +251,71 @@ class FirebaseEventClaimRepository implements EventClaimRepository {
   }
 
   @override
-  Future<void> updateClaimStatus(String claimId, {required bool approve}) {
-    return _guard(() async {
-      await _claims.doc(claimId).update({
-        'status': approve ? ClaimStatus.approved.name : ClaimStatus.rejected.name,
-        'unlocked': approve,
+  Future<void> updateClaimStatus(String claimId, {required bool approve}) async {
+    // This is a privileged admin operation. Do not fall back to an in-memory
+    // success if Firestore rejects it, or the dashboard could claim that a
+    // venue owns a listing when no server-side handoff occurred.
+    if (_useFallback) {
+      await _fallback.updateClaimStatus(claimId, approve: approve);
+      return;
+    }
+
+    final claimRef = _claims.doc(claimId);
+    try {
+      await _db.runTransaction((transaction) async {
+        final claimSnap = await transaction.get(claimRef);
+        if (!claimSnap.exists || claimSnap.data() == null) {
+          throw StateError('Claim not found.');
+        }
+        final claim = _fromMap(claimSnap.id, claimSnap.data()!);
+
+        if (!approve) {
+          transaction.update(claimRef, {
+            'status': ClaimStatus.rejected.name,
+            'unlocked': false,
+          });
+          return;
+        }
+
+        // Approval is an ownership handoff. This makes a listing originally
+        // posted by SpotVibe/admin claimable by the verified venue/promoter,
+        // while security rules continue to give admins moderation control.
+        final eventRef = _db.collection('events').doc(claim.eventId);
+        final mirrorRef = _db.collection('user_events').doc(claim.eventId);
+        final eventSnap = await transaction.get(eventRef);
+        final mirrorSnap = await transaction.get(mirrorRef);
+        if (!eventSnap.exists || eventSnap.data() == null) {
+          throw StateError('The listing no longer exists.');
+        }
+
+        final now = DateTime.now();
+        final ownership = <String, dynamic>{
+          'creatorId': claim.userId,
+          'claimedByUid': claim.userId,
+          'claimedAtMs': now.millisecondsSinceEpoch,
+          'claimedAt': FieldValue.serverTimestamp(),
+          'kind': 'user',
+        };
+        final mirrorPayload = <String, dynamic>{
+          ...eventSnap.data()!,
+          ...ownership,
+          // Curated/admin posts might not yet have a user_events mirror.
+          'createdAtMs': mirrorSnap.data()?['createdAtMs'] ?? now.millisecondsSinceEpoch,
+        };
+
+        transaction.update(claimRef, {
+          'status': ClaimStatus.approved.name,
+          'unlocked': true,
+          'firstClaimFree': true,
+          'approvedAt': FieldValue.serverTimestamp(),
+        });
+        transaction.set(eventRef, ownership, SetOptions(merge: true));
+        transaction.set(mirrorRef, mirrorPayload, SetOptions(merge: true));
       });
-    }, () => _fallback.updateClaimStatus(claimId, approve: approve));
+    } catch (error) {
+      debugPrint('Claim approval failed: $error');
+      rethrow;
+    }
   }
 
   EventClaim _fromMap(String id, Map<String, dynamic> data) {

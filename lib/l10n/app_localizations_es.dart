@@ -58,7 +58,22 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get passwordResetBackend =>
-      'Restablecer la contraseña requiere una integración con el servidor.';
+      'Si existe una cuenta con ese correo, enviamos un enlace para restablecer la contraseña.';
+
+  @override
+  String get passwordResetInstructions =>
+      'Ingresa el correo electrónico de tu cuenta de SpotVibe.';
+
+  @override
+  String get sendPasswordReset => 'Enviar enlace';
+
+  @override
+  String get passwordResetSent =>
+      'Si existe una cuenta con ese correo, enviamos un enlace para restablecer la contraseña.';
+
+  @override
+  String get passwordResetFailed =>
+      'No se pudo enviar el correo para restablecer la contraseña. Inténtalo de nuevo.';
 
   @override
   String get emailRequired => 'El correo es obligatorio';

@@ -105,6 +105,84 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _showPasswordResetDialog() async {
+    final l10n = AppLocalizations.of(context)!;
+    final emailController = TextEditingController(text: _emailController.text.trim());
+    var sending = false;
+    String? error;
+
+    final sent = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: Text(l10n.forgotPassword),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.passwordResetInstructions),
+              const SizedBox(height: AppTheme.spacingMd),
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: l10n.emailLabel,
+                  prefixIcon: const Icon(Icons.email_outlined),
+                ),
+              ),
+              if (error != null) ...[
+                const SizedBox(height: AppTheme.spacingSm),
+                Text(
+                  error!,
+                  style: TextStyle(color: Theme.of(dialogContext).colorScheme.error),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: sending ? null : () => Navigator.pop(dialogContext, false),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: sending
+                  ? null
+                  : () async {
+                      setDialogState(() {
+                        sending = true;
+                        error = null;
+                      });
+                      final auth = context.read<AuthProvider>();
+                      final success = await auth.sendPasswordResetEmail(emailController.text);
+                      if (!dialogContext.mounted) return;
+                      if (success) {
+                        Navigator.pop(dialogContext, true);
+                      } else {
+                        setDialogState(() {
+                          sending = false;
+                          error = auth.error ?? l10n.passwordResetFailed;
+                        });
+                        auth.clearError();
+                      }
+                    },
+              child: Text(sending ? '…' : l10n.sendPasswordReset),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    emailController.dispose();
+    if (sent == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.passwordResetSent),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -330,14 +408,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(l10n.passwordResetBackend),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
+                          onPressed: auth.isLoading ? null : _showPasswordResetDialog,
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
                             minimumSize: const Size(0, 32),

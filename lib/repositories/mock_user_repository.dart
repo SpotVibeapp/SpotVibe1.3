@@ -65,6 +65,11 @@ class MockUserRepository implements UserRepository {
   }
 
   @override
+  Future<void> sendPasswordResetEmail(String email) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+  }
+
+  @override
   Future<void> logout() async {
     await Future.delayed(const Duration(milliseconds: 200));
     _currentUser = null;

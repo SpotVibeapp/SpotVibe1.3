@@ -54,6 +54,22 @@ void main() {
     });
   });
 
+  group('AuthService.password reset', () {
+    test('rejects an empty reset email', () {
+      expect(
+        () => authService.sendPasswordResetEmail('   '),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('sends a reset request for a valid email', () async {
+      await expectLater(
+        authService.sendPasswordResetEmail('jane@example.com'),
+        completes,
+      );
+    });
+  });
+
   group('AuthService.register validation', () {
     test('rejects empty name', () {
       expect(

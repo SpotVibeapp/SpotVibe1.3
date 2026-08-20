@@ -197,8 +197,32 @@ abstract class AppLocalizations {
   /// No description provided for @passwordResetBackend.
   ///
   /// In en, this message translates to:
-  /// **'Password reset requires a backend integration.'**
+  /// **'If an account exists for that email address, we sent a password reset link.'**
   String get passwordResetBackend;
+
+  /// No description provided for @passwordResetInstructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the email address for your SpotVibe account.'**
+  String get passwordResetInstructions;
+
+  /// No description provided for @sendPasswordReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Send reset link'**
+  String get sendPasswordReset;
+
+  /// No description provided for @passwordResetSent.
+  ///
+  /// In en, this message translates to:
+  /// **'If an account exists for that email address, we sent a password reset link.'**
+  String get passwordResetSent;
+
+  /// No description provided for @passwordResetFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not send a password reset email. Please try again.'**
+  String get passwordResetFailed;
 
   /// No description provided for @emailRequired.
   ///

@@ -92,7 +92,8 @@ service cloud.firestore {
                     && request.resource.data.creatorId == request.auth.uid
                     && request.resource.data.title is string
                     && request.resource.data.title.size() <= 120;
-      allow update: if isSignedIn() && (
+      allow update: if isAdmin()
+                    || (isSignedIn() && (
                       resource.data.creatorId == request.auth.uid
                       || request.resource.data.diff(resource.data).affectedKeys()
                           .hasOnly([
@@ -103,7 +104,7 @@ service cloud.firestore {
                             'analyticsSaves',
                             'analyticsClicks'
                           ])
-                    );
+                    ));
       allow delete: if isAdmin()
                     || (isSignedIn()
                         && resource.data.creatorId == request.auth.uid);
@@ -128,11 +129,13 @@ service cloud.firestore {
     // ── Creator event extras ──────────────────────────────────────────────
     match /user_events/{eventId} {
       allow read: if true;
-      allow create: if isSignedIn()
-                    && request.resource.data.creatorId == request.auth.uid
-                    && request.resource.data.title is string
-                    && request.resource.data.title.size() <= 120;
-      allow update: if isSignedIn() && (
+      allow create: if isAdmin()
+                    || (isSignedIn()
+                        && request.resource.data.creatorId == request.auth.uid
+                        && request.resource.data.title is string
+                        && request.resource.data.title.size() <= 120);
+      allow update: if isAdmin()
+                    || (isSignedIn() && (
                       resource.data.creatorId == request.auth.uid
                       || request.resource.data.diff(resource.data).affectedKeys()
                           .hasOnly([
@@ -142,7 +145,7 @@ service cloud.firestore {
                             'analyticsClicks',
                             'interestedCount'
                           ])
-                    );
+                    ));
       allow delete: if isAdmin()
                     || (isSignedIn()
                         && resource.data.creatorId == request.auth.uid);
@@ -175,12 +178,13 @@ service cloud.firestore {
                     && request.resource.data.eventId is string
                     && request.resource.data.email is string
                     && request.resource.data.statement is string
-                    && request.resource.data.statement.size() <= 2000;
-      allow update: if isAdmin()
-                    || (isSignedIn()
-                        && resource.data.userId == request.auth.uid
-                        && request.resource.data.diff(resource.data).affectedKeys()
-                            .hasOnly(['unlocked']));
+                    && request.resource.data.statement.size() <= 2000
+                    // Claimants may submit proof, but never self-approve or
+                    // self-unlock a listing from the client.
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.unlocked == false
+                    && request.resource.data.firstClaimFree == false;
+      allow update: if isAdmin();
       allow delete: if isAdmin()
                     || (isSignedIn()
                         && resource.data.userId == request.auth.uid);

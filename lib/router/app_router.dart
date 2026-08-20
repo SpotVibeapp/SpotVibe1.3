@@ -64,8 +64,10 @@ class AppRouter {
   static GoRouter build({String initialLocation = '/'}) {
     return GoRouter(
       initialLocation: initialLocation,
-      // Redirect any unhandled navigation exceptions back to home.
-      onException: (_, state, router) => router.go('/'),
+      // Never silently reset a user to home when navigation fails. Showing a
+      // recoverable error page makes invalid deep links and route bugs visible
+      // during testing instead of looking like a random app refresh.
+      errorBuilder: (_, __) => const _RouteErrorScreen(),
       // Deep link redirect: if a link arrives pointing at an event page but
       // permissions haven't been shown yet, save the path and send the user
       // through the permission screen first.
@@ -393,6 +395,48 @@ class AppRouter {
         },
       ),
     ],
+    );
+  }
+}
+
+class _RouteErrorScreen extends StatelessWidget {
+  const _RouteErrorScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Page unavailable')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.link_off_rounded, size: 56, color: colors.onSurfaceVariant),
+              const SizedBox(height: 16),
+              Text(
+                'We could not open that page.',
+                style: text.titleLarge,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'The link may be outdated or the page may no longer be available.',
+                style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: () => context.go('/'),
+                icon: const Icon(Icons.home_rounded),
+                label: const Text('Browse events'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -5,11 +5,10 @@ import '../data/pricing.dart';
 import '../models/event.dart';
 import '../models/event_claim.dart';
 import '../providers/auth_provider.dart';
-import '../providers/subscription_provider.dart';
 import '../repositories/event_claim_repository.dart';
 import '../theme/theme.dart';
 
-/// Verify first. First approved claim is free; later claims need Premium.
+/// Lets a venue or promoter submit proof for an administrator to review.
 class VenueClaimScreen extends StatelessWidget {
   final Event event;
   const VenueClaimScreen({super.key, required this.event});
@@ -86,7 +85,6 @@ class _VerifyOwnershipViewState extends State<_VerifyOwnershipView> {
             status: ClaimStatus.pending,
             createdAt: DateTime.now(),
           ),
-          isPremium: context.read<SubscriptionProvider>().isSubscribed,
         );
     if (!mounted) return;
     setState(() {
@@ -100,13 +98,11 @@ class _VerifyOwnershipViewState extends State<_VerifyOwnershipView> {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final appColors = Theme.of(context).extension<AppColorsExtension>()!;
-    final sub = context.watch<SubscriptionProvider>();
 
     if (_result != null) {
       return _ClaimResultView(
         event: widget.event,
         claim: _result!,
-        isPremium: sub.isSubscribed,
         appColors: appColors,
         text: text,
         colors: colors,
@@ -130,8 +126,7 @@ class _VerifyOwnershipViewState extends State<_VerifyOwnershipView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Verify first. Your first approved claim is free. '
-                'After that, Premium ($kPremiumMonthlyLabel after a $kPremiumTrialLabel) unlocks more claims.',
+                'Submit proof that you represent this listing. An administrator reviews every claim before transferring edit access to your account.',
                 style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
               ),
               const SizedBox(height: AppTheme.spacingLg),
@@ -274,7 +269,6 @@ class _VerifyOwnershipViewState extends State<_VerifyOwnershipView> {
 class _ClaimResultView extends StatelessWidget {
   final Event event;
   final EventClaim claim;
-  final bool isPremium;
   final AppColorsExtension appColors;
   final TextTheme text;
   final ColorScheme colors;
@@ -282,7 +276,6 @@ class _ClaimResultView extends StatelessWidget {
   const _ClaimResultView({
     required this.event,
     required this.claim,
-    required this.isPremium,
     required this.appColors,
     required this.text,
     required this.colors,
@@ -290,21 +283,19 @@ class _ClaimResultView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final needsPay = claim.status == ClaimStatus.approved && !claim.unlocked;
     final pending = claim.status == ClaimStatus.pending;
-    final title = claim.unlocked
+    final approved = claim.unlocked;
+    final title = approved
         ? 'You can edit this listing'
         : pending
             ? 'Verification submitted'
-            : 'Verified — subscribe to unlock';
-    final body = claim.unlocked
-        ? 'Your first claim is free. You can now update “${event.title}”.'
+            : 'Claim not approved';
+    final body = approved
+        ? 'An administrator approved your claim. You can now update “${event.title}”.'
         : pending
             ? 'We received your request for “${event.title}”. '
-                'Work emails are approved automatically; personal inboxes are reviewed within 2 business days. '
-                'Your first approved claim stays free.'
-            : 'This listing is verified, but you already used your free claim. '
-                'Start a $kPremiumTrialLabel to unlock edits, recurring tools, and featured placement.';
+                'An administrator will review your proof before handing the listing to your account.'
+            : 'This claim was not approved. Review your proof and contact SpotVibe support if you need help.';
 
     return Scaffold(
       backgroundColor: colors.surface,
@@ -315,11 +306,11 @@ class _ClaimResultView extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                claim.unlocked
+                approved
                     ? Icons.verified_rounded
                     : pending
                         ? Icons.mark_email_read_rounded
-                        : Icons.workspace_premium_rounded,
+                        : Icons.cancel_outlined,
                 size: 72,
                 color: appColors.proGold,
               ),
@@ -332,27 +323,10 @@ class _ClaimResultView extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppTheme.spacingXl),
-              if (needsPay && !isPremium)
-                FilledButton(
-                  onPressed: () async {
-                    final ok = await context.push<bool>('/paywall');
-                    if (!context.mounted) return;
-                    if (ok == true) {
-                      await context.read<EventClaimRepository>().unlockEligibleForUser(claim.userId);
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Claim unlocked. You can edit this listing.')),
-                      );
-                      context.pop();
-                    }
-                  },
-                  child: Text('Start $kPremiumTrialLabel'),
-                )
-              else
-                ElevatedButton(
-                  onPressed: () => context.pop(),
-                  child: const Text('Back to event'),
-                ),
+              ElevatedButton(
+                onPressed: () => context.pop(),
+                child: const Text('Back to event'),
+              ),
             ],
           ),
         ),
