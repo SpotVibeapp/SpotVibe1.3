@@ -104,6 +104,25 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Requests a reset link without disclosing whether the address belongs to
+  /// an account. Firebase sends the actual email when appropriate.
+  Future<bool> sendPasswordResetEmail(String email) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await _service.sendPasswordResetEmail(email);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e is ArgumentError ? e.message.toString() : 'Could not send reset email.';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   void continueAsGuest() {
     _user = const AppUser(
       id: 'guest',

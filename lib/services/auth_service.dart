@@ -119,6 +119,13 @@ class AuthService {
     return _repository.register(trimmedName, trimmedEmail, password);
   }
 
+  Future<void> sendPasswordResetEmail(String email) async {
+    final trimmedEmail = email.trim();
+    if (trimmedEmail.isEmpty) throw ArgumentError('Email is required');
+    if (!trimmedEmail.contains('@')) throw ArgumentError('Invalid email format');
+    await _repository.sendPasswordResetEmail(trimmedEmail);
+  }
+
   Future<void> logout() async {
     await _repository.logout();
   }

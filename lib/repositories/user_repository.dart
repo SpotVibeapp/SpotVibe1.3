@@ -40,6 +40,10 @@ abstract class UserRepository {
   /// Creates a new account. Throws when the email is already registered.
   Future<AppUser> register(String name, String email, String password);
 
+  /// Sends an email-password reset link. Implementations must not reveal
+  /// whether a given address belongs to an account.
+  Future<void> sendPasswordResetEmail(String email);
+
   Future<void> logout();
 
   // ── Social graph ────────────────────────────────────────────────────────

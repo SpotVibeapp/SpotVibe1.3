@@ -113,7 +113,7 @@ void main() {
     expect(sorted.first.isFeaturedThisWeek, isTrue);
   });
 
-  test('work-email first claim auto-approves and unlocks for free', () async {
+  test('claims remain pending until an admin approves the handoff', () async {
     final repo = MockEventClaimRepository();
     final claim = await repo.submit(
       EventClaim(
@@ -133,15 +133,16 @@ void main() {
         status: ClaimStatus.pending,
         createdAt: DateTime(2026, 8, 12),
       ),
-      isPremium: false,
     );
-    expect(claim.status, ClaimStatus.approved);
-    expect(claim.unlocked, isTrue);
-    expect(claim.firstClaimFree, isTrue);
+    expect(claim.status, ClaimStatus.pending);
+    expect(claim.unlocked, isFalse);
+    expect(await repo.isApprovedPromoter(eventId: 'evt1', userId: 'u1'), isFalse);
+
+    await repo.updateClaimStatus(claim.id, approve: true);
     expect(await repo.isApprovedPromoter(eventId: 'evt1', userId: 'u1'), isTrue);
   });
 
-  test('second claim stays locked until Premium unlocks it', () async {
+  test('admin approval unlocks a submitted claim without client self-unlock', () async {
     final repo = MockEventClaimRepository();
     Future<EventClaim> submit(String eventId, String email) {
       return repo.submit(
@@ -162,15 +163,16 @@ void main() {
           status: ClaimStatus.pending,
           createdAt: DateTime(2026, 8, 12),
         ),
-        isPremium: false,
       );
     }
 
     await submit('evt1', 'owner@plaza-theatre.com');
     final second = await submit('evt2', 'owner@plaza-theatre.com');
-    expect(second.status, ClaimStatus.approved);
+    expect(second.status, ClaimStatus.pending);
     expect(second.unlocked, isFalse);
-    expect(await repo.unlockEligibleForUser('u1'), 1);
+    expect(await repo.unlockEligibleForUser('u1'), 0);
+
+    await repo.updateClaimStatus(second.id, approve: true);
     expect(await repo.isApprovedPromoter(eventId: 'evt2', userId: 'u1'), isTrue);
   });
 

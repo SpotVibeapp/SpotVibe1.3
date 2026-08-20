@@ -77,7 +77,10 @@ Your API key was committed to a **public** repo, so treat it as compromised.
    ```
    Uploads fail with a clear message until this is done.
 8. (Recommended) **App Check:** enable Play Integrity + App Attest, and
-   enforce it, so your Firebase keys can't be abused.
+   enforce it only after testing, so your Firebase keys can't be abused.
+9. **Password recovery:** use **Forgot password?** in the app with a real test
+   email, then confirm Firebase delivers the reset link and the new password
+   can sign in.
 
 ---
 

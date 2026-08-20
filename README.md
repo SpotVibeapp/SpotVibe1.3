@@ -128,8 +128,9 @@ SpotVibe has a built-in admin role for moderating the feed directly:
   - **Reports** — review user reports, **ban a user** (hides all their events,
     comments, and RSVPs), and manage the ban list.
   - **Events** — search the feed and remove any event.
-  - **Claims** — approve or reject pending venue claims (approving unlocks the
-    listing for the claimer to edit).
+  - **Claims** — approve or reject pending venue claims. Approval transfers the
+    listing mirror to the verified claimer so they can edit it; admins retain
+    moderation access.
   - **Partner codes** — stock and issue one App Store / Google Play-generated
     one-time offer code to one business partner. The dashboard never creates a
     custom Premium-unlock code; see `STORE_PRODUCTS.md` for the store setup.
