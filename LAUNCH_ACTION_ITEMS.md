@@ -81,6 +81,16 @@ Your API key was committed to a **public** repo, so treat it as compromised.
 9. **Password recovery:** use **Forgot password?** in the app with a real test
    email, then confirm Firebase delivers the reset link and the new password
    can sign in.
+10. **AI promo backgrounds (optional):** The in-app generator is available
+    after you configure an OpenAI key as a Firebase secret and deploy Cloud
+    Functions:
+    ```bash
+    firebase functions:secrets:set OPENAI_API_KEY
+    firebase deploy --only functions
+    ```
+    Set a Cloud billing alert first. The app keeps the key server-side, limits
+    generation to 3 images/day per user (20/day per admin), and stores results
+    in the event owner's Firebase Storage path.
 
 ---
 

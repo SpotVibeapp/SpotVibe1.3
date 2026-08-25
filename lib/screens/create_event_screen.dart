@@ -18,6 +18,7 @@ import '../services/ai_moderation_service.dart';
 import '../services/media_upload_service.dart';
 import '../services/user_event_service.dart';
 import '../theme/theme.dart';
+import '../widgets/events/ai_promo_image_dialog.dart';
 
 export '../models/user_event.dart' show RecurringType;
 
@@ -52,6 +53,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   late final String _eventMediaId;
   String? _localCoverPath;
   String? _localVideoPath;
+  bool _aiGeneratedCover = false;
   bool _uploadingMedia = false;
 
   // ── Premium fields ────────────────────────────────────────────────────────
@@ -166,7 +168,12 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   Future<void> _pickCover({required bool camera}) async {
     try {
       final path = await MediaUploadService().pickImage(fromCamera: camera);
-      if (path != null && mounted) setState(() => _localCoverPath = path);
+      if (path != null && mounted) {
+        setState(() {
+          _localCoverPath = path;
+          _aiGeneratedCover = false;
+        });
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -185,6 +192,42 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
     }
+  }
+
+  Future<void> _generateAiPromoImage() async {
+    final auth = context.read<AuthProvider>();
+    final subscription = context.read<SubscriptionProvider>();
+    if (!auth.isAdmin && !subscription.isSubscribed) {
+      final upgraded = await context.push<bool>('/paywall');
+      if (upgraded != true || !mounted) return;
+    }
+
+    final title = _titleController.text.trim();
+    final description = _descriptionController.text.trim();
+    final venue = _locationController.text.trim();
+    if (title.isEmpty || description.isEmpty || venue.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Add an event title, description, and venue before generating a promo image.'),
+        ),
+      );
+      return;
+    }
+
+    final result = await showAiPromoImageDialog(
+      context,
+      eventId: _eventMediaId,
+      title: title,
+      description: description,
+      category: _selectedCategory,
+      venue: venue,
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _localCoverPath = null;
+      _imageUrlController.text = result.imageUrl;
+      _aiGeneratedCover = true;
+    });
   }
 
   Future<void> _openPaywall() async {
@@ -469,18 +512,32 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               label: 'Cover photo',
               subtitle: _localCoverPath != null
                   ? 'Photo selected'
-                  : (_imageUrlController.text.isNotEmpty
-                      ? 'Using image URL'
-                      : 'Upload a photo of this event or venue'),
+                  : (_aiGeneratedCover
+                      ? 'AI-generated background selected — review before publishing'
+                      : (_imageUrlController.text.isNotEmpty
+                          ? 'Using image URL'
+                          : 'Upload a photo of this event or venue')),
               icon: Icons.add_photo_alternate_rounded,
               preview: _localCoverPath != null && !kIsWeb
                   ? Image.file(File(_localCoverPath!), fit: BoxFit.cover)
-                  : null,
+                  : (_aiGeneratedCover && _imageUrlController.text.isNotEmpty
+                      ? Image.network(_imageUrlController.text, fit: BoxFit.cover)
+                      : null),
               onLibrary: () => _pickCover(camera: false),
               onCamera: () => _pickCover(camera: true),
-              onClear: _localCoverPath == null
+              onClear: (_localCoverPath == null && _imageUrlController.text.isEmpty)
                   ? null
-                  : () => setState(() => _localCoverPath = null),
+                  : () => setState(() {
+                        _localCoverPath = null;
+                        _imageUrlController.clear();
+                        _aiGeneratedCover = false;
+                      }),
+            ),
+            const SizedBox(height: AppTheme.spacingSm),
+            OutlinedButton.icon(
+              onPressed: _generateAiPromoImage,
+              icon: const Icon(Icons.auto_awesome_rounded),
+              label: const Text('Generate AI promo background'),
             ),
             const SizedBox(height: AppTheme.spacingMd),
             _MediaPickRow(

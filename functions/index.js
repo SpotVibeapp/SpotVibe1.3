@@ -14,10 +14,16 @@
  *  - seedCuratedEvents   callable — seeds the El Paso curated feed (Admin SDK)
  */
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { defineSecret } = require('firebase-functions/params');
+const { randomUUID } = require('crypto');
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
 
 admin.initializeApp();
+
+// Stored in Cloud Secret Manager and bound only to generatePromoImage. Never
+// put this key in Flutter, Firebase Hosting, or a checked-in .env file.
+const openAiApiKey = defineSecret('OPENAI_API_KEY');
 
 // Minimal starter blocklist — expand this (or swap in an ML provider) before a
 // broad launch. This is a last-line-of-defense behind the client-side filter.
@@ -244,3 +250,198 @@ exports.seedCuratedEvents = onCall(async () => {
   // falls back to the bundled curated list, so this is optional for v1.
   return { ok: true, seeded: 0 };
 });
+
+
+// ── AI promo backgrounds ────────────────────────────────────────────────────
+
+const AI_PROMO_STYLES = new Set(['vibrant', 'editorial', 'neon', 'minimal', 'elegant']);
+const AI_PROMO_SIZES = {
+  square: '1024x1024',
+  portrait: '1024x1536',
+  landscape: '1536x1024',
+};
+const AI_PROMO_DAILY_LIMIT = 3;
+const AI_PROMO_ADMIN_DAILY_LIMIT = 20;
+
+function cleanPromoText(value, field, maxLength) {
+  if (typeof value !== 'string') {
+    throw new HttpsError('invalid-argument', `${field} is required.`);
+  }
+  const cleaned = value.trim().replace(/\s+/g, ' ');
+  if (!cleaned || cleaned.length > maxLength) {
+    throw new HttpsError(
+      'invalid-argument',
+      `${field} must be between 1 and ${maxLength} characters.`
+    );
+  }
+  return cleaned;
+}
+
+function assertSafePromoPrompt(text) {
+  // This is a first-line app policy check. The provider's high moderation
+  // setting remains the final safety filter. Keep generated images focused on
+  // event backgrounds, not explicit content, hate, personal data, or fraud.
+  const prohibited = /\b(?:nude|nudity|porn|explicit sexual|rape|self-harm|suicide method|credit card|social security|deepfake|impersonate)\b/i;
+  if (prohibited.test(text)) {
+    throw new HttpsError(
+      'permission-denied',
+      'That promo image request cannot be generated. Please use a safe event description.'
+    );
+  }
+}
+
+async function reserveAiPromoGeneration(uid) {
+  const db = admin.firestore();
+  const day = new Date().toISOString().slice(0, 10);
+  const usageRef = db.collection('ai_promo_usage').doc(`${uid}_${day}`);
+  const adminRef = db.collection('admins').doc(uid);
+
+  await db.runTransaction(async (transaction) => {
+    const [usageSnap, adminSnap] = await Promise.all([
+      transaction.get(usageRef),
+      transaction.get(adminRef),
+    ]);
+    const current = Number(usageSnap.data()?.count || 0);
+    const limit = adminSnap.exists ? AI_PROMO_ADMIN_DAILY_LIMIT : AI_PROMO_DAILY_LIMIT;
+    if (current >= limit) {
+      throw new HttpsError(
+        'resource-exhausted',
+        `You have reached today's AI promo-image limit (${limit}). Try again tomorrow.`
+      );
+    }
+    transaction.set(
+      usageRef,
+      {
+        uid,
+        day,
+        count: current + 1,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  });
+
+  return usageRef;
+}
+
+async function releaseAiPromoReservation(usageRef) {
+  try {
+    await usageRef.update({
+      count: admin.firestore.FieldValue.increment(-1),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  } catch (_) {
+    // The quota is intentionally conservative if decrementing fails.
+  }
+}
+
+/**
+ * Generates a safe event-promo background and stores it at the event owner's
+ * Firebase Storage path. The Flutter client overlays accurate event text in
+ * its own UI; the image model is explicitly told not to render text or logos.
+ *
+ * Setup:
+ *   firebase functions:secrets:set OPENAI_API_KEY
+ *   firebase deploy --only functions
+ */
+exports.generatePromoImage = onCall(
+  {
+    secrets: [openAiApiKey],
+    timeoutSeconds: 120,
+    memory: '1GiB',
+  },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError('unauthenticated', 'Sign in before generating a promo image.');
+    }
+
+    const uid = request.auth.uid;
+    const data = request.data || {};
+    const eventId = cleanPromoText(data.eventId, 'eventId', 128);
+    if (!/^[A-Za-z0-9_-]+$/.test(eventId)) {
+      throw new HttpsError('invalid-argument', 'eventId contains unsupported characters.');
+    }
+    const title = cleanPromoText(data.title, 'title', 120);
+    const description = cleanPromoText(data.description, 'description', 1500);
+    const category = cleanPromoText(data.category, 'category', 60);
+    const venue = cleanPromoText(data.venue, 'venue', 160);
+    const style = AI_PROMO_STYLES.has(data.style) ? data.style : 'vibrant';
+    const size = AI_PROMO_SIZES[data.aspectRatio] || AI_PROMO_SIZES.portrait;
+    assertSafePromoPrompt(`${title} ${description} ${venue} ${category}`);
+
+    const apiKey = openAiApiKey.value();
+    if (!apiKey) {
+      throw new HttpsError(
+        'failed-precondition',
+        'AI promo images are not configured yet. Ask the app owner to finish setup.'
+      );
+    }
+
+    const usageRef = await reserveAiPromoGeneration(uid);
+    const prompt = [
+      `Create an original, premium-quality ${style} promotional background for a local ${category} event.`,
+      `Event concept: ${title}. Venue context: ${venue}.`,
+      `Visual mood based on this event description: ${description}.`,
+      'Create only the visual background. Do not include readable text, letters, numbers, dates, logos, watermarks, QR codes, brand marks, celebrity likenesses, or copyrighted characters.',
+      'Make the composition visually clear with open space for a separate event-title overlay added by the app.',
+    ].join(' ');
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1',
+          prompt,
+          n: 1,
+          size,
+          quality: 'medium',
+          moderation: 'high',
+        }),
+      });
+      if (!response.ok) {
+        const detail = await response.text();
+        console.error('AI promo generation failed:', response.status, detail.slice(0, 500));
+        throw new HttpsError('internal', 'The image provider could not generate a promo image.');
+      }
+      const payload = await response.json();
+      const base64 = payload?.data?.[0]?.b64_json;
+      if (!base64) {
+        console.error('AI promo generation returned no image payload.');
+        throw new HttpsError('internal', 'The image provider returned no usable image.');
+      }
+
+      const imageBytes = Buffer.from(base64, 'base64');
+      const objectPath = `events/${uid}/${eventId}/ai_${randomUUID()}.png`;
+      const downloadToken = randomUUID();
+      const bucket = admin.storage().bucket();
+      const file = bucket.file(objectPath);
+      await file.save(imageBytes, {
+        resumable: false,
+        contentType: 'image/png',
+        metadata: {
+          metadata: {
+            firebaseStorageDownloadTokens: downloadToken,
+            aiGenerated: 'true',
+            aiPromptVersion: '1',
+          },
+        },
+      });
+      const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(objectPath)}?alt=media&token=${downloadToken}`;
+
+      return {
+        imageUrl,
+        storagePath: objectPath,
+        aiGenerated: true,
+      };
+    } catch (error) {
+      await releaseAiPromoReservation(usageRef);
+      if (error instanceof HttpsError) throw error;
+      console.error('Unexpected AI promo generation error:', error);
+      throw new HttpsError('internal', 'Could not generate a promo image. Please try again.');
+    }
+  }
+);
