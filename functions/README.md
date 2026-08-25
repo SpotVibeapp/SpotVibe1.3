@@ -11,9 +11,25 @@ npm install
 firebase deploy --only functions
 ```
 
-No secrets are required. To promote admins, bootstrap the **first** admin via
-the Firebase console (create `admins/{uid}` — see below); after that an admin
-can promote more admins with the `promoteAdmin` callable.
+To promote admins, bootstrap the **first** admin via the Firebase console
+(create `admins/{uid}` — see below); after that an admin can promote more
+admins with the `promoteAdmin` callable.
+
+## AI promo-image setup
+
+`generatePromoImage` uses an OpenAI image-generation key stored in Firebase
+Cloud Secret Manager — never in Flutter or source control:
+
+```bash
+firebase functions:secrets:set OPENAI_API_KEY
+firebase deploy --only functions
+```
+
+The function provides a conservative daily quota (3 per signed-in user; 20 per
+admin), provider-side high moderation, and a first-line prompt safety check.
+Generated backgrounds are written to the event owner's Firebase Storage path.
+Cloud Functions and the image provider both require a billed account; set a
+budget alert before enabling this in production.
 
 ## What's here
 
@@ -25,6 +41,7 @@ can promote more admins with the `promoteAdmin` callable.
 | `moderateUserEvent` | Firestore trigger | Flags/hides user events matching a banned-word list. |
 | `promoteAdmin` | callable | Adds a user to the `admins/{uid}` roster. Only an **existing** admin may call it (the first admin is created in the Firebase console). |
 | `seedCuratedEvents` | callable (stub) | Seeds curated events server-side. The client already bundles the curated list, so this is optional for v1. |
+| `generatePromoImage` | callable | Generates a rate-limited, moderated AI event-promo background with the provider key kept in Cloud Secret Manager. |
 
 ## Notes
 

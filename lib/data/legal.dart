@@ -38,7 +38,7 @@ const LegalDocument kPrivacyPolicy = LegalDocument(
     LegalSection(
       'Information you give us',
       'Account: name, email, password (stored by Firebase Authentication, not in plain text), and a profile photo if you upload one or sign in with Google, Apple, or Facebook.\n\n'
-          'Events you create: title, description, cover photos, optional short videos (up to 30 seconds), location, time, ticket price, and optional contact or branding fields.\n\n'
+          'Events you create: title, description, cover photos, optional short videos (up to 30 seconds), location, time, ticket price, and optional contact or branding fields. If you choose to generate an AI promo background, we send the event title, description, category, venue context, and selected visual style to OpenAI to generate that image. Do not include sensitive personal information in an AI image request.\n\n'
           'RSVPs and comments: whether you are going, and any text you post.\n\n'
           'Venue / event claims: your name, work email, phone, organization, role, and any proof you submit so we can verify you are authorized.\n\n'
           'Support: anything you email us.',
@@ -65,7 +65,7 @@ const LegalDocument kPrivacyPolicy = LegalDocument(
     ),
     LegalSection(
       'When we share information',
-      'Service providers that host or process data for us: Google Firebase (auth, database, file storage for photos and short videos), Apple and Google (app stores and in-app purchases), RevenueCat (subscription status), and Ticketmaster (outbound event search only).\n\n'
+      'Service providers that host or process data for us: Google Firebase (auth, database, file storage for photos and short videos), Apple and Google (app stores and in-app purchases), RevenueCat (subscription status), Ticketmaster (outbound event search only), and OpenAI (only when you choose to generate an AI promo background).\n\n'
           'The public: events you publish, public RSVPs, and comments are visible to other users.\n\n'
           'Legal: if required by law, to protect people, or in a sale of the business.\n\n'
           'We do not sell your personal information.',
@@ -125,8 +125,12 @@ const LegalDocument kTermsOfUse = LegalDocument(
           'We may remove content or suspend accounts that break these rules, including false venue claims.',
     ),
     LegalSection(
+      'AI-generated promo backgrounds',
+      'SpotVibe may offer an optional AI tool that generates a visual background from event details you provide. Review every result before publishing. You are responsible for ensuring your final event page is accurate and does not infringe rights, impersonate people or organizations, use misleading logos or marks, or violate our content rules. We may block, remove, or limit generated images that violate these Terms or applicable provider policies.',
+    ),
+    LegalSection(
       'Claims',
-      'Claiming a listing requires verification that you are authorized. Your first approved claim is free. Later claims may require SpotVibe Premium. We may reject or reverse a claim. False claims can lead to suspension.',
+      'Claiming a listing requires verification that you are authorized. An administrator reviews each claim before transferring listing edit access. We may reject or reverse a claim. False claims can lead to suspension.',
     ),
     LegalSection(
       'Subscriptions and payments',
