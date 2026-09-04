@@ -39,6 +39,17 @@
   "discoverTitle": "Discover events\nhappening near you",
   "discoverBody": "SpotVibe surfaces the best local events — concerts, food festivals, community meetups and more — personalised to what you love.",
   "nearYou": "Near you",
+  "homeHappeningNearYou": "Happening near you",
+  "homeNextUp": "NEXT UP",
+  "quickFilters": "Quick filters",
+  "openEvent": "Open {title}",
+  "@openEvent": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "personalised": "Personalised",
   "social": "Social",
   "reminders": "Reminders",

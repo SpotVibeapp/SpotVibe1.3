@@ -39,6 +39,17 @@
   "discoverTitle": "Descubre eventos\ncerca de ti",
   "discoverBody": "SpotVibe te muestra los mejores eventos locales: conciertos, festivales gastronómicos, reuniones comunitarias y más, personalizados según lo que te gusta.",
   "nearYou": "Cerca de ti",
+  "homeHappeningNearYou": "Eventos cerca de ti",
+  "homeNextUp": "PRÓXIMAMENTE",
+  "quickFilters": "Filtros rápidos",
+  "openEvent": "Abrir {title}",
+  "@openEvent": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "personalised": "Personalizado",
   "social": "Social",
   "reminders": "Recordatorios",

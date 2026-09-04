@@ -10,14 +10,28 @@ import '../events/event_card.dart';
 const int kEventsPerPage = 15;
 
 /// Displays [kEventsPerPage] events at a time from [eventProvider.events].
-/// Shows a count banner ("Showing 15 of 47 events") at the top and page
-/// navigation controls at the bottom when there is more than one page.
+/// Shows a count banner ("Showing 15 of 47 events") and optional
+/// [feedHeader] content before the cards, plus page navigation controls when
+/// there is more than one page.
 ///
 /// [onEventTap] is called by the parent so navigation (go_router) stays
 /// in the screen layer, not in this widget.
 class PaginatedEventsList extends StatefulWidget {
   final EventProvider eventProvider;
   final PersonalizationProvider personalization;
+
+  /// Optional scrollable content shown before the feed section heading. This
+  /// lets the home page have a visual discovery moment without making its
+  /// search controls or pagination fixed and crowded on smaller phones.
+  final List<Widget> feedHeader;
+
+  /// Optional title shown above the accurate feed-count label.
+  final String? sectionTitle;
+
+  /// A real event already displayed in a prominent header can be omitted from
+  /// the card list below it, so people are not shown the exact same listing
+  /// twice in a row.
+  final String? excludedEventId;
 
   /// Attached to the first event card so the guided tour can spotlight it.
   final GlobalKey? firstCardKey;
@@ -30,6 +44,9 @@ class PaginatedEventsList extends StatefulWidget {
     required this.eventProvider,
     required this.personalization,
     required this.onEventTap,
+    this.feedHeader = const [],
+    this.sectionTitle,
+    this.excludedEventId,
     this.firstCardKey,
   });
 
@@ -40,7 +57,14 @@ class PaginatedEventsList extends StatefulWidget {
 class _PaginatedEventsListState extends State<PaginatedEventsList> {
   int _currentPage = 0;
 
-  List<Event> get _all => widget.eventProvider.events;
+  List<Event> get _all {
+    final excludedEventId = widget.excludedEventId;
+    if (excludedEventId == null) return widget.eventProvider.events;
+    return widget.eventProvider.events
+        .where((event) => event.id != excludedEventId)
+        .toList(growable: false);
+  }
+
   int get _total => _all.length;
   int get _totalPages => (_total / kEventsPerPage).ceil().clamp(1, 99999);
 
@@ -80,28 +104,40 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
     final page = _pageEvents;
     final provider = widget.eventProvider;
 
+    final headerCount = widget.feedHeader.length;
+
     return Column(
       children: [
-        // ── Count banner ──────────────────────────────────────────────────────
-        _EventCountBanner(
-          currentPage: _currentPage,
-          pageSize: kEventsPerPage,
-          total: _total,
-        ),
-        // ── Event cards ───────────────────────────────────────────────────────
+        // ── Scrollable discovery header, feed heading, and event cards ────────
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.only(bottom: AppTheme.spacingXs),
-            itemCount: page.length,
+            itemCount: headerCount + 1 + page.length,
             itemBuilder: (ctx, i) {
-              final event = page[i];
-              final globalIndex = _currentPage * kEventsPerPage + i;
+              if (i < headerCount) return widget.feedHeader[i];
+
+              if (i == headerCount) {
+                return _EventCountBanner(
+                  currentPage: _currentPage,
+                  pageSize: kEventsPerPage,
+                  total: _total,
+                  sectionTitle: widget.sectionTitle,
+                );
+              }
+
+              final eventIndex = i - headerCount - 1;
+              final event = page[eventIndex];
+              // Cards may omit the event shown in the home hero, so use the
+              // provider's actual index rather than the visible-list offset.
+              final providerIndex = provider.indexOfEvent(event.id);
               return EventCard(
-                key: globalIndex == 0 ? widget.firstCardKey : null,
+                key: _currentPage == 0 && eventIndex == 0
+                    ? widget.firstCardKey
+                    : null,
                 event: event,
-                onTap: () => widget.onEventTap(event, globalIndex),
-                onBookmark: () => provider.toggleBookmark(globalIndex),
-                onInterested: () => provider.toggleInterested(globalIndex),
+                onTap: () => widget.onEventTap(event, providerIndex),
+                onBookmark: () => provider.toggleBookmark(providerIndex),
+                onInterested: () => provider.toggleInterested(providerIndex),
                 distanceMiles: provider.distanceFor(event),
               );
             },
@@ -130,11 +166,13 @@ class _EventCountBanner extends StatelessWidget {
   final int currentPage;
   final int pageSize;
   final int total;
+  final String? sectionTitle;
 
   const _EventCountBanner({
     required this.currentPage,
     required this.pageSize,
     required this.total,
+    this.sectionTitle,
   });
 
   @override
@@ -154,24 +192,34 @@ class _EventCountBanner extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppTheme.spacingMd,
-        AppTheme.spacingSm,
+        AppTheme.spacingMd,
         AppTheme.spacingMd,
         AppTheme.spacingXs,
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.event_rounded,
-            size: AppTheme.iconSm,
-            color: colors.primary,
-          ),
-          const SizedBox(width: AppTheme.spacingXs),
           Text(
-            label,
-            style: text.labelSmall?.copyWith(
-              color: colors.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
+            sectionTitle ?? l10n.homeHappeningNearYou,
+            style: text.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 3),
+          Row(
+            children: [
+              Icon(
+                Icons.event_rounded,
+                size: AppTheme.iconSm,
+                color: colors.primary,
+              ),
+              const SizedBox(width: AppTheme.spacingXs),
+              Text(
+                label,
+                style: text.labelSmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ],
       ),
