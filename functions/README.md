@@ -26,7 +26,7 @@ firebase deploy --only functions
 ```
 
 The function provides a conservative daily quota (3 per signed-in user; 20 per
-admin), provider-side high moderation, and a first-line prompt safety check.
+admin), provider-side standard moderation, and a first-line prompt safety check.
 Generated backgrounds are written to the event owner's Firebase Storage path.
 Cloud Functions and the image provider both require a billed account; set a
 budget alert before enabling this in production.
