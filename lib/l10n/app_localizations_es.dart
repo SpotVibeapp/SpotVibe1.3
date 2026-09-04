@@ -135,6 +135,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get homeHappeningNearYou => 'Eventos cerca de ti';
 
   @override
+  String get homeEditorialTagline => 'TU GUÍA LOCAL';
+
+  @override
   String get homeNextUp => 'PRÓXIMAMENTE';
 
   @override

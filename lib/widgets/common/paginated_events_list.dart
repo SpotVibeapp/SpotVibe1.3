@@ -196,30 +196,53 @@ class _EventCountBanner extends StatelessWidget {
         AppTheme.spacingMd,
         AppTheme.spacingXs,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            sectionTitle ?? l10n.homeHappeningNearYou,
-            style: text.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          Container(
+            width: 4,
+            height: 42,
+            decoration: BoxDecoration(
+              gradient: AppTheme.brandGradient,
+              borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+            ),
           ),
-          const SizedBox(height: 3),
-          Row(
-            children: [
-              Icon(
-                Icons.event_rounded,
-                size: AppTheme.iconSm,
-                color: colors.primary,
-              ),
-              const SizedBox(width: AppTheme.spacingXs),
-              Text(
-                label,
-                style: text.labelSmall?.copyWith(
-                  color: colors.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  sectionTitle ?? l10n.homeHappeningNearYou,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: text.titleLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
-              ),
-            ],
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.event_rounded,
+                      size: AppTheme.iconSm,
+                      color: colors.primary,
+                    ),
+                    const SizedBox(width: AppTheme.spacingXs),
+                    Expanded(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: text.labelSmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),

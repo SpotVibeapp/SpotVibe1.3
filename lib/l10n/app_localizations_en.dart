@@ -134,6 +134,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeHappeningNearYou => 'Happening near you';
 
   @override
+  String get homeEditorialTagline => 'THE LOCAL EDIT';
+
+  @override
   String get homeNextUp => 'NEXT UP';
 
   @override
