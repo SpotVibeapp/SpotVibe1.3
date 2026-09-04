@@ -115,14 +115,32 @@ class _EventsScreenState extends State<EventsScreen> {
                 children: [
                   const AppIconMark(size: 34, glow: false),
                   const SizedBox(width: AppTheme.spacingSm),
-                  SpotVibeWordmark(
-                    key: _tourKeyHeader,
-                    style: text.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
+                  Expanded(
+                    child: Column(
+                      key: _tourKeyHeader,
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SpotVibeWordmark(
+                          style: text.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          l10n.homeEditorialTagline,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: text.labelSmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.45,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const Spacer(),
                   Stack(
                     clipBehavior: Clip.none,
                     children: [

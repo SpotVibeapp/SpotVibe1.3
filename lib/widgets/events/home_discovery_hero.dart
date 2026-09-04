@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../data/event_time.dart';
 import '../../data/pricing.dart';
 import '../../l10n/app_localizations.dart';
+import '../../l10n/category_labels.dart';
 import '../../models/event.dart';
 import '../../theme/category_colors.dart';
 import '../../theme/theme.dart';
@@ -44,7 +45,14 @@ class HomeDiscoveryHero extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final accent = categoryAccent(event.category);
     final isFeatured = event.isFeaturedThisWeek;
+    final category = categoryLabel(context, event.category).toUpperCase();
+    final price = event.isFree ? l10n.free : event.costLabel;
     final location = event.fullLocation.isEmpty ? event.location : event.fullLocation;
+    // Preserve the elegant image-led layout at normal text sizes, while still
+    // leaving enough vertical room for larger accessibility text.
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
+    final heroHeight =
+        214 + ((textScale - 1).clamp(0.0, 1.0) * 72).toDouble();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -57,7 +65,7 @@ class HomeDiscoveryHero extends StatelessWidget {
         button: true,
         label: l10n.openEvent(event.title),
         child: Container(
-          height: 190,
+          height: heroHeight,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppTheme.radiusXl),
             boxShadow: [
@@ -96,9 +104,9 @@ class HomeDiscoveryHero extends StatelessWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Color(0x75000000),
-                            Color(0x1C000000),
-                            Color(0xD9000000),
+                            Color(0x7A000000),
+                            Color(0x18000000),
+                            Color(0xE4150E2A),
                           ],
                           stops: [0, 0.42, 1],
                         ),
@@ -125,15 +133,34 @@ class HomeDiscoveryHero extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _HeroBadge(
-                            icon: isFeatured
-                                ? Icons.auto_awesome_rounded
-                                : Icons.near_me_rounded,
-                            label: isFeatured
-                                ? l10n.featuredThisWeek
-                                : l10n.homeNextUp,
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _HeroBadge(
+                                  icon: isFeatured
+                                      ? Icons.auto_awesome_rounded
+                                      : Icons.near_me_rounded,
+                                  label: isFeatured
+                                      ? l10n.featuredThisWeek
+                                      : l10n.homeNextUp,
+                                ),
+                              ),
+                              const SizedBox(width: AppTheme.spacingSm),
+                              _HeroPriceBadge(label: price),
+                            ],
                           ),
                           const Spacer(),
+                          Text(
+                            category,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: text.labelSmall?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.85),
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
                           Text(
                             event.title,
                             maxLines: 2,
@@ -242,6 +269,7 @@ class _HeroBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: const Color(0xCC12101B),
@@ -249,16 +277,55 @@ class _HeroBadge extends StatelessWidget {
         border: Border.all(color: Colors.white.withValues(alpha: 0.34)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: Colors.white, size: AppTheme.iconSm),
           const SizedBox(width: AppTheme.spacingXs),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.35,
+                  ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroPriceBadge extends StatelessWidget {
+  final String label;
+
+  const _HeroPriceBadge({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.38)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.local_offer_rounded,
+            color: Colors.white,
+            size: AppTheme.iconSm - 1,
+          ),
+          const SizedBox(width: 3),
           Text(
             label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 0.35,
                 ),
           ),
         ],
@@ -377,14 +444,18 @@ class _DiscoveryFilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final enabled = onTap != null;
-    final foreground = isSelected ? colors.onPrimary : colors.onSurfaceVariant;
+    final background = isSelected
+        ? colors.primaryContainer.withValues(alpha: 0.82)
+        : colors.surface;
+    final foreground = isSelected ? colors.onPrimaryContainer : colors.onSurface;
+    final iconColor = isSelected ? colors.primary : colors.onSurfaceVariant;
 
     return Semantics(
       button: true,
       selected: isSelected,
       enabled: enabled,
       child: Material(
-        color: isSelected ? colors.primary : colors.surfaceContainerHighest,
+        color: background,
         borderRadius: BorderRadius.circular(AppTheme.radiusXl),
         child: InkWell(
           onTap: onTap,
@@ -393,20 +464,20 @@ class _DiscoveryFilterChip extends StatelessWidget {
             duration: const Duration(milliseconds: 180),
             opacity: enabled ? 1 : AppTheme.opacityDisabled,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(AppTheme.radiusXl),
                 border: Border.all(
                   color: isSelected
-                      ? colors.primary.withValues(alpha: 0.72)
-                      : colors.outlineVariant.withValues(alpha: 0.50),
+                      ? colors.primary.withValues(alpha: 0.78)
+                      : colors.outlineVariant.withValues(alpha: 0.58),
                 ),
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: colors.primary.withValues(alpha: 0.28),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
+                          color: colors.primary.withValues(alpha: 0.18),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
                         ),
                       ]
                     : null,
@@ -414,13 +485,14 @@ class _DiscoveryFilterChip extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(icon, color: foreground, size: AppTheme.iconSm),
+                  Icon(icon, color: iconColor, size: AppTheme.iconSm),
                   const SizedBox(width: AppTheme.spacingXs),
                   Text(
                     label,
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
                           color: foreground,
-                          fontWeight: FontWeight.w700,
+                          fontWeight:
+                              isSelected ? FontWeight.w800 : FontWeight.w600,
                         ),
                   ),
                 ],

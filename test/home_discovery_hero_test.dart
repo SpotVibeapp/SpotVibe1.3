@@ -81,6 +81,8 @@ void main() {
     );
 
     expect(find.text(event.title), findsOneWidget);
+    expect(find.text('MUSIC'), findsOneWidget);
+    expect(find.text('Free'), findsOneWidget);
     await tester.tap(find.text(event.title));
     expect(opened, isTrue);
   });

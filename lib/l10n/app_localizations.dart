@@ -338,6 +338,12 @@ abstract class AppLocalizations {
   /// **'Happening near you'**
   String get homeHappeningNearYou;
 
+  /// No description provided for @homeEditorialTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'THE LOCAL EDIT'**
+  String get homeEditorialTagline;
+
   /// No description provided for @homeNextUp.
   ///
   /// In en, this message translates to:
