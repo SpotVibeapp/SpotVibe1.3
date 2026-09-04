@@ -156,7 +156,7 @@ class _AiPromoImageDialogState extends State<_AiPromoImageDialog> {
                   const SizedBox(width: AppTheme.spacingSm),
                   Expanded(
                     child: Text(
-                      'Generated images are reviewed by you before publishing. Do not use misleading logos, celebrity likenesses, or copyrighted characters.',
+                      'Review this AI background before publishing. It is not sent to SpotVibe for manual approval. Do not use misleading logos, celebrity likenesses, or copyrighted characters.',
                       style: text.bodySmall,
                     ),
                   ),

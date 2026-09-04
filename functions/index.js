@@ -278,7 +278,7 @@ function cleanPromoText(value, field, maxLength) {
 }
 
 function assertSafePromoPrompt(text) {
-  // This is a first-line app policy check. The provider's high moderation
+  // This is a first-line app policy check. The provider's standard moderation
   // setting remains the final safety filter. Keep generated images focused on
   // event backgrounds, not explicit content, hate, personal data, or fraud.
   const prohibited = /\b(?:nude|nudity|porn|explicit sexual|rape|self-harm|suicide method|credit card|social security|deepfake|impersonate)\b/i;
@@ -399,7 +399,9 @@ exports.generatePromoImage = onCall(
           n: 1,
           size,
           quality: 'medium',
-          moderation: 'high',
+          // GPT Image accepts only `auto` (standard) or `low` moderation.
+          // `high` makes the provider reject the request with a 400 response.
+          moderation: 'auto',
         }),
       });
       if (!response.ok) {
