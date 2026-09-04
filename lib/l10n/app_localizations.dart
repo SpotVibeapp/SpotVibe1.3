@@ -332,6 +332,30 @@ abstract class AppLocalizations {
   /// **'Near you'**
   String get nearYou;
 
+  /// No description provided for @homeHappeningNearYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Happening near you'**
+  String get homeHappeningNearYou;
+
+  /// No description provided for @homeNextUp.
+  ///
+  /// In en, this message translates to:
+  /// **'NEXT UP'**
+  String get homeNextUp;
+
+  /// No description provided for @quickFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick filters'**
+  String get quickFilters;
+
+  /// No description provided for @openEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Open {title}'**
+  String openEvent(String title);
+
   /// No description provided for @personalised.
   ///
   /// In en, this message translates to:

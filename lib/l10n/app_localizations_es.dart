@@ -132,6 +132,20 @@ class AppLocalizationsEs extends AppLocalizations {
   String get nearYou => 'Cerca de ti';
 
   @override
+  String get homeHappeningNearYou => 'Eventos cerca de ti';
+
+  @override
+  String get homeNextUp => 'PRÓXIMAMENTE';
+
+  @override
+  String get quickFilters => 'Filtros rápidos';
+
+  @override
+  String openEvent(String title) {
+    return 'Abrir $title';
+  }
+
+  @override
   String get personalised => 'Personalizado';
 
   @override

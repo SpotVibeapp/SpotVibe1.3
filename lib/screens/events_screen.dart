@@ -15,6 +15,7 @@ import '../widgets/common/paginated_events_list.dart';
 import '../widgets/common/app_icon_mark.dart';
 import '../widgets/common/spotvibe_logo.dart';
 import '../widgets/events/filter_sheet.dart';
+import '../widgets/events/home_discovery_hero.dart';
 import '../widgets/events/search_header.dart';
 
 class EventsScreen extends StatefulWidget {
@@ -238,6 +239,12 @@ class _EventsScreenState extends State<EventsScreen> {
                 eventProvider: eventProvider,
                 areaQuery: eventProvider.areaQuery,
                 personalization: personalization,
+                isRequestingLocation: _fetchingLocation,
+                onRequestLocation: _fetchingLocation
+                    ? null
+                    : () {
+                        _requestUserLocation();
+                      },
                 firstCardKey: _tourKeyCard,
               ),
             ),
@@ -397,14 +404,57 @@ class _EventsList extends StatelessWidget {
   final EventProvider eventProvider;
   final String areaQuery;
   final PersonalizationProvider personalization;
+  final bool isRequestingLocation;
+  final VoidCallback? onRequestLocation;
   final GlobalKey? firstCardKey;
 
   const _EventsList({
     required this.eventProvider,
     required this.areaQuery,
     required this.personalization,
+    required this.isRequestingLocation,
+    required this.onRequestLocation,
     this.firstCardKey,
   });
+
+  void _toggleDatePreset(String preset) {
+    final isSelected =
+        eventProvider.filterDate == preset &&
+        eventProvider.filterDateFrom == null &&
+        eventProvider.filterDateTo == null;
+
+    eventProvider.applyFilters(
+      datePreset: isSelected ? 'all' : preset,
+      priceFilter: eventProvider.filterPrice,
+      costType: eventProvider.filterCostType,
+      timeOfDay: eventProvider.filterTime,
+      locationQuery: eventProvider.filterLocation,
+      sources: eventProvider.selectedSources,
+      radius: eventProvider.searchRadius,
+    );
+  }
+
+  void _toggleFreeFilter() {
+    final isSelected =
+        eventProvider.filterPrice == 'free' ||
+        (eventProvider.filterPrice == 'all' &&
+            eventProvider.filterCostType == 'free');
+
+    eventProvider.applyFilters(
+      datePreset: eventProvider.filterDate,
+      dateFrom: eventProvider.filterDateFrom,
+      dateTo: eventProvider.filterDateTo,
+      priceFilter: isSelected ? 'all' : 'free',
+      // The price tier is the source of truth for this shortcut. Clear the
+      // legacy cost-type field so a previously selected "paid" filter cannot
+      // conflict with a newly selected Free shortcut.
+      costType: null,
+      timeOfDay: eventProvider.filterTime,
+      locationQuery: eventProvider.filterLocation,
+      sources: eventProvider.selectedSources,
+      radius: eventProvider.searchRadius,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -544,11 +594,50 @@ class _EventsList extends StatelessWidget {
       );
     }
 
+    // The hero only belongs to the unfiltered discovery feed. Search and
+    // category results should get users directly to their requested results.
+    final showDiscoveryHero =
+        eventProvider.searchQuery.isEmpty &&
+        eventProvider.selectedCategory == 'All' &&
+        eventProvider.activeFilterCount == 0;
+    final heroEvent = showDiscoveryHero
+        ? selectDiscoveryHeroEvent(eventProvider.events)
+        : null;
+
     return PaginatedEventsList(
       eventProvider: eventProvider,
       personalization: personalization,
       firstCardKey: firstCardKey,
-      onEventTap: (event, globalIndex) {
+      sectionTitle: l10n.homeHappeningNearYou,
+      // Do not repeat the hero card directly below itself. Keep the only
+      // event visible in both places so a one-event feed never looks empty.
+      excludedEventId: heroEvent != null && eventProvider.events.length > 1
+          ? heroEvent.id
+          : null,
+      feedHeader: [
+        if (heroEvent != null)
+          HomeDiscoveryHero(
+            event: heroEvent,
+            onTap: () {
+              personalization.recordView(heroEvent);
+              context.push('/event/${heroEvent.id}', extra: heroEvent);
+            },
+          ),
+        HomeQuickFilters(
+          isTodaySelected: eventProvider.filterDate == 'today',
+          isWeekendSelected: eventProvider.filterDate == 'this_weekend',
+          isFreeSelected:
+              eventProvider.filterPrice == 'free' ||
+              eventProvider.filterCostType == 'free',
+          isNearMeSelected: eventProvider.hasUserLocation,
+          isRequestingLocation: isRequestingLocation,
+          onTodayTap: () => _toggleDatePreset('today'),
+          onWeekendTap: () => _toggleDatePreset('this_weekend'),
+          onFreeTap: _toggleFreeFilter,
+          onNearMeTap: onRequestLocation,
+        ),
+      ],
+      onEventTap: (event, _) {
         personalization.recordView(event);
         context.push('/event/${event.id}', extra: event);
       },
