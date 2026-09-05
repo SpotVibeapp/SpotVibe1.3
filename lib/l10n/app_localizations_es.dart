@@ -1762,4 +1762,110 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get claimProofPressContact => 'Contacto de prensa';
+
+  @override
+  String get eventCreationGuide => 'Guía para crear eventos';
+
+  @override
+  String get eventCreationGuideTooltip => 'Cómo crear un evento';
+
+  @override
+  String get eventCreationGuideCardTitle => 'Crea con confianza';
+
+  @override
+  String get eventCreationGuideCardBody =>
+      'Sigue la lista rápida y compara exactamente lo que incluyen Gratis y Premium.';
+
+  @override
+  String get eventCreationGuideMediaSummary =>
+      'Gratis: 1 foto de portada + 1 video corto. Premium: hasta 5 fotos en total (incluida la portada) + 3 videos cortos.';
+
+  @override
+  String get openEventCreationGuide => 'Abrir guía para creadores';
+
+  @override
+  String get eventCreationGuideIntro =>
+      'Una lista simple para publicar un evento claro y listo para compartir.';
+
+  @override
+  String get eventCreationGuideCurrentPlan => 'Tu plan actual';
+
+  @override
+  String get eventCreationGuideFreeActive => 'Plan gratis';
+
+  @override
+  String get eventCreationGuidePremiumActive => 'Premium activo';
+
+  @override
+  String get eventCreationGuideAdminAccess =>
+      'Acceso de prueba de administrador';
+
+  @override
+  String get eventCreationGuideDetailsTitle =>
+      '1. Empieza con los detalles';
+
+  @override
+  String get eventCreationGuideDetailsBody =>
+      'Agrega un título y una descripción claros; luego confirma la fecha, hora, venue, ubicación y precio del boleto. Deja el precio en blanco si el evento es gratis.';
+
+  @override
+  String get eventCreationGuideVisualsTitle => '2. Hazlo visual';
+
+  @override
+  String get eventCreationGuideVisualsBody =>
+      'Elige primero una foto de portada. Los creadores Premium pueden generar un fondo promocional con IA. Poster Studio crea un póster separado para compartir con el título, fecha, hora, venue y precio exactos de este formulario.';
+
+  @override
+  String get eventCreationGuideMediaTitle =>
+      '3. Agrega medios según tu plan';
+
+  @override
+  String get eventCreationGuidePlanIntro =>
+      'La foto de portada cuenta como la foto 1. Cada video debe durar 30 segundos o menos y pesar menos de 50 MB.';
+
+  @override
+  String get eventCreationGuideFreeEvents =>
+      'Hasta 2 eventos únicos próximos a la vez';
+
+  @override
+  String get eventCreationGuideFreeMedia =>
+      '1 foto de portada en total y 1 video corto por evento';
+
+  @override
+  String get eventCreationGuideFreePublish =>
+      'Página básica del evento en el feed público';
+
+  @override
+  String get eventCreationGuidePremiumEvents =>
+      'Eventos ilimitados, incluidos eventos recurrentes semanales o mensuales';
+
+  @override
+  String get eventCreationGuidePremiumMedia =>
+      'Hasta 5 fotos en total (incluida la portada) y 3 videos cortos por evento';
+
+  @override
+  String get eventCreationGuidePremiumTools =>
+      'Fondos promocionales con IA, analíticas, marca personalizada y enlaces de contacto';
+
+  @override
+  String get eventCreationGuideSharedTools =>
+      'Ambos planes permiten publicar los detalles principales, agregar una portada y usar Poster Studio para crear un póster para compartir. Los fondos promocionales con IA son una herramienta para creadores Premium.';
+
+  @override
+  String get eventCreationGuideAdminNote =>
+      'Tu cuenta de administrador puede probar el límite completo de 5 fotos y 3 videos. La comparación de Gratis y Premium de arriba es la que ven los creadores.';
+
+  @override
+  String get eventCreationGuideReviewTitle =>
+      '4. Revisa, publica y comparte';
+
+  @override
+  String get eventCreationGuideReviewBody =>
+      'Revisa cada detalle antes de publicar. Si después cambias el título, fecha, hora, venue o precio, vuelve a abrir Poster Studio para crear un póster actualizado.';
+
+  @override
+  String get eventCreationGuideExplorePremium => 'Explorar Premium';
+
+  @override
+  String get eventCreationGuideStart => 'Empezar a crear';
 }

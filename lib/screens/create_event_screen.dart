@@ -17,9 +17,11 @@ import '../providers/user_events_provider.dart';
 import '../repositories/user_event_repository.dart';
 import '../services/ai_moderation_service.dart';
 import '../services/media_upload_service.dart';
+import '../services/tour_service.dart';
 import '../services/user_event_service.dart';
 import '../theme/theme.dart';
 import '../widgets/events/ai_promo_image_dialog.dart';
+import '../widgets/events/event_creation_guide.dart';
 import '../widgets/events/event_media_editor.dart';
 import '../widgets/events/event_poster_studio.dart';
 
@@ -34,6 +36,8 @@ class CreateEventScreen extends StatefulWidget {
 }
 
 class _CreateEventScreenState extends State<CreateEventScreen> {
+  static const _eventCreationGuideTourId = 'event_creation_guide';
+
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -64,6 +68,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   int _initialVideoCount = 0;
   bool _aiGeneratedCover = false;
   bool _uploadingMedia = false;
+  bool _hasCheckedEventCreationGuide = false;
 
   // ── Premium fields ────────────────────────────────────────────────────────
   bool _isCreatorPro = false;
@@ -119,8 +124,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       _brandColorController.text = e.brandColor ?? '';
       _brandLogoController.text = e.brandLogoUrl ?? '';
     }
-    // Pro subscribers get unlimited creation — pre-confirm for them after first frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Pro subscribers get unlimited creation — pre-confirm for them after first frame.
+    // A first-time creator also sees the plan-aware guide once the form exists.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       final sub = context.read<SubscriptionProvider>();
       if (sub.isSubscribed) {
@@ -128,6 +134,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           _isCreatorPro = true;
         });
       }
+      await _maybeShowEventCreationGuide();
     });
   }
 
@@ -503,6 +510,32 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     }
   }
 
+  Future<void> _maybeShowEventCreationGuide() async {
+    if (_isEditing || _hasCheckedEventCreationGuide) return;
+    _hasCheckedEventCreationGuide = true;
+
+    final alreadySeen = await TourService.isSeen(_eventCreationGuideTourId);
+    if (!mounted || alreadySeen) return;
+
+    await _openEventCreationGuide();
+    if (mounted) {
+      await TourService.markSeen(_eventCreationGuideTourId);
+    }
+  }
+
+  Future<void> _openEventCreationGuide() {
+    final sub = context.read<SubscriptionProvider>();
+    final auth = context.read<AuthProvider>();
+    return showEventCreationGuide(
+      context,
+      isPremium: sub.isSubscribed,
+      isAdmin: auth.isAdmin,
+      onUpgrade: () {
+        _openPaywall();
+      },
+    );
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -717,6 +750,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       appBar: AppBar(
         title: Text(_isEditing ? l10n.editEvent : l10n.createEvent),
         actions: [
+          IconButton(
+            tooltip: l10n.eventCreationGuideTooltip,
+            onPressed: _openEventCreationGuide,
+            icon: const Icon(Icons.help_outline_rounded),
+          ),
           if (provider.isSubmitting || _uploadingMedia)
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
@@ -747,6 +785,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 isAdmin: auth.isAdmin,
                 onUpgrade: _openPaywall,
               ),
+              const SizedBox(height: AppTheme.spacingSm),
+              EventCreationGuideCard(onOpen: _openEventCreationGuide),
               const SizedBox(height: AppTheme.spacingLg),
             ],
 
