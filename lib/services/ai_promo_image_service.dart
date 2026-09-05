@@ -1,5 +1,7 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
+import '../config/app_config.dart';
+
 /// Result from the server-side AI promo-background generator.
 class AiPromoImageResult {
   final String imageUrl;
@@ -32,9 +34,14 @@ class AiPromoImageService {
     required String aspectRatio,
   }) async {
     try {
-      final result = await _functions
-          .httpsCallable('generatePromoImage')
-          .call<Map<String, dynamic>>({
+      // This Workspace has Domain Restricted Sharing enabled, which prevents
+      // an `allUsers` Cloud Run Invoker binding. Calling the backing Gen 2
+      // service URL lets Cloud Run accept the request; the `onCall` handler
+      // still verifies the Firebase Auth token before doing any work.
+      final callable = _functions.httpsCallableFromUrl(
+        AppConfig.aiPromoFunctionUrl,
+      );
+      final result = await callable.call<Map<String, dynamic>>({
         'eventId': eventId,
         'title': title.trim(),
         'description': description.trim(),

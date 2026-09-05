@@ -24,4 +24,18 @@ class AppConfig {
   ///  - iOS "Sign in with Apple" capability + entitlements file
   ///  - Firebase Authentication → Sign-in method → Apple enabled
   static const bool enableAppleSignIn = false;
+
+  /// Direct URL for the Gen 2 callable AI endpoint.
+  ///
+  /// This is public routing information, not a secret. SpotVibe's Google
+  /// Workspace Domain Restricted Sharing policy prevents an `allUsers` IAM
+  /// invoker binding on the backing Cloud Run service. The service therefore
+  /// has the Cloud Run invoker IAM check disabled and the callable itself still
+  /// requires a valid Firebase Authentication token before it can generate an
+  /// image. Override this when recreating the service with:
+  /// `--dart-define=AI_PROMO_FUNCTION_URL=https://...a.run.app`.
+  static const String aiPromoFunctionUrl = String.fromEnvironment(
+    'AI_PROMO_FUNCTION_URL',
+    defaultValue: 'https://generatepromoimage-kfzltbt5ja-uc.a.run.app',
+  );
 }
