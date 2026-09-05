@@ -755,7 +755,7 @@ abstract class AppLocalizations {
   /// No description provided for @premiumUnlockedBody.
   ///
   /// In en, this message translates to:
-  /// **'Recurring events, analytics, branding, and verified claims are unlocked.'**
+  /// **'Recurring events, rich media galleries, analytics, branding, and verified claims are unlocked.'**
   String get premiumUnlockedBody;
 
   /// No description provided for @freePerk1.
@@ -767,7 +767,7 @@ abstract class AppLocalizations {
   /// No description provided for @freePerk2.
   ///
   /// In en, this message translates to:
-  /// **'Basic event page — title, description, photo, location, time'**
+  /// **'Basic event page — title, description, 1 cover photo, 1 short video, location, time'**
   String get freePerk2;
 
   /// No description provided for @freePerk3.
@@ -859,6 +859,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Verify first. Your first claim is free'**
   String get premiumPerk7Subtitle;
+
+  /// No description provided for @premiumPerk8Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Rich media gallery'**
+  String get premiumPerk8Title;
+
+  /// No description provided for @premiumPerk8Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to 5 photos and 3 short videos on every event'**
+  String get premiumPerk8Subtitle;
 
   /// No description provided for @trialLabel.
   ///
@@ -1555,6 +1567,18 @@ abstract class AppLocalizations {
   /// **'Add up to 5 photos total. Your cover photo counts as the first.'**
   String get photoGalleryHint;
 
+  /// No description provided for @photoGalleryFreeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Free listings include 1 cover photo. Premium unlocks up to 5 photos.'**
+  String get photoGalleryFreeHint;
+
+  /// No description provided for @videoGalleryFreeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Free listings include 1 short video. Premium unlocks up to 3 videos.'**
+  String get videoGalleryFreeHint;
+
   /// No description provided for @noAdditionalPhotos.
   ///
   /// In en, this message translates to:
@@ -1651,6 +1675,18 @@ abstract class AppLocalizations {
   /// **'You can add up to {maximum} videos to one event.'**
   String mediaVideoLimit(int maximum);
 
+  /// No description provided for @mediaPremiumPerk.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium unlocks up to 5 photos and 3 videos per event.'**
+  String get mediaPremiumPerk;
+
+  /// No description provided for @unlockMediaGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock full gallery'**
+  String get unlockMediaGallery;
+
   /// No description provided for @photos.
   ///
   /// In en, this message translates to:
@@ -1696,7 +1732,7 @@ abstract class AppLocalizations {
   /// No description provided for @premiumFeaturesSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Recurring events · analytics · custom branding · contact button'**
+  /// **'Recurring events · media gallery · analytics · custom branding · contact button'**
   String get premiumFeaturesSubtitle;
 
   /// No description provided for @premiumFeaturesUnlocked.
@@ -1786,7 +1822,7 @@ abstract class AppLocalizations {
   /// No description provided for @premiumIncludes.
   ///
   /// In en, this message translates to:
-  /// **'Recurring events, analytics, branding, and claims are included.'**
+  /// **'Rich media galleries, recurring events, analytics, branding, and claims are included.'**
   String get premiumIncludes;
 
   /// No description provided for @freePlan.
@@ -1798,7 +1834,7 @@ abstract class AppLocalizations {
   /// No description provided for @freePlanBody.
   ///
   /// In en, this message translates to:
-  /// **'One upcoming one-time event at a time. Basic page (title, description, photo, location, time) in the public feed.'**
+  /// **'Up to 2 upcoming one-time events at a time. Basic page with 1 cover photo, 1 short video, title, description, location, and time in the public feed.'**
   String get freePlanBody;
 
   /// No description provided for @upgradeToPremium.

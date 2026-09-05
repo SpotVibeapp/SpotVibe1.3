@@ -362,14 +362,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get premiumUnlockedBody =>
-      'Recurring events, analytics, branding, and verified claims are unlocked.';
+      'Recurring events, rich media galleries, analytics, branding, and verified claims are unlocked.';
 
   @override
   String get freePerk1 => 'Post up to 2 upcoming one-time events at a time';
 
   @override
   String get freePerk2 =>
-      'Basic event page — title, description, photo, location, time';
+      'Basic event page — title, description, 1 cover photo, 1 short video, location, time';
 
   @override
   String get freePerk3 => 'Event appears in the public feed';
@@ -415,6 +415,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get premiumPerk7Subtitle => 'Verify first. Your first claim is free';
+
+  @override
+  String get premiumPerk8Title => 'Rich media gallery';
+
+  @override
+  String get premiumPerk8Subtitle => 'Up to 5 photos and 3 short videos on every event';
 
   @override
   String get trialLabel => '7-day free trial';
@@ -823,6 +829,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get photoGalleryHint => 'Add up to 5 photos total. Your cover photo counts as the first.';
 
   @override
+  String get photoGalleryFreeHint => 'Free listings include 1 cover photo. Premium unlocks up to 5 photos.';
+
+  @override
+  String get videoGalleryFreeHint => 'Free listings include 1 short video. Premium unlocks up to 3 videos.';
+
+  @override
   String get noAdditionalPhotos => 'Add photos from your library or camera.';
 
   @override
@@ -881,6 +893,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get mediaPremiumPerk => 'Premium unlocks up to 5 photos and 3 videos per event.';
+
+  @override
+  String get unlockMediaGallery => 'Unlock full gallery';
+
+  @override
   String get photos => 'Photos';
 
   @override
@@ -903,7 +921,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get premiumFeaturesSubtitle =>
-      'Recurring events · analytics · custom branding · contact button';
+      'Recurring events · media gallery · analytics · custom branding · contact button';
 
   @override
   String get premiumFeaturesUnlocked => 'Premium features unlocked';
@@ -949,14 +967,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get premiumIncludes =>
-      'Recurring events, analytics, branding, and claims are included.';
+      'Rich media galleries, recurring events, analytics, branding, and claims are included.';
 
   @override
   String get freePlan => 'Free plan';
 
   @override
   String get freePlanBody =>
-      'One upcoming one-time event at a time. Basic page (title, description, photo, location, time) in the public feed.';
+      'Up to 2 upcoming one-time events at a time. Basic page with 1 cover photo, 1 short video, title, description, location, and time in the public feed.';
 
   @override
   String upgradeToPremium(String price) {

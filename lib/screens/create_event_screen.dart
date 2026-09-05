@@ -60,6 +60,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   final List<String> _remotePhotoUrls = [];
   final List<String> _localVideoPaths = [];
   final List<String> _remoteVideoUrls = [];
+  int _initialPhotoCount = 0;
+  int _initialVideoCount = 0;
   bool _aiGeneratedCover = false;
   bool _uploadingMedia = false;
 
@@ -97,6 +99,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           savedPhotos.isEmpty ? e.imageUrl : savedPhotos.first;
       _remotePhotoUrls.addAll(savedPhotos.skip(1));
       _remoteVideoUrls.addAll(e.allVideoUrls);
+      _initialPhotoCount = savedPhotos.length;
+      _initialVideoCount = e.allVideoUrls.length;
       // New links are added to the gallery explicitly. Existing legacy links
       // are already represented in _remoteVideoUrls above.
       _videoUrlController.clear();
@@ -172,6 +176,37 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   int get _videoCount => _remoteVideoUrls.length + _localVideoPaths.length;
 
+  EventMediaAllowance get _mediaAllowance => eventMediaAllowance(
+        isPremium: context.read<SubscriptionProvider>().isSubscribed,
+        isAdmin: context.read<AuthProvider>().isAdmin,
+      );
+
+  int get _photoAllowance {
+    final limit = _mediaAllowance.maxPhotos;
+    // Existing organizers do not lose media they published while Premium.
+    return _isEditing && _initialPhotoCount > limit
+        ? _initialPhotoCount
+        : limit;
+  }
+
+  int get _videoAllowance {
+    final limit = _mediaAllowance.maxVideos;
+    return _isEditing && _initialVideoCount > limit
+        ? _initialVideoCount
+        : limit;
+  }
+
+  Future<void> _handleMediaLimit({required bool photos}) async {
+    final isAtAbsoluteLimit = photos
+        ? _photoAllowance >= MediaUploadService.maxEventPhotos
+        : _videoAllowance >= MediaUploadService.maxEventVideos;
+    if (!_mediaAllowance.hasFullGallery && !isAtAbsoluteLimit) {
+      await _openPaywall();
+      return;
+    }
+    _showMediaLimit(photos: photos);
+  }
+
   bool _isHttpUrl(String value) {
     final uri = Uri.tryParse(value);
     return uri != null && (uri.scheme == 'https' || uri.scheme == 'http');
@@ -216,9 +251,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   }
 
   Future<void> _addPhotos({required bool fromCamera}) async {
-    final remaining = MediaUploadService.maxEventPhotos - _photoCount;
+    final remaining = _photoAllowance - _photoCount;
     if (remaining <= 0) {
-      _showMediaLimit(photos: true);
+      await _handleMediaLimit(photos: true);
       return;
     }
 
@@ -253,8 +288,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   }
 
   Future<void> _addVideo({required bool fromCamera}) async {
-    if (_videoCount >= MediaUploadService.maxEventVideos) {
-      _showMediaLimit(photos: false);
+    if (_videoCount >= _videoAllowance) {
+      await _handleMediaLimit(photos: false);
       return;
     }
     try {
@@ -269,11 +304,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     }
   }
 
-  void _addPhotoLink() {
+  Future<void> _addPhotoLink() async {
     final url = _photoUrlController.text.trim();
     if (url.isEmpty) return;
-    if (_photoCount >= MediaUploadService.maxEventPhotos) {
-      _showMediaLimit(photos: true);
+    if (_photoCount >= _photoAllowance) {
+      await _handleMediaLimit(photos: true);
       return;
     }
     if (!_isHttpUrl(url)) {
@@ -292,11 +327,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     });
   }
 
-  void _addVideoLink() {
+  Future<void> _addVideoLink() async {
     final url = _videoUrlController.text.trim();
     if (url.isEmpty) return;
-    if (_videoCount >= MediaUploadService.maxEventVideos) {
-      _showMediaLimit(photos: false);
+    if (_videoCount >= _videoAllowance) {
+      await _handleMediaLimit(photos: false);
       return;
     }
     if (!_isHttpUrl(url)) {
@@ -560,13 +595,12 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 ? 1
                 : 0) +
             _localPhotoPaths.length;
-    if (estimatedPhotoCount > MediaUploadService.maxEventPhotos) {
-      _showMediaLimit(photos: true);
+    if (estimatedPhotoCount > _photoAllowance) {
+      await _handleMediaLimit(photos: true);
       return;
     }
-    if (videoUrls.length + _localVideoPaths.length >
-        MediaUploadService.maxEventVideos) {
-      _showMediaLimit(photos: false);
+    if (videoUrls.length + _localVideoPaths.length > _videoAllowance) {
+      await _handleMediaLimit(photos: false);
       return;
     }
 
@@ -670,6 +704,13 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   Widget build(BuildContext context) {
     final provider = context.watch<CreateEventProvider>();
     final sub = context.watch<SubscriptionProvider>();
+    final auth = context.watch<AuthProvider>();
+    final mediaAllowance = eventMediaAllowance(
+      isPremium: sub.isSubscribed,
+      isAdmin: auth.isAdmin,
+    );
+    final photoAllowance = _photoAllowance;
+    final videoAllowance = _videoAllowance;
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
@@ -703,7 +744,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               _SectionHeader(title: l10n.eventPublishing),
               _CreationAccessSelector(
                 isSubscribed: sub.isSubscribed,
-                isAdmin: context.read<AuthProvider>().isAdmin,
+                isAdmin: auth.isAdmin,
                 onUpgrade: _openPaywall,
               ),
               const SizedBox(height: AppTheme.spacingLg),
@@ -858,13 +899,23 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppTheme.spacingMd),
+            if (!mediaAllowance.hasFullGallery) ...[
+              _MediaGalleryUpgradeBanner(
+                description: l10n.mediaPremiumPerk,
+                actionLabel: l10n.unlockMediaGallery,
+                onUpgrade: _openPaywall,
+              ),
+              const SizedBox(height: AppTheme.spacingMd),
+            ],
             EventMediaEditor(
               kind: EventMediaKind.photo,
               title: l10n.eventPhotosCount(
                 _photoCount,
-                MediaUploadService.maxEventPhotos,
+                photoAllowance,
               ),
-              subtitle: l10n.photoGalleryHint,
+              subtitle: mediaAllowance.hasFullGallery
+                  ? l10n.photoGalleryHint
+                  : l10n.photoGalleryFreeHint,
               emptyLabel: l10n.noAdditionalPhotos,
               libraryLabel: l10n.library,
               cameraLabel: l10n.camera,
@@ -900,9 +951,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               kind: EventMediaKind.video,
               title: l10n.eventVideosCount(
                 _videoCount,
-                MediaUploadService.maxEventVideos,
+                videoAllowance,
               ),
-              subtitle: l10n.videoGalleryHint,
+              subtitle: mediaAllowance.hasFullGallery
+                  ? l10n.videoGalleryHint
+                  : l10n.videoGalleryFreeHint,
               emptyLabel: l10n.noVideosYet,
               libraryLabel: l10n.library,
               cameraLabel: l10n.camera,
@@ -1340,6 +1393,52 @@ class _MediaPickRow extends StatelessWidget {
               onPressed: onClear,
               icon: const Icon(Icons.close_rounded),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MediaGalleryUpgradeBanner extends StatelessWidget {
+  final String description;
+  final String actionLabel;
+  final VoidCallback onUpgrade;
+
+  const _MediaGalleryUpgradeBanner({
+    required this.description,
+    required this.actionLabel,
+    required this.onUpgrade,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.spacingMd,
+        vertical: AppTheme.spacingSm,
+      ),
+      decoration: BoxDecoration(
+        color: colors.primaryContainer.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.30)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.collections_rounded, color: colors.primary),
+          const SizedBox(width: AppTheme.spacingSm),
+          Expanded(
+            child: Text(
+              description,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.onPrimaryContainer,
+                  ),
+            ),
+          ),
+          TextButton(
+            onPressed: onUpgrade,
+            child: Text(actionLabel),
+          ),
         ],
       ),
     );

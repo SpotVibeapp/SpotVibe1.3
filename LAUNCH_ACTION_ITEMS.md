@@ -75,9 +75,10 @@ Your API key was committed to a **public** repo, so treat it as compromised.
    ```bash
    firebase deploy --only storage
    ```
-   Uploads fail with a clear message until this is done. Event creators can
-   attach up to **5 photos total (including the cover)** and **3 videos**;
-   photos are limited to 6 MB and videos to 30 seconds / 50 MB each.
+   Uploads fail with a clear message until this is done. Free creators get one
+   cover photo and one video; Premium creators and admins can attach up to
+   **5 photos total (including the cover)** and **3 videos**. Photos are
+   limited to 6 MB and videos to 30 seconds / 50 MB each.
 8. (Recommended) **App Check:** enable Play Integrity + App Attest, and
    enforce it only after testing, so your Firebase keys can't be abused.
 9. **Password recovery:** use **Forgot password?** in the app with a real test

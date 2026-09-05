@@ -11,6 +11,8 @@ Use these IDs **exactly** (they are hardcoded in `lib/data/pricing.dart`):
 
 Same IDs on iOS and Android. Both products grant the same `pro` entitlement. The app picks the founding SKU while slots remain (or if the account already bought it). After 25 founding purchases it only offers `spotvibe_premium_monthly`.
 
+Premium also unlocks **rich event media**: up to **5 photos total** (including the cover) and **3 short videos** per event. Free listings keep one cover photo and one short video, so every organizer can still publish a useful basic listing.
+
 ---
 
 ## 1. App Store Connect (iOS)

@@ -1,6 +1,42 @@
-/// Maximum media items in one event. The cover counts as one of the photos.
+/// Absolute media safety limits in one event. The cover counts as one photo.
 const int kMaxEventPhotos = 5;
 const int kMaxEventVideos = 3;
+
+/// A useful Free listing can still have a proper cover and a short clip.
+const int kFreeEventPhotos = 1;
+const int kFreeEventVideos = 1;
+
+/// The gallery allowance shown in the creator UI. The full 5-photo / 3-video
+/// experience belongs to Premium organizers and the official admin account.
+class EventMediaAllowance {
+  final int maxPhotos;
+  final int maxVideos;
+  final bool hasFullGallery;
+
+  const EventMediaAllowance({
+    required this.maxPhotos,
+    required this.maxVideos,
+    required this.hasFullGallery,
+  });
+}
+
+EventMediaAllowance eventMediaAllowance({
+  required bool isPremium,
+  required bool isAdmin,
+}) {
+  if (isPremium || isAdmin) {
+    return const EventMediaAllowance(
+      maxPhotos: kMaxEventPhotos,
+      maxVideos: kMaxEventVideos,
+      hasFullGallery: true,
+    );
+  }
+  return const EventMediaAllowance(
+    maxPhotos: kFreeEventPhotos,
+    maxVideos: kFreeEventVideos,
+    hasFullGallery: false,
+  );
+}
 
 /// Normalizes media URL lists stored with event documents.
 ///
