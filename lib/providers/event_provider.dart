@@ -45,6 +45,10 @@ class EventProvider extends ChangeNotifier {
   bool _isLoading = true;
   bool get isLoading => _isLoading;
 
+  // Each keystroke can start a request. A slow earlier request must never
+  // replace a newer city/keyword search after it finishes.
+  int _loadGeneration = 0;
+
   String? _error;
   String? get error => _error;
 
@@ -113,11 +117,12 @@ class EventProvider extends ChangeNotifier {
   List<String> get categories => _service.getCategories();
 
   Future<void> loadEvents() async {
+    final generation = ++_loadGeneration;
     _isLoading = true;
     _error = null;
     notifyListeners();
     try {
-      _events = await _service.getUpcomingEvents(
+      var loaded = await _service.getUpcomingEvents(
         category: _selectedCategory,
         searchQuery: _searchQuery.isEmpty ? null : _searchQuery,
         areaQuery: _areaQuery.isEmpty ? null : _areaQuery,
@@ -134,16 +139,19 @@ class EventProvider extends ChangeNotifier {
         userLng: _userLng,
         sortByDistance: _sortByDistance,
       );
+      if (generation != _loadGeneration) return;
+
       // Apply personalization ranking when distance sort is not active.
       // Distance sort already has a meaningful order the user explicitly chose;
       // we respect that and skip re-ranking to avoid confusing reorderings.
       if (!_sortByDistance && _personalization != null) {
-        _events = _personalization.rank(_events,
-            userLat: _userLat, userLng: _userLng);
+        loaded = _personalization.rank(loaded, userLat: _userLat, userLng: _userLng);
       }
       if (!_sortByDistance) {
-        _events = promoteFeaturedEvents(_events);
+        loaded = promoteFeaturedEvents(loaded);
       }
+      _events = loaded;
+
       final analytics = _analytics;
       if (analytics != null) {
         analytics.recordImpressions(
@@ -154,8 +162,10 @@ class EventProvider extends ChangeNotifier {
       // must never create a "new events" notification. Server-confirmed event
       // alerts will be wired through a real delivery path later.
     } catch (e) {
+      if (generation != _loadGeneration) return;
       _error = 'Failed to load events';
     }
+    if (generation != _loadGeneration) return;
     _isLoading = false;
     notifyListeners();
   }

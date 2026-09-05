@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spotvibe_app/models/event.dart';
 import 'package:spotvibe_app/repositories/event_repository.dart';
@@ -27,6 +29,38 @@ class _FixedEventRepository implements EventRepository {
 
   @override
   Future<List<Event>> getUpcomingEvents() async => events;
+
+  @override
+  Future<void> toggleBookmark(String eventId) async {}
+
+  @override
+  Future<void> toggleInterested(String eventId) async {}
+}
+
+class _ControlledEventRepository implements EventRepository {
+  final Completer<void> cityRequested = Completer<void>();
+  final Completer<void> allRequested = Completer<void>();
+  final Completer<List<Event>> cityResults = Completer<List<Event>>();
+  final Completer<List<Event>> allResults = Completer<List<Event>>();
+
+  @override
+  Future<Event?> getEventById(String id) async => null;
+
+  @override
+  Future<List<Event>> getEventsForLocation({
+    required String city,
+    required String state,
+    required String zip,
+  }) {
+    if (!cityRequested.isCompleted) cityRequested.complete();
+    return cityResults.future;
+  }
+
+  @override
+  Future<List<Event>> getUpcomingEvents() {
+    if (!allRequested.isCompleted) allRequested.complete();
+    return allResults.future;
+  }
 
   @override
   Future<void> toggleBookmark(String eventId) async {}
@@ -88,6 +122,38 @@ void main() {
 
     expect(service.isRecognizedLocationQuery('Dallas Mavericks'), isFalse);
     expect(service.isRecognizedLocationQuery('Dallas, TX'), isTrue);
+  });
+
+  test('a slower old city lookup cannot replace the newest search', () async {
+    final now = DateTime.now();
+    final cityEvent = _event(
+      id: 'dallas-result',
+      startsAt: now.add(const Duration(days: 2)),
+      endsAt: now.add(const Duration(days: 2, hours: 2)),
+    );
+    final keywordEvent = _event(
+      id: 'jazz-result',
+      startsAt: now.add(const Duration(days: 3)),
+      endsAt: now.add(const Duration(days: 3, hours: 2)),
+    ).copyWith(title: 'Jazz festival');
+    final repository = _ControlledEventRepository();
+    final provider = EventProvider(
+      service: EventService(repository: repository),
+    );
+
+    provider.search('Dallas');
+    await repository.cityRequested.future;
+    provider.search('jazz');
+    await repository.allRequested.future;
+
+    repository.allResults.complete([keywordEvent]);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    repository.cityResults.complete([cityEvent]);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+
+    expect(provider.events.map((event) => event.id), ['jazz-result']);
+    expect(provider.isLoading, isFalse);
+    provider.dispose();
   });
 
   test('city-and-state searches resolve the assistant location label', () async {
