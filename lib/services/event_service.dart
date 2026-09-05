@@ -1117,15 +1117,17 @@ class EventService {
     bool sortByDistance = false,
   }) async {
     List<Event> filtered;
+    final explicitAreaQuery = areaQuery?.trim() ?? '';
+    final hasExplicitAreaSearch = explicitAreaQuery.isNotEmpty;
 
     // ── Area search: curated local rows + live Ticketmaster for that city ──
-    if (areaQuery != null && areaQuery.isNotEmpty) {
-      final resolved = _resolveLocation(areaQuery);
+    if (hasExplicitAreaSearch) {
+      final resolved = _resolveLocation(explicitAreaQuery);
       if (resolved != null) {
         filtered = await _repository.getEventsForLocation(
           city: resolved.city,
           state: resolved.state,
-          zip: resolved.zip.isNotEmpty ? resolved.zip : areaQuery.trim(),
+          zip: resolved.zip.isNotEmpty ? resolved.zip : explicitAreaQuery,
         );
         filtered = await _withLiveListings(
           local: filtered,
@@ -1138,7 +1140,7 @@ class EventService {
         // Unrecognised input — try Ticketmaster with the raw city string
         // instead of inventing "Live Music Night — City" listings.
         final defaults = await _repository.getUpcomingEvents();
-        final aq = areaQuery.toLowerCase().trim();
+        final aq = explicitAreaQuery.toLowerCase();
         final matched = defaults.where((e) =>
             e.city.toLowerCase().contains(aq) ||
             e.state.toLowerCase().contains(aq) ||
@@ -1147,7 +1149,7 @@ class EventService {
             e.location.toLowerCase().contains(aq)).toList();
         filtered = await _withLiveListings(
           local: matched,
-          city: areaQuery.trim(),
+          city: explicitAreaQuery,
           keyword: searchQuery,
           category: category,
         );
@@ -1287,8 +1289,10 @@ class EventService {
     // searchRadius miles (using real haversine math on event lat/lng) and then
     // sort by ascending distance so the closest events appear first.
     // Events with no coordinates (lat==0 && lng==0) are kept but sorted last.
-    if (userLat != null && userLng != null) {
-      // Radius filter — only drop if radius < 100 (100 = "any distance" sentinel)
+    if (userLat != null && userLng != null && !hasExplicitAreaSearch) {
+      // Radius filter — only drop if radius < 100 (100 = "any distance" sentinel).
+      // A named city is an explicit destination, so it must never be clipped
+      // to the device's current local radius.
       if (searchRadius < 100) {
         filtered = filtered.where((e) {
           if (e.latitude == 0 && e.longitude == 0) return true; // no coords → keep
