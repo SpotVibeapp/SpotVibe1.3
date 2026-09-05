@@ -365,14 +365,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get premiumUnlockedBody =>
-      'Eventos recurrentes, analíticas, marca y reclamaciones verificadas están desbloqueados.';
+      'Eventos recurrentes, galerías multimedia, analíticas, marca y reclamaciones verificadas están desbloqueados.';
 
   @override
   String get freePerk1 => 'Publica hasta 2 eventos únicos próximos a la vez';
 
   @override
   String get freePerk2 =>
-      'Página de evento básica: título, descripción, foto, ubicación y hora';
+      'Página de evento básica: título, descripción, 1 foto de portada, 1 video corto, ubicación y hora';
 
   @override
   String get freePerk3 => 'Tu evento aparece en el feed público';
@@ -422,6 +422,12 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get premiumPerk7Subtitle =>
       'Verifica primero. Tu primer reclamo es gratis';
+
+  @override
+  String get premiumPerk8Title => 'Galería multimedia';
+
+  @override
+  String get premiumPerk8Subtitle => 'Hasta 5 fotos y 3 videos cortos en cada evento';
 
   @override
   String get trialLabel => 'prueba gratuita de 7 días';
@@ -832,6 +838,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get photoGalleryHint => 'Agrega hasta 5 fotos en total. La portada cuenta como la primera.';
 
   @override
+  String get photoGalleryFreeHint => 'Los eventos gratis incluyen 1 foto de portada. Premium desbloquea hasta 5 fotos.';
+
+  @override
+  String get videoGalleryFreeHint => 'Los eventos gratis incluyen 1 video corto. Premium desbloquea hasta 3 videos.';
+
+  @override
   String get noAdditionalPhotos => 'Agrega fotos desde tu biblioteca o cámara.';
 
   @override
@@ -890,6 +902,12 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get mediaPremiumPerk => 'Premium desbloquea hasta 5 fotos y 3 videos por evento.';
+
+  @override
+  String get unlockMediaGallery => 'Desbloquear galería completa';
+
+  @override
   String get photos => 'Fotos';
 
   @override
@@ -912,7 +930,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get premiumFeaturesSubtitle =>
-      'Eventos recurrentes · analíticas · marca personalizada · botón de contacto';
+      'Eventos recurrentes · galería multimedia · analíticas · marca personalizada · botón de contacto';
 
   @override
   String get premiumFeaturesUnlocked => 'Funciones Premium desbloqueadas';
@@ -958,14 +976,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get premiumIncludes =>
-      'Incluye eventos recurrentes, analíticas, marca y reclamaciones.';
+      'Incluye galerías multimedia, eventos recurrentes, analíticas, marca y reclamaciones.';
 
   @override
   String get freePlan => 'Plan gratis';
 
   @override
   String get freePlanBody =>
-      'Un evento único próximo a la vez. Página básica (título, descripción, foto, ubicación y hora) en el feed público.';
+      'Hasta 2 eventos únicos próximos a la vez. Página básica con 1 foto de portada, 1 video corto, título, descripción, ubicación y hora en el feed público.';
 
   @override
   String upgradeToPremium(String price) {

@@ -11,8 +11,9 @@ import '../data/media_urls.dart';
 /// Picks photos / short videos and uploads them to Firebase Storage.
 ///
 /// Limits (enforced in app/event rules):
-///   photos  ≤ 6 MB, up to 5 per event including its cover
-///   videos  ≤ 30 seconds and 50 MB, up to 3 per event
+///   Free: 1 cover photo and 1 video
+///   Premium/admin: photos ≤ 6 MB, up to 5 including cover; videos ≤ 30
+///   seconds / 50 MB, up to 3
 class MediaUploadService {
   MediaUploadService({
     ImagePicker? picker,

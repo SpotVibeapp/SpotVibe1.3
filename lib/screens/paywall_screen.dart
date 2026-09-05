@@ -290,6 +290,7 @@ class _FeatureList extends StatelessWidget {
       (l10n.premiumPerk5Title, l10n.premiumPerk5Subtitle),
       (l10n.premiumPerk6Title, l10n.premiumPerk6Subtitle),
       (l10n.premiumPerk7Title, l10n.premiumPerk7Subtitle),
+      (l10n.premiumPerk8Title, l10n.premiumPerk8Subtitle),
     ];
     return Container(
       decoration: BoxDecoration(

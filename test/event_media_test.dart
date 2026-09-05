@@ -7,6 +7,20 @@ import 'package:spotvibe_app/repositories/user_event_repository.dart';
 import 'package:spotvibe_app/services/user_event_service.dart';
 
 void main() {
+  test('Free creators get a useful basic listing while Premium gets full media',
+      () {
+    final free = eventMediaAllowance(isPremium: false, isAdmin: false);
+    final premium = eventMediaAllowance(isPremium: true, isAdmin: false);
+    final admin = eventMediaAllowance(isPremium: false, isAdmin: true);
+
+    expect(free.maxPhotos, 1);
+    expect(free.maxVideos, 1);
+    expect(free.hasFullGallery, isFalse);
+    expect(premium.maxPhotos, 5);
+    expect(premium.maxVideos, 3);
+    expect(admin.hasFullGallery, isTrue);
+  });
+
   test('normalizes media URLs without duplicate cover media', () {
     expect(
       normalizeMediaUrls([
