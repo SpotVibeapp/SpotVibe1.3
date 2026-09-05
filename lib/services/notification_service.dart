@@ -2,6 +2,8 @@ import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show Color;
 
+import '../repositories/notification_preferences_repository.dart';
+
 /// Channel IDs — one per logical notification category.
 const _kChannelEvents = 'spotvibe_events';
 const _kChannelUpdates = 'spotvibe_updates';
@@ -11,7 +13,16 @@ const _kChannelSocial = 'spotvibe_social';
 int _nextId = 1;
 int _nextNotifId() => _nextId++;
 
+/// Local, device-side notifications for actions and server-confirmed events.
+///
+/// This service never invents background activity: a feed refresh is not proof
+/// that a new event was published. True remote/background alerts require a
+/// future Firebase Cloud Messaging delivery path.
 class NotificationService {
+  NotificationService({NotificationPreferencesRepository? preferences})
+      : _preferences = preferences ?? NotificationPreferencesRepository();
+
+  final NotificationPreferencesRepository _preferences;
   bool _initialized = false;
 
   /// Call once from [main()] before [runApp].
@@ -19,54 +30,88 @@ class NotificationService {
     // awesome_notifications is mobile-only; no-op on web.
     if (kIsWeb) return;
 
-    _initialized = await AwesomeNotifications().initialize(
-      null, // use default app icon
-      [
-        NotificationChannel(
-          channelKey: _kChannelEvents,
-          channelName: 'New Events',
-          channelDescription: 'Notifications about new events near you',
-          defaultColor: const Color(0xFF6C5CE7),
-          ledColor: const Color(0xFF6C5CE7),
-          importance: NotificationImportance.High,
-          channelShowBadge: true,
-        ),
-        NotificationChannel(
-          channelKey: _kChannelUpdates,
-          channelName: 'Event Updates',
-          channelDescription: 'Updates on events you bookmarked or are interested in',
-          defaultColor: const Color(0xFF6C5CE7),
-          ledColor: const Color(0xFF6C5CE7),
-          importance: NotificationImportance.Default,
-          channelShowBadge: true,
-        ),
-        NotificationChannel(
-          channelKey: _kChannelSocial,
-          channelName: 'Social',
-          channelDescription: 'Friend requests and activity from people you follow',
-          defaultColor: const Color(0xFF6C5CE7),
-          ledColor: const Color(0xFF6C5CE7),
-          importance: NotificationImportance.High,
-          channelShowBadge: true,
-        ),
-      ],
-      debug: false,
-    );
-
+    try {
+      _initialized = await AwesomeNotifications().initialize(
+        null, // use default app icon
+        [
+          NotificationChannel(
+            channelKey: _kChannelEvents,
+            channelName: 'New Events',
+            channelDescription: 'Notifications about new events near you',
+            defaultColor: const Color(0xFF6C5CE7),
+            ledColor: const Color(0xFF6C5CE7),
+            importance: NotificationImportance.High,
+            channelShowBadge: true,
+          ),
+          NotificationChannel(
+            channelKey: _kChannelUpdates,
+            channelName: 'Event Updates',
+            channelDescription:
+                'Updates on events you bookmarked or are interested in',
+            defaultColor: const Color(0xFF6C5CE7),
+            ledColor: const Color(0xFF6C5CE7),
+            importance: NotificationImportance.Default,
+            channelShowBadge: true,
+          ),
+          NotificationChannel(
+            channelKey: _kChannelSocial,
+            channelName: 'Social',
+            channelDescription: 'Friend requests and activity from people you follow',
+            defaultColor: const Color(0xFF6C5CE7),
+            ledColor: const Color(0xFF6C5CE7),
+            importance: NotificationImportance.High,
+            channelShowBadge: true,
+          ),
+        ],
+        debug: false,
+      );
+    } catch (_) {
+      // Notification setup must never prevent the app from launching.
+      _initialized = false;
+    }
   }
 
-  // ── Permission guard ────────────────────────────────────────────────────────
+  Future<bool> _canSend() async {
+    if (kIsWeb || !_initialized) return false;
+    try {
+      return await AwesomeNotifications().isNotificationAllowed();
+    } catch (_) {
+      return false;
+    }
+  }
 
-  bool get _canSend => !kIsWeb && _initialized;
+  Future<bool> _canSendWith(Future<bool> preference) async {
+    if (!await _canSend()) return false;
+    return await preference;
+  }
 
-  // ── New event discovered ────────────────────────────────────────────────────
+  /// Sends an explicit, user-requested device test. It is not a fictional
+  /// event, reminder, or social alert.
+  Future<bool> sendTestNotification({
+    required String title,
+    required String body,
+  }) async {
+    if (!await _canSend()) return false;
+    return _send(
+      id: _nextNotifId(),
+      channelKey: _kChannelUpdates,
+      title: title,
+      body: body,
+    );
+  }
 
-  /// Called when [count] new events are loaded for the user's area.
+  // ── Server-confirmed new event ────────────────────────────────────────────
+
+  /// Reserved for a future server-confirmed event delivery trigger.
+  ///
+  /// Do not call this because a search or feed refresh returned events.
   Future<void> notifyNewEvents({
     required int count,
     required String areaLabel,
   }) async {
-    if (!_canSend || count == 0) return;
+    if (!await _canSendWith(_preferences.getWeeklyDigest()) || count == 0) {
+      return;
+    }
     final body = count == 1
         ? '1 new event found near $areaLabel'
         : '$count new events found near $areaLabel';
@@ -78,39 +123,38 @@ class NotificationService {
     );
   }
 
-  // ── Bookmark / interested update ────────────────────────────────────────────
+  // ── Bookmark / interested update ──────────────────────────────────────────
 
-  /// Called when the user bookmarks an event.
+  /// Confirms the user's own save action if event-update alerts are enabled.
   Future<void> notifyBookmarked(String eventTitle) async {
-    if (!_canSend) return;
+    if (!await _canSendWith(_preferences.getEventReminders())) return;
     await _send(
       id: _nextNotifId(),
       channelKey: _kChannelUpdates,
       title: '🔖 Event Saved',
-      body: '"$eventTitle" has been added to your bookmarks. We\'ll keep you posted on updates!',
+      body: '"$eventTitle" has been added to your bookmarks.',
     );
   }
 
-  /// Called when the user marks interested in an event.
+  /// Confirms the user's own interested action if event-update alerts are enabled.
   Future<void> notifyInterested(String eventTitle) async {
-    if (!_canSend) return;
+    if (!await _canSendWith(_preferences.getEventReminders())) return;
     await _send(
       id: _nextNotifId(),
       channelKey: _kChannelUpdates,
       title: '⭐ You\'re Interested',
-      body: 'You\'ll get updates about "$eventTitle" as the date approaches.',
+      body: '"$eventTitle" has been marked as interested.',
     );
   }
 
-  // ── Friend request ──────────────────────────────────────────────────────────
+  // ── Friend request ─────────────────────────────────────────────────────────
 
-  /// Called when the current user sends a friend request (confirms action) or
-  /// when a simulated inbound friend request is received.
+  /// Confirms the current user's real friend-request action.
   Future<void> notifyFriendRequest({
     required String fromName,
     bool isSentByMe = false,
   }) async {
-    if (!_canSend) return;
+    if (!await _canSendWith(_preferences.getSocialFriendRequests())) return;
     if (isSentByMe) {
       await _send(
         id: _nextNotifId(),
@@ -118,24 +162,25 @@ class NotificationService {
         title: '👋 Friend Request Sent',
         body: 'Your friend request to $fromName has been sent!',
       );
-    } else {
-      await _send(
-        id: _nextNotifId(),
-        channelKey: _kChannelSocial,
-        title: '🤝 New Friend Request',
-        body: '$fromName wants to connect with you on SpotVibe.',
-      );
+      return;
     }
+
+    // Inbound requests must only be called from a real backend event.
+    await _send(
+      id: _nextNotifId(),
+      channelKey: _kChannelSocial,
+      title: '🤝 New Friend Request',
+      body: '$fromName wants to connect with you on SpotVibe.',
+    );
   }
 
-  // ── A. Event Reminders ──────────────────────────────────────────────────────
+  // ── Event reminders ───────────────────────────────────────────────────────
 
-  /// "Your event starts in 1 hour" — send 60 minutes before event start.
   Future<void> notifyEventStartingSoon({
     required String eventTitle,
     required String locationLabel,
   }) async {
-    if (!_canSend) return;
+    if (!await _canSendWith(_preferences.getEventReminders())) return;
     await _send(
       id: _nextNotifId(),
       channelKey: _kChannelUpdates,
@@ -144,13 +189,12 @@ class NotificationService {
     );
   }
 
-  /// "Your event is tomorrow at [time]" — send ~24 hours before event start.
   Future<void> notifyEventTomorrow({
     required String eventTitle,
     required String timeLabel,
     required String locationLabel,
   }) async {
-    if (!_canSend) return;
+    if (!await _canSendWith(_preferences.getEventReminders())) return;
     await _send(
       id: _nextNotifId(),
       channelKey: _kChannelUpdates,
@@ -159,13 +203,12 @@ class NotificationService {
     );
   }
 
-  /// "Don't forget: [Event] tonight at [time]" — send day-of at 3 PM.
   Future<void> notifyEventTonight({
     required String eventTitle,
     required String timeLabel,
     required String locationLabel,
   }) async {
-    if (!_canSend) return;
+    if (!await _canSendWith(_preferences.getEventReminders())) return;
     await _send(
       id: _nextNotifId(),
       channelKey: _kChannelUpdates,
@@ -174,17 +217,20 @@ class NotificationService {
     );
   }
 
-  // ── B. New Events Digest ────────────────────────────────────────────────────
+  // ── Discovery alerts ──────────────────────────────────────────────────────
 
-  /// "5 new music events near you this weekend" — category-aware alert.
   Future<void> notifyNewEventsNearby({
     required int count,
     required String category,
     required String areaLabel,
     required String timePeriod,
   }) async {
-    if (!_canSend || count == 0) return;
-    final plural = count == 1 ? '1 new $category event' : '$count new $category events';
+    if (!await _canSendWith(_preferences.getCategoryEnabled(category)) ||
+        count == 0) {
+      return;
+    }
+    final plural =
+        count == 1 ? '1 new $category event' : '$count new $category events';
     await _send(
       id: _nextNotifId(),
       channelKey: _kChannelEvents,
@@ -193,13 +239,15 @@ class NotificationService {
     );
   }
 
-  /// Weekly Friday morning digest.
   Future<void> notifyWeeklyDigest({
     required int eventCount,
     required List<String> categories,
     required String areaLabel,
   }) async {
-    if (!_canSend || eventCount == 0) return;
+    if (!await _canSendWith(_preferences.getWeeklyDigest()) ||
+        eventCount == 0) {
+      return;
+    }
     final catLine = categories.take(3).join(', ');
     await _send(
       id: _nextNotifId(),
@@ -209,15 +257,18 @@ class NotificationService {
     );
   }
 
-  // ── C. Social Notifications ─────────────────────────────────────────────────
+  // ── Social notifications ──────────────────────────────────────────────────
 
-  /// "3 new comments on your event"
   Future<void> notifyNewComments({
     required String eventTitle,
     required int commentCount,
   }) async {
-    if (!_canSend || commentCount == 0) return;
-    final label = commentCount == 1 ? '1 new comment' : '$commentCount new comments';
+    if (!await _canSendWith(_preferences.getSocialComments()) ||
+        commentCount == 0) {
+      return;
+    }
+    final label =
+        commentCount == 1 ? '1 new comment' : '$commentCount new comments';
     await _send(
       id: _nextNotifId(),
       channelKey: _kChannelSocial,
@@ -226,12 +277,11 @@ class NotificationService {
     );
   }
 
-  /// "Your friend is going to [Event Name]"
   Future<void> notifyFriendRsvp({
     required String friendName,
     required String eventTitle,
   }) async {
-    if (!_canSend) return;
+    if (!await _canSendWith(_preferences.getSocialFriendRsvp())) return;
     await _send(
       id: _nextNotifId(),
       channelKey: _kChannelSocial,
@@ -240,16 +290,14 @@ class NotificationService {
     );
   }
 
-  // ── Internal send helper ────────────────────────────────────────────────────
-
-  Future<void> _send({
+  Future<bool> _send({
     required int id,
     required String channelKey,
     required String title,
     required String body,
   }) async {
     try {
-      await AwesomeNotifications().createNotification(
+      return await AwesomeNotifications().createNotification(
         content: NotificationContent(
           id: id,
           channelKey: channelKey,
@@ -261,6 +309,7 @@ class NotificationService {
       );
     } catch (_) {
       // Never crash the app due to a notification failure.
+      return false;
     }
   }
 }

@@ -946,7 +946,7 @@ abstract class AppLocalizations {
   /// No description provided for @couldNotGetLocation.
   ///
   /// In en, this message translates to:
-  /// **'Could not get your location. Please allow location access.'**
+  /// **'We couldn't determine your location. Make sure Location is turned on in your device settings, then try again.'**
   String get couldNotGetLocation;
 
   /// No description provided for @showingEventsIn.
@@ -1048,19 +1048,19 @@ abstract class AppLocalizations {
   /// No description provided for @locationNeededTitle.
   ///
   /// In en, this message translates to:
-  /// **'Location needed'**
+  /// **'Find events near you'**
   String get locationNeededTitle;
 
   /// No description provided for @locationNeededSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Enable location so SpotVibe can find events happening near you right now.'**
+  /// **'Use your location to see nearby events. If you already allowed access, make sure Location is turned on in your device settings.'**
   String get locationNeededSubtitle;
 
   /// No description provided for @enableLocation.
   ///
   /// In en, this message translates to:
-  /// **'Enable Location'**
+  /// **'Use My Location'**
   String get enableLocation;
 
   /// No description provided for @browseAllEvents.
@@ -3276,6 +3276,16 @@ abstract class AppLocalizations {
   String get eventCreationGuideReviewBody;
   String get eventCreationGuideExplorePremium;
   String get eventCreationGuideStart;
+
+  String get notificationTestTitle;
+  String get notificationTestBody;
+  String get sendTestNotification;
+  String get notificationTestAlertTitle;
+  String get notificationTestAlertBody;
+  String get notificationTestSent;
+  String get notificationPermissionNeeded;
+  String get notificationTestFailed;
+  String get openSettings;
 }
 
 class _AppLocalizationsDelegate

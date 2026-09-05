@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -38,6 +40,24 @@ class _EventsScreenState extends State<EventsScreen> {
   final GlobalKey _tourKeyCard = GlobalKey();
 
   @override
+  void initState() {
+    super.initState();
+    // Permission can be granted during onboarding before this screen is built.
+    // Resolve coordinates once without prompting again, then reload the feed
+    // with the user's actual nearby area.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(
+        _requestUserLocation(
+          requestPermission: false,
+          clearWhenActive: false,
+          showFailure: false,
+        ),
+      );
+    });
+  }
+
+  @override
   void dispose() {
     _areaController.dispose();
     super.dispose();
@@ -68,23 +88,29 @@ class _EventsScreenState extends State<EventsScreen> {
     return results;
   }
 
-  Future<void> _requestUserLocation() async {
+  Future<void> _requestUserLocation({
+    bool requestPermission = true,
+    bool clearWhenActive = true,
+    bool showFailure = true,
+  }) async {
     if (_fetchingLocation) return;
     final eventProvider = context.read<EventProvider>();
 
     if (eventProvider.hasUserLocation) {
-      eventProvider.clearUserLocation();
+      if (clearWhenActive) eventProvider.clearUserLocation();
       return;
     }
 
     setState(() => _fetchingLocation = true);
-    final coords = await _locationService.getCurrentLocation();
+    final coords = await _locationService.getCurrentLocation(
+      requestPermission: requestPermission,
+    );
     if (!mounted) return;
     setState(() => _fetchingLocation = false);
 
     if (coords != null) {
       eventProvider.setUserLocation(coords.lat, coords.lng);
-    } else {
+    } else if (showFailure) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context)!.couldNotGetLocation)),
       );

@@ -472,7 +472,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get couldNotGetLocation =>
-      'Could not get your location. Please allow location access.';
+      'We couldn\'t determine your location. Make sure Location is turned on in your device settings, then try again.';
 
   @override
   String showingEventsIn(String area) {
@@ -538,14 +538,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearLocation => 'Clear Location';
 
   @override
-  String get locationNeededTitle => 'Location needed';
+  String get locationNeededTitle => 'Find events near you';
 
   @override
   String get locationNeededSubtitle =>
-      'Enable location so SpotVibe can find events happening near you right now.';
+      'Use your location to see nearby events. If you already allowed access, make sure Location is turned on in your device settings.';
 
   @override
-  String get enableLocation => 'Enable Location';
+  String get enableLocation => 'Use My Location';
 
   @override
   String get browseAllEvents => 'Browse All Events';
@@ -1850,4 +1850,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventCreationGuideStart => 'Start creating';
+
+  @override
+  String get notificationTestTitle => 'Test notifications';
+
+  @override
+  String get notificationTestBody =>
+      'Send a one-time test alert to confirm notifications work on this device.';
+
+  @override
+  String get sendTestNotification => 'Send test notification';
+
+  @override
+  String get notificationTestAlertTitle =>
+      'SpotVibe notifications are working';
+
+  @override
+  String get notificationTestAlertBody =>
+      'This is a test notification you requested.';
+
+  @override
+  String get notificationTestSent =>
+      'Test notification sent. Check your notification shade.';
+
+  @override
+  String get notificationPermissionNeeded =>
+      'Notifications are off for SpotVibe. Turn them on in Settings to test.';
+
+  @override
+  String get notificationTestFailed =>
+      'We couldn\'t send a test notification. Please try again.';
+
+  @override
+  String get openSettings => 'Open Settings';
 }

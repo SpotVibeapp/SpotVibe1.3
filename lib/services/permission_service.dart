@@ -29,27 +29,53 @@ class PermissionService {
   /// Returns true if granted.
   Future<bool> requestLocation() async {
     if (kIsWeb) return false;
-    final status = await Permission.locationWhenInUse.request();
-    return status.isGranted;
+    try {
+      final status = await Permission.locationWhenInUse.request();
+      return status.isGranted;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Requests notification permission via awesome_notifications.
   /// Returns true if granted.
   Future<bool> requestNotifications() async {
     if (kIsWeb) return false;
-    return await AwesomeNotifications()
-        .requestPermissionToSendNotifications();
+    try {
+      return await AwesomeNotifications().requestPermissionToSendNotifications();
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Checks whether location permission is currently granted.
   Future<bool> isLocationGranted() async {
     if (kIsWeb) return false;
-    return await Permission.locationWhenInUse.isGranted;
+    try {
+      return await Permission.locationWhenInUse.isGranted;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Checks whether notification permission is currently granted.
   Future<bool> isNotificationGranted() async {
     if (kIsWeb) return false;
-    return await AwesomeNotifications().isNotificationAllowed();
+    try {
+      return await AwesomeNotifications().isNotificationAllowed();
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Opens the operating system's page for this app when a permission was
+  /// previously denied and Android no longer shows the native prompt.
+  Future<bool> openDeviceSettings() async {
+    if (kIsWeb) return false;
+    try {
+      return await openAppSettings();
+    } catch (_) {
+      return false;
+    }
   }
 }

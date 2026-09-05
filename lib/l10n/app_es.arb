@@ -221,7 +221,7 @@
   "noActiveSubscription": "No se encontró una suscripción activa para restaurar.",
   "restoreFailed": "La restauración falló. Inténtalo de nuevo.",
   "filtersTooltip": "Filtros",
-  "couldNotGetLocation": "No pudimos obtener tu ubicación. Permite el acceso a la ubicación.",
+  "couldNotGetLocation": "No pudimos determinar tu ubicación. Verifica que la ubicación esté activada en la configuración de tu dispositivo e inténtalo de nuevo.",
   "showingEventsIn": "Mostrando eventos en \"{area}\"",
   "@showingEventsIn": {
     "placeholders": {
@@ -262,9 +262,9 @@
   "noEventsNearSubtitle": "Prueba con otra ciudad o código postal, o aumenta el radio de búsqueda en las opciones de filtro.",
   "increaseRadius": "Aumentar radio",
   "clearLocation": "Quitar ubicación",
-  "locationNeededTitle": "Se necesita ubicación",
-  "locationNeededSubtitle": "Activa la ubicación para que SpotVibe encuentre eventos cerca de ti ahora mismo.",
-  "enableLocation": "Activar ubicación",
+  "locationNeededTitle": "Encuentra eventos cerca de ti",
+  "locationNeededSubtitle": "Usa tu ubicación para ver eventos cercanos. Si ya permitiste el acceso, verifica que la ubicación esté activada en la configuración de tu dispositivo.",
+  "enableLocation": "Usar mi ubicación",
   "browseAllEvents": "Ver todos los eventos",
   "noEventsFoundTitle": "No se encontraron eventos cerca",
   "noEventsFoundSubtitle": "Prueba aumentar el radio de búsqueda o vuelve más tarde: se agregan eventos nuevos todos los días.",
@@ -891,5 +891,15 @@
   "eventCreationGuideReviewTitle": "4. Revisa, publica y comparte",
   "eventCreationGuideReviewBody": "Revisa cada detalle antes de publicar. Si después cambias el título, fecha, hora, venue o precio, vuelve a abrir Poster Studio para crear un póster actualizado.",
   "eventCreationGuideExplorePremium": "Explorar Premium",
-  "eventCreationGuideStart": "Empezar a crear"
+  "eventCreationGuideStart": "Empezar a crear",
+
+  "notificationTestTitle": "Probar notificaciones",
+  "notificationTestBody": "Envía una alerta de prueba para confirmar que las notificaciones funcionan en este dispositivo.",
+  "sendTestNotification": "Enviar notificación de prueba",
+  "notificationTestAlertTitle": "Las notificaciones de SpotVibe funcionan",
+  "notificationTestAlertBody": "Esta es una notificación de prueba que solicitaste.",
+  "notificationTestSent": "Notificación de prueba enviada. Revisa la bandeja de notificaciones.",
+  "notificationPermissionNeeded": "Las notificaciones de SpotVibe están desactivadas. Actívalas en Configuración para probarlas.",
+  "notificationTestFailed": "No pudimos enviar una notificación de prueba. Inténtalo de nuevo.",
+  "openSettings": "Abrir configuración"
 }
