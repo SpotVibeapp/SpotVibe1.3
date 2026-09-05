@@ -2,6 +2,7 @@ import '../data/event_time.dart';
 import '../data/media_urls.dart';
 import '../data/pricing.dart';
 import '../models/user_event.dart';
+import '../models/event_social_link.dart';
 import '../repositories/user_event_repository.dart';
 
 export '../data/pricing.dart'
@@ -52,6 +53,7 @@ class UserEventService {
     String? contactPhone,
     String? contactWebsite,
     String? contactSocial,
+    EventSocialLinks socialLinks = const EventSocialLinks.empty(),
     String? brandColor,
     String? brandLogoUrl,
   }) async {
@@ -114,6 +116,7 @@ class UserEventService {
       contactPhone: contactPhone?.trim().isNotEmpty == true ? contactPhone!.trim() : null,
       contactWebsite: contactWebsite?.trim().isNotEmpty == true ? contactWebsite!.trim() : null,
       contactSocial: contactSocial?.trim().isNotEmpty == true ? contactSocial!.trim() : null,
+      socialLinks: socialLinks,
       brandColor: brandColor?.trim().isNotEmpty == true ? brandColor!.trim() : null,
       brandLogoUrl: brandLogoUrl?.trim().isNotEmpty == true ? brandLogoUrl!.trim() : null,
       featuredWeekKey: featuredWeekKey,

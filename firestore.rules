@@ -69,6 +69,33 @@ service cloud.firestore {
           || hasValidEventTiming(data);
     }
 
+    // Public organizer social links are optional and limited to the known
+    // platform keys. The app additionally canonicalizes each value to an
+    // official HTTPS platform URL before rendering or launching it.
+    function isValidSocialLinkValue(value) {
+      return value is string
+          && value.size() <= 512
+          && value.matches('https://.*');
+    }
+    function hasValidSocialLinks(data) {
+      return !data.keys().hasAll(['socialLinks'])
+          || (data.socialLinks is map
+              && data.socialLinks.keys().hasOnly([
+                'instagram', 'facebook', 'snapchat', 'tiktok', 'youtube'
+              ])
+              && data.socialLinks.size() <= 5
+              && (!data.socialLinks.keys().hasAny(['instagram'])
+                  || isValidSocialLinkValue(data.socialLinks.instagram))
+              && (!data.socialLinks.keys().hasAny(['facebook'])
+                  || isValidSocialLinkValue(data.socialLinks.facebook))
+              && (!data.socialLinks.keys().hasAny(['snapchat'])
+                  || isValidSocialLinkValue(data.socialLinks.snapchat))
+              && (!data.socialLinks.keys().hasAny(['tiktok'])
+                  || isValidSocialLinkValue(data.socialLinks.tiktok))
+              && (!data.socialLinks.keys().hasAny(['youtube'])
+                  || isValidSocialLinkValue(data.socialLinks.youtube)));
+    }
+
     // ── Admin roster (read by the admin themself; write only via console /
     //    Admin SDK / Cloud Functions) ──────────────────────────────────────
     match /admins/{uid} {
@@ -122,8 +149,10 @@ service cloud.firestore {
                     && request.resource.data.title is string
                     && request.resource.data.title.size() <= 120
                     && hasValidEventMedia(request.resource.data)
+                    && hasValidSocialLinks(request.resource.data)
                     && hasValidEventTiming(request.resource.data);
       allow update: if hasValidEventMedia(request.resource.data)
+                    && hasValidSocialLinks(request.resource.data)
                     && keepsValidEventTiming(request.resource.data, resource.data)
                     && (isAdmin()
                     || (isSignedIn() && (
@@ -163,6 +192,7 @@ service cloud.firestore {
     match /user_events/{eventId} {
       allow read: if true;
       allow create: if hasValidEventMedia(request.resource.data)
+                    && hasValidSocialLinks(request.resource.data)
                     && hasValidEventTiming(request.resource.data)
                     && (isAdmin()
                     || (isSignedIn()
@@ -170,6 +200,7 @@ service cloud.firestore {
                         && request.resource.data.title is string
                         && request.resource.data.title.size() <= 120));
       allow update: if hasValidEventMedia(request.resource.data)
+                    && hasValidSocialLinks(request.resource.data)
                     && keepsValidEventTiming(request.resource.data, resource.data)
                     && (isAdmin()
                     || (isSignedIn() && (

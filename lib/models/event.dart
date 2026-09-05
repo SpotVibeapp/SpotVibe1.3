@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/event_time.dart';
 import '../data/media_urls.dart';
 import '../data/pricing.dart';
+import 'event_social_link.dart';
 
 enum EventSource {
   facebook,
@@ -101,6 +102,8 @@ class Event {
   final bool isCreatorPro;
   final String? featuredWeekKey;
   final bool isUserCreated;
+  /// Public organizer profile links associated with this event.
+  final EventSocialLinks socialLinks;
 
   const Event({
     required this.id,
@@ -133,6 +136,7 @@ class Event {
     this.isCreatorPro = false,
     this.featuredWeekKey,
     this.isUserCreated = false,
+    this.socialLinks = const EventSocialLinks.empty(),
   });
 
   Event copyWith({
@@ -165,6 +169,7 @@ class Event {
     bool? isCreatorPro,
     String? featuredWeekKey,
     bool? isUserCreated,
+    EventSocialLinks? socialLinks,
   }) =>
       Event(
         id: id,
@@ -198,6 +203,7 @@ class Event {
         isCreatorPro: isCreatorPro ?? this.isCreatorPro,
         featuredWeekKey: featuredWeekKey ?? this.featuredWeekKey,
         isUserCreated: isUserCreated ?? this.isUserCreated,
+        socialLinks: socialLinks ?? this.socialLinks,
       );
 
   bool get isFree => cost == null || cost == 0;

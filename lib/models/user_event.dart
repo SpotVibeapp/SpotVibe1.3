@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../data/event_time.dart';
 import '../data/media_urls.dart';
+import 'event_social_link.dart';
 
 /// How often a Premium event auto-repeats.
 enum RecurringType { none, weekly, monthly }
@@ -45,7 +46,7 @@ class UserCreatedEvent {
   final String? contactPhone;
   /// Optional website URL shown on event page (Premium only).
   final String? contactWebsite;
-  /// Optional social handle/link shown on event page (Premium only).
+  /// Legacy generic social handle/link shown with Premium contact details.
   final String? contactSocial;
   /// Hex color string for custom brand accent, e.g. '#FF5733' (Premium only).
   final String? brandColor;
@@ -61,6 +62,8 @@ class UserCreatedEvent {
   final int analyticsSaves;
   /// Live click-through count for the analytics dashboard.
   final int analyticsClicks;
+  /// Public organizer profile links shown on this event page.
+  final EventSocialLinks socialLinks;
 
   const UserCreatedEvent({
     required this.id,
@@ -98,6 +101,7 @@ class UserCreatedEvent {
     this.analyticsViews = 0,
     this.analyticsSaves = 0,
     this.analyticsClicks = 0,
+    this.socialLinks = const EventSocialLinks.empty(),
   });
 
   bool get isFree => cost == null || cost == 0;
@@ -174,6 +178,7 @@ class UserCreatedEvent {
     int? analyticsViews,
     int? analyticsSaves,
     int? analyticsClicks,
+    EventSocialLinks? socialLinks,
   }) =>
       UserCreatedEvent(
         id: id,
@@ -214,5 +219,6 @@ class UserCreatedEvent {
         analyticsViews: analyticsViews ?? this.analyticsViews,
         analyticsSaves: analyticsSaves ?? this.analyticsSaves,
         analyticsClicks: analyticsClicks ?? this.analyticsClicks,
+        socialLinks: socialLinks ?? this.socialLinks,
       );
 }

@@ -48,6 +48,7 @@ const int kFreeUserActiveEventLimit = 2;
 const List<String> kFreePlanPerks = [
   'Post up to 2 upcoming one-time events at a time',
   'Basic event page — title, description, 1 cover photo, 1 short video, location, time',
+  'Public organizer social links',
   'Event appears in the public feed',
 ];
 
@@ -56,7 +57,7 @@ const List<(String, String)> kPremiumPlanPerks = [
   ('Featured placement', 'Top of the category feed 1× per week'),
   ('Analytics dashboard', 'Live views, saves, and click-throughs'),
   ('Custom branding', 'Logo and brand colors on your event page'),
-  ('Contact button', 'Phone, website, and social links'),
+  ('Contact button', 'Phone, website, and organizer contact tools'),
   ('No ads', 'Clean event pages with no ads'),
   ('Claim existing events', 'Verify first. Your first claim is free'),
   ('Rich media gallery', 'Up to 5 photos and 3 short videos on every event'),

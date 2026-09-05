@@ -1,5 +1,6 @@
 import 'package:uuid/uuid.dart';
 import '../models/user_event.dart';
+import '../models/event_social_link.dart';
 export '../models/user_event.dart' show RecurringType;
 
 class UserEventRepository {
@@ -121,6 +122,7 @@ class UserEventRepository {
     String? contactPhone,
     String? contactWebsite,
     String? contactSocial,
+    EventSocialLinks socialLinks = const EventSocialLinks.empty(),
     String? brandColor,
     String? brandLogoUrl,
     String? featuredWeekKey,
@@ -154,6 +156,7 @@ class UserEventRepository {
       contactPhone: contactPhone,
       contactWebsite: contactWebsite,
       contactSocial: contactSocial,
+      socialLinks: socialLinks,
       brandColor: brandColor,
       brandLogoUrl: brandLogoUrl,
       featuredWeekKey: featuredWeekKey,

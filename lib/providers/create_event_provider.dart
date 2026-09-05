@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../models/user_event.dart';
+import '../models/event_social_link.dart';
 import '../services/user_event_service.dart';
 
 export '../models/user_event.dart' show RecurringType;
@@ -63,6 +64,7 @@ class CreateEventProvider extends ChangeNotifier {
     String? contactPhone,
     String? contactWebsite,
     String? contactSocial,
+    EventSocialLinks socialLinks = const EventSocialLinks.empty(),
     String? brandColor,
     String? brandLogoUrl,
   }) async {
@@ -103,6 +105,7 @@ class CreateEventProvider extends ChangeNotifier {
           clearContactWebsite: contactWebsite == null || contactWebsite.isEmpty,
           contactSocial: contactSocial,
           clearContactSocial: contactSocial == null || contactSocial.isEmpty,
+          socialLinks: socialLinks,
           brandColor: brandColor,
           clearBrandColor: brandColor == null || brandColor.isEmpty,
           brandLogoUrl: brandLogoUrl,
@@ -137,6 +140,7 @@ class CreateEventProvider extends ChangeNotifier {
           contactPhone: contactPhone,
           contactWebsite: contactWebsite,
           contactSocial: contactSocial,
+          socialLinks: socialLinks,
           brandColor: brandColor,
           brandLogoUrl: brandLogoUrl,
         );

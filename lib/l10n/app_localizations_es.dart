@@ -408,7 +408,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get premiumPerk5Title => 'Botón de contacto';
 
   @override
-  String get premiumPerk5Subtitle => 'Teléfono, sitio web y enlaces sociales';
+  String get premiumPerk5Subtitle => 'Teléfono, sitio web y herramientas de contacto';
 
   @override
   String get premiumPerk6Title => 'Sin anuncios';
@@ -948,7 +948,49 @@ class AppLocalizationsEs extends AppLocalizations {
   String get websiteOptional => 'Sitio web (opcional)';
 
   @override
-  String get socialHandleOptional => 'Red social (opcional)';
+  String get socialHandleOptional => 'Otra cuenta social (opcional)';
+
+  @override
+  String get organizerSocialLinks =>
+      'Enlaces de redes sociales del organizador';
+
+  @override
+  String get organizerSocialLinksHelp =>
+      'Opcional. Agrega perfiles públicos que controlas. Se muestran como botones en este evento; SpotVibe nunca se conecta ni publica en tus cuentas.';
+
+  @override
+  String get instagramOptional => 'Instagram (opcional)';
+
+  @override
+  String get facebookOptional => 'Facebook (opcional)';
+
+  @override
+  String get snapchatOptional => 'Snapchat (opcional)';
+
+  @override
+  String get tiktokOptional => 'TikTok (opcional)';
+
+  @override
+  String get youtubeOptional => 'YouTube (opcional)';
+
+  @override
+  String get socialProfileHint => '@tucuenta o https://...';
+
+  @override
+  String validSocialProfileLink(String platform) {
+    return 'Ingresa un usuario o enlace HTTPS válido de $platform.';
+  }
+
+  @override
+  String get followOrganizer => 'Sigue al organizador';
+
+  @override
+  String get socialLinkOpenFailed =>
+      'No se pudo abrir este enlace de red social.';
+
+  @override
+  String get shareSocialHint =>
+      'Elige Instagram, Facebook, Snapchat u otra app instalada.';
 
   @override
   String get customBranding => 'Marca personalizada';
@@ -983,7 +1025,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get freePlanBody =>
-      'Hasta 2 eventos únicos próximos a la vez. Página básica con 1 foto de portada, 1 video corto, título, descripción, ubicación y hora en el feed público.';
+      'Hasta 2 eventos únicos próximos a la vez. Página básica con 1 foto de portada, 1 video corto, título, descripción, ubicación, hora y enlaces públicos del organizador en el feed público.';
 
   @override
   String upgradeToPremium(String price) {
@@ -1833,7 +1875,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get eventCreationGuideFreePublish =>
-      'Página básica del evento en el feed público';
+      'Página básica del evento con enlaces públicos del organizador en el feed público';
 
   @override
   String get eventCreationGuidePremiumEvents =>
@@ -1849,7 +1891,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get eventCreationGuideSharedTools =>
-      'Ambos planes permiten publicar los detalles principales, agregar una portada y usar Poster Studio para crear un póster para compartir. Los fondos promocionales con IA son una herramienta para creadores Premium.';
+      'Ambos planes permiten publicar los detalles principales, agregar enlaces públicos del organizador, agregar una portada y usar Poster Studio para crear un póster para compartir. Los fondos promocionales con IA son una herramienta para creadores Premium.';
 
   @override
   String get eventCreationGuideAdminNote =>
