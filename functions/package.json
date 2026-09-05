@@ -2,7 +2,7 @@
   "name": "spotvibe-functions",
   "description": "Cloud Functions for SpotVibe: account deletion, content moderation, curated-event seeding",
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "main": "index.js",
   "dependencies": {
