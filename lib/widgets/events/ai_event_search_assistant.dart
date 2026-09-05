@@ -162,6 +162,7 @@ class _AiEventSearchAssistantState extends State<_AiEventSearchAssistant> {
   bool _searching = false;
   String? _error;
   final List<_AssistantMessage> _messages = [];
+  final _resultsKey = GlobalKey();
   List<_AssistantResultGroup> _groups = const [];
 
   @override
@@ -174,6 +175,30 @@ class _AiEventSearchAssistantState extends State<_AiEventSearchAssistant> {
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  /// Reveals the first result group after a search completes. Waiting for the
+  /// next frame ensures the newly added result widgets have a scroll position.
+  void _revealSearchOutcome() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final target = _resultsKey.currentContext;
+      if (target != null) {
+        await Scrollable.ensureVisible(
+          target,
+          alignment: 0.06,
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOutCubic,
+        );
+        return;
+      }
+      if (!widget.scrollController.hasClients) return;
+      await widget.scrollController.animateTo(
+        widget.scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+      );
+    });
   }
 
   Future<void> _search([String? suggestedQuery]) async {
@@ -207,9 +232,11 @@ class _AiEventSearchAssistantState extends State<_AiEventSearchAssistant> {
           ),
         );
       });
+      _revealSearchOutcome();
     } catch (error) {
       if (!mounted) return;
       setState(() => _error = error.toString().replaceFirst('Exception: ', ''));
+      _revealSearchOutcome();
     } finally {
       if (mounted) setState(() => _searching = false);
     }
@@ -364,11 +391,18 @@ class _AiEventSearchAssistantState extends State<_AiEventSearchAssistant> {
                 ],
                 if (_groups.isNotEmpty) ...[
                   const SizedBox(height: AppTheme.spacingLg),
-                  for (final group in _groups)
-                    _AssistantResultGroupView(
-                      group: group,
-                      onOpenEvent: widget.onOpenEvent,
+                  KeyedSubtree(
+                    key: _resultsKey,
+                    child: Column(
+                      children: [
+                        for (final group in _groups)
+                          _AssistantResultGroupView(
+                            group: group,
+                            onOpenEvent: widget.onOpenEvent,
+                          ),
+                      ],
                     ),
+                  ),
                 ],
               ],
             ),
