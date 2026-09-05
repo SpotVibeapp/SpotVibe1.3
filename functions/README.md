@@ -31,6 +31,28 @@ Generated backgrounds are written to the event owner's Firebase Storage path.
 Cloud Functions and the image provider both require a billed account; set a
 budget alert before enabling this in production.
 
+### Google Workspace domain-restricted sharing
+
+This project’s Google Workspace organization blocks the `allUsers` IAM binding
+that Firebase normally adds to an HTTPS callable Gen 2 function. The mobile app
+therefore calls the backing Cloud Run service URL configured in
+`AppConfig.aiPromoFunctionUrl`; that URL is public routing information, never a
+secret. The callable handler still requires Firebase Authentication before it
+can generate an image.
+
+After every deployment of `generatePromoImage`, make sure its backing service
+allows the callable request without a Cloud Run IAM identity check:
+
+```bash
+gcloud run services update generatepromoimage \
+  --region=us-central1 \
+  --project=spotvibe-cfa08 \
+  --no-invoker-iam-check
+```
+
+Do not add `allUsers` to the service IAM policy while Domain Restricted Sharing
+is enforced; Google Cloud rejects that binding.
+
 ## What's here
 
 | Function | Type | Purpose |
