@@ -755,6 +755,75 @@ class AppLocalizationsEs extends AppLocalizations {
   String get eventVideoUrl => 'URL del video del evento (opcional)';
 
   @override
+  String get aiArtDirection => 'Dirección artística (opcional)';
+
+  @override
+  String get aiArtDirectionHint => 'p. ej., mesas de billar con neón azul, iluminación elegante y espacio para el título';
+
+  @override
+  String get aiArtworkOnly => 'La IA crea solo el arte. Poster Studio agrega los datos exactos del evento. Revisa el resultado antes de publicar; no se envía a SpotVibe para aprobación manual. No uses logotipos engañosos, imágenes de celebridades ni personajes protegidos por derechos de autor.';
+
+  @override
+  String get posterStudio => 'Estudio de pósteres';
+
+  @override
+  String get posterStudioIntro => 'Diseña un póster listo para compartir usando los datos exactos de este evento. Si cambias un dato, abre de nuevo el Estudio de pósteres para actualizarlo.';
+
+  @override
+  String get posterExactDetails => 'SpotVibe escribe el título, fecha, hora, venue y precio desde este formulario. No se le pide a la IA que cree estos datos.';
+
+  @override
+  String get posterTemplate => 'Plantilla';
+
+  @override
+  String get posterLayout => 'Diseño';
+
+  @override
+  String get posterTemplateBold => 'Impactante';
+
+  @override
+  String get posterTemplateEditorial => 'Editorial';
+
+  @override
+  String get posterTemplateNeon => 'Neón';
+
+  @override
+  String get posterTemplateMinimal => 'Minimalista';
+
+  @override
+  String get posterLayoutLeft => 'Izquierda';
+
+  @override
+  String get posterLayoutCenter => 'Centrado';
+
+  @override
+  String get posterShowVenue => 'Mostrar venue y ubicación';
+
+  @override
+  String get posterShowPrice => 'Mostrar precio del boleto';
+
+  @override
+  String get posterPreparing => 'Preparando póster…';
+
+  @override
+  String get sharePoster => 'Compartir póster';
+
+  @override
+  String get posterCaptureFailed => 'No se pudo crear el póster. Inténtalo de nuevo.';
+
+  @override
+  String get posterSharingMobileOnly => 'Compartir pósteres está disponible en la app de Android.';
+
+  @override
+  String get createSharePoster => 'Crear y compartir póster completo';
+
+  @override
+  String get posterCoverStays => 'La portada actual del evento no cambia.';
+
+  @override
+  String get posterTitleVenueRequired => 'Agrega un título y venue antes de crear un póster.';
+
+  @override
   String get chatLink => 'Enlace de chat comunitario (opcional)';
 
   @override

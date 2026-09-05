@@ -30,6 +30,7 @@ class AiPromoImageService {
     required String description,
     required String category,
     required String venue,
+    String artDirection = '',
     required String style,
     required String aspectRatio,
   }) async {
@@ -47,6 +48,7 @@ class AiPromoImageService {
         'description': description.trim(),
         'category': category.trim(),
         'venue': venue.trim(),
+        'artDirection': artDirection.trim(),
         'style': style,
         'aspectRatio': aspectRatio,
       });

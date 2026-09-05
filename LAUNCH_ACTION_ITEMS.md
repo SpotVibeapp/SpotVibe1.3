@@ -81,12 +81,20 @@ Your API key was committed to a **public** repo, so treat it as compromised.
 9. **Password recovery:** use **Forgot password?** in the app with a real test
    email, then confirm Firebase delivers the reset link and the new password
    can sign in.
-10. **AI promo backgrounds (optional):** The in-app generator is available
-    after you configure an OpenAI key as a Firebase secret and deploy Cloud
-    Functions:
+10. **AI promo backgrounds + Poster Studio (optional):** The in-app generator
+    accepts a bounded visual-direction note and creates only the artwork.
+    Poster Studio formats the exact title, date, time, venue, and price locally
+    so AI never invents poster text. Configure an OpenAI key as a Firebase
+    secret and deploy Cloud Functions:
     ```bash
     firebase functions:secrets:set OPENAI_API_KEY
     firebase deploy --only functions
+    ```
+    This Google Workspace project enforces Domain Restricted Sharing. After
+    deploying `generatePromoImage`, run this in Cloud Shell so the app can
+    reach the direct Cloud Run callable endpoint:
+    ```bash
+    gcloud run services update generatepromoimage --region=us-central1 --project=spotvibe-cfa08 --no-invoker-iam-check
     ```
     Set a Cloud billing alert first. The app keeps the key server-side, limits
     generation to 3 images/day per user (20/day per admin), and stores results

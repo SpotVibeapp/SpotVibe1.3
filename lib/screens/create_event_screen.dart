@@ -19,6 +19,7 @@ import '../services/media_upload_service.dart';
 import '../services/user_event_service.dart';
 import '../theme/theme.dart';
 import '../widgets/events/ai_promo_image_dialog.dart';
+import '../widgets/events/event_poster_studio.dart';
 
 export '../models/user_event.dart' show RecurringType;
 
@@ -228,6 +229,37 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       _imageUrlController.text = result.imageUrl;
       _aiGeneratedCover = true;
     });
+  }
+
+  Future<void> _openPosterStudio() async {
+    final title = _titleController.text.trim();
+    final venue = _locationController.text.trim();
+    if (title.isEmpty || venue.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.posterTitleVenueRequired),
+        ),
+      );
+      return;
+    }
+
+    // Poster Studio is a separate share asset. It deliberately leaves the
+    // selected photo or AI artwork as the in-app event cover.
+    await showEventPosterStudio(
+      context,
+      details: EventPosterDetails(
+        title: title,
+        dateTime: _combinedDateTime,
+        venue: venue,
+        address: _addressController.text.trim(),
+        city: _cityController.text.trim(),
+        state: _stateController.text.trim(),
+        cost: _parsedCost,
+        category: _selectedCategory,
+        backgroundImageUrl: _imageUrlController.text.trim(),
+        localBackgroundPath: _localCoverPath,
+      ),
+    );
   }
 
   Future<void> _openPaywall() async {
@@ -520,7 +552,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               icon: Icons.add_photo_alternate_rounded,
               preview: _localCoverPath != null && !kIsWeb
                   ? Image.file(File(_localCoverPath!), fit: BoxFit.cover)
-                  : (_aiGeneratedCover && _imageUrlController.text.isNotEmpty
+                  : (_imageUrlController.text.isNotEmpty
                       ? Image.network(_imageUrlController.text, fit: BoxFit.cover)
                       : null),
               onLibrary: () => _pickCover(camera: false),
@@ -582,6 +614,12 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               hint: 'https://example.com/image.jpg',
               icon: Icons.image_rounded,
               keyboardType: TextInputType.url,
+            ),
+            const SizedBox(height: AppTheme.spacingMd),
+            OutlinedButton.icon(
+              onPressed: _uploadingMedia ? null : _openPosterStudio,
+              icon: const Icon(Icons.dashboard_customize_rounded),
+              label: Text(l10n.createSharePoster),
             ),
             const SizedBox(height: AppTheme.spacingMd),
             _FormField(
