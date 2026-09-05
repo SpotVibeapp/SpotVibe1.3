@@ -815,6 +815,78 @@ class AppLocalizationsEn extends AppLocalizations {
   String get posterTitleVenueRequired => 'Add an event title and venue before creating a poster.';
 
   @override
+  String eventPhotosCount(int current, int maximum) {
+    return 'Event photos ($current/$maximum)';
+  }
+
+  @override
+  String get photoGalleryHint => 'Add up to 5 photos total. Your cover photo counts as the first.';
+
+  @override
+  String get noAdditionalPhotos => 'Add photos from your library or camera.';
+
+  @override
+  String get addPhotoUrl => 'Add photo link (optional)';
+
+  @override
+  String get addPhotoLink => 'Add photo link';
+
+  @override
+  String get validPhotoUrl => 'Enter a valid http or https photo link.';
+
+  @override
+  String get library => 'Library';
+
+  @override
+  String get camera => 'Camera';
+
+  @override
+  String photoNumber(int number) {
+    return 'Photo $number';
+  }
+
+  @override
+  String eventVideosCount(int current, int maximum) {
+    return 'Event videos ($current/$maximum)';
+  }
+
+  @override
+  String get videoGalleryHint => 'Add up to 3 short videos. Each can be up to 30 seconds.';
+
+  @override
+  String get noVideosYet => 'No videos yet. Add one from your library or camera.';
+
+  @override
+  String videoNumber(int number) {
+    return 'Video $number';
+  }
+
+  @override
+  String get addVideoUrl => 'Add video link (optional)';
+
+  @override
+  String get addVideoLink => 'Add video link';
+
+  @override
+  String get validVideoUrl => 'Enter a valid http or https video link.';
+
+  @override
+  String mediaPhotoLimit(int maximum) {
+    return 'You can add up to $maximum photos to one event.';
+  }
+
+  @override
+  String mediaVideoLimit(int maximum) {
+    return 'You can add up to $maximum videos to one event.';
+  }
+
+  @override
+  String get photos => 'Photos';
+
+  @override
+  String get videos => 'Videos';
+
+  @override
   String get chatLink => 'Community Chat Link (optional)';
 
   @override

@@ -1,3 +1,4 @@
+import '../data/media_urls.dart';
 import '../data/pricing.dart';
 import '../models/user_event.dart';
 import '../repositories/user_event_repository.dart';
@@ -36,7 +37,9 @@ class UserEventService {
     String zipCode = '',
     double? cost,
     String imageUrl = '',
+    List<String> imageUrls = const [],
     String? videoUrl,
+    List<String> videoUrls = const [],
     required String category,
     required String organizerName,
     String? mapLink,
@@ -55,6 +58,15 @@ class UserEventService {
     if (location.trim().isEmpty) throw ArgumentError('Location is required.');
     if (!isCreatorPro && recurringType != RecurringType.none) {
       throw ArgumentError('Recurring events require SpotVibe Premium.');
+    }
+
+    final normalizedImages = normalizeMediaUrls([imageUrl, ...imageUrls]);
+    final normalizedVideos = normalizeMediaUrls([videoUrl, ...videoUrls]);
+    if (normalizedImages.length > kMaxEventPhotos) {
+      throw ArgumentError('Events can include up to $kMaxEventPhotos photos.');
+    }
+    if (normalizedVideos.length > kMaxEventVideos) {
+      throw ArgumentError('Events can include up to $kMaxEventVideos videos.');
     }
 
     var listing = isPremiumListing && isCreatorPro;
@@ -82,8 +94,10 @@ class UserEventService {
       state: state.trim(),
       zipCode: zipCode.trim(),
       cost: cost,
-      imageUrl: imageUrl.trim(),
-      videoUrl: (videoUrl?.trim().isNotEmpty == true) ? videoUrl!.trim() : null,
+      imageUrl: normalizedImages.isEmpty ? '' : normalizedImages.first,
+      imageUrls: normalizedImages,
+      videoUrl: normalizedVideos.isEmpty ? null : normalizedVideos.first,
+      videoUrls: normalizedVideos,
       category: category,
       organizerName: organizerName,
       mapLink: mapLink?.trim().isNotEmpty == true ? mapLink!.trim() : null,
@@ -102,6 +116,14 @@ class UserEventService {
 
   Future<UserCreatedEvent> updateEvent(UserCreatedEvent event) async {
     if (event.title.trim().isEmpty) throw ArgumentError('Event title is required.');
+    if (normalizeMediaUrls([event.imageUrl, ...event.imageUrls]).length >
+        kMaxEventPhotos) {
+      throw ArgumentError('Events can include up to $kMaxEventPhotos photos.');
+    }
+    if (normalizeMediaUrls([event.videoUrl, ...event.videoUrls]).length >
+        kMaxEventVideos) {
+      throw ArgumentError('Events can include up to $kMaxEventVideos videos.');
+    }
     return _repository.updateEvent(event);
   }
 

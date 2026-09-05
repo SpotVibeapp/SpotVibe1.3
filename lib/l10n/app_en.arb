@@ -400,6 +400,74 @@
   "createSharePoster": "Create & share full poster",
   "posterCoverStays": "Your current event cover stays unchanged.",
   "posterTitleVenueRequired": "Add an event title and venue before creating a poster.",
+  "eventPhotosCount": "Event photos ({current}/{maximum})",
+  "@eventPhotosCount": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "maximum": {
+        "type": "int"
+      }
+    }
+  },
+  "photoGalleryHint": "Add up to 5 photos total. Your cover photo counts as the first.",
+  "noAdditionalPhotos": "Add photos from your library or camera.",
+  "addPhotoUrl": "Add photo link (optional)",
+  "addPhotoLink": "Add photo link",
+  "validPhotoUrl": "Enter a valid http or https photo link.",
+  "library": "Library",
+  "camera": "Camera",
+  "photoNumber": "Photo {number}",
+  "@photoNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "eventVideosCount": "Event videos ({current}/{maximum})",
+  "@eventVideosCount": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "maximum": {
+        "type": "int"
+      }
+    }
+  },
+  "videoGalleryHint": "Add up to 3 short videos. Each can be up to 30 seconds.",
+  "noVideosYet": "No videos yet. Add one from your library or camera.",
+  "videoNumber": "Video {number}",
+  "@videoNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "addVideoUrl": "Add video link (optional)",
+  "addVideoLink": "Add video link",
+  "validVideoUrl": "Enter a valid http or https video link.",
+  "mediaPhotoLimit": "You can add up to {maximum} photos to one event.",
+  "@mediaPhotoLimit": {
+    "placeholders": {
+      "maximum": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaVideoLimit": "You can add up to {maximum} videos to one event.",
+  "@mediaVideoLimit": {
+    "placeholders": {
+      "maximum": {
+        "type": "int"
+      }
+    }
+  },
+  "photos": "Photos",
+  "videos": "Videos",
   "chatLink": "Community Chat Link (optional)",
   "saveChanges": "Save Changes",
   "publishPremium": "Publish Event — Premium",

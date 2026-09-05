@@ -7,7 +7,14 @@ import '../../theme/theme.dart';
 /// Plays an uploaded mp4 in-app. YouTube / Vimeo / other hosts open externally.
 class EventVideoPlayer extends StatefulWidget {
   final String videoUrl;
-  const EventVideoPlayer({super.key, required this.videoUrl});
+  /// Gallery callers provide their own numbered heading.
+  final bool showTitle;
+
+  const EventVideoPlayer({
+    super.key,
+    required this.videoUrl,
+    this.showTitle = true,
+  });
 
   @override
   State<EventVideoPlayer> createState() => _EventVideoPlayerState();
@@ -55,8 +62,10 @@ class _EventVideoPlayerState extends State<EventVideoPlayer> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Event video', style: text.titleSmall),
-        const SizedBox(height: AppTheme.spacingSm),
+        if (widget.showTitle) ...[
+          Text('Event video', style: text.titleSmall),
+          const SizedBox(height: AppTheme.spacingSm),
+        ],
         if (controller != null && _ready && !_failed)
           ClipRRect(
             borderRadius: BorderRadius.circular(AppTheme.radiusMedium),

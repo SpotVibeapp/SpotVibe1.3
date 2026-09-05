@@ -6,11 +6,13 @@ import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 
+import '../data/media_urls.dart';
+
 /// Picks photos / short videos and uploads them to Firebase Storage.
 ///
-/// Limits (enforced here, also in storage.rules):
-///   photos  ≤ 6 MB
-///   videos  ≤ 30 seconds and 50 MB
+/// Limits (enforced in app/event rules):
+///   photos  ≤ 6 MB, up to 5 per event including its cover
+///   videos  ≤ 30 seconds and 50 MB, up to 3 per event
 class MediaUploadService {
   MediaUploadService({
     ImagePicker? picker,
@@ -27,6 +29,8 @@ class MediaUploadService {
   static const maxVideoSeconds = 30;
   static const maxPhotoBytes = 6 * 1024 * 1024;
   static const maxVideoBytes = 50 * 1024 * 1024;
+  static const maxEventPhotos = kMaxEventPhotos;
+  static const maxEventVideos = kMaxEventVideos;
 
   String? get _uid => _auth.currentUser?.uid;
 
@@ -38,6 +42,18 @@ class MediaUploadService {
       imageQuality: 85,
     );
     return file?.path;
+  }
+
+  /// Lets a creator select several gallery photos at once. The caller supplies
+  /// the remaining event slots so the initial cover still counts toward five.
+  Future<List<String>> pickImages({required int maxImages}) async {
+    if (maxImages <= 0) return const [];
+    final files = await _picker.pickMultiImage(
+      maxWidth: 1600,
+      maxHeight: 1600,
+      imageQuality: 85,
+    );
+    return files.take(maxImages).map((file) => file.path).toList(growable: false);
   }
 
   /// Returns a local path, or throws if the clip is longer than 30 seconds.
@@ -98,6 +114,21 @@ class MediaUploadService {
     );
   }
 
+  Future<String> uploadEventPhoto({
+    required String eventId,
+    required String localPath,
+    required int slot,
+  }) {
+    final uid = _requireUid();
+    final stamp = DateTime.now().millisecondsSinceEpoch;
+    return _upload(
+      localPath: localPath,
+      refPath: 'events/$uid/$eventId/photo_${slot + 1}_$stamp.jpg',
+      contentType: 'image/jpeg',
+      maxBytes: maxPhotoBytes,
+    );
+  }
+
   Future<String> uploadEventVideo({
     required String eventId,
     required String localPath,
@@ -106,6 +137,21 @@ class MediaUploadService {
     return _upload(
       localPath: localPath,
       refPath: 'events/$uid/$eventId/promo.mp4',
+      contentType: 'video/mp4',
+      maxBytes: maxVideoBytes,
+    );
+  }
+
+  Future<String> uploadAdditionalEventVideo({
+    required String eventId,
+    required String localPath,
+    required int slot,
+  }) {
+    final uid = _requireUid();
+    final stamp = DateTime.now().millisecondsSinceEpoch;
+    return _upload(
+      localPath: localPath,
+      refPath: 'events/$uid/$eventId/video_${slot + 1}_$stamp.mp4',
       contentType: 'video/mp4',
       maxBytes: maxVideoBytes,
     );

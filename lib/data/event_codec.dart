@@ -1,3 +1,4 @@
+import 'media_urls.dart';
 import '../models/event.dart';
 import '../models/rsvp.dart';
 import '../models/user_event.dart';
@@ -49,6 +50,9 @@ Map<String, dynamic> eventToMap(Event event, {String kind = 'curated'}) {
     'zipCode': event.zipCode,
     'cost': event.cost,
     'imageUrl': event.imageUrl,
+    'imageUrls': event.allImageUrls,
+    'videoUrl': event.videoUrl,
+    'videoUrls': event.allVideoUrls,
     'category': event.category,
     'organizerName': event.organizerName,
     'organizerAvatarUrl': event.organizerAvatarUrl,
@@ -67,6 +71,17 @@ Map<String, dynamic> eventToMap(Event event, {String kind = 'curated'}) {
 }
 
 Event eventFromMap(String id, Map<String, dynamic> data) {
+  final imageUrls = mediaUrlsFromValue(data['imageUrls']);
+  final videoUrls = mediaUrlsFromValue(data['videoUrls']);
+  final storedImageUrl = (data['imageUrl'] as String? ?? '').trim();
+  final storedVideoUrl = (data['videoUrl'] as String? ?? '').trim();
+  final coverUrl = storedImageUrl.isNotEmpty
+      ? storedImageUrl
+      : (imageUrls.isEmpty ? '' : imageUrls.first);
+  final firstVideoUrl = storedVideoUrl.isNotEmpty
+      ? storedVideoUrl
+      : (videoUrls.isEmpty ? null : videoUrls.first);
+
   return Event(
     id: id,
     title: data['title'] as String? ?? '',
@@ -78,7 +93,10 @@ Event eventFromMap(String id, Map<String, dynamic> data) {
     state: data['state'] as String? ?? '',
     zipCode: data['zipCode'] as String? ?? '',
     cost: (data['cost'] as num?)?.toDouble(),
-    imageUrl: data['imageUrl'] as String? ?? '',
+    imageUrl: coverUrl,
+    imageUrls: imageUrls,
+    videoUrl: firstVideoUrl,
+    videoUrls: videoUrls,
     category: data['category'] as String? ?? 'Community',
     organizerName: data['organizerName'] as String? ?? '',
     organizerAvatarUrl: data['organizerAvatarUrl'] as String? ?? '',
@@ -138,6 +156,11 @@ RsvpEntry rsvpFromMap(Map<String, dynamic> data) {
 }
 
 Map<String, dynamic> userEventToMap(UserCreatedEvent event) {
+  final images = event.allImageUrls;
+  final videos = event.allVideoUrls;
+  final coverUrl = images.isEmpty ? event.imageUrl : images.first;
+  final firstVideoUrl = videos.isEmpty ? null : videos.first;
+
   return {
     ...eventToMap(
       Event(
@@ -151,7 +174,10 @@ Map<String, dynamic> userEventToMap(UserCreatedEvent event) {
         state: event.state,
         zipCode: event.zipCode,
         cost: event.cost,
-        imageUrl: event.imageUrl,
+        imageUrl: coverUrl,
+        imageUrls: images,
+        videoUrl: firstVideoUrl,
+        videoUrls: videos,
         category: event.category,
         organizerName: event.organizerName,
         organizerAvatarUrl: '',
@@ -167,7 +193,9 @@ Map<String, dynamic> userEventToMap(UserCreatedEvent event) {
       kind: 'user',
     ),
     'creatorId': event.creatorId,
-    'videoUrl': event.videoUrl,
+    'imageUrls': images,
+    'videoUrl': firstVideoUrl,
+    'videoUrls': videos,
     'mapLink': event.mapLink,
     'chatLink': event.chatLink,
     'isPremiumListing': event.isPremiumListing,
@@ -188,6 +216,17 @@ Map<String, dynamic> userEventToMap(UserCreatedEvent event) {
 }
 
 UserCreatedEvent userEventFromMap(String id, Map<String, dynamic> data) {
+  final imageUrls = mediaUrlsFromValue(data['imageUrls']);
+  final videoUrls = mediaUrlsFromValue(data['videoUrls']);
+  final storedImageUrl = (data['imageUrl'] as String? ?? '').trim();
+  final storedVideoUrl = (data['videoUrl'] as String? ?? '').trim();
+  final coverUrl = storedImageUrl.isNotEmpty
+      ? storedImageUrl
+      : (imageUrls.isEmpty ? '' : imageUrls.first);
+  final firstVideoUrl = storedVideoUrl.isNotEmpty
+      ? storedVideoUrl
+      : (videoUrls.isEmpty ? null : videoUrls.first);
+
   return UserCreatedEvent(
     id: id,
     creatorId: data['creatorId'] as String? ?? '',
@@ -200,8 +239,10 @@ UserCreatedEvent userEventFromMap(String id, Map<String, dynamic> data) {
     state: data['state'] as String? ?? '',
     zipCode: data['zipCode'] as String? ?? '',
     cost: (data['cost'] as num?)?.toDouble(),
-    imageUrl: data['imageUrl'] as String? ?? '',
-    videoUrl: data['videoUrl'] as String?,
+    imageUrl: coverUrl,
+    imageUrls: imageUrls,
+    videoUrl: firstVideoUrl,
+    videoUrls: videoUrls,
     category: data['category'] as String? ?? 'Community',
     organizerName: data['organizerName'] as String? ?? '',
     mapLink: data['mapLink'] as String?,

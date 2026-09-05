@@ -400,6 +400,74 @@
   "createSharePoster": "Crear y compartir póster completo",
   "posterCoverStays": "La portada actual del evento no cambia.",
   "posterTitleVenueRequired": "Agrega un título y venue antes de crear un póster.",
+  "eventPhotosCount": "Fotos del evento ({current}/{maximum})",
+  "@eventPhotosCount": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "maximum": {
+        "type": "int"
+      }
+    }
+  },
+  "photoGalleryHint": "Agrega hasta 5 fotos en total. La portada cuenta como la primera.",
+  "noAdditionalPhotos": "Agrega fotos desde tu biblioteca o cámara.",
+  "addPhotoUrl": "Agregar enlace de foto (opcional)",
+  "addPhotoLink": "Agregar enlace de foto",
+  "validPhotoUrl": "Ingresa un enlace de foto http o https válido.",
+  "library": "Biblioteca",
+  "camera": "Cámara",
+  "photoNumber": "Foto {number}",
+  "@photoNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "eventVideosCount": "Videos del evento ({current}/{maximum})",
+  "@eventVideosCount": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "maximum": {
+        "type": "int"
+      }
+    }
+  },
+  "videoGalleryHint": "Agrega hasta 3 videos cortos. Cada uno puede durar hasta 30 segundos.",
+  "noVideosYet": "Aún no hay videos. Agrega uno desde tu biblioteca o cámara.",
+  "videoNumber": "Video {number}",
+  "@videoNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "addVideoUrl": "Agregar enlace de video (opcional)",
+  "addVideoLink": "Agregar enlace de video",
+  "validVideoUrl": "Ingresa un enlace de video http o https válido.",
+  "mediaPhotoLimit": "Puedes agregar hasta {maximum} fotos a un evento.",
+  "@mediaPhotoLimit": {
+    "placeholders": {
+      "maximum": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaVideoLimit": "Puedes agregar hasta {maximum} videos a un evento.",
+  "@mediaVideoLimit": {
+    "placeholders": {
+      "maximum": {
+        "type": "int"
+      }
+    }
+  },
+  "photos": "Fotos",
+  "videos": "Videos",
   "chatLink": "Enlace de chat comunitario (opcional)",
   "saveChanges": "Guardar cambios",
   "publishPremium": "Publicar evento — Premium",

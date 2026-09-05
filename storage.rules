@@ -2,9 +2,10 @@ rules_version = '2';
 
 // Deploy: firebase deploy --only storage
 //
-//   users/{uid}/avatar.jpg          profile photos
-//   events/{uid}/{eventId}/cover.*  event cover photos
-//   events/{uid}/{eventId}/promo.*  short operator videos
+//   users/{uid}/avatar.jpg                   profile photos
+//   events/{uid}/{eventId}/cover.*           primary event cover photo
+//   events/{uid}/{eventId}/photo_*.*         up to four additional photos
+//   events/{uid}/{eventId}/video_*.*         up to three short event videos
 
 service firebase.storage {
   match /b/{bucket}/o {

@@ -12,7 +12,7 @@ import '../widgets/events/event_page_ad.dart';
 import '../theme/category_colors.dart';
 import '../theme/theme.dart';
 import '../widgets/events/add_to_calendar_button.dart';
-import '../widgets/events/event_video_player.dart';
+import '../widgets/events/event_media_gallery.dart';
 import '../widgets/events/story_card.dart';
 import '../widgets/common/app_avatar.dart';
 import '../widgets/common/event_image_placeholder.dart';
@@ -300,10 +300,15 @@ class _UserEventDetailContent extends StatelessWidget {
                   const SizedBox(height: AppTheme.spacingSm),
                   Text(event.description, style: text.bodyMedium),
 
-                  // Video (optional)
-                  if (event.videoUrl != null && event.videoUrl!.isNotEmpty) ...[
+                  // Full event media gallery. The hero remains the cover;
+                  // this section appears when there are extra photos or any videos.
+                  if (event.allImageUrls.length > 1 || event.allVideoUrls.isNotEmpty) ...[
                     const Divider(height: AppTheme.spacingXl),
-                    EventVideoPlayer(videoUrl: event.videoUrl!),
+                    EventMediaGallery(
+                      imageUrls: event.allImageUrls,
+                      videoUrls: event.allVideoUrls,
+                      category: event.category,
+                    ),
                   ],
 
                   const Divider(height: AppTheme.spacingXl),
