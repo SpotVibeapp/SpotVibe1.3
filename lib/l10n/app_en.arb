@@ -907,5 +907,50 @@
   "eventEnds": "Ends",
   "endTimeHint": "Set the real end time. Your event stays visible as happening now until then.",
   "endTimeMustBeAfterStart": "End date and time must be after the start.",
-  "happeningNow": "Happening now"
+  "endTimeRequired": "Choose an end time before publishing.",
+  "selectEndTime": "Choose time",
+  "happeningNow": "Happening now",
+
+  "editProfile": "Edit profile",
+  "profileNameLabel": "Company or organizer name",
+  "profileNameHint": "e.g. SpotVibe",
+  "profileNameHelp": "This name appears on your profile and on events you create.",
+  "updateExistingEventNames": "Update this name on events I already posted",
+  "profileNameRequired": "Enter a company or organizer name.",
+  "profileNameTooLong": "Name must be 100 characters or fewer.",
+  "profileUpdated": "Profile updated.",
+
+  "askSpotVibe": "Ask SpotVibe",
+  "askSpotVibeSubtitle": "Describe what you want to do and see real local events — with optional road-trip picks.",
+  "askSpotVibeSignIn": "Sign in to get real event recommendations.",
+  "aiSearchIntro": "Tell me what you are looking for. I will turn it into a search, then show only real SpotVibe and Ticketmaster listings.",
+  "aiSearchRealResults": "Ask SpotVibe interprets your request. Event names, dates, prices, and availability always come from real listings.",
+  "aiSearchRoadTrips": "Include nearby-city road trips (up to 4 hours)",
+  "aiSearchRoadTripsHint": "Optional: check real matches in selected regional cities. Confirm directions and travel time before you go.",
+  "aiSearchTryPrompt": "Try one of these",
+  "aiSearchPromptMusic": "Live music this weekend",
+  "aiSearchPromptFamily": "Family-friendly events tomorrow",
+  "aiSearchPromptFood": "Food and drink events this week",
+  "aiSearchHint": "e.g. comedy Friday, outdoor art, or live jazz",
+  "aiSearchEmptyQuery": "Tell SpotVibe what you want to find.",
+  "aiSearchSearching": "Searching real events…",
+  "aiSearchFoundRealResults": "Here are real listings that match your request.",
+  "aiSearchNoResults": "No matching live listings were found. Try a broader request or another date.",
+  "aiSearchLocalResults": "Near {location}",
+  "@aiSearchLocalResults": {
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "aiSearchRoadTripResults": "Road-trip options in {location}",
+  "@aiSearchRoadTripResults": {
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "aiSearchNoResultsHere": "No matching live listings were returned for this area."
 }

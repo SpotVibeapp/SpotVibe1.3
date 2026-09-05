@@ -1,3 +1,4 @@
+import '../data/event_time.dart';
 import '../data/media_urls.dart';
 import '../data/pricing.dart';
 import '../models/user_event.dart';
@@ -57,7 +58,7 @@ class UserEventService {
     if (title.trim().isEmpty) throw ArgumentError('Event title is required.');
     if (description.trim().isEmpty) throw ArgumentError('Description is required.');
     if (location.trim().isEmpty) throw ArgumentError('Location is required.');
-    if (!endDateTime.isAfter(dateTime)) {
+    if (!hasValidEventWindow(dateTime, endDateTime)) {
       throw ArgumentError('End date and time must be after the start.');
     }
     if (!isCreatorPro && recurringType != RecurringType.none) {
@@ -121,7 +122,7 @@ class UserEventService {
 
   Future<UserCreatedEvent> updateEvent(UserCreatedEvent event) async {
     if (event.title.trim().isEmpty) throw ArgumentError('Event title is required.');
-    if (event.endDateTime == null || !event.endDateTime!.isAfter(event.dateTime)) {
+    if (!hasValidEventWindow(event.dateTime, event.endDateTime)) {
       throw ArgumentError('End date and time must be after the start.');
     }
     if (normalizeMediaUrls([event.imageUrl, ...event.imageUrls]).length >
@@ -133,6 +134,17 @@ class UserEventService {
       throw ArgumentError('Events can include up to $kMaxEventVideos videos.');
     }
     return _repository.updateEvent(event);
+  }
+
+  /// Applies a creator's new public organizer name to their existing event
+  /// mirrors. This never changes ownership or a venue claim.
+  Future<int> updateOrganizerNameForCreator(
+    String creatorId,
+    String organizerName,
+  ) {
+    final name = organizerName.trim();
+    if (name.isEmpty) throw ArgumentError('Organizer name is required.');
+    return _repository.updateOrganizerNameForCreator(creatorId, name);
   }
 
   Future<void> deleteEvent(String eventId, String requestingUserId) async {

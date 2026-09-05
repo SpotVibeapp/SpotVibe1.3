@@ -993,6 +993,7 @@ class EventService {
     required List<Event> local,
     String? city,
     String? state,
+    String? keyword,
     double? lat,
     double? lng,
   }) async {
@@ -1003,6 +1004,7 @@ class EventService {
     final remote = await tm.search(
       city: city,
       stateCode: state,
+      keyword: keyword,
       lat: lat,
       lng: lng,
     );
@@ -1061,6 +1063,7 @@ class EventService {
           local: filtered,
           city: resolved.city,
           state: resolved.state,
+          keyword: searchQuery,
         );
       } else {
         // Unrecognised input — try Ticketmaster with the raw city string
@@ -1076,6 +1079,7 @@ class EventService {
         filtered = await _withLiveListings(
           local: matched,
           city: areaQuery.trim(),
+          keyword: searchQuery,
         );
       }
       filtered = filtered.where((e) => e.isVisibleAt()).toList();
@@ -1084,6 +1088,7 @@ class EventService {
       filtered = events.where((e) => e.isVisibleAt()).toList();
       filtered = await _withLiveListings(
         local: filtered,
+        keyword: searchQuery,
         lat: userLat ?? kElPasoLat,
         lng: userLng ?? kElPasoLng,
       );

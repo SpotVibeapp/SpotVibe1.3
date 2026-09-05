@@ -43,6 +43,7 @@ class TicketmasterService {
   Future<List<Event>> search({
     String? city,
     String? stateCode,
+    String? keyword,
     double? lat,
     double? lng,
     double radiusMiles = 40,
@@ -66,6 +67,10 @@ class TicketmasterService {
         'includeTBD': 'no',
         'includeTest': 'no',
       };
+      final cleanedKeyword = keyword?.trim() ?? '';
+      if (cleanedKeyword.isNotEmpty) {
+        params['keyword'] = cleanedKeyword;
+      }
       if (lat != null && lng != null) {
         params['latlong'] = '${lat.toStringAsFixed(4)},${lng.toStringAsFixed(4)}';
       } else if (city != null && city.isNotEmpty) {

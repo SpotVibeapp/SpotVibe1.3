@@ -1,5 +1,11 @@
 import 'package:intl/intl.dart';
 
+/// Whether an event window has an explicit end after its start.
+///
+/// New creator events must satisfy this check before they can be published.
+bool hasValidEventWindow(DateTime dateTime, DateTime? endDateTime) =>
+    endDateTime != null && endDateTime.isAfter(dateTime);
+
 /// Whether an event has started but its explicit end time has not passed.
 ///
 /// Legacy events without [endDateTime] remain visible only until their start

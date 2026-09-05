@@ -181,6 +181,27 @@ Without a key the feed still shows the curated El Paso seed (real venues,
 Wikimedia venue photos) and stays empty for other cities instead of faking
 listings.
 
+### Ask SpotVibe (AI event search)
+
+The signed-in assistant sends only a short natural-language request to the
+server-side OpenAI intent parser. It returns filters only; every result is then
+fetched from SpotVibe and Ticketmaster, never invented by AI. The optional
+road-trip switch searches a curated El Paso-region city list only after the
+person explicitly enables it.
+
+Deploy `searchEventAssistant`, apply the matching Cloud Run no-IAM-check setup,
+then pass its direct service URL at run/build time:
+
+```bash
+flutter run \
+  --dart-define=TICKETMASTER_API_KEY=your_key_here \
+  --dart-define=AI_EVENT_SEARCH_FUNCTION_URL=https://...a.run.app
+```
+
+See `functions/README.md` for the Cloud Run commands. The function reuses the
+existing `OPENAI_API_KEY` Firebase secret; never put that secret in Flutter or
+source control.
+
 ### One-time console setup (you must do this)
 
 1. Open https://console.firebase.google.com → project **spotvibe-cfa08**

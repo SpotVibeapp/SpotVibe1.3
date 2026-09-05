@@ -1899,5 +1899,110 @@ class AppLocalizationsEn extends AppLocalizations {
       'End date and time must be after the start.';
 
   @override
+  String get endTimeRequired => 'Choose an end time before publishing.';
+
+  @override
+  String get selectEndTime => 'Choose time';
+
+  @override
   String get happeningNow => 'Happening now';
+
+  @override
+  String get editProfile => 'Edit profile';
+
+  @override
+  String get profileNameLabel => 'Company or organizer name';
+
+  @override
+  String get profileNameHint => 'e.g. SpotVibe';
+
+  @override
+  String get profileNameHelp =>
+      'This name appears on your profile and on events you create.';
+
+  @override
+  String get updateExistingEventNames =>
+      'Update this name on events I already posted';
+
+  @override
+  String get profileNameRequired =>
+      'Enter a company or organizer name.';
+
+  @override
+  String get profileNameTooLong =>
+      'Name must be 100 characters or fewer.';
+
+  @override
+  String get profileUpdated => 'Profile updated.';
+
+  @override
+  String get askSpotVibe => 'Ask SpotVibe';
+
+  @override
+  String get askSpotVibeSubtitle =>
+      'Describe what you want to do and see real local events — with optional road-trip picks.';
+
+  @override
+  String get askSpotVibeSignIn =>
+      'Sign in to get real event recommendations.';
+
+  @override
+  String get aiSearchIntro =>
+      'Tell me what you are looking for. I will turn it into a search, then show only real SpotVibe and Ticketmaster listings.';
+
+  @override
+  String get aiSearchRealResults =>
+      'Ask SpotVibe interprets your request. Event names, dates, prices, and availability always come from real listings.';
+
+  @override
+  String get aiSearchRoadTrips =>
+      'Include nearby-city road trips (up to 4 hours)';
+
+  @override
+  String get aiSearchRoadTripsHint =>
+      'Optional: check real matches in selected regional cities. Confirm directions and travel time before you go.';
+
+  @override
+  String get aiSearchTryPrompt => 'Try one of these';
+
+  @override
+  String get aiSearchPromptMusic => 'Live music this weekend';
+
+  @override
+  String get aiSearchPromptFamily => 'Family-friendly events tomorrow';
+
+  @override
+  String get aiSearchPromptFood => 'Food and drink events this week';
+
+  @override
+  String get aiSearchHint =>
+      'e.g. comedy Friday, outdoor art, or live jazz';
+
+  @override
+  String get aiSearchEmptyQuery => 'Tell SpotVibe what you want to find.';
+
+  @override
+  String get aiSearchSearching => 'Searching real events…';
+
+  @override
+  String get aiSearchFoundRealResults =>
+      'Here are real listings that match your request.';
+
+  @override
+  String get aiSearchNoResults =>
+      'No matching live listings were found. Try a broader request or another date.';
+
+  @override
+  String aiSearchLocalResults(String location) {
+    return 'Near $location';
+  }
+
+  @override
+  String aiSearchRoadTripResults(String location) {
+    return 'Road-trip options in $location';
+  }
+
+  @override
+  String get aiSearchNoResultsHere =>
+      'No matching live listings were returned for this area.';
 }

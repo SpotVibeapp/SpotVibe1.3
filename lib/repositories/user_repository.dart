@@ -61,4 +61,7 @@ abstract class UserRepository {
 
   /// Replaces the signed-in user's avatar URL (Firestore + Auth photoURL).
   Future<AppUser> updateAvatarUrl(String avatarUrl);
+
+  /// Replaces the signed-in user's public display name (Firestore + Auth).
+  Future<AppUser> updateDisplayName(String displayName);
 }

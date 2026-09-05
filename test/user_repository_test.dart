@@ -26,6 +26,16 @@ void main() {
       expect(await repo.getCurrentUser(), isNull);
     });
 
+    test('profile name can change without changing the sign-in email', () async {
+      await repo.register('Blake Johnson', 'blake@example.com', 'password1');
+
+      final updated = await repo.updateDisplayName('SpotVibe');
+
+      expect(updated.displayName, 'SpotVibe');
+      expect(updated.email, 'blake@example.com');
+      expect((await repo.getCurrentUser())!.displayName, 'SpotVibe');
+    });
+
     test('social login produces a stable provider-scoped id', () async {
       final first = await repo.loginWithSocial(
         provider: 'Google',

@@ -194,4 +194,12 @@ class AuthProvider extends ChangeNotifier {
     _user = await _service.updateAvatarUrl(avatarUrl);
     notifyListeners();
   }
+
+  /// Updates the display name shown on the profile and on future event posts.
+  Future<AppUser> updateDisplayName(String displayName) async {
+    final updated = await _service.updateDisplayName(displayName);
+    _user = updated;
+    notifyListeners();
+    return updated;
+  }
 }

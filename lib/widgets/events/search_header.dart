@@ -16,6 +16,8 @@ class SearchHeader extends StatefulWidget {
   final bool isUsingMyLocation;
   /// Returns autocomplete suggestions for a given query string.
   final List<String> Function(String query)? onSuggestionsRequest;
+  /// Opens Ask SpotVibe with the current natural-language search text.
+  final ValueChanged<String>? onAskAi;
 
   const SearchHeader({
     super.key,
@@ -28,6 +30,7 @@ class SearchHeader extends StatefulWidget {
     this.onUseMyLocation,
     this.isUsingMyLocation = false,
     this.onSuggestionsRequest,
+    this.onAskAi,
   });
 
   @override
@@ -165,17 +168,42 @@ class _SearchHeaderState extends State<SearchHeader> {
                     decoration: InputDecoration(
                       hintText: l10n.searchHint,
                       prefixIcon: Icon(Icons.search_rounded, color: colors.onSurfaceVariant),
-                      suffixIcon: _keywordController.text.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(Icons.clear_rounded,
-                                  size: AppTheme.iconSm, color: colors.onSurfaceVariant),
-                              onPressed: () {
-                                _keywordController.clear();
-                                widget.onSearch('');
-                                _hideOverlay();
-                              },
+                      suffixIcon: widget.onAskAi != null ||
+                              _keywordController.text.isNotEmpty
+                          ? Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (widget.onAskAi != null)
+                                  Tooltip(
+                                    message: l10n.askSpotVibe,
+                                    child: IconButton(
+                                      icon: Icon(
+                                        Icons.auto_awesome_rounded,
+                                        size: AppTheme.iconSm,
+                                        color: colors.primary,
+                                      ),
+                                      onPressed: () =>
+                                          widget.onAskAi!(_keywordController.text),
+                                    ),
+                                  ),
+                                if (_keywordController.text.isNotEmpty)
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.clear_rounded,
+                                      size: AppTheme.iconSm,
+                                      color: colors.onSurfaceVariant,
+                                    ),
+                                    onPressed: () {
+                                      _keywordController.clear();
+                                      widget.onSearch('');
+                                      _hideOverlay();
+                                    },
+                                  ),
+                              ],
                             )
                           : null,
+                      suffixIconConstraints:
+                          const BoxConstraints(minWidth: 0, minHeight: 0),
                       isDense: true,
                     ),
                   ),

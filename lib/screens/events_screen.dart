@@ -3,10 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
+import '../data/el_paso_events.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/personalization_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/event_provider.dart';
+import '../services/event_service.dart';
 import '../services/location_service.dart';
 import '../theme/theme.dart';
 import '../widgets/common/category_chips.dart';
@@ -16,6 +19,7 @@ import '../widgets/common/guided_tour.dart';
 import '../widgets/common/paginated_events_list.dart';
 import '../widgets/common/app_icon_mark.dart';
 import '../widgets/common/spotvibe_logo.dart';
+import '../widgets/events/ai_event_search_assistant.dart';
 import '../widgets/events/filter_sheet.dart';
 import '../widgets/events/home_discovery_hero.dart';
 import '../widgets/events/search_header.dart';
@@ -115,6 +119,27 @@ class _EventsScreenState extends State<EventsScreen> {
         SnackBar(content: Text(AppLocalizations.of(context)!.couldNotGetLocation)),
       );
     }
+  }
+
+  Future<void> _openAiEventSearch({String initialQuery = ''}) async {
+    final auth = context.read<AuthProvider>();
+    if (!auth.isLoggedIn || auth.isGuest) {
+      await context.push('/login');
+      return;
+    }
+
+    final eventProvider = context.read<EventProvider>();
+    final area = eventProvider.areaQuery.trim();
+    await showAiEventSearchAssistant(
+      context,
+      eventService: context.read<EventService>(),
+      homeCity: area.isEmpty ? kElPasoCity : area,
+      homeState: area.isEmpty ? kElPasoState : '',
+      initialQuery: initialQuery,
+      onOpenEvent: (event) {
+        context.push('/event/${event.id}', extra: event);
+      },
+    );
   }
 
   @override
@@ -258,8 +283,14 @@ class _EventsScreenState extends State<EventsScreen> {
               onUseMyLocation: _fetchingLocation ? null : _requestUserLocation,
               isUsingMyLocation: eventProvider.hasUserLocation,
               onSuggestionsRequest: (q) => _buildSuggestions(q, eventProvider),
+              onAskAi: (query) => _openAiEventSearch(initialQuery: query),
             ),
-            const SizedBox(height: AppTheme.spacingMd),
+            const SizedBox(height: AppTheme.spacingSm),
+            AskSpotVibeCard(
+              isSignedIn: authProvider.isLoggedIn && !authProvider.isGuest,
+              onTap: () => _openAiEventSearch(),
+            ),
+            const SizedBox(height: AppTheme.spacingSm),
             CategoryChips(
               key: _tourKeyCategories,
               categories: eventProvider.categories,

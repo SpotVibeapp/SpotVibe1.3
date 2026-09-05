@@ -152,6 +152,16 @@ class AuthService {
     return _repository.updateAvatarUrl(avatarUrl);
   }
 
+  /// Updates the public profile/organizer name without changing the sign-in email.
+  Future<AppUser> updateDisplayName(String displayName) {
+    final trimmed = displayName.trim();
+    if (trimmed.isEmpty) throw ArgumentError('Display name is required.');
+    if (trimmed.length > 100) {
+      throw ArgumentError('Display name must be 100 characters or fewer.');
+    }
+    return _repository.updateDisplayName(trimmed);
+  }
+
   /// Cryptographically secure random nonce for Apple Sign-In.
   static String _generateNonce([int length = 32]) {
     const charset =

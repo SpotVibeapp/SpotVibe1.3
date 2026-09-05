@@ -38,4 +38,14 @@ class AppConfig {
     'AI_PROMO_FUNCTION_URL',
     defaultValue: 'https://generatepromoimage-kfzltbt5ja-uc.a.run.app',
   );
+
+  /// Direct URL for the authenticated Gen 2 Ask SpotVibe endpoint.
+  ///
+  /// Set this after deploying `searchEventAssistant` with:
+  /// `--dart-define=AI_EVENT_SEARCH_FUNCTION_URL=https://...a.run.app`.
+  /// It is public routing information, not an AI-provider secret.
+  static const String aiEventSearchFunctionUrl = String.fromEnvironment(
+    'AI_EVENT_SEARCH_FUNCTION_URL',
+    defaultValue: '',
+  );
 }
