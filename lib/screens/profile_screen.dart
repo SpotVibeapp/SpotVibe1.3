@@ -155,9 +155,14 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
+      // Explicitly keep the last Profile action above Android's system
+      // navigation/gesture area. On devices with three-button navigation this
+      // prevents the Sign out button from ending underneath the system bar.
+      body: SafeArea(
+        top: false,
+        child: Stack(
+          children: [
+            SingleChildScrollView(
             padding: const EdgeInsets.all(AppTheme.spacingLg),
             child: Column(
               children: [
@@ -293,8 +298,9 @@ class ProfileScreen extends StatelessWidget {
                 description: l10n.tourProfile3Body,
               ),
             ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
