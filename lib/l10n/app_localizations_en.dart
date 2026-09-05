@@ -402,7 +402,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get premiumPerk5Title => 'Contact button';
 
   @override
-  String get premiumPerk5Subtitle => 'Phone, website, and social links';
+  String get premiumPerk5Subtitle => 'Phone, website, and organizer contact tools';
 
   @override
   String get premiumPerk6Title => 'No ads';
@@ -939,7 +939,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get websiteOptional => 'Website (optional)';
 
   @override
-  String get socialHandleOptional => 'Social Handle (optional)';
+  String get socialHandleOptional => 'Other social handle (optional)';
+
+  @override
+  String get organizerSocialLinks => 'Organizer social links';
+
+  @override
+  String get organizerSocialLinksHelp =>
+      'Optional. Add public social profiles you control. They appear as buttons on this event; SpotVibe never connects or posts to your accounts.';
+
+  @override
+  String get instagramOptional => 'Instagram (optional)';
+
+  @override
+  String get facebookOptional => 'Facebook (optional)';
+
+  @override
+  String get snapchatOptional => 'Snapchat (optional)';
+
+  @override
+  String get tiktokOptional => 'TikTok (optional)';
+
+  @override
+  String get youtubeOptional => 'YouTube (optional)';
+
+  @override
+  String get socialProfileHint => '@yourhandle or https://...';
+
+  @override
+  String validSocialProfileLink(String platform) {
+    return 'Enter a valid $platform handle or HTTPS profile link.';
+  }
+
+  @override
+  String get followOrganizer => 'Follow organizer';
+
+  @override
+  String get socialLinkOpenFailed => 'Could not open this social link.';
+
+  @override
+  String get shareSocialHint =>
+      'Choose Instagram, Facebook, Snapchat, or another installed app.';
 
   @override
   String get customBranding => 'Custom Branding';
@@ -974,7 +1014,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get freePlanBody =>
-      'Up to 2 upcoming one-time events at a time. Basic page with 1 cover photo, 1 short video, title, description, location, and time in the public feed.';
+      'Up to 2 upcoming one-time events at a time. Basic page with 1 cover photo, 1 short video, title, description, location, time, and public organizer social links in the public feed.';
 
   @override
   String upgradeToPremium(String price) {
@@ -1815,7 +1855,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventCreationGuideFreePublish =>
-      'Basic event page in the public feed';
+      'Basic event page with public organizer social links in the public feed';
 
   @override
   String get eventCreationGuidePremiumEvents =>
@@ -1831,7 +1871,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventCreationGuideSharedTools =>
-      'Both plans can publish core event details, add a cover, and use Poster Studio to make a share poster. AI promo backgrounds are a Premium creator tool.';
+      'Both plans can publish core event details, add public organizer social links, add a cover, and use Poster Studio to make a share poster. AI promo backgrounds are a Premium creator tool.';
 
   @override
   String get eventCreationGuideAdminNote =>

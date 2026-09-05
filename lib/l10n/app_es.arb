@@ -156,7 +156,7 @@
   "premiumPerk4Title": "Marca personalizada",
   "premiumPerk4Subtitle": "Logo y colores de marca en la página de tu evento",
   "premiumPerk5Title": "Botón de contacto",
-  "premiumPerk5Subtitle": "Teléfono, sitio web y enlaces sociales",
+  "premiumPerk5Subtitle": "Teléfono, sitio web y herramientas de contacto",
   "premiumPerk6Title": "Sin anuncios",
   "premiumPerk6Subtitle": "Páginas de evento limpias y sin anuncios",
   "premiumPerk7Title": "Reclama eventos existentes",
@@ -485,7 +485,26 @@
   "contactInfo": "Información de contacto",
   "phoneOptional": "Teléfono (opcional)",
   "websiteOptional": "Sitio web (opcional)",
-  "socialHandleOptional": "Red social (opcional)",
+  "socialHandleOptional": "Otra cuenta social (opcional)",
+  "organizerSocialLinks": "Enlaces de redes sociales del organizador",
+  "organizerSocialLinksHelp": "Opcional. Agrega perfiles públicos que controlas. Se muestran como botones en este evento; SpotVibe nunca se conecta ni publica en tus cuentas.",
+  "instagramOptional": "Instagram (opcional)",
+  "facebookOptional": "Facebook (opcional)",
+  "snapchatOptional": "Snapchat (opcional)",
+  "tiktokOptional": "TikTok (opcional)",
+  "youtubeOptional": "YouTube (opcional)",
+  "socialProfileHint": "@tucuenta o https://...",
+  "validSocialProfileLink": "Ingresa un usuario o enlace HTTPS válido de {platform}.",
+  "@validSocialProfileLink": {
+    "placeholders": {
+      "platform": {
+        "type": "String"
+      }
+    }
+  },
+  "followOrganizer": "Sigue al organizador",
+  "socialLinkOpenFailed": "No se pudo abrir este enlace de red social.",
+  "shareSocialHint": "Elige Instagram, Facebook, Snapchat u otra app instalada.",
   "customBranding": "Marca personalizada",
   "brandAccentColor": "Color de acento de marca",
   "brandLogoUrl": "URL del logo de marca (opcional)",
@@ -496,7 +515,7 @@
   "premiumUnlimited": "Premium — eventos ilimitados",
   "premiumIncludes": "Incluye galerías multimedia, eventos recurrentes, analíticas, marca y reclamaciones.",
   "freePlan": "Plan gratis",
-  "freePlanBody": "Hasta 2 eventos únicos próximos a la vez. Página básica con 1 foto de portada, 1 video corto, título, descripción, ubicación y hora en el feed público.",
+  "freePlanBody": "Hasta 2 eventos únicos próximos a la vez. Página básica con 1 foto de portada, 1 video corto, título, descripción, ubicación, hora y enlaces públicos del organizador en el feed público.",
   "upgradeToPremium": "Mejora a Premium — {price}",
   "@upgradeToPremium": {
     "placeholders": {
@@ -882,11 +901,11 @@
   "eventCreationGuidePlanIntro": "La foto de portada cuenta como la foto 1. Cada video debe durar 30 segundos o menos y pesar menos de 50 MB.",
   "eventCreationGuideFreeEvents": "Hasta 2 eventos únicos próximos a la vez",
   "eventCreationGuideFreeMedia": "1 foto de portada en total y 1 video corto por evento",
-  "eventCreationGuideFreePublish": "Página básica del evento en el feed público",
+  "eventCreationGuideFreePublish": "Página básica del evento con enlaces públicos del organizador en el feed público",
   "eventCreationGuidePremiumEvents": "Eventos ilimitados, incluidos eventos recurrentes semanales o mensuales",
   "eventCreationGuidePremiumMedia": "Hasta 5 fotos en total (incluida la portada) y 3 videos cortos por evento",
   "eventCreationGuidePremiumTools": "Fondos promocionales con IA, analíticas, marca personalizada y enlaces de contacto",
-  "eventCreationGuideSharedTools": "Ambos planes permiten publicar los detalles principales, agregar una portada y usar Poster Studio para crear un póster para compartir. Los fondos promocionales con IA son una herramienta para creadores Premium.",
+  "eventCreationGuideSharedTools": "Ambos planes permiten publicar los detalles principales, agregar enlaces públicos del organizador, agregar una portada y usar Poster Studio para crear un póster para compartir. Los fondos promocionales con IA son una herramienta para creadores Premium.",
   "eventCreationGuideAdminNote": "Tu cuenta de administrador puede probar el límite completo de 5 fotos y 3 videos. La comparación de Gratis y Premium de arriba es la que ven los creadores.",
   "eventCreationGuideReviewTitle": "4. Revisa, publica y comparte",
   "eventCreationGuideReviewBody": "Revisa cada detalle antes de publicar. Si después cambias el título, fecha, hora, venue o precio, vuelve a abrir Poster Studio para crear un póster actualizado.",

@@ -8,13 +8,14 @@ import '../data/event_time.dart';
 import '../l10n/app_localizations.dart';
 import '../models/user_event.dart';
 import '../providers/auth_provider.dart';
-import '../services/deep_link_service.dart';
 import '../services/event_analytics_service.dart';
 import '../widgets/events/event_page_ad.dart';
 import '../theme/category_colors.dart';
 import '../theme/theme.dart';
 import '../widgets/events/add_to_calendar_button.dart';
 import '../widgets/events/event_media_gallery.dart';
+import '../widgets/events/event_share_card.dart';
+import '../widgets/events/organizer_social_links.dart';
 import '../widgets/events/story_card.dart';
 import '../widgets/common/app_avatar.dart';
 import '../widgets/common/event_image_placeholder.dart';
@@ -89,11 +90,9 @@ class _UserEventDetailContent extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.share_rounded),
                 tooltip: 'Share event',
-                onPressed: () => DeepLinkService.shareEvent(
+                onPressed: () => showUserEventShareSheet(
                   context,
-                  eventId: event.id,
-                  eventTitle: event.title,
-                  isUserEvent: true,
+                  event: event,
                 ),
               ),
               if (isCreator) ...[
@@ -304,6 +303,14 @@ class _UserEventDetailContent extends StatelessWidget {
                       ],
                     ],
                   ),
+                  if (event.socialLinks.isNotEmpty) ...[
+                    const SizedBox(height: AppTheme.spacingMd),
+                    OrganizerSocialLinks(
+                      eventId: event.id,
+                      organizerName: event.organizerName,
+                      links: event.socialLinks,
+                    ),
+                  ],
                   const Divider(height: AppTheme.spacingXl),
 
                   // Description

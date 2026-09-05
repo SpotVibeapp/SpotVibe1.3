@@ -181,6 +181,20 @@ Without a key the feed still shows the curated El Paso seed (real venues,
 Wikimedia venue photos) and stays empty for other cities instead of faking
 listings.
 
+### Organizer social links and event sharing
+
+Every signed-in event creator can add optional public **Instagram, Facebook,
+Snapchat, TikTok, and YouTube** profile links to an event. Enter either a
+handle or an official HTTPS profile URL; SpotVibe normalizes and stores only
+matching official platform URLs. These buttons open externally from the event
+page. No social-media password, OAuth connection, account import, or automatic
+posting is used.
+
+The event **Share** action opens Android's native share sheet with an accurate
+event card and the event link, so a person can choose an installed compatible
+app such as Instagram, Facebook, Snapchat, Messages, or another destination.
+They must still confirm the post in that app.
+
 ### Ask SpotVibe (AI event search)
 
 The signed-in assistant sends only a short natural-language request to the

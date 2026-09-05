@@ -156,7 +156,7 @@
   "premiumPerk4Title": "Custom branding",
   "premiumPerk4Subtitle": "Logo and brand colors on your event page",
   "premiumPerk5Title": "Contact button",
-  "premiumPerk5Subtitle": "Phone, website, and social links",
+  "premiumPerk5Subtitle": "Phone, website, and organizer contact tools",
   "premiumPerk6Title": "No ads",
   "premiumPerk6Subtitle": "Clean event pages with no ads",
   "premiumPerk7Title": "Claim existing events",
@@ -485,7 +485,26 @@
   "contactInfo": "Contact Info",
   "phoneOptional": "Phone (optional)",
   "websiteOptional": "Website (optional)",
-  "socialHandleOptional": "Social Handle (optional)",
+  "socialHandleOptional": "Other social handle (optional)",
+  "organizerSocialLinks": "Organizer social links",
+  "organizerSocialLinksHelp": "Optional. Add public social profiles you control. They appear as buttons on this event; SpotVibe never connects or posts to your accounts.",
+  "instagramOptional": "Instagram (optional)",
+  "facebookOptional": "Facebook (optional)",
+  "snapchatOptional": "Snapchat (optional)",
+  "tiktokOptional": "TikTok (optional)",
+  "youtubeOptional": "YouTube (optional)",
+  "socialProfileHint": "@yourhandle or https://...",
+  "validSocialProfileLink": "Enter a valid {platform} handle or HTTPS profile link.",
+  "@validSocialProfileLink": {
+    "placeholders": {
+      "platform": {
+        "type": "String"
+      }
+    }
+  },
+  "followOrganizer": "Follow organizer",
+  "socialLinkOpenFailed": "Could not open this social link.",
+  "shareSocialHint": "Choose Instagram, Facebook, Snapchat, or another installed app.",
   "customBranding": "Custom Branding",
   "brandAccentColor": "Brand Accent Color",
   "brandLogoUrl": "Brand Logo URL (optional)",
@@ -496,7 +515,7 @@
   "premiumUnlimited": "Premium — unlimited events",
   "premiumIncludes": "Rich media galleries, recurring events, analytics, branding, and claims are included.",
   "freePlan": "Free plan",
-  "freePlanBody": "Up to 2 upcoming one-time events at a time. Basic page with 1 cover photo, 1 short video, title, description, location, and time in the public feed.",
+  "freePlanBody": "Up to 2 upcoming one-time events at a time. Basic page with 1 cover photo, 1 short video, title, description, location, time, and public organizer social links in the public feed.",
   "upgradeToPremium": "Upgrade to Premium — {price}",
   "@upgradeToPremium": {
     "placeholders": {
@@ -882,11 +901,11 @@
   "eventCreationGuidePlanIntro": "The cover photo counts as photo 1. Every video must be 30 seconds or less and under 50 MB.",
   "eventCreationGuideFreeEvents": "Up to 2 upcoming one-time events at a time",
   "eventCreationGuideFreeMedia": "1 cover photo total and 1 short video per event",
-  "eventCreationGuideFreePublish": "Basic event page in the public feed",
+  "eventCreationGuideFreePublish": "Basic event page with public organizer social links in the public feed",
   "eventCreationGuidePremiumEvents": "Unlimited events, including weekly or monthly recurring events",
   "eventCreationGuidePremiumMedia": "Up to 5 photos total (cover included) and 3 short videos per event",
   "eventCreationGuidePremiumTools": "AI promo backgrounds, analytics, custom branding, and contact links",
-  "eventCreationGuideSharedTools": "Both plans can publish core event details, add a cover, and use Poster Studio to make a share poster. AI promo backgrounds are a Premium creator tool.",
+  "eventCreationGuideSharedTools": "Both plans can publish core event details, add public organizer social links, add a cover, and use Poster Studio to make a share poster. AI promo backgrounds are a Premium creator tool.",
   "eventCreationGuideAdminNote": "Your admin account can test the full 5-photo and 3-video media allowance. The Free and Premium comparison above is what creators see.",
   "eventCreationGuideReviewTitle": "4. Review, publish, and share",
   "eventCreationGuideReviewBody": "Check every detail before publishing. If you later change the title, date, time, venue, or price, reopen Poster Studio to create an updated share poster.",

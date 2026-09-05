@@ -9,18 +9,107 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
+import '../../models/user_event.dart';
 import '../../services/deep_link_service.dart';
 import '../../services/share_analytics_service.dart';
 import '../../theme/category_colors.dart';
 import '../../theme/theme.dart';
 import '../common/event_image_placeholder.dart';
 
-/// Opens the share options bottom sheet for [event].
+/// Data needed to create an event card and native social share action.
+///
+/// This intentionally contains no social-account credentials. The platform
+/// chooser is always Android's native share sheet, so a person decides whether
+/// and where to post.
+@immutable
+class ShareEventData {
+  final String id;
+  final String title;
+  final DateTime dateTime;
+  final String location;
+  final String city;
+  final String imageUrl;
+  final String category;
+  final double? cost;
+  final bool isUserEvent;
+
+  const ShareEventData({
+    required this.id,
+    required this.title,
+    required this.dateTime,
+    required this.location,
+    required this.city,
+    required this.imageUrl,
+    required this.category,
+    required this.cost,
+    required this.isUserEvent,
+  });
+
+  factory ShareEventData.fromEvent(Event event) => ShareEventData(
+        id: event.id,
+        title: event.title,
+        dateTime: event.dateTime,
+        location: event.location,
+        city: event.city,
+        imageUrl: event.imageUrl,
+        category: event.category,
+        cost: event.cost,
+        // Feed events can be a public mirror of a creator listing. Preserve
+        // that distinction so copied/shared links reopen its creator page.
+        isUserEvent: event.isUserCreated,
+      );
+
+  factory ShareEventData.fromUserEvent(UserCreatedEvent event) =>
+      ShareEventData(
+        id: event.id,
+        title: event.title,
+        dateTime: event.dateTime,
+        location: event.location,
+        city: event.city,
+        imageUrl: event.imageUrl,
+        category: event.category,
+        cost: event.cost,
+        isUserEvent: true,
+      );
+
+  bool get isFree => cost == null || cost == 0;
+  String get costLabel => isFree ? 'Free' : '\$${cost!.toStringAsFixed(2)}';
+  String get fullLocation =>
+      [location, city].where((part) => part.isNotEmpty).join(', ');
+}
+
+/// Opens the share options bottom sheet for a discovery [event].
 /// [analytics] is optional; pass a shared instance to record share actions.
 void showEventShareSheet(
   BuildContext context, {
   required Event event,
+  ShareAnalyticsService? analytics,
+}) {
+  _showShareSheet(
+    context,
+    event: ShareEventData.fromEvent(event),
+    analytics: analytics,
+  );
+}
+
+/// Opens the same rich social sharing choices for a user-created event.
+void showUserEventShareSheet(
+  BuildContext context, {
+  required UserCreatedEvent event,
+  ShareAnalyticsService? analytics,
+}) {
+  _showShareSheet(
+    context,
+    event: ShareEventData.fromUserEvent(event),
+    analytics: analytics,
+  );
+}
+
+void _showShareSheet(
+  BuildContext context, {
+  required ShareEventData event,
   ShareAnalyticsService? analytics,
 }) {
   showModalBottomSheet(
@@ -36,7 +125,7 @@ void showEventShareSheet(
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _ShareSheet extends StatefulWidget {
-  final Event event;
+  final ShareEventData event;
   final ShareAnalyticsService? analytics;
 
   const _ShareSheet({required this.event, this.analytics});
@@ -50,16 +139,16 @@ class _ShareSheetState extends State<_ShareSheet> {
   bool _isCapturingCard = false;
   bool _isBuildingLink = false;
 
-  Event get _event => widget.event;
+  ShareEventData get _event => widget.event;
 
   // ── helpers ───────────────────────────────────────────────────────────────
 
   String _formatDate(DateTime dt) =>
       DateFormat('EEE, MMM d · h:mm a').format(dt);
 
-  Future<String> _buildShareLink() async {
-    return DeepLinkService.eventLink(_event.id);
-  }
+  String _buildShareLink() => _event.isUserEvent
+      ? DeepLinkService.userEventLink(_event.id)
+      : DeepLinkService.eventLink(_event.id);
 
   String _buildShareMessage(String link) {
     final date = _formatDate(_event.dateTime);
@@ -113,11 +202,12 @@ class _ShareSheetState extends State<_ShareSheet> {
       final file = File('${dir.path}/spotvibe_share_${_event.id}.png');
       await file.writeAsBytes(bytes);
 
-      // Attach a plain-text subject so apps that accept both show the title
+      // Include the public event link with the image. Apps that accept an
+      // image and text can publish both; others still receive the card.
       await Share.shareXFiles(
         [XFile(file.path, mimeType: 'image/png')],
         subject: '${_event.title} — SpotVibe',
-        text: 'Check out ${_event.title} on SpotVibe!',
+        text: _buildShareMessage(_buildShareLink()),
       );
       widget.analytics?.recordShare(
         eventId: _event.id,
@@ -145,7 +235,7 @@ class _ShareSheetState extends State<_ShareSheet> {
     setState(() => _isBuildingLink = true);
 
     try {
-      final link = await _buildShareLink();
+      final link = _buildShareLink();
       if (!mounted) return;
       final message = _buildShareMessage(link);
       await Share.share(message, subject: '${_event.title} — SpotVibe');
@@ -171,7 +261,7 @@ class _ShareSheetState extends State<_ShareSheet> {
   // ── copy link to clipboard ────────────────────────────────────────────────
 
   Future<void> _copyLink() async {
-    final link = DeepLinkService.eventLink(_event.id);
+    final link = _buildShareLink();
     await Clipboard.setData(ClipboardData(text: link));
     widget.analytics?.recordShare(
       eventId: _event.id,
@@ -238,6 +328,14 @@ class _ShareSheetState extends State<_ShareSheet> {
                 const SizedBox(width: AppTheme.spacingSm),
                 Text('Share Event', style: text.titleMedium),
               ],
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingXs),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
+            child: Text(
+              AppLocalizations.of(context)!.shareSocialHint,
+              style: text.bodySmall?.copyWith(color: colors.onSurfaceVariant),
             ),
           ),
           const SizedBox(height: AppTheme.spacingMd),
@@ -307,7 +405,7 @@ class _ShareSheetState extends State<_ShareSheet> {
 
                 // Copy link tile
                 _CopyLinkTile(
-                  eventId: _event.id,
+                  event: _event,
                   colors: colors,
                   text: text,
                   onCopy: _copyLink,
@@ -326,7 +424,7 @@ class _ShareSheetState extends State<_ShareSheet> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _ShareCardGraphic extends StatelessWidget {
-  final Event event;
+  final ShareEventData event;
 
   const _ShareCardGraphic({required this.event});
 
@@ -540,13 +638,13 @@ class _ShareCardGraphic extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _CopyLinkTile extends StatelessWidget {
-  final String eventId;
+  final ShareEventData event;
   final ColorScheme colors;
   final TextTheme text;
   final VoidCallback onCopy;
 
   const _CopyLinkTile({
-    required this.eventId,
+    required this.event,
     required this.colors,
     required this.text,
     required this.onCopy,
@@ -554,7 +652,9 @@ class _CopyLinkTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final link = DeepLinkService.eventLink(eventId);
+    final link = event.isUserEvent
+        ? DeepLinkService.userEventLink(event.id)
+        : DeepLinkService.eventLink(event.id);
     return InkWell(
       onTap: onCopy,
       borderRadius: BorderRadius.circular(AppTheme.radiusMedium),

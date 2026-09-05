@@ -1,5 +1,6 @@
 import 'media_urls.dart';
 import '../models/event.dart';
+import '../models/event_social_link.dart';
 import '../models/rsvp.dart';
 import '../models/user_event.dart';
 
@@ -68,6 +69,7 @@ Map<String, dynamic> eventToMap(Event event, {String kind = 'curated'}) {
     'isPremiumListing': event.isPremiumListing,
     'isCreatorPro': event.isCreatorPro,
     'featuredWeekKey': event.featuredWeekKey,
+    'socialLinks': event.socialLinks.toStorageMap(),
   };
 }
 
@@ -116,6 +118,7 @@ Event eventFromMap(String id, Map<String, dynamic> data) {
     featuredWeekKey: data['featuredWeekKey'] as String?,
     isUserCreated: data['kind'] == 'user' ||
         (data['creatorId'] as String?)?.isNotEmpty == true,
+    socialLinks: EventSocialLinks.fromStorage(data['socialLinks']),
   );
 }
 
@@ -195,6 +198,7 @@ Map<String, dynamic> userEventToMap(UserCreatedEvent event) {
         isCreatorPro: event.isCreatorPro,
         featuredWeekKey: event.featuredWeekKey,
         isUserCreated: true,
+        socialLinks: event.socialLinks,
       ),
       kind: 'user',
     ),
@@ -218,6 +222,7 @@ Map<String, dynamic> userEventToMap(UserCreatedEvent event) {
     'analyticsViews': event.analyticsViews,
     'analyticsSaves': event.analyticsSaves,
     'analyticsClicks': event.analyticsClicks,
+    'socialLinks': event.socialLinks.toStorageMap(),
   };
 }
 
@@ -272,5 +277,6 @@ UserCreatedEvent userEventFromMap(String id, Map<String, dynamic> data) {
     analyticsViews: (data['analyticsViews'] as num?)?.toInt() ?? 0,
     analyticsSaves: (data['analyticsSaves'] as num?)?.toInt() ?? 0,
     analyticsClicks: (data['analyticsClicks'] as num?)?.toInt() ?? 0,
+    socialLinks: EventSocialLinks.fromStorage(data['socialLinks']),
   );
 }

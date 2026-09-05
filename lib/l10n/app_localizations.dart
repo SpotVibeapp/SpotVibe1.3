@@ -833,7 +833,7 @@ abstract class AppLocalizations {
   /// No description provided for @premiumPerk5Subtitle.
   ///
   /// In en, this message translates to:
-  /// **'Phone, website, and social links'**
+  /// **'Phone, website, and organizer contact tools'**
   String get premiumPerk5Subtitle;
 
   /// No description provided for @premiumPerk6Title.
@@ -1768,8 +1768,80 @@ abstract class AppLocalizations {
   /// No description provided for @socialHandleOptional.
   ///
   /// In en, this message translates to:
-  /// **'Social Handle (optional)'**
+  /// **'Other social handle (optional)'**
   String get socialHandleOptional;
+
+  /// No description provided for @organizerSocialLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Organizer social links'**
+  String get organizerSocialLinks;
+
+  /// No description provided for @organizerSocialLinksHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. Add public social profiles you control. They appear as buttons on this event; SpotVibe never connects or posts to your accounts.'**
+  String get organizerSocialLinksHelp;
+
+  /// No description provided for @instagramOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Instagram (optional)'**
+  String get instagramOptional;
+
+  /// No description provided for @facebookOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Facebook (optional)'**
+  String get facebookOptional;
+
+  /// No description provided for @snapchatOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Snapchat (optional)'**
+  String get snapchatOptional;
+
+  /// No description provided for @tiktokOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'TikTok (optional)'**
+  String get tiktokOptional;
+
+  /// No description provided for @youtubeOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'YouTube (optional)'**
+  String get youtubeOptional;
+
+  /// No description provided for @socialProfileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'@yourhandle or https://...'**
+  String get socialProfileHint;
+
+  /// No description provided for @validSocialProfileLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid {platform} handle or HTTPS profile link.'**
+  String validSocialProfileLink(String platform);
+
+  /// No description provided for @followOrganizer.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow organizer'**
+  String get followOrganizer;
+
+  /// No description provided for @socialLinkOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open this social link.'**
+  String get socialLinkOpenFailed;
+
+  /// No description provided for @shareSocialHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Instagram, Facebook, Snapchat, or another installed app.'**
+  String get shareSocialHint;
 
   /// No description provided for @customBranding.
   ///
@@ -1834,7 +1906,7 @@ abstract class AppLocalizations {
   /// No description provided for @freePlanBody.
   ///
   /// In en, this message translates to:
-  /// **'Up to 2 upcoming one-time events at a time. Basic page with 1 cover photo, 1 short video, title, description, location, and time in the public feed.'**
+  /// **'Up to 2 upcoming one-time events at a time. Basic page with 1 cover photo, 1 short video, title, description, location, time, and public organizer social links in the public feed.'**
   String get freePlanBody;
 
   /// No description provided for @upgradeToPremium.

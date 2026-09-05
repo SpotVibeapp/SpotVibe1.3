@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../data/event_codec.dart';
 import '../models/user_event.dart';
+import '../models/event_social_link.dart';
 import 'user_event_repository.dart';
 
 /// Persists user-created events to `user_events/{id}` and mirrors a feed
@@ -97,6 +98,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
     String? contactPhone,
     String? contactWebsite,
     String? contactSocial,
+    EventSocialLinks socialLinks = const EventSocialLinks.empty(),
     String? brandColor,
     String? brandLogoUrl,
     String? featuredWeekKey,
@@ -130,6 +132,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
         contactPhone: contactPhone,
         contactWebsite: contactWebsite,
         contactSocial: contactSocial,
+        socialLinks: socialLinks,
         brandColor: brandColor,
         brandLogoUrl: brandLogoUrl,
         featuredWeekKey: featuredWeekKey,
@@ -172,6 +175,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
           contactPhone: contactPhone,
           contactWebsite: contactWebsite,
           contactSocial: contactSocial,
+          socialLinks: socialLinks,
           brandColor: brandColor,
           brandLogoUrl: brandLogoUrl,
           featuredWeekKey: featuredWeekKey,

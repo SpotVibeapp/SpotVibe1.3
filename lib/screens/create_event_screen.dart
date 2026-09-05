@@ -11,6 +11,7 @@ import '../data/pricing.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/category_labels.dart';
 import '../models/user_event.dart';
+import '../models/event_social_link.dart';
 import '../providers/auth_provider.dart';
 import '../providers/create_event_provider.dart';
 import '../providers/subscription_provider.dart';
@@ -81,6 +82,13 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   final _contactPhoneController = TextEditingController();
   final _contactWebsiteController = TextEditingController();
   final _contactSocialController = TextEditingController();
+  // Public organizer social links are available to every creator. They are
+  // event-level links, not social account sign-in or automatic posting.
+  final _instagramController = TextEditingController();
+  final _facebookController = TextEditingController();
+  final _snapchatController = TextEditingController();
+  final _tiktokController = TextEditingController();
+  final _youtubeController = TextEditingController();
   final _brandColorController = TextEditingController();
   final _brandLogoController = TextEditingController();
 
@@ -136,6 +144,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       _contactPhoneController.text = e.contactPhone ?? '';
       _contactWebsiteController.text = e.contactWebsite ?? '';
       _contactSocialController.text = e.contactSocial ?? '';
+      _instagramController.text = e.socialLinks[SocialPlatform.instagram] ?? '';
+      _facebookController.text = e.socialLinks[SocialPlatform.facebook] ?? '';
+      _snapchatController.text = e.socialLinks[SocialPlatform.snapchat] ?? '';
+      _tiktokController.text = e.socialLinks[SocialPlatform.tiktok] ?? '';
+      _youtubeController.text = e.socialLinks[SocialPlatform.youtube] ?? '';
       _brandColorController.text = e.brandColor ?? '';
       _brandLogoController.text = e.brandLogoUrl ?? '';
     }
@@ -171,10 +184,23 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     _contactPhoneController.dispose();
     _contactWebsiteController.dispose();
     _contactSocialController.dispose();
+    _instagramController.dispose();
+    _facebookController.dispose();
+    _snapchatController.dispose();
+    _tiktokController.dispose();
+    _youtubeController.dispose();
     _brandColorController.dispose();
     _brandLogoController.dispose();
     super.dispose();
   }
+
+  Map<SocialPlatform, String?> get _socialLinkInputs => {
+        SocialPlatform.instagram: _instagramController.text,
+        SocialPlatform.facebook: _facebookController.text,
+        SocialPlatform.snapchat: _snapchatController.text,
+        SocialPlatform.tiktok: _tiktokController.text,
+        SocialPlatform.youtube: _youtubeController.text,
+      };
 
   DateTime get _combinedDateTime => DateTime(
         _selectedDate.year,
@@ -625,6 +651,19 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       );
       return;
     }
+    final rawSocialLinks = _socialLinkInputs;
+    final invalidSocialPlatform = firstInvalidSocialPlatform(rawSocialLinks);
+    if (invalidSocialPlatform != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.validSocialProfileLink(invalidSocialPlatform.label),
+          ),
+        ),
+      );
+      return;
+    }
+    final socialLinks = EventSocialLinks.fromInput(rawSocialLinks);
     final auth = context.read<AuthProvider>();
     final subCheck = context.read<SubscriptionProvider>();
     // Admins post unlimited official events without the free-plan cap.
@@ -795,6 +834,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       contactPhone: _isCreatorPro ? _contactPhoneController.text.trim() : null,
       contactWebsite: _isCreatorPro ? _contactWebsiteController.text.trim() : null,
       contactSocial: _isCreatorPro ? _contactSocialController.text.trim() : null,
+      socialLinks: socialLinks,
       brandColor: _isCreatorPro ? _brandColorController.text.trim() : null,
       brandLogoUrl: _isCreatorPro ? _brandLogoController.text.trim() : null,
     );
@@ -1184,6 +1224,17 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             ),
             const SizedBox(height: AppTheme.spacingLg),
 
+            // Public social links are intentionally separate from Premium
+            // contact/branding tools: every signed-in creator can add them.
+            _OrganizerSocialLinksForm(
+              instagramController: _instagramController,
+              facebookController: _facebookController,
+              snapchatController: _snapchatController,
+              tiktokController: _tiktokController,
+              youtubeController: _youtubeController,
+            ),
+            const SizedBox(height: AppTheme.spacingLg),
+
             // ── Premium section ──────────────────────────────────────────────
             _CreatorProSection(
               isCreatorPro: _isCreatorPro,
@@ -1216,6 +1267,82 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 }
 
 // ── Sub-widgets ──────────────────────────────────────────────────────────────
+
+// ── Public organizer social links ───────────────────────────────────────────
+
+class _OrganizerSocialLinksForm extends StatelessWidget {
+  final TextEditingController instagramController;
+  final TextEditingController facebookController;
+  final TextEditingController snapchatController;
+  final TextEditingController tiktokController;
+  final TextEditingController youtubeController;
+
+  const _OrganizerSocialLinksForm({
+    required this.instagramController,
+    required this.facebookController,
+    required this.snapchatController,
+    required this.tiktokController,
+    required this.youtubeController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final text = Theme.of(context).textTheme;
+    final colors = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(title: l10n.organizerSocialLinks),
+        Text(
+          l10n.organizerSocialLinksHelp,
+          style: text.bodySmall?.copyWith(color: colors.onSurfaceVariant),
+        ),
+        const SizedBox(height: AppTheme.spacingMd),
+        _FormField(
+          controller: instagramController,
+          label: l10n.instagramOptional,
+          hint: l10n.socialProfileHint,
+          icon: Icons.camera_alt_rounded,
+          keyboardType: TextInputType.url,
+        ),
+        const SizedBox(height: AppTheme.spacingMd),
+        _FormField(
+          controller: facebookController,
+          label: l10n.facebookOptional,
+          hint: l10n.socialProfileHint,
+          icon: Icons.facebook_rounded,
+          keyboardType: TextInputType.url,
+        ),
+        const SizedBox(height: AppTheme.spacingMd),
+        _FormField(
+          controller: snapchatController,
+          label: l10n.snapchatOptional,
+          hint: l10n.socialProfileHint,
+          icon: Icons.chat_bubble_rounded,
+          keyboardType: TextInputType.url,
+        ),
+        const SizedBox(height: AppTheme.spacingMd),
+        _FormField(
+          controller: tiktokController,
+          label: l10n.tiktokOptional,
+          hint: l10n.socialProfileHint,
+          icon: Icons.music_note_rounded,
+          keyboardType: TextInputType.url,
+        ),
+        const SizedBox(height: AppTheme.spacingMd),
+        _FormField(
+          controller: youtubeController,
+          label: l10n.youtubeOptional,
+          hint: l10n.socialProfileHint,
+          icon: Icons.play_circle_fill_rounded,
+          keyboardType: TextInputType.url,
+        ),
+      ],
+    );
+  }
+}
 
 // ── Premium section ────────────────────────────────────────────────────────────
 

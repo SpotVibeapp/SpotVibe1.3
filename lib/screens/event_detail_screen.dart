@@ -8,7 +8,6 @@ import '../providers/auth_provider.dart';
 import '../providers/follow_provider.dart';
 import '../providers/event_provider.dart';
 import '../providers/moderation_provider.dart';
-import '../services/deep_link_service.dart';
 import '../services/maps_service.dart';
 import '../theme/category_colors.dart';
 import '../theme/theme.dart';
@@ -16,6 +15,8 @@ import '../services/event_analytics_service.dart';
 import '../widgets/events/claim_venue_banner.dart';
 import '../widgets/events/event_page_ad.dart';
 import '../widgets/events/event_media_gallery.dart';
+import '../widgets/events/event_share_card.dart';
+import '../widgets/events/organizer_social_links.dart';
 import '../widgets/common/app_avatar.dart';
 import '../widgets/common/event_image_placeholder.dart';
 import '../widgets/common/guided_tour.dart';
@@ -105,11 +106,9 @@ class _DetailContent extends StatelessWidget {
                 key: shareKey,
                 icon: const Icon(Icons.share_rounded),
                 tooltip: l10n.shareEventTooltip,
-                onPressed: () => DeepLinkService.shareEvent(
+                onPressed: () => showEventShareSheet(
                   context,
-                  eventId: event.id,
-                  eventTitle: event.title,
-                  isUserEvent: false,
+                  event: event,
                 ),
               ),
               if (context.read<AuthProvider>().isAdmin)
@@ -247,6 +246,14 @@ class _DetailContent extends StatelessWidget {
                   SectionTitle(title: l10n.organizer, accent: catColor),
                   const SizedBox(height: AppTheme.spacingSm),
                   _OrganizerRow(event: event),
+                  if (event.socialLinks.isNotEmpty) ...[
+                    const SizedBox(height: AppTheme.spacingMd),
+                    OrganizerSocialLinks(
+                      eventId: event.id,
+                      organizerName: event.organizerName,
+                      links: event.socialLinks,
+                    ),
+                  ],
                   const SizedBox(height: AppTheme.spacingLg),
                   ClaimVenueBanner(event: event),
                   if (event.showsAds) ...[
