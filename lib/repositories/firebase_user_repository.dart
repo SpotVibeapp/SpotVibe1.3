@@ -378,6 +378,36 @@ class FirebaseUserRepository implements UserRepository {
     return _appUserFor(user);
   }
 
+  @override
+  Future<AppUser> updateDisplayName(String displayName) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('Sign in to edit your profile.');
+    final name = displayName.trim();
+    if (name.isEmpty) throw ArgumentError('Display name is required.');
+
+    try {
+      await user.updateDisplayName(name);
+      await user.reload();
+    } on FirebaseAuthException catch (e) {
+      throw Exception(messageForAuthException(e));
+    } catch (e) {
+      debugPrint('Auth display name update failed: $e');
+      throw Exception('Could not save your profile name. Try again.');
+    }
+
+    try {
+      await _users.doc(user.uid).set({
+        'name': name,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Firestore display name update failed: $e');
+      throw Exception('Could not save your profile name. Try again.');
+    }
+
+    return _appUserFor(_auth.currentUser ?? user);
+  }
+
   /// Whether [uid] is listed in the `admins/{uid}` collection.
   /// Best-effort: any failure resolves to `false`.
   Future<bool> _isAdmin(String uid) async {

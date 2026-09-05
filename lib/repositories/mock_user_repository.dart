@@ -104,4 +104,12 @@ class MockUserRepository implements UserRepository {
     _currentUser = user.copyWith(avatarUrl: avatarUrl);
     return _currentUser!;
   }
+
+  @override
+  Future<AppUser> updateDisplayName(String displayName) async {
+    final user = _currentUser;
+    if (user == null) throw Exception('Sign in to edit your profile.');
+    _currentUser = user.copyWith(displayName: displayName);
+    return _currentUser!;
+  }
 }

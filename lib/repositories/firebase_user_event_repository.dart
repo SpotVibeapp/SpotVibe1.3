@@ -197,6 +197,40 @@ class FirebaseUserEventRepository extends UserEventRepository {
   }
 
   @override
+  Future<int> updateOrganizerNameForCreator(
+    String creatorId,
+    String organizerName,
+  ) {
+    final name = organizerName.trim();
+    if (name.isEmpty) return Future.value(0);
+
+    return _guard(() async {
+      final snapshot = await _userEvents
+          .where('creatorId', isEqualTo: creatorId)
+          .get();
+      final changed = snapshot.docs
+          .where((doc) => doc.data()['organizerName'] != name)
+          .toList();
+
+      // Each event has two mirrored documents. Keep batches below Firestore's
+      // 500-operation limit even for prolific organizers.
+      for (var offset = 0; offset < changed.length; offset += 200) {
+        final batch = _db.batch();
+        for (final doc in changed.skip(offset).take(200)) {
+          final patch = <String, dynamic>{
+            'organizerName': name,
+            'updatedAt': FieldValue.serverTimestamp(),
+          };
+          batch.update(doc.reference, patch);
+          batch.set(_events.doc(doc.id), patch, SetOptions(merge: true));
+        }
+        await batch.commit();
+      }
+      return changed.length;
+    }, () => super.updateOrganizerNameForCreator(creatorId, name));
+  }
+
+  @override
   Future<void> deleteEvent(String id) {
     return _guard(() async {
       final batch = _db.batch();

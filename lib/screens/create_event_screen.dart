@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import '../data/event_time.dart';
 import '../data/media_urls.dart';
 import '../data/pricing.dart';
 import '../l10n/app_localizations.dart';
@@ -55,8 +56,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 7));
   TimeOfDay _selectedTime = const TimeOfDay(hour: 18, minute: 0);
+  // The end date starts on the same day, but creators must explicitly choose
+  // an end time before publishing so SpotVibe never guesses when an event ends.
   DateTime _selectedEndDate = DateTime.now().add(const Duration(days: 7));
-  TimeOfDay _selectedEndTime = const TimeOfDay(hour: 21, minute: 0);
+  TimeOfDay? _selectedEndTime;
   String _selectedCategory = 'Music';
   bool _isPremiumListing = false;
   String? _moderationError;
@@ -115,14 +118,16 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       _chatLinkController.text = e.chatLink ?? '';
       _selectedDate = e.dateTime;
       _selectedTime = TimeOfDay(hour: e.dateTime.hour, minute: e.dateTime.minute);
-      // Older listings did not store an end time. Show a clear editable
-      // three-hour suggestion so the organizer can publish the actual end.
-      final endDateTime = e.endDateTime ?? e.dateTime.add(const Duration(hours: 3));
-      _selectedEndDate = endDateTime;
-      _selectedEndTime = TimeOfDay(
-        hour: endDateTime.hour,
-        minute: endDateTime.minute,
-      );
+      // Legacy listings may not have an end time. Keep the date aligned with
+      // the start, but require the organizer to choose the real end time.
+      final endDateTime = e.endDateTime;
+      _selectedEndDate = endDateTime ?? e.dateTime;
+      _selectedEndTime = endDateTime == null
+          ? null
+          : TimeOfDay(
+              hour: endDateTime.hour,
+              minute: endDateTime.minute,
+            );
       _selectedCategory = e.category;
       _isPremiumListing = e.isPremiumListing;
       // Restore Premium fields if the event was created on Premium
@@ -179,28 +184,22 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         _selectedTime.minute,
       );
 
-  DateTime get _combinedEndDateTime => DateTime(
-        _selectedEndDate.year,
-        _selectedEndDate.month,
-        _selectedEndDate.day,
-        _selectedEndTime.hour,
-        _selectedEndTime.minute,
-      );
+  DateTime? get _combinedEndDateTime {
+    final endTime = _selectedEndTime;
+    if (endTime == null) return null;
+    return DateTime(
+      _selectedEndDate.year,
+      _selectedEndDate.month,
+      _selectedEndDate.day,
+      endTime.hour,
+      endTime.minute,
+    );
+  }
 
   bool _isSameCalendarDate(DateTime first, DateTime second) =>
       first.year == second.year &&
       first.month == second.month &&
       first.day == second.day;
-
-  void _ensureEndFollowsStart() {
-    if (_combinedEndDateTime.isAfter(_combinedDateTime)) return;
-    final adjusted = _combinedDateTime.add(const Duration(hours: 3));
-    _selectedEndDate = adjusted;
-    _selectedEndTime = TimeOfDay(
-      hour: adjusted.hour,
-      minute: adjusted.minute,
-    );
-  }
 
   double? get _parsedCost {
     final text = _costController.text.trim();
@@ -450,19 +449,13 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             _isSameCalendarDate(_selectedEndDate, _selectedDate);
         _selectedDate = picked;
         if (endWasOnStartDate) _selectedEndDate = picked;
-        _ensureEndFollowsStart();
       });
     }
   }
 
   Future<void> _pickTime() async {
     final picked = await showTimePicker(context: context, initialTime: _selectedTime);
-    if (picked != null) {
-      setState(() {
-        _selectedTime = picked;
-        _ensureEndFollowsStart();
-      });
-    }
+    if (picked != null) setState(() => _selectedTime = picked);
   }
 
   Future<void> _pickEndDate() async {
@@ -476,8 +469,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   }
 
   Future<void> _pickEndTime() async {
-    final picked =
-        await showTimePicker(context: context, initialTime: _selectedEndTime);
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedEndTime ?? _selectedTime,
+    );
     if (picked != null) setState(() => _selectedEndTime = picked);
   }
 
@@ -535,13 +530,25 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   }
 
   Future<void> _openPosterStudio() async {
+    final l10n = AppLocalizations.of(context)!;
     final title = _titleController.text.trim();
     final venue = _locationController.text.trim();
+    final endDateTime = _combinedEndDateTime;
     if (title.isEmpty || venue.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.posterTitleVenueRequired),
-        ),
+        SnackBar(content: Text(l10n.posterTitleVenueRequired)),
+      );
+      return;
+    }
+    if (endDateTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.endTimeRequired)),
+      );
+      return;
+    }
+    if (!hasValidEventWindow(_combinedDateTime, endDateTime)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.endTimeMustBeAfterStart)),
       );
       return;
     }
@@ -553,7 +560,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       details: EventPosterDetails(
         title: title,
         dateTime: _combinedDateTime,
-        endDateTime: _combinedEndDateTime,
+        endDateTime: endDateTime,
         venue: venue,
         address: _addressController.text.trim(),
         city: _cityController.text.trim(),
@@ -605,7 +612,14 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final l10n = AppLocalizations.of(context)!;
-    if (!_combinedEndDateTime.isAfter(_combinedDateTime)) {
+    final endDateTime = _combinedEndDateTime;
+    if (endDateTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.endTimeRequired)),
+      );
+      return;
+    }
+    if (!hasValidEventWindow(_combinedDateTime, endDateTime)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.endTimeMustBeAfterStart)),
       );
@@ -761,7 +775,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       title: _titleController.text,
       description: _descriptionController.text,
       dateTime: _combinedDateTime,
-      endDateTime: _combinedEndDateTime,
+      endDateTime: endDateTime,
       location: _locationController.text,
       address: _addressController.text,
       city: _cityController.text,
@@ -943,7 +957,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   child: _DateTimeTile(
                     icon: Icons.timer_off_rounded,
                     label: l10n.time,
-                    value: _selectedEndTime.format(context),
+                    value: _selectedEndTime?.format(context) ?? l10n.selectEndTime,
                     onTap: _pickEndTime,
                   ),
                 ),

@@ -8,6 +8,8 @@ import '../providers/follow_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/theme_provider.dart';
+import '../repositories/user_event_repository.dart';
+import '../services/user_event_service.dart';
 import '../theme/theme.dart';
 import '../widgets/common/editable_avatar.dart';
 import '../widgets/common/app_icon_mark.dart';
@@ -145,6 +147,13 @@ class ProfileScreen extends StatelessWidget {
           padding: EdgeInsets.all(8),
           child: AppIconMark(size: 30, glow: false),
         ),
+        actions: [
+          IconButton(
+            tooltip: l10n.editProfile,
+            onPressed: () => _editProfile(context),
+            icon: const Icon(Icons.edit_rounded),
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -166,6 +175,12 @@ class ProfileScreen extends StatelessWidget {
                 Text(user.displayName, style: text.headlineSmall),
                 const SizedBox(height: AppTheme.spacingXs),
                 Text(user.email, style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant)),
+                const SizedBox(height: AppTheme.spacingSm),
+                OutlinedButton.icon(
+                  onPressed: () => _editProfile(context),
+                  icon: const Icon(Icons.edit_rounded),
+                  label: Text(l10n.editProfile),
+                ),
                 const SizedBox(height: AppTheme.spacingLg),
 
                 // ── Follower / Following stats ─────────────────────────────────
@@ -284,6 +299,46 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  /// Lets a signed-in person update only their own public organizer name.
+  /// Account email, roles, and other users are intentionally not editable here.
+  Future<void> _editProfile(BuildContext context) async {
+    final auth = context.read<AuthProvider>();
+    final user = auth.user;
+    if (user == null || user.isGuest) return;
+    final l10n = AppLocalizations.of(context)!;
+
+    final draft = await showDialog<_ProfileEditDraft>(
+      context: context,
+      builder: (_) => _EditProfileDialog(initialName: user.displayName),
+    );
+    if (draft == null || !context.mounted) return;
+
+    final eventService = UserEventService(
+      repository: context.read<UserEventRepository>(),
+    );
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final updated = await auth.updateDisplayName(draft.displayName);
+      if (draft.updateExistingEvents) {
+        await eventService.updateOrganizerNameForCreator(
+          updated.id,
+          updated.displayName,
+        );
+      }
+      if (!context.mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.profileUpdated)),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    }
+  }
+
   /// Resets all tour "seen" flags and returns home so the tour replays.
   Future<void> _replayTour(BuildContext context) async {
     await TourService.resetAll();
@@ -369,6 +424,115 @@ class ProfileScreen extends StatelessWidget {
     );
 
     if (choice != null) await provider.setCode(choice);
+  }
+}
+
+class _ProfileEditDraft {
+  final String displayName;
+  final bool updateExistingEvents;
+
+  const _ProfileEditDraft({
+    required this.displayName,
+    required this.updateExistingEvents,
+  });
+}
+
+class _EditProfileDialog extends StatefulWidget {
+  final String initialName;
+
+  const _EditProfileDialog({required this.initialName});
+
+  @override
+  State<_EditProfileDialog> createState() => _EditProfileDialogState();
+}
+
+class _EditProfileDialogState extends State<_EditProfileDialog> {
+  late final TextEditingController _nameController;
+  bool _updateExistingEvents = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.initialName);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final l10n = AppLocalizations.of(context)!;
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      setState(() => _error = l10n.profileNameRequired);
+      return;
+    }
+    if (name.length > 100) {
+      setState(() => _error = l10n.profileNameTooLong);
+      return;
+    }
+    Navigator.pop(
+      context,
+      _ProfileEditDraft(
+        displayName: name,
+        updateExistingEvents: _updateExistingEvents,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return AlertDialog(
+      title: Text(l10n.editProfile),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.profileNameHelp),
+            const SizedBox(height: AppTheme.spacingMd),
+            TextField(
+              controller: _nameController,
+              autofocus: true,
+              maxLength: 100,
+              textCapitalization: TextCapitalization.words,
+              onChanged: (_) {
+                if (_error != null) setState(() => _error = null);
+              },
+              decoration: InputDecoration(
+                labelText: l10n.profileNameLabel,
+                hintText: l10n.profileNameHint,
+                errorText: _error,
+                prefixIcon: const Icon(Icons.business_rounded),
+              ),
+            ),
+            const SizedBox(height: AppTheme.spacingXs),
+            CheckboxListTile(
+              value: _updateExistingEvents,
+              onChanged: (value) =>
+                  setState(() => _updateExistingEvents = value ?? false),
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: Text(l10n.updateExistingEventNames),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: _save,
+          child: Text(l10n.save),
+        ),
+      ],
+    );
   }
 }
 

@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spotvibe_app/models/event.dart';
 import 'package:spotvibe_app/repositories/event_repository.dart';
+import 'package:spotvibe_app/repositories/user_event_repository.dart';
 import 'package:spotvibe_app/services/event_service.dart';
 
 class _FixedEventRepository implements EventRepository {
@@ -93,5 +94,44 @@ void main() {
     final service = EventService(repository: _FixedEventRepository([legacy]));
 
     expect(await service.getUpcomingEvents(), isEmpty);
+  });
+
+  test('renaming an organizer updates only that creator’s own events', () async {
+    final repository = UserEventRepository();
+    final start = DateTime.now().add(const Duration(days: 3));
+    final mine = await repository.createEvent(
+      creatorId: 'spotvibe-admin',
+      title: 'Official listing',
+      description: 'A real event listed by the company.',
+      dateTime: start,
+      endDateTime: start.add(const Duration(hours: 3)),
+      location: 'Community Hall',
+      address: '1 Main Street',
+      category: 'Community',
+      organizerName: 'Blake',
+    );
+    final other = await repository.createEvent(
+      creatorId: 'another-organizer',
+      title: 'Other listing',
+      description: 'A real event listed by a different organizer.',
+      dateTime: start,
+      endDateTime: start.add(const Duration(hours: 3)),
+      location: 'Community Hall',
+      address: '1 Main Street',
+      category: 'Community',
+      organizerName: 'Another organizer',
+    );
+
+    final renamed = await repository.updateOrganizerNameForCreator(
+      'spotvibe-admin',
+      'SpotVibe',
+    );
+
+    expect(renamed, 1);
+    expect((await repository.getEventById(mine.id))!.organizerName, 'SpotVibe');
+    expect(
+      (await repository.getEventById(other.id))!.organizerName,
+      'Another organizer',
+    );
   });
 }

@@ -170,6 +170,26 @@ class UserEventRepository {
     return updated;
   }
 
+  /// Keeps prior events aligned when a creator changes their public organizer
+  /// name. Claims transfer [creatorId], so events already claimed by another
+  /// verified venue are intentionally not renamed.
+  Future<int> updateOrganizerNameForCreator(
+    String creatorId,
+    String organizerName,
+  ) async {
+    final name = organizerName.trim();
+    if (name.isEmpty) return 0;
+
+    var updated = 0;
+    for (var index = 0; index < _events.length; index++) {
+      final event = _events[index];
+      if (event.creatorId != creatorId || event.organizerName == name) continue;
+      _events[index] = event.copyWith(organizerName: name);
+      updated++;
+    }
+    return updated;
+  }
+
   Future<void> deleteEvent(String id) async {
     await Future.delayed(const Duration(milliseconds: 200));
     _events.removeWhere((e) => e.id == id);

@@ -3291,7 +3291,38 @@ abstract class AppLocalizations {
   String get eventEnds;
   String get endTimeHint;
   String get endTimeMustBeAfterStart;
+  String get endTimeRequired;
+  String get selectEndTime;
   String get happeningNow;
+
+  String get editProfile;
+  String get profileNameLabel;
+  String get profileNameHint;
+  String get profileNameHelp;
+  String get updateExistingEventNames;
+  String get profileNameRequired;
+  String get profileNameTooLong;
+  String get profileUpdated;
+
+  String get askSpotVibe;
+  String get askSpotVibeSubtitle;
+  String get askSpotVibeSignIn;
+  String get aiSearchIntro;
+  String get aiSearchRealResults;
+  String get aiSearchRoadTrips;
+  String get aiSearchRoadTripsHint;
+  String get aiSearchTryPrompt;
+  String get aiSearchPromptMusic;
+  String get aiSearchPromptFamily;
+  String get aiSearchPromptFood;
+  String get aiSearchHint;
+  String get aiSearchEmptyQuery;
+  String get aiSearchSearching;
+  String get aiSearchFoundRealResults;
+  String get aiSearchNoResults;
+  String aiSearchLocalResults(String location);
+  String aiSearchRoadTripResults(String location);
+  String get aiSearchNoResultsHere;
 }
 
 class _AppLocalizationsDelegate

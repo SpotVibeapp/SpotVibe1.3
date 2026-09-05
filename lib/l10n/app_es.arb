@@ -907,5 +907,50 @@
   "eventEnds": "Termina",
   "endTimeHint": "Indica la hora real de finalización. Tu evento seguirá visible como En curso hasta entonces.",
   "endTimeMustBeAfterStart": "La fecha y hora de finalización deben ser posteriores al inicio.",
-  "happeningNow": "En curso ahora"
+  "endTimeRequired": "Elige una hora de finalización antes de publicar.",
+  "selectEndTime": "Elegir hora",
+  "happeningNow": "En curso ahora",
+
+  "editProfile": "Editar perfil",
+  "profileNameLabel": "Nombre de empresa u organizador",
+  "profileNameHint": "p. ej., SpotVibe",
+  "profileNameHelp": "Este nombre aparece en tu perfil y en los eventos que creas.",
+  "updateExistingEventNames": "Actualizar este nombre en los eventos que ya publiqué",
+  "profileNameRequired": "Ingresa un nombre de empresa u organizador.",
+  "profileNameTooLong": "El nombre debe tener 100 caracteres o menos.",
+  "profileUpdated": "Perfil actualizado.",
+
+  "askSpotVibe": "Pregúntale a SpotVibe",
+  "askSpotVibeSubtitle": "Describe lo que quieres hacer y encuentra eventos locales reales, con opciones de viaje por carretera.",
+  "askSpotVibeSignIn": "Inicia sesión para recibir recomendaciones de eventos reales.",
+  "aiSearchIntro": "Cuéntame qué estás buscando. Lo convertiré en una búsqueda y mostraré solo eventos reales de SpotVibe y Ticketmaster.",
+  "aiSearchRealResults": "SpotVibe interpreta tu solicitud. Los nombres, fechas, precios y disponibilidad siempre provienen de eventos reales.",
+  "aiSearchRoadTrips": "Incluir viajes a ciudades cercanas (hasta 4 horas)",
+  "aiSearchRoadTripsHint": "Opcional: busca coincidencias reales en ciudades regionales seleccionadas. Confirma las indicaciones y el tiempo de viaje antes de salir.",
+  "aiSearchTryPrompt": "Prueba una de estas opciones",
+  "aiSearchPromptMusic": "Música en vivo este fin de semana",
+  "aiSearchPromptFamily": "Eventos familiares mañana",
+  "aiSearchPromptFood": "Eventos de comida y bebida esta semana",
+  "aiSearchHint": "p. ej., comedia el viernes, arte al aire libre o jazz en vivo",
+  "aiSearchEmptyQuery": "Dile a SpotVibe qué quieres encontrar.",
+  "aiSearchSearching": "Buscando eventos reales…",
+  "aiSearchFoundRealResults": "Estos son eventos reales que coinciden con tu solicitud.",
+  "aiSearchNoResults": "No se encontraron eventos activos que coincidan. Prueba una solicitud más amplia u otra fecha.",
+  "aiSearchLocalResults": "Cerca de {location}",
+  "@aiSearchLocalResults": {
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "aiSearchRoadTripResults": "Opciones de viaje en {location}",
+  "@aiSearchRoadTripResults": {
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "aiSearchNoResultsHere": "No se encontraron eventos activos que coincidan en esta zona."
 }

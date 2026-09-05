@@ -54,6 +54,24 @@ void main() {
     });
   });
 
+  group('AuthService.profile name', () {
+    test('rejects a blank display name', () {
+      expect(
+        () => authService.updateDisplayName('  '),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('updates the signed-in display name', () async {
+      await authService.register('Blake Johnson', 'blake@example.com', 'password1');
+
+      final updated = await authService.updateDisplayName('SpotVibe');
+
+      expect(updated.displayName, 'SpotVibe');
+      expect(updated.email, 'blake@example.com');
+    });
+  });
+
   group('AuthService.password reset', () {
     test('rejects an empty reset email', () {
       expect(

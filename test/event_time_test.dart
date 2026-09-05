@@ -26,6 +26,9 @@ void main() {
     final during = DateTime(2026, 8, 12, 10, 0);
     final after = DateTime(2026, 8, 12, 13, 0);
 
+    expect(hasValidEventWindow(start, end), isTrue);
+    expect(hasValidEventWindow(start, null), isFalse);
+    expect(hasValidEventWindow(start, start), isFalse);
     expect(isEventHappeningNow(start, end, now: during), isTrue);
     expect(isEventVisibleInFeed(start, end, now: during), isTrue);
     expect(isEventVisibleInFeed(start, end, now: after), isFalse);

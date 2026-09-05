@@ -7,7 +7,7 @@ const String kAccountDeletionUrl =
 
 const String kLegalEntityName = 'Spotvibe LLC';
 const String kLegalContactEmail = 'blakejohnson@spotvibeapp.com';
-const String kLegalEffectiveDate = 'August 12, 2026';
+const String kLegalEffectiveDate = 'September 5, 2026';
 
 class LegalSection {
   final String heading;
@@ -38,7 +38,8 @@ const LegalDocument kPrivacyPolicy = LegalDocument(
     LegalSection(
       'Information you give us',
       'Account: name, email, password (stored by Firebase Authentication, not in plain text), and a profile photo if you upload one or sign in with Google, Apple, or Facebook.\n\n'
-          'Events you create: title, description, up to five photos including a cover, up to three short videos (up to 30 seconds each), location, time, ticket price, and optional contact or branding fields. If you choose to generate an AI promo background, we send the event title, description, category, venue context, selected visual style, and optional art-direction text to OpenAI to generate that image. Poster Studio formats a share poster from the event details you entered; it does not ask OpenAI to invent poster text. Do not include sensitive personal information in an AI image request.\n\n'
+          'Events you create: title, description, start and end time, up to five photos including a cover, up to three short videos (up to 30 seconds each), location, ticket price, and optional contact or branding fields. If you choose to generate an AI promo background, we send the event title, description, category, venue context, selected visual style, and optional art-direction text to OpenAI to generate that image. Poster Studio formats a share poster from the event details you entered; it does not ask OpenAI to invent poster text.\n\n'
+          'Ask SpotVibe: if you choose the signed-in AI event-search assistant, we send your short search request to OpenAI only to turn it into search filters. We do not send your account email or precise device location to OpenAI for this feature. The app then retrieves displayed event listings separately from SpotVibe and Ticketmaster; the AI assistant does not create event listings. Do not include sensitive personal information in an AI request.\n\n'
           'RSVPs and comments: whether you are going, and any text you post.\n\n'
           'Venue / event claims: your name, work email, phone, organization, role, and any proof you submit so we can verify you are authorized.\n\n'
           'Support: anything you email us.',
@@ -65,7 +66,7 @@ const LegalDocument kPrivacyPolicy = LegalDocument(
     ),
     LegalSection(
       'When we share information',
-      'Service providers that host or process data for us: Google Firebase (auth, database, file storage for photos and short videos), Apple and Google (app stores and in-app purchases), RevenueCat (subscription status), Ticketmaster (outbound event search only), and OpenAI (only when you choose to generate an AI promo background).\n\n'
+      'Service providers that host or process data for us: Google Firebase (auth, database, file storage for photos and short videos), Apple and Google (app stores and in-app purchases), RevenueCat (subscription status), Ticketmaster (outbound event search only), and OpenAI (only when you choose to generate an AI promo background or Ask SpotVibe to interpret a search request).\n\n'
           'The public: events you publish, public RSVPs, and comments are visible to other users.\n\n'
           'Legal: if required by law, to protect people, or in a sale of the business.\n\n'
           'We do not sell your personal information.',
@@ -127,6 +128,10 @@ const LegalDocument kTermsOfUse = LegalDocument(
     LegalSection(
       'AI-generated promo backgrounds',
       'SpotVibe may offer an optional AI tool that generates a visual background from event details and optional visual direction you provide. Poster Studio can format your title, date, time, venue, and price onto that background using the details you entered; it does not ask the image model to invent those details. Review every result before publishing, and regenerate a poster if you change the event details. You are responsible for ensuring the final event page and poster are accurate and do not infringe rights, impersonate people or organizations, use misleading logos or marks, or violate our content rules. We may block, remove, or limit generated images that violate these Terms or applicable provider policies.',
+    ),
+    LegalSection(
+      'Ask SpotVibe event search',
+      'Ask SpotVibe is an optional signed-in search helper. It uses AI only to interpret a short request into search filters; it does not create or verify event listings. Every listing shown afterward comes from SpotVibe or Ticketmaster and may change, sell out, or be cancelled. Nearby-city road-trip searching is optional and does not guarantee a driving time, route, safety, accessibility, or event availability. Check the official listing and directions before making travel plans.',
     ),
     LegalSection(
       'Claims',
