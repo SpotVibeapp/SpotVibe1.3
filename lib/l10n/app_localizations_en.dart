@@ -1747,4 +1747,107 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get claimProofPressContact => 'Press contact';
+
+  @override
+  String get eventCreationGuide => 'Event creation guide';
+
+  @override
+  String get eventCreationGuideTooltip => 'How to create an event';
+
+  @override
+  String get eventCreationGuideCardTitle => 'Create with confidence';
+
+  @override
+  String get eventCreationGuideCardBody =>
+      'Follow the quick checklist and compare exactly what Free and Premium include.';
+
+  @override
+  String get eventCreationGuideMediaSummary =>
+      'Free: 1 cover photo + 1 short video. Premium: up to 5 photos total (including the cover) + 3 short videos.';
+
+  @override
+  String get openEventCreationGuide => 'Open creator guide';
+
+  @override
+  String get eventCreationGuideIntro =>
+      'A simple checklist for publishing a clear, share-ready event.';
+
+  @override
+  String get eventCreationGuideCurrentPlan => 'Your current plan';
+
+  @override
+  String get eventCreationGuideFreeActive => 'Free plan';
+
+  @override
+  String get eventCreationGuidePremiumActive => 'Premium active';
+
+  @override
+  String get eventCreationGuideAdminAccess => 'Admin test access';
+
+  @override
+  String get eventCreationGuideDetailsTitle => '1. Start with the details';
+
+  @override
+  String get eventCreationGuideDetailsBody =>
+      'Add a clear title and description, then confirm the date, time, venue, location, and ticket price. Leave the price blank when the event is free.';
+
+  @override
+  String get eventCreationGuideVisualsTitle => '2. Make it visual';
+
+  @override
+  String get eventCreationGuideVisualsBody =>
+      'Choose a cover photo first. Premium creators can generate an AI promo background. Poster Studio makes a separate share poster using the exact title, date, time, venue, and price from this form.';
+
+  @override
+  String get eventCreationGuideMediaTitle => '3. Add media that fits your plan';
+
+  @override
+  String get eventCreationGuidePlanIntro =>
+      'The cover photo counts as photo 1. Every video must be 30 seconds or less and under 50 MB.';
+
+  @override
+  String get eventCreationGuideFreeEvents =>
+      'Up to 2 upcoming one-time events at a time';
+
+  @override
+  String get eventCreationGuideFreeMedia =>
+      '1 cover photo total and 1 short video per event';
+
+  @override
+  String get eventCreationGuideFreePublish =>
+      'Basic event page in the public feed';
+
+  @override
+  String get eventCreationGuidePremiumEvents =>
+      'Unlimited events, including weekly or monthly recurring events';
+
+  @override
+  String get eventCreationGuidePremiumMedia =>
+      'Up to 5 photos total (cover included) and 3 short videos per event';
+
+  @override
+  String get eventCreationGuidePremiumTools =>
+      'AI promo backgrounds, analytics, custom branding, and contact links';
+
+  @override
+  String get eventCreationGuideSharedTools =>
+      'Both plans can publish core event details, add a cover, and use Poster Studio to make a share poster. AI promo backgrounds are a Premium creator tool.';
+
+  @override
+  String get eventCreationGuideAdminNote =>
+      'Your admin account can test the full 5-photo and 3-video media allowance. The Free and Premium comparison above is what creators see.';
+
+  @override
+  String get eventCreationGuideReviewTitle =>
+      '4. Review, publish, and share';
+
+  @override
+  String get eventCreationGuideReviewBody =>
+      'Check every detail before publishing. If you later change the title, date, time, venue, or price, reopen Poster Studio to create an updated share poster.';
+
+  @override
+  String get eventCreationGuideExplorePremium => 'Explore Premium';
+
+  @override
+  String get eventCreationGuideStart => 'Start creating';
 }

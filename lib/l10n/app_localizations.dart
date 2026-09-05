@@ -3246,6 +3246,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Press contact'**
   String get claimProofPressContact;
+
+  String get eventCreationGuide;
+  String get eventCreationGuideTooltip;
+  String get eventCreationGuideCardTitle;
+  String get eventCreationGuideCardBody;
+  String get eventCreationGuideMediaSummary;
+  String get openEventCreationGuide;
+  String get eventCreationGuideIntro;
+  String get eventCreationGuideCurrentPlan;
+  String get eventCreationGuideFreeActive;
+  String get eventCreationGuidePremiumActive;
+  String get eventCreationGuideAdminAccess;
+  String get eventCreationGuideDetailsTitle;
+  String get eventCreationGuideDetailsBody;
+  String get eventCreationGuideVisualsTitle;
+  String get eventCreationGuideVisualsBody;
+  String get eventCreationGuideMediaTitle;
+  String get eventCreationGuidePlanIntro;
+  String get eventCreationGuideFreeEvents;
+  String get eventCreationGuideFreeMedia;
+  String get eventCreationGuideFreePublish;
+  String get eventCreationGuidePremiumEvents;
+  String get eventCreationGuidePremiumMedia;
+  String get eventCreationGuidePremiumTools;
+  String get eventCreationGuideSharedTools;
+  String get eventCreationGuideAdminNote;
+  String get eventCreationGuideReviewTitle;
+  String get eventCreationGuideReviewBody;
+  String get eventCreationGuideExplorePremium;
+  String get eventCreationGuideStart;
 }
 
 class _AppLocalizationsDelegate
