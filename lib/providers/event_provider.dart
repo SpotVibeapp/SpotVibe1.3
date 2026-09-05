@@ -88,8 +88,11 @@ class EventProvider extends ChangeNotifier {
 
   double? get userLat => _userLat;
   double? get userLng => _userLng;
-  bool get sortByDistance => _sortByDistance;
+  /// Distance ordering applies only to the person's current area. An explicit
+  /// city search is intentionally not filtered or ordered by their GPS point.
+  bool get sortByDistance => _sortByDistance && !hasAreaSearch;
   bool get hasUserLocation => _userLat != null && _userLng != null;
+  bool get hasAreaSearch => _areaQuery.trim().isNotEmpty;
 
   // --- source filter (empty = all sources shown) ---
   final Set<EventSource> _selectedSources = {};
@@ -118,6 +121,12 @@ class EventProvider extends ChangeNotifier {
 
   Future<void> loadEvents() async {
     final generation = ++_loadGeneration;
+    final isAreaSearch = hasAreaSearch;
+    // A named city is a deliberate destination search. Never apply the
+    // device's local radius/sort to Dallas, Albuquerque, or any other city.
+    final appliedUserLat = isAreaSearch ? null : _userLat;
+    final appliedUserLng = isAreaSearch ? null : _userLng;
+    final appliedDistanceSort = isAreaSearch ? false : _sortByDistance;
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -135,19 +144,23 @@ class EventProvider extends ChangeNotifier {
         timeOfDay: _filterTime == 'all' ? null : _filterTime,
         locationQuery: _filterLocation.isEmpty ? null : _filterLocation,
         sources: _selectedSources.isEmpty ? null : _selectedSources,
-        userLat: _userLat,
-        userLng: _userLng,
-        sortByDistance: _sortByDistance,
+        userLat: appliedUserLat,
+        userLng: appliedUserLng,
+        sortByDistance: appliedDistanceSort,
       );
       if (generation != _loadGeneration) return;
 
       // Apply personalization ranking when distance sort is not active.
       // Distance sort already has a meaningful order the user explicitly chose;
       // we respect that and skip re-ranking to avoid confusing reorderings.
-      if (!_sortByDistance && _personalization != null) {
-        loaded = _personalization.rank(loaded, userLat: _userLat, userLng: _userLng);
+      if (!appliedDistanceSort && _personalization != null) {
+        loaded = _personalization.rank(
+          loaded,
+          userLat: appliedUserLat,
+          userLng: appliedUserLng,
+        );
       }
-      if (!_sortByDistance) {
+      if (!appliedDistanceSort) {
         loaded = promoteFeaturedEvents(loaded);
       }
       _events = loaded;

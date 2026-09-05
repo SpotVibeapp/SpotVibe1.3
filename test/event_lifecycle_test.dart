@@ -156,6 +156,31 @@ void main() {
     provider.dispose();
   });
 
+  test('explicit city searches ignore the device’s local radius', () async {
+    final startsAt = DateTime.now().add(const Duration(days: 2));
+    final dallas = _event(
+      id: 'dallas-city-search',
+      startsAt: startsAt,
+      endsAt: startsAt.add(const Duration(hours: 2)),
+    ).copyWith(
+      city: 'Dallas',
+      state: 'TX',
+      latitude: 32.7767,
+      longitude: -96.7970,
+    );
+    final service = EventService(repository: _FixedEventRepository([dallas]));
+
+    final events = await service.getUpcomingEvents(
+      areaQuery: 'Dallas',
+      userLat: 31.7619,
+      userLng: -106.4850,
+      searchRadius: 25,
+      sortByDistance: true,
+    );
+
+    expect(events, [dallas]);
+  });
+
   test('city-and-state searches resolve the assistant location label', () async {
     final startsAt = DateTime.now().add(const Duration(days: 2));
     final elPaso = _event(

@@ -281,7 +281,8 @@ class _EventsScreenState extends State<EventsScreen> {
               isLoggedIn: authProvider.isLoggedIn || authProvider.isGuest,
               avatarUrl: authProvider.user?.avatarUrl,
               onUseMyLocation: _fetchingLocation ? null : _requestUserLocation,
-              isUsingMyLocation: eventProvider.hasUserLocation,
+              isUsingMyLocation:
+                  eventProvider.hasUserLocation && !eventProvider.hasAreaSearch,
               onSuggestionsRequest: (q) => _buildSuggestions(q, eventProvider),
               onAskAi: (query) => _openAiEventSearch(initialQuery: query),
             ),
@@ -445,7 +446,7 @@ class _SearchResultsHeader extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (eventProvider.hasUserLocation)
+          if (eventProvider.hasUserLocation && !eventProvider.hasAreaSearch)
             GestureDetector(
               onTap: () => eventProvider.setSortByDistance(!sortingByDistance),
               child: Row(
@@ -704,7 +705,8 @@ class _EventsList extends StatelessWidget {
           isFreeSelected:
               eventProvider.filterPrice == 'free' ||
               eventProvider.filterCostType == 'free',
-          isNearMeSelected: eventProvider.hasUserLocation,
+          isNearMeSelected:
+              eventProvider.hasUserLocation && !eventProvider.hasAreaSearch,
           isRequestingLocation: isRequestingLocation,
           onTodayTap: () => _toggleDatePreset('today'),
           onWeekendTap: () => _toggleDatePreset('this_weekend'),
