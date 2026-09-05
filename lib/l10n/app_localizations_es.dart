@@ -1806,7 +1806,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get eventCreationGuideDetailsBody =>
-      'Agrega un título y una descripción claros; luego confirma la fecha y hora de inicio y finalización, venue, ubicación y precio del boleto. Deja el precio en blanco si el evento es gratis.';
+      'Agrega un título y una descripción claros; luego confirma la fecha, hora, venue, ubicación y precio del boleto. Deja el precio en blanco si el evento es gratis.';
 
   @override
   String get eventCreationGuideVisualsTitle => '2. Hazlo visual';
@@ -1901,21 +1901,4 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get openSettings => 'Abrir configuración';
-
-  @override
-  String get eventStarts => 'Empieza';
-
-  @override
-  String get eventEnds => 'Termina';
-
-  @override
-  String get endTimeHint =>
-      'Indica la hora real de finalización. Tu evento seguirá visible como En curso hasta entonces.';
-
-  @override
-  String get endTimeMustBeAfterStart =>
-      'La fecha y hora de finalización deben ser posteriores al inicio.';
-
-  @override
-  String get happeningNow => 'En curso ahora';
 }

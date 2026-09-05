@@ -3286,12 +3286,6 @@ abstract class AppLocalizations {
   String get notificationPermissionNeeded;
   String get notificationTestFailed;
   String get openSettings;
-
-  String get eventStarts;
-  String get eventEnds;
-  String get endTimeHint;
-  String get endTimeMustBeAfterStart;
-  String get happeningNow;
 }
 
 class _AppLocalizationsDelegate

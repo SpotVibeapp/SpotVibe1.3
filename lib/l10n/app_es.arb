@@ -875,7 +875,7 @@
   "eventCreationGuidePremiumActive": "Premium activo",
   "eventCreationGuideAdminAccess": "Acceso de prueba de administrador",
   "eventCreationGuideDetailsTitle": "1. Empieza con los detalles",
-  "eventCreationGuideDetailsBody": "Agrega un título y una descripción claros; luego confirma la fecha y hora de inicio y finalización, venue, ubicación y precio del boleto. Deja el precio en blanco si el evento es gratis.",
+  "eventCreationGuideDetailsBody": "Agrega un título y una descripción claros; luego confirma la fecha, hora, venue, ubicación y precio del boleto. Deja el precio en blanco si el evento es gratis.",
   "eventCreationGuideVisualsTitle": "2. Hazlo visual",
   "eventCreationGuideVisualsBody": "Elige primero una foto de portada. Los creadores Premium pueden generar un fondo promocional con IA. Poster Studio crea un póster separado para compartir con el título, fecha, hora, venue y precio exactos de este formulario.",
   "eventCreationGuideMediaTitle": "3. Agrega medios según tu plan",
@@ -901,11 +901,5 @@
   "notificationTestSent": "Notificación de prueba enviada. Revisa la bandeja de notificaciones.",
   "notificationPermissionNeeded": "Las notificaciones de SpotVibe están desactivadas. Actívalas en Configuración para probarlas.",
   "notificationTestFailed": "No pudimos enviar una notificación de prueba. Inténtalo de nuevo.",
-  "openSettings": "Abrir configuración",
-
-  "eventStarts": "Empieza",
-  "eventEnds": "Termina",
-  "endTimeHint": "Indica la hora real de finalización. Tu evento seguirá visible como En curso hasta entonces.",
-  "endTimeMustBeAfterStart": "La fecha y hora de finalización deben ser posteriores al inicio.",
-  "happeningNow": "En curso ahora"
+  "openSettings": "Abrir configuración"
 }
