@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/notification_preferences_provider.dart';
+import '../services/notification_service.dart';
+import '../services/permission_service.dart';
 import '../theme/theme.dart';
 
 class NotificationPreferencesScreen extends StatefulWidget {
@@ -12,12 +17,63 @@ class NotificationPreferencesScreen extends StatefulWidget {
 }
 
 class _NotificationPreferencesScreenState extends State<NotificationPreferencesScreen> {
+  bool _sendingTest = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<NotificationPreferencesProvider>().load();
     });
+  }
+
+  Future<void> _sendTestNotification() async {
+    if (_sendingTest) return;
+
+    final permissionService = context.read<PermissionService>();
+    final notificationService = context.read<NotificationService>();
+    final l10n = AppLocalizations.of(context)!;
+    setState(() => _sendingTest = true);
+
+    var allowed = await permissionService.isNotificationGranted();
+    if (!allowed) {
+      allowed = await permissionService.requestNotifications();
+    }
+
+    var sent = false;
+    if (allowed) {
+      sent = await notificationService.sendTestNotification(
+        title: l10n.notificationTestAlertTitle,
+        body: l10n.notificationTestAlertBody,
+      );
+    }
+
+    if (!mounted) return;
+    setState(() => _sendingTest = false);
+
+    final messenger = ScaffoldMessenger.of(context);
+    if (!allowed) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(l10n.notificationPermissionNeeded),
+          action: SnackBarAction(
+            label: l10n.openSettings,
+            onPressed: () {
+              unawaited(permissionService.openDeviceSettings());
+            },
+          ),
+        ),
+      );
+      return;
+    }
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          sent ? l10n.notificationTestSent : l10n.notificationTestFailed,
+        ),
+      ),
+    );
   }
 
   @override
@@ -41,27 +97,84 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
           child: Divider(height: 1, color: colors.outlineVariant),
         ),
       ),
-      body:
-          prefs.isLoaded
-              ? _PrefsBody(prefs: prefs)
-              : const Center(child: CircularProgressIndicator()),
+      body: prefs.isLoaded
+          ? _PrefsBody(
+              prefs: prefs,
+              isSendingTest: _sendingTest,
+              onSendTest: _sendTestNotification,
+            )
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 }
 
 class _PrefsBody extends StatelessWidget {
-  const _PrefsBody({required this.prefs});
+  const _PrefsBody({
+    required this.prefs,
+    required this.isSendingTest,
+    required this.onSendTest,
+  });
 
   final NotificationPreferencesProvider prefs;
+  final bool isSendingTest;
+  final VoidCallback onSendTest;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingMd),
       children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
+          child: Container(
+            padding: const EdgeInsets.all(AppTheme.spacingMd),
+            decoration: BoxDecoration(
+              color: colors.primaryContainer.withValues(alpha: 0.45),
+              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+              border: Border.all(color: colors.primary.withValues(alpha: 0.30)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.notifications_active_rounded, color: colors.primary),
+                    const SizedBox(width: AppTheme.spacingSm),
+                    Expanded(
+                      child: Text(
+                        l10n.notificationTestTitle,
+                        style: text.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppTheme.spacingXs),
+                Text(
+                  l10n.notificationTestBody,
+                  style: text.bodySmall?.copyWith(color: colors.onSurfaceVariant),
+                ),
+                const SizedBox(height: AppTheme.spacingSm),
+                FilledButton.tonalIcon(
+                  onPressed: isSendingTest ? null : onSendTest,
+                  icon: isSendingTest
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.send_rounded),
+                  label: Text(l10n.sendTestNotification),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppTheme.spacingSm),
+
         // ── A. Event Reminders ─────────────────────────────────────────────
         _SectionHeader(icon: Icons.alarm_rounded, label: 'Event Reminders', color: colors.tertiary),
         _PrefTile(

@@ -480,7 +480,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get couldNotGetLocation =>
-      'No pudimos obtener tu ubicación. Permite el acceso a la ubicación.';
+      'No pudimos determinar tu ubicación. Verifica que la ubicación esté activada en la configuración de tu dispositivo e inténtalo de nuevo.';
 
   @override
   String showingEventsIn(String area) {
@@ -546,14 +546,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get clearLocation => 'Quitar ubicación';
 
   @override
-  String get locationNeededTitle => 'Se necesita ubicación';
+  String get locationNeededTitle => 'Encuentra eventos cerca de ti';
 
   @override
   String get locationNeededSubtitle =>
-      'Activa la ubicación para que SpotVibe encuentre eventos cerca de ti ahora mismo.';
+      'Usa tu ubicación para ver eventos cercanos. Si ya permitiste el acceso, verifica que la ubicación esté activada en la configuración de tu dispositivo.';
 
   @override
-  String get enableLocation => 'Activar ubicación';
+  String get enableLocation => 'Usar mi ubicación';
 
   @override
   String get browseAllEvents => 'Ver todos los eventos';
@@ -1868,4 +1868,37 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get eventCreationGuideStart => 'Empezar a crear';
+
+  @override
+  String get notificationTestTitle => 'Probar notificaciones';
+
+  @override
+  String get notificationTestBody =>
+      'Envía una alerta de prueba para confirmar que las notificaciones funcionan en este dispositivo.';
+
+  @override
+  String get sendTestNotification => 'Enviar notificación de prueba';
+
+  @override
+  String get notificationTestAlertTitle =>
+      'Las notificaciones de SpotVibe funcionan';
+
+  @override
+  String get notificationTestAlertBody =>
+      'Esta es una notificación de prueba que solicitaste.';
+
+  @override
+  String get notificationTestSent =>
+      'Notificación de prueba enviada. Revisa la bandeja de notificaciones.';
+
+  @override
+  String get notificationPermissionNeeded =>
+      'Las notificaciones de SpotVibe están desactivadas. Actívalas en Configuración para probarlas.';
+
+  @override
+  String get notificationTestFailed =>
+      'No pudimos enviar una notificación de prueba. Inténtalo de nuevo.';
+
+  @override
+  String get openSettings => 'Abrir configuración';
 }

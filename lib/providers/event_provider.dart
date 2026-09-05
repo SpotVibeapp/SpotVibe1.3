@@ -112,7 +112,6 @@ class EventProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
     try {
-      final previous = _events.length;
       _events = await _service.getUpcomingEvents(
         category: _selectedCategory,
         searchQuery: _searchQuery.isEmpty ? null : _searchQuery,
@@ -146,13 +145,9 @@ class EventProvider extends ChangeNotifier {
           _events.where((e) => e.isUserCreated).map((e) => e.id),
         );
       }
-      // Notify when a location search returns a new set of events.
-      if (_areaQuery.isNotEmpty && _events.isNotEmpty && _events.length != previous) {
-        _notifications?.notifyNewEvents(
-          count: _events.length,
-          areaLabel: _areaQuery,
-        );
-      }
+      // A feed refresh does not prove that an event is newly published, so it
+      // must never create a "new events" notification. Server-confirmed event
+      // alerts will be wired through a real delivery path later.
     } catch (e) {
       _error = 'Failed to load events';
     }

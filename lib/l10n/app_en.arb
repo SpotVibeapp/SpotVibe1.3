@@ -221,7 +221,7 @@
   "noActiveSubscription": "No active subscription found to restore.",
   "restoreFailed": "Restore failed. Please try again.",
   "filtersTooltip": "Filters",
-  "couldNotGetLocation": "Could not get your location. Please allow location access.",
+  "couldNotGetLocation": "We couldn't determine your location. Make sure Location is turned on in your device settings, then try again.",
   "showingEventsIn": "Showing events in \"{area}\"",
   "@showingEventsIn": {
     "placeholders": {
@@ -262,9 +262,9 @@
   "noEventsNearSubtitle": "Try a different city, zip code, or increase your search radius in the filter options.",
   "increaseRadius": "Increase Radius",
   "clearLocation": "Clear Location",
-  "locationNeededTitle": "Location needed",
-  "locationNeededSubtitle": "Enable location so SpotVibe can find events happening near you right now.",
-  "enableLocation": "Enable Location",
+  "locationNeededTitle": "Find events near you",
+  "locationNeededSubtitle": "Use your location to see nearby events. If you already allowed access, make sure Location is turned on in your device settings.",
+  "enableLocation": "Use My Location",
   "browseAllEvents": "Browse All Events",
   "noEventsFoundTitle": "No events found nearby",
   "noEventsFoundSubtitle": "Try increasing your search radius or check back later — new events are added every day.",
@@ -891,5 +891,15 @@
   "eventCreationGuideReviewTitle": "4. Review, publish, and share",
   "eventCreationGuideReviewBody": "Check every detail before publishing. If you later change the title, date, time, venue, or price, reopen Poster Studio to create an updated share poster.",
   "eventCreationGuideExplorePremium": "Explore Premium",
-  "eventCreationGuideStart": "Start creating"
+  "eventCreationGuideStart": "Start creating",
+
+  "notificationTestTitle": "Test notifications",
+  "notificationTestBody": "Send a one-time test alert to confirm notifications work on this device.",
+  "sendTestNotification": "Send test notification",
+  "notificationTestAlertTitle": "SpotVibe notifications are working",
+  "notificationTestAlertBody": "This is a test notification you requested.",
+  "notificationTestSent": "Test notification sent. Check your notification shade.",
+  "notificationPermissionNeeded": "Notifications are off for SpotVibe. Turn them on in Settings to test.",
+  "notificationTestFailed": "We couldn't send a test notification. Please try again.",
+  "openSettings": "Open Settings"
 }
