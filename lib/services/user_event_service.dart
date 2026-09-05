@@ -30,6 +30,7 @@ class UserEventService {
     required String title,
     required String description,
     required DateTime dateTime,
+    required DateTime endDateTime,
     required String location,
     required String address,
     String city = '',
@@ -56,6 +57,9 @@ class UserEventService {
     if (title.trim().isEmpty) throw ArgumentError('Event title is required.');
     if (description.trim().isEmpty) throw ArgumentError('Description is required.');
     if (location.trim().isEmpty) throw ArgumentError('Location is required.');
+    if (!endDateTime.isAfter(dateTime)) {
+      throw ArgumentError('End date and time must be after the start.');
+    }
     if (!isCreatorPro && recurringType != RecurringType.none) {
       throw ArgumentError('Recurring events require SpotVibe Premium.');
     }
@@ -88,6 +92,7 @@ class UserEventService {
       title: title.trim(),
       description: description.trim(),
       dateTime: dateTime,
+      endDateTime: endDateTime,
       location: location.trim(),
       address: address.trim(),
       city: city.trim(),
@@ -116,6 +121,9 @@ class UserEventService {
 
   Future<UserCreatedEvent> updateEvent(UserCreatedEvent event) async {
     if (event.title.trim().isEmpty) throw ArgumentError('Event title is required.');
+    if (event.endDateTime == null || !event.endDateTime!.isAfter(event.dateTime)) {
+      throw ArgumentError('End date and time must be after the start.');
+    }
     if (normalizeMediaUrls([event.imageUrl, ...event.imageUrls]).length >
         kMaxEventPhotos) {
       throw ArgumentError('Events can include up to $kMaxEventPhotos photos.');

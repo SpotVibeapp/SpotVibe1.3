@@ -1,9 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import '../data/event_time.dart';
+import '../l10n/app_localizations.dart';
 import '../models/user_event.dart';
 import '../providers/auth_provider.dart';
 import '../services/deep_link_service.dart';
@@ -61,6 +63,7 @@ class _UserEventDetailContent extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final appColors = Theme.of(context).extension<AppColorsExtension>()!;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: CustomScrollView(
@@ -133,6 +136,10 @@ class _UserEventDetailContent extends StatelessWidget {
                         _FeaturedBadge(appColors: appColors),
                     ],
                   ),
+                  if (event.isHappeningNow) ...[
+                    const SizedBox(height: AppTheme.spacingXs),
+                    _HappeningNowBadge(label: l10n.happeningNow),
+                  ],
                   if (event.isRecurring || event.isCreatorPro) ...[
                     const SizedBox(height: AppTheme.spacingXs),
                     Wrap(
@@ -148,7 +155,10 @@ class _UserEventDetailContent extends StatelessWidget {
                   // Info rows
                   _InfoRow(
                     icon: Icons.calendar_today_rounded,
-                    label: DateFormat('EEEE, MMMM d, y · h:mm a').format(event.dateTime),
+                    label: formatEventTimeRange(
+                      event.dateTime,
+                      event.endDateTime,
+                    ),
                     color: colors.primary,
                   ),
                   const SizedBox(height: AppTheme.spacingSm),
@@ -231,6 +241,7 @@ class _UserEventDetailContent extends StatelessWidget {
                     description: event.description,
                     location: event.fullLocation,
                     startTime: event.dateTime,
+                    endTime: event.endDateTime,
                   ),
                   // Contact button (Creator Pro only)
                   if (event.isCreatorPro && event.hasContactInfo) ...[
@@ -349,6 +360,43 @@ class _InfoRow extends StatelessWidget {
         const SizedBox(width: AppTheme.spacingSm),
         Expanded(child: Text(label, style: text.bodyMedium)),
       ],
+    );
+  }
+}
+
+class _HappeningNowBadge extends StatelessWidget {
+  final String label;
+
+  const _HappeningNowBadge({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final appColors = Theme.of(context).extension<AppColorsExtension>()!;
+    final text = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.spacingSm,
+        vertical: AppTheme.spacingXs,
+      ),
+      decoration: BoxDecoration(
+        color: appColors.success.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        border: Border.all(color: appColors.success.withValues(alpha: 0.45)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.sensors_rounded, size: 14, color: appColors.success),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: text.labelSmall?.copyWith(
+              color: appColors.success,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../data/event_time.dart';
 import '../data/media_urls.dart';
 
 /// How often a Premium event auto-repeats.
@@ -11,7 +12,10 @@ class UserCreatedEvent {
   final String creatorId;
   final String title;
   final String description;
+  /// Event start date and time.
   final DateTime dateTime;
+  /// Explicit event end time. Legacy event documents can omit this value.
+  final DateTime? endDateTime;
   final String location;
   final String address;
   final String city;
@@ -64,6 +68,7 @@ class UserCreatedEvent {
     required this.title,
     required this.description,
     required this.dateTime,
+    this.endDateTime,
     required this.location,
     required this.address,
     this.city = '',
@@ -96,6 +101,11 @@ class UserCreatedEvent {
   });
 
   bool get isFree => cost == null || cost == 0;
+  /// True while the event has started and its explicit end time is still ahead.
+  bool get isHappeningNow => isEventHappeningNow(dateTime, endDateTime);
+  /// Whether the event belongs in an active feed at [now].
+  bool isVisibleAt({DateTime? now}) =>
+      isEventVisibleInFeed(dateTime, endDateTime, now: now);
   String get costLabel => isFree ? 'Free' : '\$${cost!.toStringAsFixed(2)}';
   List<String> get allImageUrls => List.unmodifiable(
         normalizeMediaUrls([imageUrl, ...imageUrls]).take(kMaxEventPhotos),
@@ -124,6 +134,8 @@ class UserCreatedEvent {
     String? title,
     String? description,
     DateTime? dateTime,
+    DateTime? endDateTime,
+    bool clearEndDateTime = false,
     String? location,
     String? address,
     String? city,
@@ -169,6 +181,8 @@ class UserCreatedEvent {
         title: title ?? this.title,
         description: description ?? this.description,
         dateTime: dateTime ?? this.dateTime,
+        endDateTime:
+            clearEndDateTime ? null : (endDateTime ?? this.endDateTime),
         location: location ?? this.location,
         address: address ?? this.address,
         city: city ?? this.city,

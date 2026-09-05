@@ -45,6 +45,7 @@ class HomeDiscoveryHero extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final accent = categoryAccent(event.category);
     final isFeatured = event.isFeaturedThisWeek;
+    final isLive = event.isHappeningNow;
     final category = categoryLabel(context, event.category).toUpperCase();
     final price = event.isFree ? l10n.free : event.costLabel;
     final location = event.fullLocation.isEmpty ? event.location : event.fullLocation;
@@ -137,12 +138,16 @@ class HomeDiscoveryHero extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: _HeroBadge(
-                                  icon: isFeatured
-                                      ? Icons.auto_awesome_rounded
-                                      : Icons.near_me_rounded,
-                                  label: isFeatured
-                                      ? l10n.featuredThisWeek
-                                      : l10n.homeNextUp,
+                                  icon: isLive
+                                      ? Icons.sensors_rounded
+                                      : isFeatured
+                                          ? Icons.auto_awesome_rounded
+                                          : Icons.near_me_rounded,
+                                  label: isLive
+                                      ? l10n.happeningNow
+                                      : isFeatured
+                                          ? l10n.featuredThisWeek
+                                          : l10n.homeNextUp,
                                 ),
                               ),
                               const SizedBox(width: AppTheme.spacingSm),

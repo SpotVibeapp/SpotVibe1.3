@@ -50,6 +50,25 @@ service cloud.firestore {
                 || (data.videoUrls is list && data.videoUrls.size() <= 3));
     }
 
+    // New event windows must carry both an explicit start and end. Existing
+    // legacy events remain readable and can still receive analytics updates;
+    // changing their timing requires adding a valid end time.
+    function hasValidEventTiming(data) {
+      return data.keys().hasAll(['dateTimeMs', 'endDateTimeMs'])
+          && data.dateTimeMs is int
+          && data.endDateTimeMs is int
+          && data.endDateTimeMs > data.dateTimeMs;
+    }
+    function keepsValidEventTiming(data, existing) {
+      return !data.diff(existing).affectedKeys().hasAny([
+               'dateTime',
+               'dateTimeMs',
+               'endDateTime',
+               'endDateTimeMs'
+             ])
+          || hasValidEventTiming(data);
+    }
+
     // ── Admin roster (read by the admin themself; write only via console /
     //    Admin SDK / Cloud Functions) ──────────────────────────────────────
     match /admins/{uid} {
@@ -102,8 +121,10 @@ service cloud.firestore {
                     && request.resource.data.creatorId == request.auth.uid
                     && request.resource.data.title is string
                     && request.resource.data.title.size() <= 120
-                    && hasValidEventMedia(request.resource.data);
+                    && hasValidEventMedia(request.resource.data)
+                    && hasValidEventTiming(request.resource.data);
       allow update: if hasValidEventMedia(request.resource.data)
+                    && keepsValidEventTiming(request.resource.data, resource.data)
                     && (isAdmin()
                     || (isSignedIn() && (
                       resource.data.creatorId == request.auth.uid
@@ -142,12 +163,14 @@ service cloud.firestore {
     match /user_events/{eventId} {
       allow read: if true;
       allow create: if hasValidEventMedia(request.resource.data)
+                    && hasValidEventTiming(request.resource.data)
                     && (isAdmin()
                     || (isSignedIn()
                         && request.resource.data.creatorId == request.auth.uid
                         && request.resource.data.title is string
                         && request.resource.data.title.size() <= 120));
       allow update: if hasValidEventMedia(request.resource.data)
+                    && keepsValidEventTiming(request.resource.data, resource.data)
                     && (isAdmin()
                     || (isSignedIn() && (
                       resource.data.creatorId == request.auth.uid

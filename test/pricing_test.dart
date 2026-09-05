@@ -195,6 +195,7 @@ void main() {
       title: 'Live Night',
       description: 'desc',
       dateTime: DateTime.now().add(const Duration(days: 3)),
+      endDateTime: DateTime.now().add(const Duration(days: 3, hours: 3)),
       location: 'Bar',
       address: '1 Main',
       category: 'Music',

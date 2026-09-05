@@ -12,6 +12,8 @@ class AddToCalendarButton extends StatelessWidget {
   final String description;
   final String location;
   final DateTime startTime;
+  /// The event's actual end when available; legacy listings fall back to two hours.
+  final DateTime? endTime;
 
   const AddToCalendarButton({
     super.key,
@@ -19,10 +21,12 @@ class AddToCalendarButton extends StatelessWidget {
     required this.description,
     required this.location,
     required this.startTime,
+    this.endTime,
   });
 
-  // Events default to 2 hours when no explicit end time is stored.
-  DateTime get _endTime => startTime.add(const Duration(hours: 2));
+  // Legacy listings that did not publish an end time still use a conservative
+  // two-hour calendar fallback. New creator listings pass their exact end.
+  DateTime get _endTime => endTime ?? startTime.add(const Duration(hours: 2));
 
   Future<void> _addToCalendar(BuildContext context) async {
     if (kIsWeb) {

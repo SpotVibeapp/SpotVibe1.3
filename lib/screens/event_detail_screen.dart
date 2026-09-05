@@ -135,6 +135,10 @@ class _DetailContent extends StatelessWidget {
                   _CategoryAndCost(event: event, appColors: appColors),
                   const SizedBox(height: AppTheme.spacingSm),
                   Text(event.title, style: text.headlineSmall),
+                  if (event.isHappeningNow) ...[
+                    const SizedBox(height: AppTheme.spacingXs),
+                    _HappeningNowBadge(label: l10n.happeningNow),
+                  ],
                   if (event.isFeaturedThisWeek) ...[
                     const SizedBox(height: AppTheme.spacingXs),
                     Container(
@@ -162,7 +166,10 @@ class _DetailContent extends StatelessWidget {
                       children: [
                         _InfoRow(
                           icon: Icons.calendar_today_rounded,
-                          label: formatEventWhen(event.dateTime),
+                          label: formatEventTimeRange(
+                            event.dateTime,
+                            event.endDateTime,
+                          ),
                         ),
                         const SizedBox(height: AppTheme.spacingSm),
                         Divider(height: 1, color: colors.outlineVariant.withValues(alpha: 0.3)),
@@ -323,6 +330,43 @@ class _DetailContent extends StatelessWidget {
     } else {
       context.go('/');
     }
+  }
+}
+
+class _HappeningNowBadge extends StatelessWidget {
+  final String label;
+
+  const _HappeningNowBadge({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final appColors = Theme.of(context).extension<AppColorsExtension>()!;
+    final text = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.spacingSm,
+        vertical: AppTheme.spacingXs,
+      ),
+      decoration: BoxDecoration(
+        color: appColors.success.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        border: Border.all(color: appColors.success.withValues(alpha: 0.45)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.sensors_rounded, size: 14, color: appColors.success),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: text.labelSmall?.copyWith(
+              color: appColors.success,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

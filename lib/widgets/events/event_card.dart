@@ -117,11 +117,13 @@ class _EventImage extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: catColor,
+                  color: event.isHappeningNow ? appColors.success : catColor,
                   borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                 ),
                 child: Text(
-                  formatEventDayChip(event.dateTime),
+                  event.isHappeningNow
+                      ? l10n.happeningNow
+                      : formatEventDayChip(event.dateTime),
                   style: text.labelMedium?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,

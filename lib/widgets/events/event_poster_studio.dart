@@ -28,6 +28,7 @@ enum PosterTextAlignment { left, center }
 class EventPosterDetails {
   final String title;
   final DateTime dateTime;
+  final DateTime? endDateTime;
   final String venue;
   final String address;
   final String city;
@@ -40,6 +41,7 @@ class EventPosterDetails {
   const EventPosterDetails({
     required this.title,
     required this.dateTime,
+    this.endDateTime,
     required this.venue,
     required this.address,
     required this.city,
@@ -77,6 +79,20 @@ String posterLocationLine({
 String posterPriceLabel(double? cost, {required String freeLabel}) {
   if (cost == null || cost <= 0) return freeLabel.toUpperCase();
   return '\$${cost.toStringAsFixed(2)}';
+}
+
+/// Formats the event's exact start and end time for a share poster.
+String posterTimeLabel(DateTime dateTime, DateTime? endDateTime) {
+  final start = dateTime.toLocal();
+  final startLabel = DateFormat('h:mm a').format(start);
+  if (endDateTime == null) return startLabel;
+
+  final end = endDateTime.toLocal();
+  final sameDay = start.year == end.year &&
+      start.month == end.month &&
+      start.day == end.day;
+  if (sameDay) return '$startLabel – ${DateFormat('h:mm a').format(end)}';
+  return '$startLabel – ${DateFormat('EEE h:mm a').format(end)}';
 }
 
 /// Opens the full-screen poster composer for a draft or existing event.
@@ -510,7 +526,7 @@ class EventPosterGraphic extends StatelessWidget {
     final crossAxis = centered ? CrossAxisAlignment.center : CrossAxisAlignment.start;
     final category = categoryLabel(context, details.category).toUpperCase();
     final date = DateFormat('EEE, MMM d').format(details.dateTime);
-    final time = DateFormat('h:mm a').format(details.dateTime);
+    final time = posterTimeLabel(details.dateTime, details.endDateTime);
     final location = details.locationLine;
     final price = posterPriceLabel(details.cost, freeLabel: l10n.free);
 

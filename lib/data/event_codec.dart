@@ -43,6 +43,7 @@ Map<String, dynamic> eventToMap(Event event, {String kind = 'curated'}) {
     'title': event.title,
     'description': event.description,
     'dateTimeMs': event.dateTime.millisecondsSinceEpoch,
+    'endDateTimeMs': event.endDateTime?.millisecondsSinceEpoch,
     'location': event.location,
     'address': event.address,
     'city': event.city,
@@ -81,12 +82,16 @@ Event eventFromMap(String id, Map<String, dynamic> data) {
   final firstVideoUrl = storedVideoUrl.isNotEmpty
       ? storedVideoUrl
       : (videoUrls.isEmpty ? null : videoUrls.first);
+  final rawEndDateTime = data['endDateTime'] ?? data['endDateTimeMs'];
+  final endDateTime =
+      rawEndDateTime == null ? null : parseStoreDate(rawEndDateTime);
 
   return Event(
     id: id,
     title: data['title'] as String? ?? '',
     description: data['description'] as String? ?? '',
     dateTime: parseStoreDate(data['dateTime'] ?? data['dateTimeMs']),
+    endDateTime: endDateTime,
     location: data['location'] as String? ?? '',
     address: data['address'] as String? ?? '',
     city: data['city'] as String? ?? '',
@@ -168,6 +173,7 @@ Map<String, dynamic> userEventToMap(UserCreatedEvent event) {
         title: event.title,
         description: event.description,
         dateTime: event.dateTime,
+        endDateTime: event.endDateTime,
         location: event.location,
         address: event.address,
         city: event.city,
@@ -226,6 +232,9 @@ UserCreatedEvent userEventFromMap(String id, Map<String, dynamic> data) {
   final firstVideoUrl = storedVideoUrl.isNotEmpty
       ? storedVideoUrl
       : (videoUrls.isEmpty ? null : videoUrls.first);
+  final rawEndDateTime = data['endDateTime'] ?? data['endDateTimeMs'];
+  final endDateTime =
+      rawEndDateTime == null ? null : parseStoreDate(rawEndDateTime);
 
   return UserCreatedEvent(
     id: id,
@@ -233,6 +242,7 @@ UserCreatedEvent userEventFromMap(String id, Map<String, dynamic> data) {
     title: data['title'] as String? ?? '',
     description: data['description'] as String? ?? '',
     dateTime: parseStoreDate(data['dateTime'] ?? data['dateTimeMs']),
+    endDateTime: endDateTime,
     location: data['location'] as String? ?? '',
     address: data['address'] as String? ?? '',
     city: data['city'] as String? ?? '',

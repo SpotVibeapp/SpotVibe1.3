@@ -875,7 +875,7 @@
   "eventCreationGuidePremiumActive": "Premium active",
   "eventCreationGuideAdminAccess": "Admin test access",
   "eventCreationGuideDetailsTitle": "1. Start with the details",
-  "eventCreationGuideDetailsBody": "Add a clear title and description, then confirm the date, time, venue, location, and ticket price. Leave the price blank when the event is free.",
+  "eventCreationGuideDetailsBody": "Add a clear title and description, then confirm the start and end date/time, venue, location, and ticket price. Leave the price blank when the event is free.",
   "eventCreationGuideVisualsTitle": "2. Make it visual",
   "eventCreationGuideVisualsBody": "Choose a cover photo first. Premium creators can generate an AI promo background. Poster Studio makes a separate share poster using the exact title, date, time, venue, and price from this form.",
   "eventCreationGuideMediaTitle": "3. Add media that fits your plan",
@@ -901,5 +901,11 @@
   "notificationTestSent": "Test notification sent. Check your notification shade.",
   "notificationPermissionNeeded": "Notifications are off for SpotVibe. Turn them on in Settings to test.",
   "notificationTestFailed": "We couldn't send a test notification. Please try again.",
-  "openSettings": "Open Settings"
+  "openSettings": "Open Settings",
+
+  "eventStarts": "Starts",
+  "eventEnds": "Ends",
+  "endTimeHint": "Set the real end time. Your event stays visible as happening now until then.",
+  "endTimeMustBeAfterStart": "End date and time must be after the start.",
+  "happeningNow": "Happening now"
 }
