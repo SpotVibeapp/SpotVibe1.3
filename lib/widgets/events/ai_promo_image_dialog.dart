@@ -56,7 +56,7 @@ class _AiPromoImageDialogState extends State<_AiPromoImageDialog> {
   };
 
   static const _ratios = <String, String>{
-    'portrait': 'Portrait poster',
+    'portrait': 'Portrait',
     'square': 'Square',
     'landscape': 'Landscape',
   };
@@ -106,7 +106,7 @@ class _AiPromoImageDialogState extends State<_AiPromoImageDialog> {
     final text = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
-      title: const Text('Generate AI promo background'),
+      title: const Text('Generate AI background'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -211,7 +211,7 @@ class _AiPromoImageDialogState extends State<_AiPromoImageDialog> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.auto_awesome_rounded),
-          label: Text(_generating ? 'Generating…' : 'Generate'),
+          label: Text(_generating ? 'Generating…' : 'Generate background'),
         ),
       ],
     );

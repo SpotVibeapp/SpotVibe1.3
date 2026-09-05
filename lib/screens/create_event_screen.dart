@@ -537,6 +537,21 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               icon: Icons.map_outlined,
               keyboardType: TextInputType.url,
             ),
+            const SizedBox(height: AppTheme.spacingMd),
+            _FormField(
+              controller: _costController,
+              label: l10n.ticketPriceLabel,
+              hint: '0.00',
+              icon: Icons.attach_money_rounded,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return null;
+                final parsed = double.tryParse(v.replaceAll('\$', ''));
+                if (parsed == null || parsed < 0) return l10n.enterValidPrice;
+                return null;
+              },
+            ),
             const SizedBox(height: AppTheme.spacingLg),
 
             _SectionHeader(title: l10n.extras),
@@ -571,6 +586,18 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               icon: const Icon(Icons.auto_awesome_rounded),
               label: const Text('Generate AI promo background'),
             ),
+            const SizedBox(height: AppTheme.spacingSm),
+            FilledButton.tonalIcon(
+              onPressed: _uploadingMedia ? null : _openPosterStudio,
+              icon: const Icon(Icons.dashboard_customize_rounded),
+              label: Text(l10n.createSharePoster),
+            ),
+            const SizedBox(height: AppTheme.spacingXs),
+            Text(
+              l10n.posterExactDetails,
+              style: Theme.of(context).textTheme.labelSmall,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: AppTheme.spacingMd),
             _MediaPickRow(
               label: 'Short video',
@@ -595,31 +622,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             ],
             const SizedBox(height: AppTheme.spacingMd),
             _FormField(
-              controller: _costController,
-              label: l10n.ticketPriceLabel,
-              hint: '0.00',
-              icon: Icons.attach_money_rounded,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) return null;
-                final parsed = double.tryParse(v.replaceAll('\$', ''));
-                if (parsed == null || parsed < 0) return l10n.enterValidPrice;
-                return null;
-              },
-            ),
-            const SizedBox(height: AppTheme.spacingMd),
-            _FormField(
               controller: _imageUrlController,
               label: l10n.eventImageUrl,
               hint: 'https://example.com/image.jpg',
               icon: Icons.image_rounded,
               keyboardType: TextInputType.url,
-            ),
-            const SizedBox(height: AppTheme.spacingMd),
-            OutlinedButton.icon(
-              onPressed: _uploadingMedia ? null : _openPosterStudio,
-              icon: const Icon(Icons.dashboard_customize_rounded),
-              label: Text(l10n.createSharePoster),
             ),
             const SizedBox(height: AppTheme.spacingMd),
             _FormField(
