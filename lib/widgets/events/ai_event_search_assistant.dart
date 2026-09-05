@@ -268,7 +268,7 @@ class _AiEventSearchAssistantState extends State<_AiEventSearchAssistant> {
   }) {
     return widget.eventService.getUpcomingEvents(
       areaQuery: location.displayName,
-      searchQuery: plan.searchText.isEmpty ? null : plan.searchText,
+      searchQuery: plan.specificSearchText,
       category: ignoreCategory ? null : plan.category,
       datePreset: plan.datePreset == 'all' ? null : plan.datePreset,
       searchRadius: 100,

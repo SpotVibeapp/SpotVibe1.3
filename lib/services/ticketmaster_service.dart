@@ -21,17 +21,34 @@ const String kTicketmasterApiKey = String.fromEnvironment(
   'TICKETMASTER_API_KEY',
 );
 
+/// Formats an exact UTC lower-bound accepted by the Discovery API.
+///
+/// A lower-bound is required because the API's ascending first page may
+/// otherwise contain historical listings that the app correctly removes.
+String ticketmasterStartDateTime(DateTime time) {
+  final utc = time.toUtc();
+  String twoDigits(int value) => value.toString().padLeft(2, '0');
+  return '${utc.year.toString().padLeft(4, '0')}-'
+      '${twoDigits(utc.month)}-${twoDigits(utc.day)}T'
+      '${twoDigits(utc.hour)}:${twoDigits(utc.minute)}:${twoDigits(utc.second)}Z';
+}
+
 class TicketmasterService {
-  TicketmasterService({Dio? dio, String? apiKey})
-      : _dio = dio ??
+  TicketmasterService({
+    Dio? dio,
+    String? apiKey,
+    DateTime Function()? clock,
+  })  : _dio = dio ??
             Dio(BaseOptions(
               connectTimeout: const Duration(seconds: 12),
               receiveTimeout: const Duration(seconds: 12),
             )),
-        _apiKey = apiKey ?? kTicketmasterApiKey;
+        _apiKey = apiKey ?? kTicketmasterApiKey,
+        _clock = clock ?? DateTime.now;
 
   final Dio _dio;
   final String _apiKey;
+  final DateTime Function() _clock;
 
   static const _endpoint =
       'https://app.ticketmaster.com/discovery/v2/events.json';
@@ -44,6 +61,7 @@ class TicketmasterService {
     String? city,
     String? stateCode,
     String? keyword,
+    String? classificationName,
     double? lat,
     double? lng,
     double radiusMiles = 40,
@@ -56,11 +74,17 @@ class TicketmasterService {
     }
 
     try {
+      // The Discovery API can include historical events unless a start window
+      // is supplied. Because results are sorted ascending, those past rows can
+      // consume the first page and leave every other city looking empty after
+      // the client correctly hides expired listings.
+      final now = _clock();
       final params = <String, dynamic>{
         'apikey': _apiKey,
         'countryCode': 'US',
         'size': size.clamp(1, 200),
         'sort': 'date,asc',
+        'startDateTime': ticketmasterStartDateTime(now),
         'radius': radiusMiles.round().clamp(1, 200),
         'unit': 'miles',
         'includeTBA': 'no',
@@ -70,6 +94,10 @@ class TicketmasterService {
       final cleanedKeyword = keyword?.trim() ?? '';
       if (cleanedKeyword.isNotEmpty) {
         params['keyword'] = cleanedKeyword;
+      }
+      final cleanedClassification = classificationName?.trim() ?? '';
+      if (cleanedClassification.isNotEmpty) {
+        params['classificationName'] = cleanedClassification;
       }
       if (lat != null && lng != null) {
         params['latlong'] = '${lat.toStringAsFixed(4)},${lng.toStringAsFixed(4)}';
@@ -96,7 +124,7 @@ class TicketmasterService {
         final event = eventFromTicketmaster(Map<String, dynamic>.from(item));
         if (event == null) continue;
         if (looksLikeStandaloneAddon(event.title)) continue;
-        if (!event.dateTime.isAfter(DateTime.now().subtract(const Duration(hours: 2)))) {
+        if (!event.dateTime.isAfter(now)) {
           continue;
         }
         events.add(event);

@@ -3,6 +3,13 @@ import 'package:spotvibe_app/models/event.dart';
 import 'package:spotvibe_app/services/ticketmaster_service.dart';
 
 void main() {
+  test('formats a UTC future lower-bound for Ticketmaster searches', () {
+    expect(
+      ticketmasterStartDateTime(DateTime.utc(2026, 9, 5, 18, 4, 9, 999)),
+      '2026-09-05T18:04:09Z',
+    );
+  });
+
   test('picks the widest 16:9 Ticketmaster image', () {
     final url = pickTicketmasterImage([
       {'url': 'https://s1.ticketm.net/small.jpg', 'width': 100, 'ratio': '4_3'},
