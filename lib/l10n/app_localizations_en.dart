@@ -746,6 +746,75 @@ class AppLocalizationsEn extends AppLocalizations {
   String get eventVideoUrl => 'Event Video URL (optional)';
 
   @override
+  String get aiArtDirection => 'Art direction (optional)';
+
+  @override
+  String get aiArtDirectionHint => 'e.g. blue neon pool tables, elegant lighting, open space for a title';
+
+  @override
+  String get aiArtworkOnly => 'AI creates the artwork only. Poster Studio adds the exact event details. Review the result before publishing; it is not sent to SpotVibe for manual approval. Do not use misleading logos, celebrity likenesses, or copyrighted characters.';
+
+  @override
+  String get posterStudio => 'Poster Studio';
+
+  @override
+  String get posterStudioIntro => 'Design a share-ready poster using the exact details from this event. If you change an event detail, reopen Poster Studio to refresh the poster.';
+
+  @override
+  String get posterExactDetails => 'SpotVibe writes the title, date, time, venue, and price from this form. AI is not asked to create these details.';
+
+  @override
+  String get posterTemplate => 'Template';
+
+  @override
+  String get posterLayout => 'Layout';
+
+  @override
+  String get posterTemplateBold => 'Bold';
+
+  @override
+  String get posterTemplateEditorial => 'Editorial';
+
+  @override
+  String get posterTemplateNeon => 'Neon';
+
+  @override
+  String get posterTemplateMinimal => 'Minimal';
+
+  @override
+  String get posterLayoutLeft => 'Left';
+
+  @override
+  String get posterLayoutCenter => 'Centered';
+
+  @override
+  String get posterShowVenue => 'Show venue and location';
+
+  @override
+  String get posterShowPrice => 'Show ticket price';
+
+  @override
+  String get posterPreparing => 'Preparing poster…';
+
+  @override
+  String get sharePoster => 'Share poster';
+
+  @override
+  String get posterCaptureFailed => 'Could not create the poster. Please try again.';
+
+  @override
+  String get posterSharingMobileOnly => 'Poster sharing is available in the Android app.';
+
+  @override
+  String get createSharePoster => 'Create & share full poster';
+
+  @override
+  String get posterCoverStays => 'Your current event cover stays unchanged.';
+
+  @override
+  String get posterTitleVenueRequired => 'Add an event title and venue before creating a poster.';
+
+  @override
   String get chatLink => 'Community Chat Link (optional)';
 
   @override

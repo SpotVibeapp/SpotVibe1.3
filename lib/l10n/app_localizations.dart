@@ -1405,6 +1405,144 @@ abstract class AppLocalizations {
   /// **'Event Video URL (optional)'**
   String get eventVideoUrl;
 
+  /// No description provided for @aiArtDirection.
+  ///
+  /// In en, this message translates to:
+  /// **'Art direction (optional)'**
+  String get aiArtDirection;
+
+  /// No description provided for @aiArtDirectionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. blue neon pool tables, elegant lighting, open space for a title'**
+  String get aiArtDirectionHint;
+
+  /// No description provided for @aiArtworkOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'AI creates the artwork only. Poster Studio adds the exact event details. Review the result before publishing; it is not sent to SpotVibe for manual approval. Do not use misleading logos, celebrity likenesses, or copyrighted characters.'**
+  String get aiArtworkOnly;
+
+  /// No description provided for @posterStudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Poster Studio'**
+  String get posterStudio;
+
+  /// No description provided for @posterStudioIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Design a share-ready poster using the exact details from this event. If you change an event detail, reopen Poster Studio to refresh the poster.'**
+  String get posterStudioIntro;
+
+  /// No description provided for @posterExactDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'SpotVibe writes the title, date, time, venue, and price from this form. AI is not asked to create these details.'**
+  String get posterExactDetails;
+
+  /// No description provided for @posterTemplate.
+  ///
+  /// In en, this message translates to:
+  /// **'Template'**
+  String get posterTemplate;
+
+  /// No description provided for @posterLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout'**
+  String get posterLayout;
+
+  /// No description provided for @posterTemplateBold.
+  ///
+  /// In en, this message translates to:
+  /// **'Bold'**
+  String get posterTemplateBold;
+
+  /// No description provided for @posterTemplateEditorial.
+  ///
+  /// In en, this message translates to:
+  /// **'Editorial'**
+  String get posterTemplateEditorial;
+
+  /// No description provided for @posterTemplateNeon.
+  ///
+  /// In en, this message translates to:
+  /// **'Neon'**
+  String get posterTemplateNeon;
+
+  /// No description provided for @posterTemplateMinimal.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimal'**
+  String get posterTemplateMinimal;
+
+  /// No description provided for @posterLayoutLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get posterLayoutLeft;
+
+  /// No description provided for @posterLayoutCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Centered'**
+  String get posterLayoutCenter;
+
+  /// No description provided for @posterShowVenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Show venue and location'**
+  String get posterShowVenue;
+
+  /// No description provided for @posterShowPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Show ticket price'**
+  String get posterShowPrice;
+
+  /// No description provided for @posterPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing poster…'**
+  String get posterPreparing;
+
+  /// No description provided for @sharePoster.
+  ///
+  /// In en, this message translates to:
+  /// **'Share poster'**
+  String get sharePoster;
+
+  /// No description provided for @posterCaptureFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create the poster. Please try again.'**
+  String get posterCaptureFailed;
+
+  /// No description provided for @posterSharingMobileOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Poster sharing is available in the Android app.'**
+  String get posterSharingMobileOnly;
+
+  /// No description provided for @createSharePoster.
+  ///
+  /// In en, this message translates to:
+  /// **'Create & share full poster'**
+  String get createSharePoster;
+
+  /// No description provided for @posterCoverStays.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current event cover stays unchanged.'**
+  String get posterCoverStays;
+
+  /// No description provided for @posterTitleVenueRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an event title and venue before creating a poster.'**
+  String get posterTitleVenueRequired;
+
   /// No description provided for @chatLink.
   ///
   /// In en, this message translates to:

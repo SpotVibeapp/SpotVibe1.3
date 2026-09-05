@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../services/ai_promo_image_service.dart';
 import '../../theme/theme.dart';
 
@@ -61,10 +62,17 @@ class _AiPromoImageDialogState extends State<_AiPromoImageDialog> {
   };
 
   final _service = AiPromoImageService();
+  final _artDirectionController = TextEditingController();
   var _style = 'vibrant';
   var _ratio = 'portrait';
   var _generating = false;
   String? _error;
+
+  @override
+  void dispose() {
+    _artDirectionController.dispose();
+    super.dispose();
+  }
 
   Future<void> _generate() async {
     setState(() {
@@ -78,6 +86,7 @@ class _AiPromoImageDialogState extends State<_AiPromoImageDialog> {
         description: widget.description,
         category: widget.category,
         venue: widget.venue,
+        artDirection: _artDirectionController.text,
         style: _style,
         aspectRatio: _ratio,
       );
@@ -95,6 +104,7 @@ class _AiPromoImageDialogState extends State<_AiPromoImageDialog> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
       title: const Text('Generate AI promo background'),
       content: SingleChildScrollView(
@@ -103,7 +113,7 @@ class _AiPromoImageDialogState extends State<_AiPromoImageDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'SpotVibe will generate an original visual background for “${widget.title}”. Your event title, date, and venue remain accurate because the app adds them separately.',
+              'SpotVibe will generate an original visual background for “${widget.title}”. Poster Studio can add your exact title, date, time, venue, and price separately.',
               style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
             ),
             const SizedBox(height: AppTheme.spacingMd),
@@ -143,6 +153,20 @@ class _AiPromoImageDialogState extends State<_AiPromoImageDialog> {
                   .toList(),
             ),
             const SizedBox(height: AppTheme.spacingMd),
+            Text(l10n.aiArtDirection, style: text.titleSmall),
+            const SizedBox(height: AppTheme.spacingSm),
+            TextField(
+              controller: _artDirectionController,
+              enabled: !_generating,
+              maxLength: 280,
+              minLines: 2,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: l10n.aiArtDirectionHint,
+                prefixIcon: const Icon(Icons.palette_outlined),
+              ),
+            ),
+            const SizedBox(height: AppTheme.spacingSm),
             Container(
               padding: const EdgeInsets.all(AppTheme.spacingSm),
               decoration: BoxDecoration(
@@ -156,7 +180,7 @@ class _AiPromoImageDialogState extends State<_AiPromoImageDialog> {
                   const SizedBox(width: AppTheme.spacingSm),
                   Expanded(
                     child: Text(
-                      'Review this AI background before publishing. It is not sent to SpotVibe for manual approval. Do not use misleading logos, celebrity likenesses, or copyrighted characters.',
+                      l10n.aiArtworkOnly,
                       style: text.bodySmall,
                     ),
                   ),

@@ -126,7 +126,7 @@ const LegalDocument kTermsOfUse = LegalDocument(
     ),
     LegalSection(
       'AI-generated promo backgrounds',
-      'SpotVibe may offer an optional AI tool that generates a visual background from event details you provide. Review every result before publishing. You are responsible for ensuring your final event page is accurate and does not infringe rights, impersonate people or organizations, use misleading logos or marks, or violate our content rules. We may block, remove, or limit generated images that violate these Terms or applicable provider policies.',
+      'SpotVibe may offer an optional AI tool that generates a visual background from event details and optional visual direction you provide. Poster Studio can format your title, date, time, venue, and price onto that background using the details you entered; it does not ask the image model to invent those details. Review every result before publishing, and regenerate a poster if you change the event details. You are responsible for ensuring the final event page and poster are accurate and do not infringe rights, impersonate people or organizations, use misleading logos or marks, or violate our content rules. We may block, remove, or limit generated images that violate these Terms or applicable provider policies.',
     ),
     LegalSection(
       'Claims',
