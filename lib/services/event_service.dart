@@ -554,7 +554,15 @@ const Map<String, String> _stateNameToCode = {
 /// Returns null only when the input is completely unrecognisable (e.g. random
 /// letters that match no known place). In practice this almost never happens.
 _ResolvedLocation? _resolveLocation(String input) {
-  final lower = input.toLowerCase().trim();
+  // Search surfaces, including Ask SpotVibe, display locations as
+  // "City, ST". Normalize comma/whitespace separators before the existing
+  // city lookup so Ticketmaster receives `city: El Paso`, `stateCode: TX`
+  // rather than an invalid combined city string such as `El Paso, TX`.
+  final lower = input
+      .toLowerCase()
+      .replaceAll(',', ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
   final digits = lower.replaceAll(RegExp(r'\D'), '');
 
   // 1. Numeric zip code — resolve prefix to state and look up canonical city name

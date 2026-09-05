@@ -72,6 +72,20 @@ void main() {
     expect(live.isHappeningNow, isTrue);
   });
 
+  test('city-and-state searches resolve the assistant location label', () async {
+    final startsAt = DateTime.now().add(const Duration(days: 2));
+    final elPaso = _event(
+      id: 'el-paso-search',
+      startsAt: startsAt,
+      endsAt: startsAt.add(const Duration(hours: 2)),
+    );
+    final service = EventService(repository: _FixedEventRepository([elPaso]));
+
+    final events = await service.getUpcomingEvents(areaQuery: 'El Paso, TX');
+
+    expect(events, [elPaso]);
+  });
+
   test('active feed removes events after their explicit end time', () async {
     final now = DateTime.now();
     final finished = _event(
