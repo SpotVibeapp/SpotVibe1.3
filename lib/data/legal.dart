@@ -38,7 +38,7 @@ const LegalDocument kPrivacyPolicy = LegalDocument(
     LegalSection(
       'Information you give us',
       'Account: name, email, password (stored by Firebase Authentication, not in plain text), and a profile photo if you upload one or sign in with Google, Apple, or Facebook.\n\n'
-          'Events you create: title, description, cover photos, optional short videos (up to 30 seconds), location, time, ticket price, and optional contact or branding fields. If you choose to generate an AI promo background, we send the event title, description, category, venue context, and selected visual style to OpenAI to generate that image. Do not include sensitive personal information in an AI image request.\n\n'
+          'Events you create: title, description, up to five photos including a cover, up to three short videos (up to 30 seconds each), location, time, ticket price, and optional contact or branding fields. If you choose to generate an AI promo background, we send the event title, description, category, venue context, selected visual style, and optional art-direction text to OpenAI to generate that image. Poster Studio formats a share poster from the event details you entered; it does not ask OpenAI to invent poster text. Do not include sensitive personal information in an AI image request.\n\n'
           'RSVPs and comments: whether you are going, and any text you post.\n\n'
           'Venue / event claims: your name, work email, phone, organization, role, and any proof you submit so we can verify you are authorized.\n\n'
           'Support: anything you email us.',

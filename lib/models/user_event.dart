@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../data/media_urls.dart';
+
 /// How often a Premium event auto-repeats.
 enum RecurringType { none, weekly, monthly }
 
@@ -17,7 +19,11 @@ class UserCreatedEvent {
   final String zipCode;
   final double? cost;
   final String imageUrl;
+  /// Ordered photo gallery. The cover [imageUrl] remains for legacy readers.
+  final List<String> imageUrls;
   final String? videoUrl;
+  /// Ordered video gallery. The first entry is mirrored in [videoUrl].
+  final List<String> videoUrls;
   final String category;
   final String organizerName;
   final String? mapLink;
@@ -65,7 +71,9 @@ class UserCreatedEvent {
     this.zipCode = '',
     this.cost,
     this.imageUrl = '',
+    this.imageUrls = const [],
     this.videoUrl,
+    this.videoUrls = const [],
     required this.category,
     required this.organizerName,
     this.mapLink,
@@ -89,6 +97,12 @@ class UserCreatedEvent {
 
   bool get isFree => cost == null || cost == 0;
   String get costLabel => isFree ? 'Free' : '\$${cost!.toStringAsFixed(2)}';
+  List<String> get allImageUrls => List.unmodifiable(
+        normalizeMediaUrls([imageUrl, ...imageUrls]).take(kMaxEventPhotos),
+      );
+  List<String> get allVideoUrls => List.unmodifiable(
+        normalizeMediaUrls([videoUrl, ...videoUrls]).take(kMaxEventVideos),
+      );
   String get fullLocation => [location, city, state].where((s) => s.isNotEmpty).join(', ');
   bool get hasContactInfo =>
       (contactPhone?.isNotEmpty ?? false) ||
@@ -118,8 +132,10 @@ class UserCreatedEvent {
     double? cost,
     bool clearCost = false,
     String? imageUrl,
+    List<String>? imageUrls,
     String? videoUrl,
     bool clearVideoUrl = false,
+    List<String>? videoUrls,
     String? category,
     String? organizerName,
     String? mapLink,
@@ -160,7 +176,9 @@ class UserCreatedEvent {
         zipCode: zipCode ?? this.zipCode,
         cost: clearCost ? null : (cost ?? this.cost),
         imageUrl: imageUrl ?? this.imageUrl,
+        imageUrls: imageUrls ?? this.imageUrls,
         videoUrl: clearVideoUrl ? null : (videoUrl ?? this.videoUrl),
+        videoUrls: videoUrls ?? this.videoUrls,
         category: category ?? this.category,
         organizerName: organizerName ?? this.organizerName,
         mapLink: clearMapLink ? null : (mapLink ?? this.mapLink),

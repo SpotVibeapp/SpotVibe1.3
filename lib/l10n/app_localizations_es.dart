@@ -824,6 +824,78 @@ class AppLocalizationsEs extends AppLocalizations {
   String get posterTitleVenueRequired => 'Agrega un título y venue antes de crear un póster.';
 
   @override
+  String eventPhotosCount(int current, int maximum) {
+    return 'Fotos del evento ($current/$maximum)';
+  }
+
+  @override
+  String get photoGalleryHint => 'Agrega hasta 5 fotos en total. La portada cuenta como la primera.';
+
+  @override
+  String get noAdditionalPhotos => 'Agrega fotos desde tu biblioteca o cámara.';
+
+  @override
+  String get addPhotoUrl => 'Agregar enlace de foto (opcional)';
+
+  @override
+  String get addPhotoLink => 'Agregar enlace de foto';
+
+  @override
+  String get validPhotoUrl => 'Ingresa un enlace de foto http o https válido.';
+
+  @override
+  String get library => 'Biblioteca';
+
+  @override
+  String get camera => 'Cámara';
+
+  @override
+  String photoNumber(int number) {
+    return 'Foto $number';
+  }
+
+  @override
+  String eventVideosCount(int current, int maximum) {
+    return 'Videos del evento ($current/$maximum)';
+  }
+
+  @override
+  String get videoGalleryHint => 'Agrega hasta 3 videos cortos. Cada uno puede durar hasta 30 segundos.';
+
+  @override
+  String get noVideosYet => 'Aún no hay videos. Agrega uno desde tu biblioteca o cámara.';
+
+  @override
+  String videoNumber(int number) {
+    return 'Video $number';
+  }
+
+  @override
+  String get addVideoUrl => 'Agregar enlace de video (opcional)';
+
+  @override
+  String get addVideoLink => 'Agregar enlace de video';
+
+  @override
+  String get validVideoUrl => 'Ingresa un enlace de video http o https válido.';
+
+  @override
+  String mediaPhotoLimit(int maximum) {
+    return 'Puedes agregar hasta $maximum fotos a un evento.';
+  }
+
+  @override
+  String mediaVideoLimit(int maximum) {
+    return 'Puedes agregar hasta $maximum videos a un evento.';
+  }
+
+  @override
+  String get photos => 'Fotos';
+
+  @override
+  String get videos => 'Videos';
+
+  @override
   String get chatLink => 'Enlace de chat comunitario (opcional)';
 
   @override

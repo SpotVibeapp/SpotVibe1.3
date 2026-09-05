@@ -15,6 +15,7 @@ import '../theme/theme.dart';
 import '../services/event_analytics_service.dart';
 import '../widgets/events/claim_venue_banner.dart';
 import '../widgets/events/event_page_ad.dart';
+import '../widgets/events/event_media_gallery.dart';
 import '../widgets/common/app_avatar.dart';
 import '../widgets/common/event_image_placeholder.dart';
 import '../widgets/common/guided_tour.dart';
@@ -227,6 +228,14 @@ class _DetailContent extends StatelessWidget {
                   SectionTitle(title: l10n.aboutThisEvent, accent: catColor),
                   const SizedBox(height: AppTheme.spacingSm),
                   Text(event.description, style: text.bodyMedium),
+                  if (event.allImageUrls.length > 1 || event.allVideoUrls.isNotEmpty) ...[
+                    const SizedBox(height: AppTheme.spacingLg),
+                    EventMediaGallery(
+                      imageUrls: event.allImageUrls,
+                      videoUrls: event.allVideoUrls,
+                      category: event.category,
+                    ),
+                  ],
                   const SizedBox(height: AppTheme.spacingLg),
                   SectionTitle(title: l10n.organizer, accent: catColor),
                   const SizedBox(height: AppTheme.spacingSm),

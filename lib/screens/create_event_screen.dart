@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import '../data/media_urls.dart';
 import '../data/pricing.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/category_labels.dart';
@@ -19,6 +20,7 @@ import '../services/media_upload_service.dart';
 import '../services/user_event_service.dart';
 import '../theme/theme.dart';
 import '../widgets/events/ai_promo_image_dialog.dart';
+import '../widgets/events/event_media_editor.dart';
 import '../widgets/events/event_poster_studio.dart';
 
 export '../models/user_event.dart' show RecurringType;
@@ -42,6 +44,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   final _zipController = TextEditingController();
   final _costController = TextEditingController();
   final _imageUrlController = TextEditingController();
+  final _photoUrlController = TextEditingController();
   final _videoUrlController = TextEditingController();
   final _mapLinkController = TextEditingController();
   final _chatLinkController = TextEditingController();
@@ -53,7 +56,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   String? _moderationError;
   late final String _eventMediaId;
   String? _localCoverPath;
-  String? _localVideoPath;
+  final List<String> _localPhotoPaths = [];
+  final List<String> _remotePhotoUrls = [];
+  final List<String> _localVideoPaths = [];
+  final List<String> _remoteVideoUrls = [];
   bool _aiGeneratedCover = false;
   bool _uploadingMedia = false;
 
@@ -86,8 +92,14 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       _stateController.text = e.state;
       _zipController.text = e.zipCode;
       if (e.cost != null) _costController.text = e.cost!.toStringAsFixed(2);
-      _imageUrlController.text = e.imageUrl;
-      _videoUrlController.text = e.videoUrl ?? '';
+      final savedPhotos = e.allImageUrls;
+      _imageUrlController.text =
+          savedPhotos.isEmpty ? e.imageUrl : savedPhotos.first;
+      _remotePhotoUrls.addAll(savedPhotos.skip(1));
+      _remoteVideoUrls.addAll(e.allVideoUrls);
+      // New links are added to the gallery explicitly. Existing legacy links
+      // are already represented in _remoteVideoUrls above.
+      _videoUrlController.clear();
       _mapLinkController.text = e.mapLink ?? '';
       _chatLinkController.text = e.chatLink ?? '';
       _selectedDate = e.dateTime;
@@ -126,6 +138,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     _zipController.dispose();
     _costController.dispose();
     _imageUrlController.dispose();
+    _photoUrlController.dispose();
     _videoUrlController.dispose();
     _mapLinkController.dispose();
     _chatLinkController.dispose();
@@ -149,6 +162,202 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     final text = _costController.text.trim();
     if (text.isEmpty) return null;
     return double.tryParse(text.replaceAll('\$', ''));
+  }
+
+  bool get _hasCover =>
+      _localCoverPath != null || _imageUrlController.text.trim().isNotEmpty;
+
+  int get _photoCount =>
+      (_hasCover ? 1 : 0) + _remotePhotoUrls.length + _localPhotoPaths.length;
+
+  int get _videoCount => _remoteVideoUrls.length + _localVideoPaths.length;
+
+  bool _isHttpUrl(String value) {
+    final uri = Uri.tryParse(value);
+    return uri != null && (uri.scheme == 'https' || uri.scheme == 'http');
+  }
+
+  void _showMediaLimit({required bool photos}) {
+    final l10n = AppLocalizations.of(context)!;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          photos
+              ? l10n.mediaPhotoLimit(MediaUploadService.maxEventPhotos)
+              : l10n.mediaVideoLimit(MediaUploadService.maxEventVideos),
+        ),
+      ),
+    );
+  }
+
+  void _clearCover() {
+    setState(() {
+      void promoteNextPhoto() {
+        if (_remotePhotoUrls.isNotEmpty) {
+          // Keep media order intuitive: the next gallery photo becomes cover.
+          _imageUrlController.text = _remotePhotoUrls.removeAt(0);
+        } else if (_localPhotoPaths.isNotEmpty) {
+          _localCoverPath = _localPhotoPaths.removeAt(0);
+        }
+      }
+
+      // If a new local cover temporarily replaced a URL cover, reveal the URL
+      // again instead of silently discarding it. Otherwise promote the next
+      // gallery item so an event never loses its first photo unexpectedly.
+      if (_localCoverPath != null) {
+        _localCoverPath = null;
+        if (_imageUrlController.text.trim().isEmpty) promoteNextPhoto();
+      } else {
+        _imageUrlController.clear();
+        promoteNextPhoto();
+      }
+      _aiGeneratedCover = false;
+    });
+  }
+
+  Future<void> _addPhotos({required bool fromCamera}) async {
+    final remaining = MediaUploadService.maxEventPhotos - _photoCount;
+    if (remaining <= 0) {
+      _showMediaLimit(photos: true);
+      return;
+    }
+
+    try {
+      final media = MediaUploadService();
+      final paths = <String>[];
+      if (fromCamera) {
+        final path = await media.pickImage(fromCamera: true);
+        if (path != null) paths.add(path);
+      } else {
+        paths.addAll(await media.pickImages(maxImages: remaining));
+      }
+      if (paths.isEmpty || !mounted) return;
+
+      setState(() {
+        for (final path in paths) {
+          if (!_hasCover) {
+            _localCoverPath = path;
+            _imageUrlController.clear();
+            _aiGeneratedCover = false;
+          } else {
+            _localPhotoPaths.add(path);
+          }
+        }
+      });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
+  Future<void> _addVideo({required bool fromCamera}) async {
+    if (_videoCount >= MediaUploadService.maxEventVideos) {
+      _showMediaLimit(photos: false);
+      return;
+    }
+    try {
+      final path = await MediaUploadService().pickVideo(fromCamera: fromCamera);
+      if (path == null || !mounted) return;
+      setState(() => _localVideoPaths.add(path));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
+  void _addPhotoLink() {
+    final url = _photoUrlController.text.trim();
+    if (url.isEmpty) return;
+    if (_photoCount >= MediaUploadService.maxEventPhotos) {
+      _showMediaLimit(photos: true);
+      return;
+    }
+    if (!_isHttpUrl(url)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.validPhotoUrl)),
+      );
+      return;
+    }
+    setState(() {
+      if (!_hasCover) {
+        _imageUrlController.text = url;
+      } else if (!_remotePhotoUrls.contains(url)) {
+        _remotePhotoUrls.add(url);
+      }
+      _photoUrlController.clear();
+    });
+  }
+
+  void _addVideoLink() {
+    final url = _videoUrlController.text.trim();
+    if (url.isEmpty) return;
+    if (_videoCount >= MediaUploadService.maxEventVideos) {
+      _showMediaLimit(photos: false);
+      return;
+    }
+    if (!_isHttpUrl(url)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.validVideoUrl)),
+      );
+      return;
+    }
+    setState(() {
+      if (!_remoteVideoUrls.contains(url)) _remoteVideoUrls.add(url);
+      _videoUrlController.clear();
+    });
+  }
+
+  List<EventMediaDraftItem> _additionalPhotoItems(AppLocalizations l10n) {
+    final items = <EventMediaDraftItem>[];
+    final firstPhotoNumber = _hasCover ? 2 : 1;
+    for (var index = 0; index < _remotePhotoUrls.length; index++) {
+      final itemIndex = index;
+      items.add(EventMediaDraftItem(
+        source: _remotePhotoUrls[itemIndex],
+        isLocal: false,
+        label: l10n.photoNumber(firstPhotoNumber + itemIndex),
+        onRemove: () => setState(() => _remotePhotoUrls.removeAt(itemIndex)),
+      ));
+    }
+    for (var index = 0; index < _localPhotoPaths.length; index++) {
+      final itemIndex = index;
+      items.add(EventMediaDraftItem(
+        source: _localPhotoPaths[itemIndex],
+        isLocal: true,
+        label: l10n.photoNumber(
+          firstPhotoNumber + _remotePhotoUrls.length + itemIndex,
+        ),
+        onRemove: () => setState(() => _localPhotoPaths.removeAt(itemIndex)),
+      ));
+    }
+    return items;
+  }
+
+  List<EventMediaDraftItem> _videoItems(AppLocalizations l10n) {
+    final items = <EventMediaDraftItem>[];
+    for (var index = 0; index < _remoteVideoUrls.length; index++) {
+      final itemIndex = index;
+      items.add(EventMediaDraftItem(
+        source: _remoteVideoUrls[itemIndex],
+        isLocal: false,
+        label: l10n.videoNumber(itemIndex + 1),
+        onRemove: () => setState(() => _remoteVideoUrls.removeAt(itemIndex)),
+      ));
+    }
+    for (var index = 0; index < _localVideoPaths.length; index++) {
+      final itemIndex = index;
+      items.add(EventMediaDraftItem(
+        source: _localVideoPaths[itemIndex],
+        isLocal: true,
+        label: l10n.videoNumber(_remoteVideoUrls.length + itemIndex + 1),
+        onRemove: () => setState(() => _localVideoPaths.removeAt(itemIndex)),
+      ));
+    }
+    return items;
   }
 
   Future<void> _pickDate() async {
@@ -175,18 +384,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           _aiGeneratedCover = false;
         });
       }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
-      );
-    }
-  }
-
-  Future<void> _pickVideo({required bool camera}) async {
-    try {
-      final path = await MediaUploadService().pickVideo(fromCamera: camera);
-      if (path != null && mounted) setState(() => _localVideoPath = path);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -327,23 +524,82 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     }
     // ────────────────────────────────────────────────────────────────────────
 
-    var imageUrl = _imageUrlController.text.trim();
-    var videoUrl = _videoUrlController.text.trim();
-    if (_localCoverPath != null || _localVideoPath != null) {
+    var coverUrl = _imageUrlController.text.trim();
+    final pendingPhotoUrl = _photoUrlController.text.trim();
+    final pendingVideoUrl = _videoUrlController.text.trim();
+    if (pendingPhotoUrl.isNotEmpty && !_isHttpUrl(pendingPhotoUrl)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.validPhotoUrl)),
+      );
+      return;
+    }
+    if (pendingVideoUrl.isNotEmpty && !_isHttpUrl(pendingVideoUrl)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.validVideoUrl)),
+      );
+      return;
+    }
+    var photoUrls = normalizeMediaUrls([
+      coverUrl,
+      ..._remotePhotoUrls,
+      pendingPhotoUrl,
+    ]).toList();
+    var videoUrls = normalizeMediaUrls([
+      ..._remoteVideoUrls,
+      pendingVideoUrl,
+    ]).toList();
+
+    // A replacement local cover occupies one slot even if an old URL remains
+    // in the controller until publishing.
+    final estimatedPhotoCount =
+        (_localCoverPath != null || coverUrl.isNotEmpty ? 1 : 0) +
+            _remotePhotoUrls.length +
+            (pendingPhotoUrl.isNotEmpty &&
+                    pendingPhotoUrl != coverUrl &&
+                    !_remotePhotoUrls.contains(pendingPhotoUrl)
+                ? 1
+                : 0) +
+            _localPhotoPaths.length;
+    if (estimatedPhotoCount > MediaUploadService.maxEventPhotos) {
+      _showMediaLimit(photos: true);
+      return;
+    }
+    if (videoUrls.length + _localVideoPaths.length >
+        MediaUploadService.maxEventVideos) {
+      _showMediaLimit(photos: false);
+      return;
+    }
+
+    if (_localCoverPath != null ||
+        _localPhotoPaths.isNotEmpty ||
+        _localVideoPaths.isNotEmpty) {
       setState(() => _uploadingMedia = true);
       try {
         final media = MediaUploadService();
         if (_localCoverPath != null) {
-          imageUrl = await media.uploadEventImage(
+          coverUrl = await media.uploadEventImage(
             eventId: _eventMediaId,
             localPath: _localCoverPath!,
           );
         }
-        if (_localVideoPath != null) {
-          videoUrl = await media.uploadEventVideo(
+        photoUrls = normalizeMediaUrls([
+          coverUrl,
+          ..._remotePhotoUrls,
+          pendingPhotoUrl,
+        ]).toList();
+        for (final path in _localPhotoPaths) {
+          photoUrls.add(await media.uploadEventPhoto(
             eventId: _eventMediaId,
-            localPath: _localVideoPath!,
-          );
+            localPath: path,
+            slot: photoUrls.length,
+          ));
+        }
+        for (final path in _localVideoPaths) {
+          videoUrls.add(await media.uploadAdditionalEventVideo(
+            eventId: _eventMediaId,
+            localPath: path,
+            slot: videoUrls.length,
+          ));
         }
       } catch (e) {
         if (!mounted) return;
@@ -355,6 +611,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       }
       if (mounted) setState(() => _uploadingMedia = false);
     }
+
+    photoUrls = normalizeMediaUrls(photoUrls).toList();
+    videoUrls = normalizeMediaUrls(videoUrls).toList();
+    coverUrl = photoUrls.isEmpty ? '' : photoUrls.first;
+    final videoUrl = videoUrls.isEmpty ? null : videoUrls.first;
 
     final provider = context.read<CreateEventProvider>();
     final result = await provider.submit(
@@ -368,8 +629,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       state: _stateController.text,
       zipCode: _zipController.text,
       cost: _parsedCost,
-      imageUrl: imageUrl,
-      videoUrl: videoUrl.isEmpty ? null : videoUrl,
+      imageUrl: coverUrl,
+      imageUrls: photoUrls,
+      videoUrl: videoUrl,
+      videoUrls: videoUrls,
       category: _selectedCategory,
       mapLink: _mapLinkController.text.trim().isEmpty ? null : _mapLinkController.text.trim(),
       chatLink: _chatLinkController.text.trim().isEmpty ? null : _chatLinkController.text.trim(),
@@ -574,11 +837,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               onCamera: () => _pickCover(camera: true),
               onClear: (_localCoverPath == null && _imageUrlController.text.isEmpty)
                   ? null
-                  : () => setState(() {
-                        _localCoverPath = null;
-                        _imageUrlController.clear();
-                        _aiGeneratedCover = false;
-                      }),
+                  : _clearCover,
             ),
             const SizedBox(height: AppTheme.spacingSm),
             OutlinedButton.icon(
@@ -599,18 +858,82 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppTheme.spacingMd),
-            _MediaPickRow(
-              label: 'Short video',
-              subtitle: _localVideoPath != null
-                  ? 'Video selected (max 30 seconds)'
-                  : 'Operators can add a 30-second promo clip',
-              icon: Icons.videocam_rounded,
-              onLibrary: () => _pickVideo(camera: false),
-              onCamera: () => _pickVideo(camera: true),
-              onClear: _localVideoPath == null
-                  ? null
-                  : () => setState(() => _localVideoPath = null),
+            EventMediaEditor(
+              kind: EventMediaKind.photo,
+              title: l10n.eventPhotosCount(
+                _photoCount,
+                MediaUploadService.maxEventPhotos,
+              ),
+              subtitle: l10n.photoGalleryHint,
+              emptyLabel: l10n.noAdditionalPhotos,
+              libraryLabel: l10n.library,
+              cameraLabel: l10n.camera,
+              items: _additionalPhotoItems(l10n),
+              onLibrary: _photoCount < MediaUploadService.maxEventPhotos
+                  ? () => _addPhotos(fromCamera: false)
+                  : null,
+              onCamera: _photoCount < MediaUploadService.maxEventPhotos
+                  ? () => _addPhotos(fromCamera: true)
+                  : null,
             ),
+            const SizedBox(height: AppTheme.spacingSm),
+            _FormField(
+              controller: _photoUrlController,
+              label: l10n.addPhotoUrl,
+              hint: 'https://example.com/photo.jpg',
+              icon: Icons.link_rounded,
+              keyboardType: TextInputType.url,
+            ),
+            const SizedBox(height: AppTheme.spacingXs),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: _photoCount < MediaUploadService.maxEventPhotos
+                    ? _addPhotoLink
+                    : null,
+                icon: const Icon(Icons.add_rounded),
+                label: Text(l10n.addPhotoLink),
+              ),
+            ),
+            const SizedBox(height: AppTheme.spacingMd),
+            EventMediaEditor(
+              kind: EventMediaKind.video,
+              title: l10n.eventVideosCount(
+                _videoCount,
+                MediaUploadService.maxEventVideos,
+              ),
+              subtitle: l10n.videoGalleryHint,
+              emptyLabel: l10n.noVideosYet,
+              libraryLabel: l10n.library,
+              cameraLabel: l10n.camera,
+              items: _videoItems(l10n),
+              onLibrary: _videoCount < MediaUploadService.maxEventVideos
+                  ? () => _addVideo(fromCamera: false)
+                  : null,
+              onCamera: _videoCount < MediaUploadService.maxEventVideos
+                  ? () => _addVideo(fromCamera: true)
+                  : null,
+            ),
+            const SizedBox(height: AppTheme.spacingSm),
+            _FormField(
+              controller: _videoUrlController,
+              label: l10n.addVideoUrl,
+              hint: 'https://youtube.com/watch?v=... or .mp4 link',
+              icon: Icons.link_rounded,
+              keyboardType: TextInputType.url,
+            ),
+            const SizedBox(height: AppTheme.spacingXs),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: _videoCount < MediaUploadService.maxEventVideos
+                    ? _addVideoLink
+                    : null,
+                icon: const Icon(Icons.add_rounded),
+                label: Text(l10n.addVideoLink),
+              ),
+            ),
+            const SizedBox(height: AppTheme.spacingSm),
             if (_uploadingMedia) ...[
               const SizedBox(height: AppTheme.spacingSm),
               const LinearProgressIndicator(),
@@ -627,14 +950,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               hint: 'https://example.com/image.jpg',
               icon: Icons.image_rounded,
               keyboardType: TextInputType.url,
-            ),
-            const SizedBox(height: AppTheme.spacingMd),
-            _FormField(
-              controller: _videoUrlController,
-              label: l10n.eventVideoUrl,
-              hint: 'https://youtube.com/watch?v=... or .mp4 link',
-              icon: Icons.videocam_rounded,
-              keyboardType: TextInputType.url,
+              onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: AppTheme.spacingMd),
             _FormField(
@@ -1053,6 +1369,7 @@ class _FormField extends StatelessWidget {
   final int maxLines;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
+  final ValueChanged<String>? onChanged;
 
   const _FormField({
     required this.controller,
@@ -1062,6 +1379,7 @@ class _FormField extends StatelessWidget {
     this.maxLines = 1,
     this.keyboardType,
     this.validator,
+    this.onChanged,
   });
 
   @override
@@ -1072,6 +1390,7 @@ class _FormField extends StatelessWidget {
       maxLines: maxLines,
       keyboardType: keyboardType,
       validator: validator,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,

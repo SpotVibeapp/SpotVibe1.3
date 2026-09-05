@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/media_urls.dart';
 import '../data/pricing.dart';
 
 enum EventSource {
@@ -74,6 +75,13 @@ class Event {
   final String zipCode;
   final double? cost;
   final String imageUrl;
+  /// Ordered event photo gallery. The cover [imageUrl] is also included for
+  /// new events; [allImageUrls] deduplicates legacy and gallery data.
+  final List<String> imageUrls;
+  /// First video kept for backwards compatibility with older event documents.
+  final String? videoUrl;
+  /// Ordered event video gallery.
+  final List<String> videoUrls;
   final String category;
   final String organizerName;
   final String organizerAvatarUrl;
@@ -102,6 +110,9 @@ class Event {
     this.zipCode = '',
     this.cost,
     required this.imageUrl,
+    this.imageUrls = const [],
+    this.videoUrl,
+    this.videoUrls = const [],
     required this.category,
     required this.organizerName,
     required this.organizerAvatarUrl,
@@ -130,6 +141,10 @@ class Event {
     String? zipCode,
     double? cost,
     String? imageUrl,
+    List<String>? imageUrls,
+    String? videoUrl,
+    bool clearVideoUrl = false,
+    List<String>? videoUrls,
     String? category,
     int? bookmarkedCount,
     int? interestedCount,
@@ -156,6 +171,9 @@ class Event {
         zipCode: zipCode ?? this.zipCode,
         cost: cost ?? this.cost,
         imageUrl: imageUrl ?? this.imageUrl,
+        imageUrls: imageUrls ?? this.imageUrls,
+        videoUrl: clearVideoUrl ? null : (videoUrl ?? this.videoUrl),
+        videoUrls: videoUrls ?? this.videoUrls,
         category: category ?? this.category,
         organizerName: organizerName,
         organizerAvatarUrl: organizerAvatarUrl,
@@ -176,6 +194,16 @@ class Event {
   bool get isFree => cost == null || cost == 0;
 
   String get costLabel => isFree ? 'Free' : '\$${cost!.toStringAsFixed(2)}';
+
+  /// Cover first, followed by up to four additional event photos.
+  List<String> get allImageUrls => List.unmodifiable(
+        normalizeMediaUrls([imageUrl, ...imageUrls]).take(kMaxEventPhotos),
+      );
+
+  /// First video first, followed by up to two additional event videos.
+  List<String> get allVideoUrls => List.unmodifiable(
+        normalizeMediaUrls([videoUrl, ...videoUrls]).take(kMaxEventVideos),
+      );
 
   String get fullLocation => [location, city, state].where((s) => s.isNotEmpty).join(', ');
 

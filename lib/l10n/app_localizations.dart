@@ -1543,6 +1543,126 @@ abstract class AppLocalizations {
   /// **'Add an event title and venue before creating a poster.'**
   String get posterTitleVenueRequired;
 
+  /// No description provided for @eventPhotosCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Event photos ({current}/{maximum})'**
+  String eventPhotosCount(int current, int maximum);
+
+  /// No description provided for @photoGalleryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add up to 5 photos total. Your cover photo counts as the first.'**
+  String get photoGalleryHint;
+
+  /// No description provided for @noAdditionalPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photos from your library or camera.'**
+  String get noAdditionalPhotos;
+
+  /// No description provided for @addPhotoUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo link (optional)'**
+  String get addPhotoUrl;
+
+  /// No description provided for @addPhotoLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo link'**
+  String get addPhotoLink;
+
+  /// No description provided for @validPhotoUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid http or https photo link.'**
+  String get validPhotoUrl;
+
+  /// No description provided for @library.
+  ///
+  /// In en, this message translates to:
+  /// **'Library'**
+  String get library;
+
+  /// No description provided for @camera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get camera;
+
+  /// No description provided for @photoNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo {number}'**
+  String photoNumber(int number);
+
+  /// No description provided for @eventVideosCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Event videos ({current}/{maximum})'**
+  String eventVideosCount(int current, int maximum);
+
+  /// No description provided for @videoGalleryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add up to 3 short videos. Each can be up to 30 seconds.'**
+  String get videoGalleryHint;
+
+  /// No description provided for @noVideosYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No videos yet. Add one from your library or camera.'**
+  String get noVideosYet;
+
+  /// No description provided for @videoNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Video {number}'**
+  String videoNumber(int number);
+
+  /// No description provided for @addVideoUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Add video link (optional)'**
+  String get addVideoUrl;
+
+  /// No description provided for @addVideoLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Add video link'**
+  String get addVideoLink;
+
+  /// No description provided for @validVideoUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid http or https video link.'**
+  String get validVideoUrl;
+
+  /// No description provided for @mediaPhotoLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'You can add up to {maximum} photos to one event.'**
+  String mediaPhotoLimit(int maximum);
+
+  /// No description provided for @mediaVideoLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'You can add up to {maximum} videos to one event.'**
+  String mediaVideoLimit(int maximum);
+
+  /// No description provided for @photos.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get photos;
+
+  /// No description provided for @videos.
+  ///
+  /// In en, this message translates to:
+  /// **'Videos'**
+  String get videos;
+
   /// No description provided for @chatLink.
   ///
   /// In en, this message translates to:
