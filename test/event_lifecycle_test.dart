@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spotvibe_app/models/event.dart';
 import 'package:spotvibe_app/repositories/event_repository.dart';
+import 'package:spotvibe_app/providers/event_provider.dart';
 import 'package:spotvibe_app/repositories/user_event_repository.dart';
 import 'package:spotvibe_app/services/event_service.dart';
 
@@ -70,6 +71,23 @@ void main() {
 
     expect(events, [live]);
     expect(live.isHappeningNow, isTrue);
+  });
+
+  test('main search routes a recognized city to real location search', () {
+    final service = EventService(repository: _FixedEventRepository(const []));
+    final provider = EventProvider(service: service);
+
+    provider.search('Dallas');
+
+    expect(provider.areaQuery, 'Dallas');
+    expect(provider.searchQuery, isEmpty);
+
+    provider.search('jazz');
+    expect(provider.areaQuery, isEmpty);
+    expect(provider.searchQuery, 'jazz');
+
+    expect(service.isRecognizedLocationQuery('Dallas Mavericks'), isFalse);
+    expect(service.isRecognizedLocationQuery('Dallas, TX'), isTrue);
   });
 
   test('city-and-state searches resolve the assistant location label', () async {

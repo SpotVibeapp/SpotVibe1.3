@@ -21,6 +21,26 @@ void main() {
     expect(plan.requestedLocation?.displayName, 'Albuquerque, NM');
   });
 
+  test('broad discovery wording does not become a literal provider keyword', () {
+    final broad = AiEventSearchPlan.fromMap({
+      'searchText': 'concerts in El Paso',
+      'category': 'Music',
+      'datePreset': 'all',
+      'requestedCity': 'El Paso',
+      'requestedState': 'TX',
+    });
+    final specific = AiEventSearchPlan.fromMap({
+      'searchText': 'Bad Bunny concert in El Paso',
+      'category': 'Music',
+      'datePreset': 'all',
+      'requestedCity': 'El Paso',
+      'requestedState': 'TX',
+    });
+
+    expect(broad.specificSearchText, isNull);
+    expect(specific.specificSearchText, 'bad bunny');
+  });
+
   test('AI search plan falls back safely for malformed output', () {
     final plan = AiEventSearchPlan.fromMap({
       'searchText': 42,

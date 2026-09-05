@@ -55,6 +55,11 @@ class EventProvider extends ChangeNotifier {
   String get searchQuery => _searchQuery;
 
   String _areaQuery = '';
+  // True only when an exact city was entered in the main keyword field. This
+  // lets us clear that implicit location when the person resumes a normal
+  // title/artist search, without clearing an area they deliberately set in the
+  // dedicated location field.
+  bool _areaSetByKeywordSearch = false;
   String get areaQuery => _areaQuery;
 
   double _searchRadius = 25.0; // miles; 100 = "Any distance"
@@ -161,12 +166,28 @@ class EventProvider extends ChangeNotifier {
   }
 
   void search(String query) {
-    _searchQuery = query;
+    final trimmed = query.trim();
+    if (trimmed.isNotEmpty && _service.isRecognizedLocationQuery(trimmed)) {
+      // People naturally enter a city in the prominent search field. Route an
+      // exact recognized location to the same real Ticketmaster city search as
+      // the dedicated location field instead of filtering the current feed for
+      // a city name in an event title.
+      _areaQuery = trimmed;
+      _areaSetByKeywordSearch = true;
+      _searchQuery = '';
+    } else {
+      _searchQuery = query;
+      if (_areaSetByKeywordSearch) {
+        _areaQuery = '';
+        _areaSetByKeywordSearch = false;
+      }
+    }
     loadEvents();
   }
 
   void searchArea(String area) {
     _areaQuery = area;
+    _areaSetByKeywordSearch = false;
     loadEvents();
   }
 

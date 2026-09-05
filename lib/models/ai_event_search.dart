@@ -17,6 +17,61 @@ class AiSearchLocation {
   }
 }
 
+// Terms that describe broad discovery categories rather than a performer,
+// venue, or title. They are intentionally not sent as Ticketmaster's `keyword`
+// because that endpoint matches event names literally and can hide valid real
+// listings already constrained by city/category/date.
+const _broadDiscoveryWords = <String>{
+  'a',
+  'an',
+  'and',
+  'art',
+  'arts',
+  'at',
+  'comedy',
+  'concert',
+  'concerts',
+  'dance',
+  'do',
+  'drink',
+  'event',
+  'events',
+  'family',
+  'film',
+  'find',
+  'food',
+  'for',
+  'friendly',
+  'happening',
+  'happenings',
+  'health',
+  'in',
+  'live',
+  'looking',
+  'me',
+  'movie',
+  'movies',
+  'music',
+  'near',
+  'outdoor',
+  'outdoors',
+  'show',
+  'shows',
+  'sport',
+  'sports',
+  'tech',
+  'the',
+  'things',
+  'this',
+  'to',
+  'today',
+  'tomorrow',
+  'week',
+  'weekend',
+  'wellness',
+  'what',
+};
+
 /// Safe, structured search intent returned by the authenticated AI function.
 ///
 /// This deliberately contains filters only — never event names, dates, venues,
@@ -53,6 +108,34 @@ class AiEventSearchPlan {
   final String? category;
   final String datePreset;
   final AiSearchLocation? requestedLocation;
+
+  /// Returns a provider keyword only when the AI plan contains a distinctive
+  /// term (for example an artist, venue, or event title). Generic requests
+  /// such as "concerts in El Paso" are better served by the real city,
+  /// category, and date filters than by Ticketmaster's literal name-only
+  /// keyword matching.
+  String? get specificSearchText {
+    final raw = searchText.trim();
+    if (raw.isEmpty) return null;
+
+    final locationWords = <String>{
+      if (requestedLocation != null) ...[
+        ...requestedLocation!.city
+            .toLowerCase()
+            .split(RegExp(r'[^a-z0-9]+')),
+        requestedLocation!.state.toLowerCase(),
+      ],
+    }..removeWhere((word) => word.isEmpty);
+    final meaningful = raw
+        .toLowerCase()
+        .split(RegExp(r'[^a-z0-9]+'))
+        .where((word) => word.isNotEmpty)
+        .where((word) => !_broadDiscoveryWords.contains(word))
+        .where((word) => !locationWords.contains(word))
+        .toList();
+
+    return meaningful.isEmpty ? null : meaningful.join(' ');
+  }
 
   const AiEventSearchPlan({
     required this.searchText,

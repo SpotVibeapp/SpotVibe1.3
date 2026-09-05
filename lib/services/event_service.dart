@@ -553,16 +553,18 @@ const Map<String, String> _stateNameToCode = {
 /// Resolves a zip code / city / state input to a [_ResolvedLocation].
 /// Returns null only when the input is completely unrecognisable (e.g. random
 /// letters that match no known place). In practice this almost never happens.
+String _normalizedLocationText(String input) => input
+    .toLowerCase()
+    .replaceAll(',', ' ')
+    .replaceAll(RegExp(r'\s+'), ' ')
+    .trim();
+
 _ResolvedLocation? _resolveLocation(String input) {
   // Search surfaces, including Ask SpotVibe, display locations as
   // "City, ST". Normalize comma/whitespace separators before the existing
   // city lookup so Ticketmaster receives `city: El Paso`, `stateCode: TX`
   // rather than an invalid combined city string such as `El Paso, TX`.
-  final lower = input
-      .toLowerCase()
-      .replaceAll(',', ' ')
-      .replaceAll(RegExp(r'\s+'), ' ')
-      .trim();
+  final lower = _normalizedLocationText(input);
   final digits = lower.replaceAll(RegExp(r'\D'), '');
 
   // 1. Numeric zip code — resolve prefix to state and look up canonical city name
@@ -983,6 +985,26 @@ const Map<String, String> _zipToCity = {
   '829':'Casper','830':'Rock Springs','831':'Rock Springs',
 };
 
+/// Ticketmaster's documented classifications used for unambiguous SpotVibe
+/// categories. Other categories remain broad because mapping them would hide
+/// real listings under Ticketmaster's different taxonomy.
+String? _ticketmasterClassificationFor(String? category) {
+  switch (category) {
+    case 'Music':
+      return 'Music';
+    case 'Sports':
+      return 'Sports';
+    case 'Arts':
+      return 'Arts & Theatre';
+    case 'Family':
+      return 'Family';
+    case 'Film':
+      return 'Film';
+    default:
+      return null;
+  }
+}
+
 class EventService {
   final EventRepository _repository;
   final TicketmasterService? _ticketmaster;
@@ -993,6 +1015,42 @@ class EventService {
   })  : _repository = repository,
         _ticketmaster = ticketmaster;
 
+  /// Whether [query] is an exact recognized city, state, or ZIP search.
+  ///
+  /// Home's main search uses this only for a standalone location such as
+  /// `Dallas` or `Albuquerque, NM`. A title/artist query such as `Dallas
+  /// Mavericks` must remain a keyword search rather than being misread as the
+  /// city Dallas.
+  bool isRecognizedLocationQuery(String query) {
+    final normalized = _normalizedLocationText(query);
+    if (normalized.isEmpty) return false;
+
+    final digits = normalized.replaceAll(RegExp(r'\D'), '');
+    if (digits.length >= 3 && _zipPrefixToState.containsKey(digits.substring(0, 3))) {
+      return true;
+    }
+
+    final stateCode = normalized.toUpperCase();
+    if (stateCode.length == 2 && _stateNameToCode.values.contains(stateCode)) {
+      return true;
+    }
+    if (_stateNameToCode.containsKey(normalized)) return true;
+
+    for (final entry in _cityToState.entries) {
+      final city = entry.key;
+      final state = entry.value.toLowerCase();
+      if (normalized == city || normalized == '$city $state') return true;
+      if (_stateNameToCode.entries.any(
+        (stateEntry) =>
+            stateEntry.value == entry.value &&
+            normalized == '$city ${stateEntry.key}',
+      )) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /// Merges curated/Firestore rows with live Ticketmaster listings and
   /// drops same-show duplicates. Placeholder Ticketmaster seed rows
   /// (Chihuahuas / Coliseum / Sun Bowl / symphony) are dropped once the
@@ -1002,6 +1060,7 @@ class EventService {
     String? city,
     String? state,
     String? keyword,
+    String? category,
     double? lat,
     double? lng,
   }) async {
@@ -1013,6 +1072,7 @@ class EventService {
       city: city,
       stateCode: state,
       keyword: keyword,
+      classificationName: _ticketmasterClassificationFor(category),
       lat: lat,
       lng: lng,
     );
@@ -1072,6 +1132,7 @@ class EventService {
           city: resolved.city,
           state: resolved.state,
           keyword: searchQuery,
+          category: category,
         );
       } else {
         // Unrecognised input — try Ticketmaster with the raw city string
@@ -1088,6 +1149,7 @@ class EventService {
           local: matched,
           city: areaQuery.trim(),
           keyword: searchQuery,
+          category: category,
         );
       }
       filtered = filtered.where((e) => e.isVisibleAt()).toList();
@@ -1097,6 +1159,7 @@ class EventService {
       filtered = await _withLiveListings(
         local: filtered,
         keyword: searchQuery,
+        category: category,
         lat: userLat ?? kElPasoLat,
         lng: userLng ?? kElPasoLng,
       );
