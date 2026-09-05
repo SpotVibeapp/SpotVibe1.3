@@ -136,6 +136,7 @@ class QuickActionsSection extends StatelessWidget {
           description: event.description,
           location: event.fullLocation,
           startTime: event.dateTime,
+          endTime: event.endDateTime,
         ),
         const SizedBox(height: AppTheme.spacingSm),
         // Report as a subtle text action
@@ -168,6 +169,7 @@ class QuickActionsSection extends StatelessWidget {
           description: event.description,
           location: event.fullLocation,
           startTime: event.dateTime,
+          endTime: event.endDateTime,
         ),
       ),
       shape: const RoundedRectangleBorder(

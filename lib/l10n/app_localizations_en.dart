@@ -1789,7 +1789,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventCreationGuideDetailsBody =>
-      'Add a clear title and description, then confirm the date, time, venue, location, and ticket price. Leave the price blank when the event is free.';
+      'Add a clear title and description, then confirm the start and end date/time, venue, location, and ticket price. Leave the price blank when the event is free.';
 
   @override
   String get eventCreationGuideVisualsTitle => '2. Make it visual';
@@ -1883,4 +1883,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openSettings => 'Open Settings';
+
+  @override
+  String get eventStarts => 'Starts';
+
+  @override
+  String get eventEnds => 'Ends';
+
+  @override
+  String get endTimeHint =>
+      'Set the real end time. Your event stays visible as happening now until then.';
+
+  @override
+  String get endTimeMustBeAfterStart =>
+      'End date and time must be after the start.';
+
+  @override
+  String get happeningNow => 'Happening now';
 }

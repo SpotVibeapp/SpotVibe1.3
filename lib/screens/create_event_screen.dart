@@ -55,6 +55,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 7));
   TimeOfDay _selectedTime = const TimeOfDay(hour: 18, minute: 0);
+  DateTime _selectedEndDate = DateTime.now().add(const Duration(days: 7));
+  TimeOfDay _selectedEndTime = const TimeOfDay(hour: 21, minute: 0);
   String _selectedCategory = 'Music';
   bool _isPremiumListing = false;
   String? _moderationError;
@@ -113,6 +115,14 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       _chatLinkController.text = e.chatLink ?? '';
       _selectedDate = e.dateTime;
       _selectedTime = TimeOfDay(hour: e.dateTime.hour, minute: e.dateTime.minute);
+      // Older listings did not store an end time. Show a clear editable
+      // three-hour suggestion so the organizer can publish the actual end.
+      final endDateTime = e.endDateTime ?? e.dateTime.add(const Duration(hours: 3));
+      _selectedEndDate = endDateTime;
+      _selectedEndTime = TimeOfDay(
+        hour: endDateTime.hour,
+        minute: endDateTime.minute,
+      );
       _selectedCategory = e.category;
       _isPremiumListing = e.isPremiumListing;
       // Restore Premium fields if the event was created on Premium
@@ -168,6 +178,29 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         _selectedTime.hour,
         _selectedTime.minute,
       );
+
+  DateTime get _combinedEndDateTime => DateTime(
+        _selectedEndDate.year,
+        _selectedEndDate.month,
+        _selectedEndDate.day,
+        _selectedEndTime.hour,
+        _selectedEndTime.minute,
+      );
+
+  bool _isSameCalendarDate(DateTime first, DateTime second) =>
+      first.year == second.year &&
+      first.month == second.month &&
+      first.day == second.day;
+
+  void _ensureEndFollowsStart() {
+    if (_combinedEndDateTime.isAfter(_combinedDateTime)) return;
+    final adjusted = _combinedDateTime.add(const Duration(hours: 3));
+    _selectedEndDate = adjusted;
+    _selectedEndTime = TimeOfDay(
+      hour: adjusted.hour,
+      minute: adjusted.minute,
+    );
+  }
 
   double? get _parsedCost {
     final text = _costController.text.trim();
@@ -409,12 +442,43 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
     );
-    if (picked != null) setState(() => _selectedDate = picked);
+    if (picked != null) {
+      setState(() {
+        // A normal one-day event keeps its end on the newly selected start
+        // date. Multi-day events keep their separately chosen end date.
+        final endWasOnStartDate =
+            _isSameCalendarDate(_selectedEndDate, _selectedDate);
+        _selectedDate = picked;
+        if (endWasOnStartDate) _selectedEndDate = picked;
+        _ensureEndFollowsStart();
+      });
+    }
   }
 
   Future<void> _pickTime() async {
     final picked = await showTimePicker(context: context, initialTime: _selectedTime);
-    if (picked != null) setState(() => _selectedTime = picked);
+    if (picked != null) {
+      setState(() {
+        _selectedTime = picked;
+        _ensureEndFollowsStart();
+      });
+    }
+  }
+
+  Future<void> _pickEndDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedEndDate,
+      firstDate: _selectedDate,
+      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+    );
+    if (picked != null) setState(() => _selectedEndDate = picked);
+  }
+
+  Future<void> _pickEndTime() async {
+    final picked =
+        await showTimePicker(context: context, initialTime: _selectedEndTime);
+    if (picked != null) setState(() => _selectedEndTime = picked);
   }
 
   Future<void> _pickCover({required bool camera}) async {
@@ -489,6 +553,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       details: EventPosterDetails(
         title: title,
         dateTime: _combinedDateTime,
+        endDateTime: _combinedEndDateTime,
         venue: venue,
         address: _addressController.text.trim(),
         city: _cityController.text.trim(),
@@ -540,6 +605,12 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final l10n = AppLocalizations.of(context)!;
+    if (!_combinedEndDateTime.isAfter(_combinedDateTime)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.endTimeMustBeAfterStart)),
+      );
+      return;
+    }
     final auth = context.read<AuthProvider>();
     final subCheck = context.read<SubscriptionProvider>();
     // Admins post unlimited official events without the free-plan cap.
@@ -690,6 +761,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       title: _titleController.text,
       description: _descriptionController.text,
       dateTime: _combinedDateTime,
+      endDateTime: _combinedEndDateTime,
       location: _locationController.text,
       address: _addressController.text,
       city: _cityController.text,
@@ -818,6 +890,14 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             const SizedBox(height: AppTheme.spacingLg),
 
             _SectionHeader(title: l10n.dateAndTime),
+            Text(
+              l10n.eventStarts,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: AppTheme.spacingXs),
             Row(
               children: [
                 Expanded(
@@ -838,6 +918,41 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: AppTheme.spacingMd),
+            Text(
+              l10n.eventEnds,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: AppTheme.spacingXs),
+            Row(
+              children: [
+                Expanded(
+                  child: _DateTimeTile(
+                    icon: Icons.event_available_rounded,
+                    label: l10n.date,
+                    value: '${_selectedEndDate.month}/${_selectedEndDate.day}/${_selectedEndDate.year}',
+                    onTap: _pickEndDate,
+                  ),
+                ),
+                const SizedBox(width: AppTheme.spacingSm),
+                Expanded(
+                  child: _DateTimeTile(
+                    icon: Icons.timer_off_rounded,
+                    label: l10n.time,
+                    value: _selectedEndTime.format(context),
+                    onTap: _pickEndTime,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppTheme.spacingXs),
+            Text(
+              l10n.endTimeHint,
+              style: Theme.of(context).textTheme.labelSmall,
             ),
             const SizedBox(height: AppTheme.spacingLg),
 

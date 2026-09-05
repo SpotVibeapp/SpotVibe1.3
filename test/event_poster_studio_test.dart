@@ -37,6 +37,22 @@ void main() {
     });
   });
 
+  group('posterTimeLabel', () {
+    test('uses the exact same-day start and end time', () {
+      expect(
+        posterTimeLabel(
+          DateTime(2026, 9, 12, 20),
+          DateTime(2026, 9, 12, 23, 30),
+        ),
+        '8:00 PM – 11:30 PM',
+      );
+    });
+
+    test('keeps legacy posters compatible when no end was stored', () {
+      expect(posterTimeLabel(DateTime(2026, 9, 12, 20), null), '8:00 PM');
+    });
+  });
+
   group('posterPriceLabel', () {
     test('shows a structured free label when price is omitted or zero', () {
       expect(posterPriceLabel(null, freeLabel: 'Free'), 'FREE');

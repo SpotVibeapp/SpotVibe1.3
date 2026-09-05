@@ -76,6 +76,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
     required String title,
     required String description,
     required DateTime dateTime,
+    required DateTime endDateTime,
     required String location,
     required String address,
     String city = '',
@@ -107,6 +108,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
         title: title,
         description: description,
         dateTime: dateTime,
+        endDateTime: endDateTime,
         location: location,
         address: address,
         city: city.isEmpty ? 'El Paso' : city,
@@ -135,6 +137,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
       final payload = {
         ...userEventToMap(event),
         'dateTime': Timestamp.fromDate(event.dateTime),
+        'endDateTime': Timestamp.fromDate(endDateTime),
         'createdAt': FieldValue.serverTimestamp(),
       };
       final batch = _db.batch();
@@ -148,6 +151,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
           title: title,
           description: description,
           dateTime: dateTime,
+          endDateTime: endDateTime,
           location: location,
           address: address,
           city: city,
@@ -180,6 +184,8 @@ class FirebaseUserEventRepository extends UserEventRepository {
       final payload = {
         ...userEventToMap(updated),
         'dateTime': Timestamp.fromDate(updated.dateTime),
+        if (updated.endDateTime != null)
+          'endDateTime': Timestamp.fromDate(updated.endDateTime!),
         'updatedAt': FieldValue.serverTimestamp(),
       };
       final batch = _db.batch();

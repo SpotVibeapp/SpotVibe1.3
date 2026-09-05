@@ -52,6 +52,7 @@ void main() {
       title: 'Pool Night',
       description: 'A real event.',
       dateTime: DateTime(2026, 9, 12, 20),
+      endDateTime: DateTime(2026, 9, 12, 23),
       location: 'The Pool Hall',
       address: '123 Main St',
       imageUrl: photos.first,
@@ -69,6 +70,7 @@ void main() {
     expect(restored.allVideoUrls, videos);
     expect(restored.imageUrl, photos.first);
     expect(restored.videoUrl, videos.first);
+    expect(restored.endDateTime, event.endDateTime);
   });
 
   test('creator events keep all media while mirroring first media for legacy readers',
@@ -79,6 +81,7 @@ void main() {
       title: 'Pool Night',
       description: 'A real event.',
       dateTime: DateTime(2026, 9, 12, 20),
+      endDateTime: DateTime(2026, 9, 12, 23),
       location: 'The Pool Hall',
       address: '123 Main St',
       imageUrl: 'https://example.test/cover.jpg',
@@ -103,6 +106,28 @@ void main() {
     expect(restored.allVideoUrls, event.allVideoUrls);
     expect(stored['imageUrl'], event.imageUrl);
     expect(stored['videoUrl'], event.videoUrl);
+    expect(restored.endDateTime, event.endDateTime);
+  });
+
+  test('event service requires an end after the start time', () async {
+    final service = UserEventService(repository: UserEventRepository());
+    final start = DateTime.now().add(const Duration(days: 3));
+
+    await expectLater(
+      service.createEvent(
+        creatorId: 'creator-1',
+        title: 'Invalid timing',
+        description: 'A listing with an invalid event window.',
+        dateTime: start,
+        endDateTime: start,
+        location: 'The Pool Hall',
+        address: '123 Main St',
+        category: 'Social',
+        organizerName: 'SpotVibe',
+        isPremiumListing: false,
+      ),
+      throwsA(isA<ArgumentError>()),
+    );
   });
 
   test('event service enforces five-photo and three-video limits', () async {
@@ -114,6 +139,7 @@ void main() {
         title: 'Five photos',
         description: 'A real event with a complete gallery.',
         dateTime: DateTime.now().add(const Duration(days: 3)),
+        endDateTime: DateTime.now().add(const Duration(days: 3, hours: 3)),
         location: 'The Pool Hall',
         address: '123 Main St',
         imageUrl: 'https://example.test/photo-1.jpg',
@@ -138,6 +164,7 @@ void main() {
         title: 'Too many photos',
         description: 'A real event with too many images.',
         dateTime: DateTime.now().add(const Duration(days: 3)),
+        endDateTime: DateTime.now().add(const Duration(days: 3, hours: 3)),
         location: 'The Pool Hall',
         address: '123 Main St',
         imageUrl: 'https://example.test/cover.jpg',
@@ -158,6 +185,7 @@ void main() {
         title: 'Too many videos',
         description: 'A real event with too many video clips.',
         dateTime: DateTime.now().add(const Duration(days: 3)),
+        endDateTime: DateTime.now().add(const Duration(days: 3, hours: 3)),
         location: 'The Pool Hall',
         address: '123 Main St',
         videoUrls: List.generate(

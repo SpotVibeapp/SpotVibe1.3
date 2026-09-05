@@ -1014,7 +1014,9 @@ class EventService {
                   e.source == EventSource.ticketmaster))
           .toList();
     }
-    return dedupeEvents([...curated, ...remote]);
+    return dedupeEvents([...curated, ...remote])
+        .where((event) => event.isVisibleAt())
+        .toList();
   }
 
   Future<Event?> getEventById(String id) async {
@@ -1076,10 +1078,10 @@ class EventService {
           city: areaQuery.trim(),
         );
       }
-      filtered = filtered.where((e) => e.dateTime.isAfter(DateTime.now())).toList();
+      filtered = filtered.where((e) => e.isVisibleAt()).toList();
     } else {
       final events = await _repository.getUpcomingEvents();
-      filtered = events.where((e) => e.dateTime.isAfter(DateTime.now())).toList();
+      filtered = events.where((e) => e.isVisibleAt()).toList();
       filtered = await _withLiveListings(
         local: filtered,
         lat: userLat ?? kElPasoLat,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/event_time.dart';
 import '../data/media_urls.dart';
 import '../data/pricing.dart';
 
@@ -67,7 +68,10 @@ class Event {
   final String id;
   final String title;
   final String description;
+  /// Event start date and time.
   final DateTime dateTime;
+  /// Explicit event end time. Legacy event documents can omit this value.
+  final DateTime? endDateTime;
   final String location;
   final String address;
   final String city;
@@ -103,6 +107,7 @@ class Event {
     required this.title,
     required this.description,
     required this.dateTime,
+    this.endDateTime,
     required this.location,
     required this.address,
     this.city = '',
@@ -134,6 +139,8 @@ class Event {
     String? title,
     String? description,
     DateTime? dateTime,
+    DateTime? endDateTime,
+    bool clearEndDateTime = false,
     String? location,
     String? address,
     String? city,
@@ -164,6 +171,8 @@ class Event {
         title: title ?? this.title,
         description: description ?? this.description,
         dateTime: dateTime ?? this.dateTime,
+        endDateTime:
+            clearEndDateTime ? null : (endDateTime ?? this.endDateTime),
         location: location ?? this.location,
         address: address ?? this.address,
         city: city ?? this.city,
@@ -192,6 +201,13 @@ class Event {
       );
 
   bool get isFree => cost == null || cost == 0;
+
+  /// True while the event has started and its explicit end time is still ahead.
+  bool get isHappeningNow => isEventHappeningNow(dateTime, endDateTime);
+
+  /// Whether the event belongs in the active discovery feed at [now].
+  bool isVisibleAt({DateTime? now}) =>
+      isEventVisibleInFeed(dateTime, endDateTime, now: now);
 
   String get costLabel => isFree ? 'Free' : '\$${cost!.toStringAsFixed(2)}';
 
