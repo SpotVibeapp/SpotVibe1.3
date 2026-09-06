@@ -63,10 +63,7 @@ class MockEventRepository implements EventRepository {
         .map((e) {
           final s = saves[e.id];
           if (s == null) return e;
-          return e.copyWith(
-            isBookmarked: s.bookmarked,
-            isInterested: s.interested,
-          );
+          return s.applyTo(e);
         })
         .toList();
   }

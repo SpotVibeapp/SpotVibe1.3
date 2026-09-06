@@ -191,6 +191,9 @@ class FirebaseEventRepository implements EventRepository {
           bookmarked: data['bookmarked'] == true,
           interested: data['interested'] == true,
           updatedAtMs: (data['updatedAt'] as Timestamp?)?.millisecondsSinceEpoch ?? 0,
+          // True when the mirror transaction also updated the event doc's
+          // counters — only possible for events with a Firestore doc.
+          countedRemotely: data['countedRemotely'] == true,
         );
       }
       // Device-local entries are optimistic writes that may not have synced
@@ -264,6 +267,10 @@ class FirebaseEventRepository implements EventRepository {
         await tx.set(saveRef, {
           'bookmarked': bookmarked,
           'interested': interested,
+          // Whether the event doc's public counters include this save.
+          // Ticketmaster listings have no doc, so their saves can never be
+          // counted remotely — the UI adjusts the displayed count locally.
+          'countedRemotely': eventSnap.exists,
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
       }
