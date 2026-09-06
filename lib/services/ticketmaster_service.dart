@@ -410,6 +410,9 @@ Event? eventFromTicketmaster(Map<String, dynamic> json) {
     state: state,
     zipCode: zip,
     cost: cost,
+    // Ticketmaster listings are ticketed by definition — never show "Free"
+    // just because this event had no published price range.
+    isTicketed: true,
     imageUrl: imageUrl,
     category: _mapClassification(json),
     organizerName: venueName.isEmpty ? 'Ticketmaster' : venueName,

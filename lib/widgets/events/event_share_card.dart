@@ -35,6 +35,10 @@ class ShareEventData {
   final double? cost;
   final bool isUserEvent;
 
+  /// True for ticketed listings without a published price (Ticketmaster) —
+  /// keeps the shared image from showing a misleading "Free" badge.
+  final bool isTicketed;
+
   const ShareEventData({
     required this.id,
     required this.title,
@@ -45,6 +49,7 @@ class ShareEventData {
     required this.category,
     required this.cost,
     required this.isUserEvent,
+    this.isTicketed = false,
   });
 
   factory ShareEventData.fromEvent(Event event) => ShareEventData(
@@ -56,6 +61,7 @@ class ShareEventData {
         imageUrl: event.imageUrl,
         category: event.category,
         cost: event.cost,
+        isTicketed: event.isTicketed,
         // Feed events can be a public mirror of a creator listing. Preserve
         // that distinction so copied/shared links reopen its creator page.
         isUserEvent: event.isUserCreated,
@@ -74,8 +80,9 @@ class ShareEventData {
         isUserEvent: true,
       );
 
-  bool get isFree => cost == null || cost == 0;
-  String get costLabel => isFree ? 'Free' : '\$${cost!.toStringAsFixed(2)}';
+  bool get isFree => !isTicketed && (cost == null || cost == 0);
+  String get costLabel =>
+      isFree ? 'Free' : (cost == null ? 'Tickets' : '\$${cost.toStringAsFixed(2)}');
   String get fullLocation =>
       [location, city].where((part) => part.isNotEmpty).join(', ');
 }

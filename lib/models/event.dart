@@ -79,6 +79,10 @@ class Event {
   final String state;
   final String zipCode;
   final double? cost;
+  /// True for listings that are known to be ticketed even when no price was
+  /// published (e.g. Ticketmaster events without priceRanges). Prevents
+  /// paid listings from showing a misleading "Free" badge.
+  final bool isTicketed;
   final String imageUrl;
   /// Ordered event photo gallery. The cover [imageUrl] is also included for
   /// new events; [allImageUrls] deduplicates legacy and gallery data.
@@ -117,6 +121,7 @@ class Event {
     this.state = '',
     this.zipCode = '',
     this.cost,
+    this.isTicketed = false,
     required this.imageUrl,
     this.imageUrls = const [],
     this.videoUrl,
@@ -151,6 +156,7 @@ class Event {
     String? state,
     String? zipCode,
     double? cost,
+    bool? isTicketed,
     String? imageUrl,
     List<String>? imageUrls,
     String? videoUrl,
@@ -184,6 +190,7 @@ class Event {
         state: state ?? this.state,
         zipCode: zipCode ?? this.zipCode,
         cost: cost ?? this.cost,
+        isTicketed: isTicketed ?? this.isTicketed,
         imageUrl: imageUrl ?? this.imageUrl,
         imageUrls: imageUrls ?? this.imageUrls,
         videoUrl: clearVideoUrl ? null : (videoUrl ?? this.videoUrl),
@@ -206,7 +213,9 @@ class Event {
         socialLinks: socialLinks ?? this.socialLinks,
       );
 
-  bool get isFree => cost == null || cost == 0;
+  /// Ticketed listings (e.g. Ticketmaster) are never "free" just because the
+  /// source did not publish a price range.
+  bool get isFree => !isTicketed && (cost == null || cost == 0);
 
   /// True while the event has started and its explicit end time is still ahead.
   bool get isHappeningNow => isEventHappeningNow(dateTime, endDateTime);
@@ -215,7 +224,13 @@ class Event {
   bool isVisibleAt({DateTime? now}) =>
       isEventVisibleInFeed(dateTime, endDateTime, now: now);
 
-  String get costLabel => isFree ? 'Free' : '\$${cost!.toStringAsFixed(2)}';
+  /// Ticketed events without a published price show a neutral "Tickets"
+  /// label instead of a misleading "Free" (or a crash on a null cost).
+  String get costLabel {
+    if (isFree) return 'Free';
+    if (cost == null) return 'Tickets';
+    return '\$${cost.toStringAsFixed(2)}';
+  }
 
   /// Cover first, followed by up to four additional event photos.
   List<String> get allImageUrls => List.unmodifiable(
