@@ -40,11 +40,17 @@ class AddToCalendarButton extends StatelessWidget {
       startDate: startTime,
       endDate: _endTime,
     );
-    final added = await Add2Calendar.addEvent2Cal(event);
-    if (!added && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.calendarError)),
-      );
+    bool added = false;
+    try {
+      added = await Add2Calendar.addEvent2Cal(event);
+    } catch (_) {
+      added = false;
+    }
+    if (!added) {
+      // No native calendar handler accepted the insert (or it was blocked) —
+      // fall back to the Google Calendar web form, which works with any
+      // browser installed.
+      if (context.mounted) await _openGoogleCalendarUrl(context);
     }
   }
 
@@ -63,13 +69,21 @@ class AddToCalendarButton extends StatelessWidget {
       '&location=$encodedLocation'
       '&details=$encodedDetails',
     );
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.googleCalendarError)),
-      );
+    try {
+      final launched =
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched && context.mounted) {
+        _showCalendarError(context);
+      }
+    } catch (_) {
+      if (context.mounted) _showCalendarError(context);
     }
+  }
+
+  void _showCalendarError(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context)!.googleCalendarError)),
+    );
   }
 
   /// Formats a DateTime to Google Calendar's YYYYMMDDTHHmmssZ format (UTC).

@@ -49,15 +49,15 @@ class MapsService {
     }
     candidates.add(googleDirectionsUri(event));
 
+    // Launch directly and catch — canLaunchUrl is unreliable on Android 11+
+    // (package visibility) even when a handler exists.
     for (final uri in candidates) {
       try {
-        if (await canLaunchUrl(uri)) {
-          final launched = await launchUrl(
-            uri,
-            mode: LaunchMode.externalApplication,
-          );
-          if (launched) return true;
-        }
+        final launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+        if (launched) return true;
       } catch (_) {
         // try the next candidate
       }
@@ -71,10 +71,9 @@ class MapsService {
       return false;
     }
     try {
-      if (await canLaunchUrl(uri)) {
-        return launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } catch (_) {}
-    return false;
+      return await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      return false;
+    }
   }
 }
