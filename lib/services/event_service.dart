@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import '../data/el_paso_events.dart';
 import '../data/event_dedupe.dart';
 import '../models/event.dart';
+import '../models/event_save.dart';
 import '../repositories/event_repository.dart';
 import 'ticketmaster_service.dart';
 
@@ -1092,7 +1093,35 @@ class EventService {
   Future<Event?> getEventById(String id) async {
     final local = await _repository.getEventById(id);
     if (local != null) return local;
-    return _ticketmaster?.getEventById(id);
+    final remote = await _ticketmaster?.getEventById(id);
+    if (remote == null) return null;
+    // Ticketmaster events never pass through the repository — apply the
+    // user's saved flags here so bookmarks survive cold-start deep links.
+    return (await _withSaves([remote])).first;
+  }
+
+  /// Applies the user's bookmark / interested flags to every event —
+  /// including live Ticketmaster listings merged after the repository read.
+  /// Without this, bookmarks on Ticketmaster events were wiped on every
+  /// feed refresh (which runs once per minute).
+  Future<List<Event>> _withSaves(List<Event> events) async {
+    if (events.isEmpty) return events;
+    try {
+      final saves = await _repository.getSaves();
+      if (saves.isEmpty) return events;
+      return events
+          .map((e) {
+            final s = saves[e.id];
+            if (s == null) return e;
+            return e.copyWith(
+              isBookmarked: s.bookmarked,
+              isInterested: s.interested,
+            );
+          })
+          .toList();
+    } catch (_) {
+      return events;
+    }
   }
 
   Future<List<Event>> getUpcomingEvents({
@@ -1311,26 +1340,44 @@ class EventService {
           final dB = _haversineDistanceMiles(userLat, userLng, b.latitude, b.longitude);
           return dA.compareTo(dB);
         });
-        return filtered;
+        return _withSaves(filtered);
       }
     }
 
     filtered.sort((a, b) => a.dateTime.compareTo(b.dateTime));
-    return promoteFeaturedEvents(filtered);
+    return _withSaves(promoteFeaturedEvents(filtered));
   }
 
   Future<Event> toggleBookmark(Event event) async {
-    await _repository.toggleBookmark(event.id);
+    EventSave? current;
+    try {
+      current = (await _repository.getSaves())[event.id];
+    } catch (_) {}
+    final next = !(current?.bookmarked ?? event.isBookmarked);
+    await _repository.setSave(
+      event.id,
+      bookmarked: next,
+      interested: current?.interested ?? event.isInterested,
+    );
     return event.copyWith(
-      isBookmarked: !event.isBookmarked,
+      isBookmarked: next,
       bookmarkedCount: event.isBookmarked ? event.bookmarkedCount - 1 : event.bookmarkedCount + 1,
     );
   }
 
   Future<Event> toggleInterested(Event event) async {
-    await _repository.toggleInterested(event.id);
+    EventSave? current;
+    try {
+      current = (await _repository.getSaves())[event.id];
+    } catch (_) {}
+    final next = !(current?.interested ?? event.isInterested);
+    await _repository.setSave(
+      event.id,
+      bookmarked: current?.bookmarked ?? event.isBookmarked,
+      interested: next,
+    );
     return event.copyWith(
-      isInterested: !event.isInterested,
+      isInterested: next,
       interestedCount: event.isInterested ? event.interestedCount - 1 : event.interestedCount + 1,
     );
   }

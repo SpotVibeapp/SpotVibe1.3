@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spotvibe_app/models/event.dart';
+import 'package:spotvibe_app/models/event_save.dart';
 import 'package:spotvibe_app/repositories/event_repository.dart';
 import 'package:spotvibe_app/providers/event_provider.dart';
 import 'package:spotvibe_app/repositories/user_event_repository.dart';
@@ -31,10 +32,14 @@ class _FixedEventRepository implements EventRepository {
   Future<List<Event>> getUpcomingEvents() async => events;
 
   @override
-  Future<void> toggleBookmark(String eventId) async {}
+  Future<Map<String, EventSave>> getSaves() async => {};
 
   @override
-  Future<void> toggleInterested(String eventId) async {}
+  Future<void> setSave(
+    String eventId, {
+    required bool bookmarked,
+    required bool interested,
+  }) async {}
 }
 
 class _ControlledEventRepository implements EventRepository {
@@ -63,10 +68,14 @@ class _ControlledEventRepository implements EventRepository {
   }
 
   @override
-  Future<void> toggleBookmark(String eventId) async {}
+  Future<Map<String, EventSave>> getSaves() async => {};
 
   @override
-  Future<void> toggleInterested(String eventId) async {}
+  Future<void> setSave(
+    String eventId, {
+    required bool bookmarked,
+    required bool interested,
+  }) async {}
 }
 
 Event _event({

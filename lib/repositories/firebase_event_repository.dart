@@ -5,8 +5,10 @@ import 'package:flutter/foundation.dart';
 import '../data/el_paso_events.dart';
 import '../data/event_codec.dart';
 import '../models/event.dart';
+import '../models/event_save.dart';
 import '../services/ban_service.dart';
 import 'event_repository.dart';
+import 'local_saves_store.dart';
 
 /// Firestore-backed [EventRepository].
 ///
@@ -29,6 +31,7 @@ class FirebaseEventRepository implements EventRepository {
   final FirebaseFirestore _db;
   final FirebaseAuth _auth;
   final EventRepository _fallback;
+  final LocalSavesStore _localSaves = LocalSavesStore();
 
   bool _seedAttempted = false;
   bool _useFallback = false;
@@ -165,69 +168,147 @@ class FirebaseEventRepository implements EventRepository {
   }
 
   @override
-  Future<void> toggleBookmark(String eventId) {
-    return _guard(() async {
-      await _toggleSave(eventId, field: 'bookmarked');
-    }, () => _fallback.toggleBookmark(eventId));
+  Future<Map<String, EventSave>> getSaves() async {
+    // Deliberately NOT routed through [_guard]: a failed saves read (e.g.
+    // transient rules/offline hiccup) must not latch the whole feed into
+    // mock-fallback mode — it only degrades the save overlay.
+    if (_useFallback) return _localSaves.load();
+    try {
+      final uid = _uid;
+      // Guests: the device-local store is the only store.
+      if (uid == null) return await _localSaves.load();
+
+      final snap = await _db
+          .collection('users')
+          .doc(uid)
+          .collection('saved_events')
+          .get();
+      final saves = <String, EventSave>{};
+      for (final d in snap.docs) {
+        final data = d.data();
+        saves[d.id] = EventSave(
+          eventId: d.id,
+          bookmarked: data['bookmarked'] == true,
+          interested: data['interested'] == true,
+          updatedAtMs: (data['updatedAt'] as Timestamp?)?.millisecondsSinceEpoch ?? 0,
+        );
+      }
+      // Device-local entries are optimistic writes that may not have synced
+      // yet (offline / failed write). The most recent change wins.
+      final local = await _localSaves.load();
+      local.forEach((id, l) {
+        final remote = saves[id];
+        if (remote == null || l.updatedAtMs > remote.updatedAtMs) {
+          saves[id] = l;
+        }
+      });
+      return saves;
+    } catch (e) {
+      debugPrint('Saved-events read failed ($e) — using device-local saves.');
+      return _localSaves.load();
+    }
   }
 
   @override
-  Future<void> toggleInterested(String eventId) {
-    return _guard(() async {
-      await _toggleSave(eventId, field: 'interested');
-    }, () => _fallback.toggleInterested(eventId));
+  Future<void> setSave(
+    String eventId, {
+    required bool bookmarked,
+    required bool interested,
+  }) async {
+    // Optimistic device-local write FIRST — a failed or slow network write
+    // must never silently discard the user's action.
+    if (bookmarked || interested) {
+      await _localSaves.set(eventId, bookmarked: bookmarked, interested: interested);
+    } else {
+      await _localSaves.remove(eventId);
+    }
+
+    final uid = _uid;
+    if (uid == null) return; // guest — local store is authoritative
+
+    final synced = await _guardWrite(
+      () => _mirrorSave(uid, eventId,
+          bookmarked: bookmarked, interested: interested),
+    );
+    if (synced) {
+      // Synced successfully — drop the local override so Firestore stays the
+      // single source of truth for signed-in users.
+      await _localSaves.remove(eventId);
+    } else {
+      // Keep the local entry; it wins the merge in [getSaves] until the
+      // write succeeds, and re-syncs on the next toggle.
+    }
   }
 
-  Future<void> _toggleSave(String eventId, {required String field}) async {
-    final uid = _uid;
-    if (uid == null) {
-      // Guests: persist only for this process via the mock.
-      if (field == 'bookmarked') {
-        await _fallback.toggleBookmark(eventId);
-      } else {
-        await _fallback.toggleInterested(eventId);
-      }
-      return;
-    }
+  /// Mirrors one save to Firestore. Must only be called for a signed-in
+  /// user (guests would be rejected by the security rules).
+  Future<void> _mirrorSave(
+    String uid,
+    String eventId, {
+    required bool bookmarked,
+    required bool interested,
+  }) async {
     final saveRef =
         _db.collection('users').doc(uid).collection('saved_events').doc(eventId);
     final eventRef = _events.doc(eventId);
     await _db.runTransaction((tx) async {
       final saveSnap = await tx.get(saveRef);
       final eventSnap = await tx.get(eventRef);
-      final currently = saveSnap.data()?[field] == true;
-      final next = !currently;
-      tx.set(saveRef, {
-        field: next,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      final prevBookmarked = saveSnap.data()?['bookmarked'] == true;
+      final prevInterested = saveSnap.data()?['interested'] == true;
+
+      if (!bookmarked && !interested) {
+        // Fully unsaved — remove the doc so the collection stays tidy.
+        if (saveSnap.exists) await tx.delete(saveRef);
+      } else {
+        await tx.set(saveRef, {
+          'bookmarked': bookmarked,
+          'interested': interested,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+
       if (eventSnap.exists) {
-        final countField =
-            field == 'bookmarked' ? 'bookmarkedCount' : 'interestedCount';
-        tx.update(eventRef, {
-          countField: FieldValue.increment(next ? 1 : -1),
-        });
+        // Ticketmaster listings have no Firestore doc — only counters on
+        // docs that exist are updated.
+        final updates = <String, FieldValue>{};
+        if (prevBookmarked != bookmarked) {
+          updates['bookmarkedCount'] = FieldValue.increment(bookmarked ? 1 : -1);
+        }
+        if (prevInterested != interested) {
+          updates['interestedCount'] = FieldValue.increment(interested ? 1 : -1);
+        }
+        if (updates.isNotEmpty) await tx.update(eventRef, updates);
       }
     });
   }
 
-  Future<List<Event>> _overlaySaves(List<Event> events) async {
-    final uid = _uid;
-    if (uid == null || events.isEmpty) return events;
+  /// Like [_guard] for user-triggered writes, but never latches the mock
+  /// fallback: a failed save must not downgrade the whole live feed.
+  /// Returns whether the write reached Firestore.
+  Future<bool> _guardWrite(Future<void> Function() action) async {
+    if (_useFallback) return false;
     try {
-      final saves = await _db
-          .collection('users')
-          .doc(uid)
-          .collection('saved_events')
-          .get();
-      final byId = {for (final d in saves.docs) d.id: d.data()};
+      await action();
+      return true;
+    } catch (e) {
+      debugPrint('Firestore write failed ($e).');
+      return false;
+    }
+  }
+
+  Future<List<Event>> _overlaySaves(List<Event> events) async {
+    if (events.isEmpty) return events;
+    try {
+      final saves = await getSaves();
+      if (saves.isEmpty) return events;
       return events
           .map((e) {
-            final save = byId[e.id];
-            if (save == null) return e;
+            final s = saves[e.id];
+            if (s == null) return e;
             return e.copyWith(
-              isBookmarked: save['bookmarked'] == true,
-              isInterested: save['interested'] == true,
+              isBookmarked: s.bookmarked,
+              isInterested: s.interested,
             );
           })
           .toList();
