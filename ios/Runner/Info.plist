@@ -47,8 +47,11 @@
     <true/>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
+    <!-- Deep links are handled by app_links (lib/main.dart). Flutter's built-in
+         handler must stay OFF or it feeds the raw spotvibe:// URI to go_router
+         (no matching route) and overrides the app_links navigation. -->
     <key>FlutterDeepLinkingEnabled</key>
-    <true/>
+    <false/>
     <key>CFBundleURLTypes</key>
     <array>
       <dict>
