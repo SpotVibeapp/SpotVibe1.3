@@ -71,7 +71,6 @@ void main() async {
   //   4. /                     — all subsequent normal launches
   String initialLocation = '/';
   String? coldLinkUri;
-  String? coldLinkUri;
 
   if (!kIsWeb) {
     try {
@@ -124,6 +123,7 @@ void main() async {
       notificationService: notificationService,
       permissionService: permissionService,
       initialLocation: initialLocation,
+      initialLinkUri: coldLinkUri,
     ),
   );
 }
@@ -254,7 +254,6 @@ class SpotVibeApp extends StatefulWidget {
   final PermissionService permissionService;
   final String initialLocation;
   final String? initialLinkUri;
-  final String? initialLinkUri;
 
   const SpotVibeApp({
     super.key,
@@ -282,8 +281,6 @@ class _SpotVibeAppState extends State<SpotVibeApp>
   late final GoRouter _router;
   final AppLinks _appLinks = AppLinks();
   String? _lastResumeLinkUri;
-  final AppLinks _appLinks = AppLinks();
-  String? _lastResumeLinkUri;
 
   @override
   void initState() {
@@ -293,10 +290,12 @@ class _SpotVibeAppState extends State<SpotVibeApp>
     if (!kIsWeb) {
       WidgetsBinding.instance.addObserver(this);
       // app_links: handles https App Links, universal links, and spotvibe://
-      // custom-scheme URIs while the app is running.
-      final appLinks = AppLinks();
-      appLinks.uriLinkStream.listen((uri) {
+      // custom-scheme URIs while the app is running. Uses the same _appLinks
+      // instance as the resume check — two instances would double-handle the
+      // warm-tap delivery.
+      _appLinks.uriLinkStream.listen((uri) {
         debugPrint('[deepLink] stream uri=$uri');
+        _lastResumeLinkUri = uri.toString();
         final path = DeepLinkService.pathFromUri(uri.toString());
         debugPrint('[deepLink] stream parsed path=$path');
         if (path != null) _router.go(path);
