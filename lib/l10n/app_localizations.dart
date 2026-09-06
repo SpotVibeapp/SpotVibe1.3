@@ -946,7 +946,7 @@ abstract class AppLocalizations {
   /// No description provided for @couldNotGetLocation.
   ///
   /// In en, this message translates to:
-  /// **'We couldn't determine your location. Make sure Location is turned on in your device settings, then try again.'**
+  /// **'We couldn\'t determine your location. Make sure Location is turned on in your device settings, then try again.'**
   String get couldNotGetLocation;
 
   /// No description provided for @showingEventsIn.
@@ -1675,6 +1675,12 @@ abstract class AppLocalizations {
   /// **'You can add up to {maximum} videos to one event.'**
   String mediaVideoLimit(int maximum);
 
+  /// No description provided for @photos.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get photos;
+
   /// No description provided for @mediaPremiumPerk.
   ///
   /// In en, this message translates to:
@@ -1686,12 +1692,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unlock full gallery'**
   String get unlockMediaGallery;
-
-  /// No description provided for @photos.
-  ///
-  /// In en, this message translates to:
-  /// **'Photos'**
-  String get photos;
 
   /// No description provided for @videos.
   ///
@@ -3331,81 +3331,436 @@ abstract class AppLocalizations {
   /// **'Press contact'**
   String get claimProofPressContact;
 
+  /// No description provided for @eventCreationGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'Event creation guide'**
   String get eventCreationGuide;
+
+  /// No description provided for @eventCreationGuideTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'How to create an event'**
   String get eventCreationGuideTooltip;
+
+  /// No description provided for @eventCreationGuideCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create with confidence'**
   String get eventCreationGuideCardTitle;
+
+  /// No description provided for @eventCreationGuideCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow the quick checklist and compare exactly what Free and Premium include.'**
   String get eventCreationGuideCardBody;
+
+  /// No description provided for @eventCreationGuideMediaSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Free: 1 cover photo + 1 short video. Premium: up to 5 photos total (including the cover) + 3 short videos.'**
   String get eventCreationGuideMediaSummary;
+
+  /// No description provided for @openEventCreationGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'Open creator guide'**
   String get openEventCreationGuide;
+
+  /// No description provided for @eventCreationGuideIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'A simple checklist for publishing a clear, share-ready event.'**
   String get eventCreationGuideIntro;
+
+  /// No description provided for @eventCreationGuideCurrentPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current plan'**
   String get eventCreationGuideCurrentPlan;
+
+  /// No description provided for @eventCreationGuideFreeActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Free plan'**
   String get eventCreationGuideFreeActive;
+
+  /// No description provided for @eventCreationGuidePremiumActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium active'**
   String get eventCreationGuidePremiumActive;
+
+  /// No description provided for @eventCreationGuideAdminAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin test access'**
   String get eventCreationGuideAdminAccess;
+
+  /// No description provided for @eventCreationGuideDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'1. Start with the details'**
   String get eventCreationGuideDetailsTitle;
+
+  /// No description provided for @eventCreationGuideDetailsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a clear title and description, then confirm the start and end date/time, venue, location, and ticket price. Leave the price blank when the event is free.'**
   String get eventCreationGuideDetailsBody;
+
+  /// No description provided for @eventCreationGuideVisualsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'2. Make it visual'**
   String get eventCreationGuideVisualsTitle;
+
+  /// No description provided for @eventCreationGuideVisualsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a cover photo first. Premium creators can generate an AI promo background. Poster Studio makes a separate share poster using the exact title, date, time, venue, and price from this form.'**
   String get eventCreationGuideVisualsBody;
+
+  /// No description provided for @eventCreationGuideMediaTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'3. Add media that fits your plan'**
   String get eventCreationGuideMediaTitle;
+
+  /// No description provided for @eventCreationGuidePlanIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'The cover photo counts as photo 1. Every video must be 30 seconds or less and under 50 MB.'**
   String get eventCreationGuidePlanIntro;
+
+  /// No description provided for @eventCreationGuideFreeEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to 2 upcoming one-time events at a time'**
   String get eventCreationGuideFreeEvents;
+
+  /// No description provided for @eventCreationGuideFreeMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'1 cover photo total and 1 short video per event'**
   String get eventCreationGuideFreeMedia;
+
+  /// No description provided for @eventCreationGuideFreePublish.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic event page with public organizer social links in the public feed'**
   String get eventCreationGuideFreePublish;
+
+  /// No description provided for @eventCreationGuidePremiumEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited events, including weekly or monthly recurring events'**
   String get eventCreationGuidePremiumEvents;
+
+  /// No description provided for @eventCreationGuidePremiumMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to 5 photos total (cover included) and 3 short videos per event'**
   String get eventCreationGuidePremiumMedia;
+
+  /// No description provided for @eventCreationGuidePremiumTools.
+  ///
+  /// In en, this message translates to:
+  /// **'AI promo backgrounds, analytics, custom branding, and contact links'**
   String get eventCreationGuidePremiumTools;
+
+  /// No description provided for @eventCreationGuideSharedTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Both plans can publish core event details, add public organizer social links, add a cover, and use Poster Studio to make a share poster. AI promo backgrounds are a Premium creator tool.'**
   String get eventCreationGuideSharedTools;
+
+  /// No description provided for @eventCreationGuideAdminNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Your administrator account can test the full 5-photo and 3-video media allowance, plus all creator tools without a subscription.'**
   String get eventCreationGuideAdminNote;
+
+  /// No description provided for @eventCreationGuideReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'4. Review, publish, and share'**
   String get eventCreationGuideReviewTitle;
+
+  /// No description provided for @eventCreationGuideReviewBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Check every detail before publishing. If you later change the title, date, time, venue, or price, reopen Poster Studio to create an updated share poster.'**
   String get eventCreationGuideReviewBody;
+
+  /// No description provided for @eventCreationGuideExplorePremium.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore Premium'**
   String get eventCreationGuideExplorePremium;
+
+  /// No description provided for @eventCreationGuideStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start creating'**
   String get eventCreationGuideStart;
 
+  /// No description provided for @notificationTestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Test notifications'**
   String get notificationTestTitle;
+
+  /// No description provided for @notificationTestBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a one-time test alert to confirm notifications work on this device.'**
   String get notificationTestBody;
+
+  /// No description provided for @sendTestNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'Send test notification'**
   String get sendTestNotification;
+
+  /// No description provided for @notificationTestAlertTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SpotVibe notifications are working'**
   String get notificationTestAlertTitle;
+
+  /// No description provided for @notificationTestAlertBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a test notification you requested.'**
   String get notificationTestAlertBody;
+
+  /// No description provided for @notificationTestSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Test notification sent. Check your notification shade.'**
   String get notificationTestSent;
+
+  /// No description provided for @notificationPermissionNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are off for SpotVibe. Turn them on in Settings to test.'**
   String get notificationPermissionNeeded;
+
+  /// No description provided for @notificationTestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t send a test notification. Please try again.'**
   String get notificationTestFailed;
+
+  /// No description provided for @openSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Settings'**
   String get openSettings;
 
+  /// No description provided for @eventStarts.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts'**
   String get eventStarts;
+
+  /// No description provided for @eventEnds.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends'**
   String get eventEnds;
+
+  /// No description provided for @endTimeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Set the real end time. Your event stays visible as happening now until then.'**
   String get endTimeHint;
+
+  /// No description provided for @endTimeMustBeAfterStart.
+  ///
+  /// In en, this message translates to:
+  /// **'End date and time must be after the start.'**
   String get endTimeMustBeAfterStart;
+
+  /// No description provided for @endTimeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an end time before publishing.'**
   String get endTimeRequired;
+
+  /// No description provided for @selectEndTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose time'**
   String get selectEndTime;
+
+  /// No description provided for @happeningNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Happening now'**
   String get happeningNow;
 
+  /// No description provided for @editProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit profile'**
   String get editProfile;
+
+  /// No description provided for @profileNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Company or organizer name'**
   String get profileNameLabel;
+
+  /// No description provided for @profileNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. SpotVibe'**
   String get profileNameHint;
+
+  /// No description provided for @profileNameHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'This name appears on your profile and on events you create.'**
   String get profileNameHelp;
+
+  /// No description provided for @updateExistingEventNames.
+  ///
+  /// In en, this message translates to:
+  /// **'Update this name on events I already posted'**
   String get updateExistingEventNames;
+
+  /// No description provided for @profileNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a company or organizer name.'**
   String get profileNameRequired;
+
+  /// No description provided for @profileNameTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Name must be 100 characters or fewer.'**
   String get profileNameTooLong;
+
+  /// No description provided for @profileUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated.'**
   String get profileUpdated;
 
+  /// No description provided for @askSpotVibe.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask SpotVibe'**
   String get askSpotVibe;
+
+  /// No description provided for @askSpotVibeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe what you want to do and see real local events — with optional road-trip picks.'**
   String get askSpotVibeSubtitle;
+
+  /// No description provided for @askSpotVibeSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to get real event recommendations.'**
   String get askSpotVibeSignIn;
+
+  /// No description provided for @aiSearchIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell me what you are looking for. I will turn it into a search, then show only real SpotVibe and Ticketmaster listings.'**
   String get aiSearchIntro;
+
+  /// No description provided for @aiSearchRealResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask SpotVibe interprets your request. Event names, dates, prices, and availability always come from real listings.'**
   String get aiSearchRealResults;
+
+  /// No description provided for @aiSearchRoadTrips.
+  ///
+  /// In en, this message translates to:
+  /// **'Include nearby-city road trips (up to 4 hours)'**
   String get aiSearchRoadTrips;
+
+  /// No description provided for @aiSearchRoadTripsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional: check real matches in selected regional cities. Confirm directions and travel time before you go.'**
   String get aiSearchRoadTripsHint;
+
+  /// No description provided for @aiSearchTryPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Try one of these'**
   String get aiSearchTryPrompt;
+
+  /// No description provided for @aiSearchPromptMusic.
+  ///
+  /// In en, this message translates to:
+  /// **'Live music this weekend'**
   String get aiSearchPromptMusic;
+
+  /// No description provided for @aiSearchPromptFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Family-friendly events tomorrow'**
   String get aiSearchPromptFamily;
+
+  /// No description provided for @aiSearchPromptFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Food and drink events this week'**
   String get aiSearchPromptFood;
+
+  /// No description provided for @aiSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. comedy Friday, outdoor art, or live jazz'**
   String get aiSearchHint;
+
+  /// No description provided for @aiSearchEmptyQuery.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell SpotVibe what you want to find.'**
   String get aiSearchEmptyQuery;
+
+  /// No description provided for @aiSearchSearching.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching real events…'**
   String get aiSearchSearching;
+
+  /// No description provided for @aiSearchFoundRealResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Here are real listings that match your request.'**
   String get aiSearchFoundRealResults;
+
+  /// No description provided for @aiSearchNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching live listings were found. Try a broader request or another date.'**
   String get aiSearchNoResults;
+
+  /// No description provided for @aiSearchLocalResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Near {location}'**
   String aiSearchLocalResults(String location);
+
+  /// No description provided for @aiSearchRoadTripResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Road-trip options in {location}'**
   String aiSearchRoadTripResults(String location);
+
+  /// No description provided for @aiSearchNoResultsHere.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching live listings were returned for this area.'**
   String get aiSearchNoResultsHere;
 }
 

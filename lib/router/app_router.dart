@@ -47,14 +47,8 @@ import '../services/permission_service.dart';
 import '../services/user_event_service.dart';
 
 class AppRouter {
-  static EventService _eventService(
-    BuildContext context,
-    EventRepository eventRepo,
-  ) {
-    return EventService(
-      repository: eventRepo,
-      ticketmaster: context.read<TicketmasterService>(),
-    );
+  static EventService _eventService(BuildContext context, EventRepository eventRepo) {
+    return EventService(repository: eventRepo, ticketmaster: context.read<TicketmasterService>());
   }
 
   /// Build the router.  [initialLocation] is resolved at startup:
@@ -67,14 +61,19 @@ class AppRouter {
       // Never silently reset a user to home when navigation fails. Showing a
       // recoverable error page makes invalid deep links and route bugs visible
       // during testing instead of looking like a random app refresh.
-      errorBuilder: (_, __) => const _RouteErrorScreen(),
+      errorBuilder: (_, state) {
+        debugPrint(
+          '[deepLink] ROUTE ERROR uri=${state.uri} '
+          'name=${state.name} error=${state.error}',
+        );
+        return const _RouteErrorScreen();
+      },
       // Deep link redirect: if a link arrives pointing at an event page but
       // permissions haven't been shown yet, save the path and send the user
       // through the permission screen first.
       redirect: (context, state) async {
         final path = state.uri.toString();
-        final isEventPath =
-            path.startsWith('/event/') || path.startsWith('/user-event/');
+        final isEventPath = path.startsWith('/event/') || path.startsWith('/user-event/');
         if (!isEventPath) return null;
 
         final permSvc = context.read<PermissionService>();
@@ -86,315 +85,301 @@ class AppRouter {
         return '/onboarding';
       },
       routes: [
-      GoRoute(
-        path: '/onboarding',
-        builder: (context, state) {
-          final permSvc = context.read<PermissionService>();
-          final onboardingRepo = context.read<OnboardingRepository>();
-          return OnboardingScreen(
-            permissionService: permSvc,
-            onboardingRepository: onboardingRepo,
-          );
-        },
-      ),
-      GoRoute(
-        path: '/permissions',
-        builder: (context, state) {
-          final permSvc = context.read<PermissionService>();
-          return PermissionPromptScreen(permissionService: permSvc);
-        },
-      ),
-      GoRoute(
-        path: '/notifications',
-        builder: (context, state) {
-          final notifProvider = context.read<NotificationProvider>();
-          return ChangeNotifierProvider.value(
-            value: notifProvider,
-            child: const NotificationsScreen(),
-          );
-        },
-      ),
-      GoRoute(
-        path: '/notification-preferences',
-        builder: (context, state) {
-          final prefsRepo =
-              context.read<NotificationPreferencesRepository>();
-          return ChangeNotifierProvider(
-            create: (_) =>
-                NotificationPreferencesProvider(repository: prefsRepo),
-            child: const NotificationPreferencesScreen(),
-          );
-        },
-      ),
-      GoRoute(
-        path: '/',
-        builder: (context, state) {
-          final eventRepo = context.read<EventRepository>();
-          final notifs = context.read<NotificationService>();
-          final expiry = context.read<EventExpiryService>();
-          final personalization = context.read<PersonalizationProvider>();
-          return MultiProvider(
-            providers: [
-              Provider(create: (ctx) => _eventService(ctx, eventRepo)),
-              ChangeNotifierProvider(
-                create: (ctx) => EventProvider(
-                  service: ctx.read<EventService>(),
-                  notificationService: notifs,
-                  expiryService: expiry,
-                  personalizationProvider: personalization,
-                  analytics: context.read<EventAnalyticsService>(),
-                )..initialize(),
-              ),
-            ],
-            child: const EventsScreen(),
-          );
-        },
-      ),
-      GoRoute(
-        path: '/map',
-        builder: (context, state) {
-          final eventRepo = context.read<EventRepository>();
-          final notifs = context.read<NotificationService>();
-          final expiry = context.read<EventExpiryService>();
-          return MultiProvider(
-            providers: [
-              Provider(create: (ctx) => _eventService(ctx, eventRepo)),
-              ChangeNotifierProvider(
-                create: (ctx) => EventProvider(
-                  service: ctx.read<EventService>(),
-                  notificationService: notifs,
-                  expiryService: expiry,
-                )..initialize(),
-              ),
-            ],
-            child: const EventMapScreen(),
-          );
-        },
-      ),
-      // Top-level route so deep links work on cold start (no state.extra needed).
-      GoRoute(
-        path: '/event/:id',
-        builder: (context, state) {
-          final eventId = state.pathParameters['id']!;
-          // In-app navigation passes the Event object via extra to avoid a
-          // redundant async load. A cold-start deep link has no extra, so we
-          // fall back to loading the event by ID from the repository.
-          final eventExtra = state.extra as Event?;
-          final eventRepo = context.read<EventRepository>();
-          final rsvpRepo = context.read<RsvpRepository>();
-          final notifs = context.read<NotificationService>();
-          final auth = context.read<AuthProvider>();
-          if (eventExtra != null) {
+        GoRoute(
+          path: '/onboarding',
+          builder: (context, state) {
+            final permSvc = context.read<PermissionService>();
+            final onboardingRepo = context.read<OnboardingRepository>();
+            return OnboardingScreen(
+              permissionService: permSvc,
+              onboardingRepository: onboardingRepo,
+            );
+          },
+        ),
+        GoRoute(
+          path: '/permissions',
+          builder: (context, state) {
+            final permSvc = context.read<PermissionService>();
+            return PermissionPromptScreen(permissionService: permSvc);
+          },
+        ),
+        GoRoute(
+          path: '/notifications',
+          builder: (context, state) {
+            final notifProvider = context.read<NotificationProvider>();
+            return ChangeNotifierProvider.value(
+              value: notifProvider,
+              child: const NotificationsScreen(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/notification-preferences',
+          builder: (context, state) {
+            final prefsRepo = context.read<NotificationPreferencesRepository>();
+            return ChangeNotifierProvider(
+              create: (_) => NotificationPreferencesProvider(repository: prefsRepo),
+              child: const NotificationPreferencesScreen(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/',
+          builder: (context, state) {
+            final eventRepo = context.read<EventRepository>();
+            final notifs = context.read<NotificationService>();
+            final expiry = context.read<EventExpiryService>();
+            final personalization = context.read<PersonalizationProvider>();
             return MultiProvider(
               providers: [
                 Provider(create: (ctx) => _eventService(ctx, eventRepo)),
                 ChangeNotifierProvider(
-                  create: (ctx) => EventProvider(
-                    service: ctx.read<EventService>(),
-                    notificationService: notifs,
-                  )..seedEvents([eventExtra]),
-                ),
-                ChangeNotifierProvider(
-                  create: (_) => RsvpProvider(
-                    repository: rsvpRepo,
-                    eventId: eventExtra.id,
-                    currentUserId: auth.user?.id ?? 'guest',
-                  )..load(),
+                  create:
+                      (ctx) => EventProvider(
+                        service: ctx.read<EventService>(),
+                        notificationService: notifs,
+                        expiryService: expiry,
+                        personalizationProvider: personalization,
+                        analytics: context.read<EventAnalyticsService>(),
+                      )..initialize(),
                 ),
               ],
-              child: EventDetailScreen(event: eventExtra),
+              child: const EventsScreen(),
             );
-          }
-          // Cold-start: load event by ID asynchronously.
-          return _EventDeepLinkLoader(
-            eventId: eventId,
-            eventRepo: eventRepo,
-            ticketmaster: context.read<TicketmasterService>(),
-            rsvpRepo: rsvpRepo,
-            notifs: notifs,
-            auth: auth,
-          );
-        },
-      ),
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: '/profile',
-        builder: (context, state) => const ProfileScreen(),
-      ),
-      GoRoute(
-        path: '/admin',
-        builder: (context, state) {
-          final auth = context.read<AuthProvider>();
-          if (!auth.isAdmin) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (context.mounted) context.go('/');
-            });
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
-          }
-          return const AdminDashboardScreen();
-        },
-      ),
-
-      GoRoute(
-        path: '/saved-events',
-        builder: (context, state) {
-          final eventRepo = context.read<EventRepository>();
-          return ChangeNotifierProvider(
-            create: (_) => EventProvider(
-              service: _eventService(context, eventRepo),
-              expiryService: context.read<EventExpiryService>(),
-            )..initialize(),
-            child: const SavedEventsScreen(),
-          );
-        },
-      ),
-
-      GoRoute(
-        path: '/privacy',
-        builder: (context, state) =>
-            const LegalDocumentScreen(document: kPrivacyPolicy),
-      ),
-      GoRoute(
-        path: '/terms',
-        builder: (context, state) =>
-            const LegalDocumentScreen(document: kTermsOfUse),
-      ),
-      GoRoute(
-        path: '/paywall',
-        builder: (context, state) => const PaywallScreen(),
-      ),
-      GoRoute(
-        path: '/creator-pro-paywall',
-        builder: (context, state) => const PaywallScreen(),
-      ),
-      GoRoute(
-        path: '/creator-dashboard',
-        builder: (context, state) {
-          final auth = context.read<AuthProvider>();
-          if (!auth.isLoggedIn || auth.isGuest) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (context.mounted) context.go('/login');
-            });
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
-          }
-          final userEventRepo = context.read<UserEventRepository>();
-          final service = UserEventService(repository: userEventRepo);
-          return ChangeNotifierProvider(
-            create: (_) => UserEventsProvider(
-              service: service,
-              creatorId: auth.user!.id,
-            ),
-            child: const CreatorDashboardScreen(),
-          );
-        },
-      ),
-      GoRoute(
-        path: '/event-analytics/:id',
-        builder: (context, state) {
-          final event = state.extra as UserCreatedEvent;
-          return CreatorAnalyticsScreen(event: event);
-        },
-      ),
-      GoRoute(
-        path: '/claim-venue',
-        builder: (context, state) {
-          final event = state.extra as Event;
-          return VenueClaimScreen(event: event);
-        },
-      ),
-      GoRoute(
-        path: '/my-events',
-        builder: (context, state) {
-          final auth = context.read<AuthProvider>();
-          if (!auth.isLoggedIn || auth.isGuest) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (context.mounted) context.go('/login');
-            });
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
-          }
-          final userEventRepo = context.read<UserEventRepository>();
-          final service = UserEventService(repository: userEventRepo);
-          return ChangeNotifierProvider(
-            create: (_) => UserEventsProvider(
-              service: service,
-              creatorId: auth.user!.id,
-            ),
-            child: const MyEventsScreen(),
-          );
-        },
-      ),
-      GoRoute(
-        path: '/create-event',
-        builder: (context, state) {
-          final auth = context.read<AuthProvider>();
-          if (!auth.isLoggedIn || auth.isGuest) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (context.mounted) context.go('/login');
-            });
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
-          }
-          final userEventRepo = context.read<UserEventRepository>();
-          final service = UserEventService(repository: userEventRepo);
-          return MultiProvider(
-            providers: [
-              Provider(create: (_) => service),
-              ChangeNotifierProvider(
-                create: (_) => CreateEventProvider(
-                  service: service,
-                  creatorId: auth.user!.id,
-                  creatorName: auth.user!.displayName,
+          },
+        ),
+        GoRoute(
+          path: '/map',
+          builder: (context, state) {
+            final eventRepo = context.read<EventRepository>();
+            final notifs = context.read<NotificationService>();
+            final expiry = context.read<EventExpiryService>();
+            return MultiProvider(
+              providers: [
+                Provider(create: (ctx) => _eventService(ctx, eventRepo)),
+                ChangeNotifierProvider(
+                  create:
+                      (ctx) => EventProvider(
+                        service: ctx.read<EventService>(),
+                        notificationService: notifs,
+                        expiryService: expiry,
+                      )..initialize(),
                 ),
-              ),
-            ],
-            child: const CreateEventScreen(),
-          );
-        },
-      ),
-      GoRoute(
-        path: '/edit-event/:id',
-        builder: (context, state) {
-          final eventId = state.pathParameters['id']!;
-          final auth = context.read<AuthProvider>();
-          final userEventRepo = context.read<UserEventRepository>();
-          final service = UserEventService(repository: userEventRepo);
-          // Load event synchronously from repo — wrapped in FutureBuilder in the route
-          return MultiProvider(
-            providers: [
-              Provider(create: (_) => service),
-              ChangeNotifierProvider(
-                create: (_) => CreateEventProvider(
-                  service: service,
-                  creatorId: auth.user?.id ?? 'user_1',
-                  creatorName: auth.user?.displayName ?? 'Anonymous',
+              ],
+              child: const EventMapScreen(),
+            );
+          },
+        ),
+        // Top-level route so deep links work on cold start (no state.extra needed).
+        GoRoute(
+          path: '/event/:id',
+          builder: (context, state) {
+            final eventId = state.pathParameters['id']!;
+            // In-app navigation passes the Event object via extra to avoid a
+            // redundant async load. A cold-start deep link has no extra, so we
+            // fall back to loading the event by ID from the repository.
+            final eventExtra = state.extra as Event?;
+            final eventRepo = context.read<EventRepository>();
+            final rsvpRepo = context.read<RsvpRepository>();
+            final notifs = context.read<NotificationService>();
+            final auth = context.read<AuthProvider>();
+            if (eventExtra != null) {
+              return MultiProvider(
+                providers: [
+                  Provider(create: (ctx) => _eventService(ctx, eventRepo)),
+                  ChangeNotifierProvider(
+                    create:
+                        (ctx) => EventProvider(
+                          service: ctx.read<EventService>(),
+                          notificationService: notifs,
+                        )..seedEvents([eventExtra]),
+                  ),
+                  ChangeNotifierProvider(
+                    create:
+                        (_) => RsvpProvider(
+                          repository: rsvpRepo,
+                          eventId: eventExtra.id,
+                          currentUserId: auth.user?.id ?? 'guest',
+                        )..load(),
+                  ),
+                ],
+                child: EventDetailScreen(event: eventExtra),
+              );
+            }
+            // Cold-start: load event by ID asynchronously.
+            return _EventDeepLinkLoader(
+              eventId: eventId,
+              eventRepo: eventRepo,
+              ticketmaster: context.read<TicketmasterService>(),
+              rsvpRepo: rsvpRepo,
+              notifs: notifs,
+              auth: auth,
+            );
+          },
+        ),
+        GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+        GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
+        GoRoute(
+          path: '/admin',
+          builder: (context, state) {
+            final auth = context.read<AuthProvider>();
+            if (!auth.isAdmin) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (context.mounted) context.go('/');
+              });
+              return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            }
+            return const AdminDashboardScreen();
+          },
+        ),
+
+        GoRoute(
+          path: '/saved-events',
+          builder: (context, state) {
+            final eventRepo = context.read<EventRepository>();
+            return ChangeNotifierProvider(
+              create:
+                  (_) => EventProvider(
+                    service: _eventService(context, eventRepo),
+                    expiryService: context.read<EventExpiryService>(),
+                  )..initialize(),
+              child: const SavedEventsScreen(),
+            );
+          },
+        ),
+
+        GoRoute(
+          path: '/privacy',
+          builder: (context, state) => const LegalDocumentScreen(document: kPrivacyPolicy),
+        ),
+        GoRoute(
+          path: '/terms',
+          builder: (context, state) => const LegalDocumentScreen(document: kTermsOfUse),
+        ),
+        GoRoute(path: '/paywall', builder: (context, state) => const PaywallScreen()),
+        GoRoute(path: '/creator-pro-paywall', builder: (context, state) => const PaywallScreen()),
+        GoRoute(
+          path: '/creator-dashboard',
+          builder: (context, state) {
+            final auth = context.read<AuthProvider>();
+            if (!auth.isLoggedIn || auth.isGuest) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (context.mounted) context.go('/login');
+              });
+              return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            }
+            final userEventRepo = context.read<UserEventRepository>();
+            final service = UserEventService(repository: userEventRepo);
+            return ChangeNotifierProvider(
+              create: (_) => UserEventsProvider(service: service, creatorId: auth.user!.id),
+              child: const CreatorDashboardScreen(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/event-analytics/:id',
+          builder: (context, state) {
+            final event = state.extra as UserCreatedEvent;
+            return CreatorAnalyticsScreen(event: event);
+          },
+        ),
+        GoRoute(
+          path: '/claim-venue',
+          builder: (context, state) {
+            final event = state.extra as Event;
+            return VenueClaimScreen(event: event);
+          },
+        ),
+        GoRoute(
+          path: '/my-events',
+          builder: (context, state) {
+            final auth = context.read<AuthProvider>();
+            if (!auth.isLoggedIn || auth.isGuest) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (context.mounted) context.go('/login');
+              });
+              return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            }
+            final userEventRepo = context.read<UserEventRepository>();
+            final service = UserEventService(repository: userEventRepo);
+            return ChangeNotifierProvider(
+              create: (_) => UserEventsProvider(service: service, creatorId: auth.user!.id),
+              child: const MyEventsScreen(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/create-event',
+          builder: (context, state) {
+            final auth = context.read<AuthProvider>();
+            if (!auth.isLoggedIn || auth.isGuest) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (context.mounted) context.go('/login');
+              });
+              return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            }
+            final userEventRepo = context.read<UserEventRepository>();
+            final service = UserEventService(repository: userEventRepo);
+            return MultiProvider(
+              providers: [
+                Provider(create: (_) => service),
+                ChangeNotifierProvider(
+                  create:
+                      (_) => CreateEventProvider(
+                        service: service,
+                        creatorId: auth.user!.id,
+                        creatorName: auth.user!.displayName,
+                      ),
                 ),
-              ),
-            ],
-            child: _EditEventLoader(eventId: eventId, service: service),
-          );
-        },
-      ),
-      GoRoute(
-        path: '/user-event/:id',
-        builder: (context, state) {
-          final eventId = state.pathParameters['id']!;
-          final rsvpRepo = context.read<RsvpRepository>();
-          final auth = context.read<AuthProvider>();
-          final userEventRepo = context.read<UserEventRepository>();
-          final service = UserEventService(repository: userEventRepo);
-          return ChangeNotifierProvider(
-            create: (_) => RsvpProvider(
-              repository: rsvpRepo,
-              eventId: 'user_$eventId',
-              currentUserId: auth.user?.id ?? 'guest',
-            )..load(),
-            child: _UserEventDetailLoader(eventId: eventId, service: service),
-          );
-        },
-      ),
-    ],
+              ],
+              child: const CreateEventScreen(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/edit-event/:id',
+          builder: (context, state) {
+            final eventId = state.pathParameters['id']!;
+            final auth = context.read<AuthProvider>();
+            final userEventRepo = context.read<UserEventRepository>();
+            final service = UserEventService(repository: userEventRepo);
+            // Load event synchronously from repo — wrapped in FutureBuilder in the route
+            return MultiProvider(
+              providers: [
+                Provider(create: (_) => service),
+                ChangeNotifierProvider(
+                  create:
+                      (_) => CreateEventProvider(
+                        service: service,
+                        creatorId: auth.user?.id ?? 'user_1',
+                        creatorName: auth.user?.displayName ?? 'Anonymous',
+                      ),
+                ),
+              ],
+              child: _EditEventLoader(eventId: eventId, service: service),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/user-event/:id',
+          builder: (context, state) {
+            final eventId = state.pathParameters['id']!;
+            final rsvpRepo = context.read<RsvpRepository>();
+            final auth = context.read<AuthProvider>();
+            final userEventRepo = context.read<UserEventRepository>();
+            final service = UserEventService(repository: userEventRepo);
+            return ChangeNotifierProvider(
+              create:
+                  (_) => RsvpProvider(
+                    repository: rsvpRepo,
+                    eventId: 'user_$eventId',
+                    currentUserId: auth.user?.id ?? 'guest',
+                  )..load(),
+              child: _UserEventDetailLoader(eventId: eventId, service: service),
+            );
+          },
+        ),
+      ],
     );
   }
 }
@@ -497,8 +482,7 @@ class _EventDeepLinkLoaderState extends State<_EventDeepLinkLoader> {
       // SnackBar + context.go('/')) fired during the cold-start navigation
       // and surfaced as the router error page ("We could not open that
       // page") instead of a useful message.
-      debugPrint(
-          'Deep-link event not found: ${widget.eventId} (repo + Ticketmaster both empty)');
+      debugPrint('Deep-link event not found: ${widget.eventId} (repo + Ticketmaster both empty)');
       setState(() {
         _notFound = true;
         _loading = false;
@@ -527,8 +511,7 @@ class _EventDeepLinkLoaderState extends State<_EventDeepLinkLoader> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.event_busy_rounded,
-                    size: 56, color: colors.onSurfaceVariant),
+                Icon(Icons.event_busy_rounded, size: 56, color: colors.onSurfaceVariant),
                 const SizedBox(height: 16),
                 Text(
                   'This event is no longer available.',
@@ -538,8 +521,7 @@ class _EventDeepLinkLoaderState extends State<_EventDeepLinkLoader> {
                 const SizedBox(height: 8),
                 Text(
                   'It may have ended, or the listing source did not respond.',
-                  style: text.bodyMedium
-                      ?.copyWith(color: colors.onSurfaceVariant),
+                  style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
@@ -558,17 +540,19 @@ class _EventDeepLinkLoaderState extends State<_EventDeepLinkLoader> {
       providers: [
         Provider(create: (_) => _service),
         ChangeNotifierProvider(
-          create: (ctx) => EventProvider(
-            service: ctx.read<EventService>(),
-            notificationService: widget.notifs,
-          )..seedEvents([_event!]),
+          create:
+              (ctx) => EventProvider(
+                service: ctx.read<EventService>(),
+                notificationService: widget.notifs,
+              )..seedEvents([_event!]),
         ),
         ChangeNotifierProvider(
-          create: (_) => RsvpProvider(
-            repository: widget.rsvpRepo,
-            eventId: _event!.id,
-            currentUserId: widget.auth.user?.id ?? 'guest',
-          )..load(),
+          create:
+              (_) => RsvpProvider(
+                repository: widget.rsvpRepo,
+                eventId: _event!.id,
+                currentUserId: widget.auth.user?.id ?? 'guest',
+              )..load(),
         ),
       ],
       child: EventDetailScreen(event: _event!),
@@ -599,13 +583,18 @@ class _UserEventDetailLoaderState extends State<_UserEventDetailLoader> {
 
   Future<void> _load() async {
     final event = await widget.service.getEventById(widget.eventId);
-    if (mounted) setState(() { _event = event; _loading = false; });
+    if (mounted)
+      setState(() {
+        _event = event;
+        _loading = false;
+      });
   }
 
   @override
   Widget build(BuildContext context) {
     if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    if (_event == null) return Scaffold(appBar: AppBar(), body: const Center(child: Text('Event not found.')));
+    if (_event == null)
+      return Scaffold(appBar: AppBar(), body: const Center(child: Text('Event not found.')));
     return UserEventDetailScreen(event: _event!);
   }
 }
@@ -633,13 +622,18 @@ class _EditEventLoaderState extends State<_EditEventLoader> {
 
   Future<void> _load() async {
     final event = await widget.service.getEventById(widget.eventId);
-    if (mounted) setState(() { _event = event; _loading = false; });
+    if (mounted)
+      setState(() {
+        _event = event;
+        _loading = false;
+      });
   }
 
   @override
   Widget build(BuildContext context) {
     if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    if (_event == null) return Scaffold(appBar: AppBar(), body: const Center(child: Text('Event not found.')));
+    if (_event == null)
+      return Scaffold(appBar: AppBar(), body: const Center(child: Text('Event not found.')));
     return CreateEventScreen(editingEvent: _event);
   }
 }

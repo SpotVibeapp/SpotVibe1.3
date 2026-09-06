@@ -1,0 +1,77 @@
+From 8df5fa9dba44b32af92906a2a2ee2d3cfa31adad Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@arena.ai>
+Date: Sun, 6 Sep 2026 21:12:29 +0000
+Subject: [PATCH] Add deep-link diagnostics: log every incoming URI/path and
+ show the unmatched location on the route error screen
+
+---
+ lib/main.dart              | 10 +++++++++-
+ lib/router/app_router.dart | 22 +++++++++++++++++++++-
+ 2 files changed, 23 insertions(+), 2 deletions(-)
+
+diff --git a/lib/main.dart b/lib/main.dart
+index 8c443bd..273eb60 100644
+--- a/lib/main.dart
++++ b/lib/main.dart
+@@ -77,10 +77,14 @@ Future<void> main() async {
+       final appLinks = AppLinks();
+       final coldUri = await appLinks.getInitialLink();
+       if (coldUri != null) {
++        debugPrint('[deepLink] cold-start uri=$coldUri');
+         final path = DeepLinkService.pathFromUri(coldUri.toString());
++        debugPrint('[deepLink] cold-start parsed path=$path');
+         if (path != null) initialLocation = path;
+       }
+-    } catch (_) {}
++    } catch (e) {
++      debugPrint('[deepLink] cold-start read failed: $e');
++    }
+   }
+ 
+   if (initialLocation == '/') {
+diff --git a/lib/router/app_router.dart b/lib/router/app_router.dart
+index 5aed983..c02c6b2 100644
+--- a/lib/router/app_router.dart
++++ b/lib/router/app_router.dart
+@@ -67,7 +67,11 @@ class AppRouter {
+       // Never silently reset a user to home when navigation fails. Showing a
+       // recoverable error page makes invalid deep links and route bugs visible
+       // during testing instead of looking like a random app refresh.
+-      errorBuilder: (_, __) => const _RouteErrorScreen(),
++      errorBuilder: (_, state) {
++        debugPrint('[deepLink] ROUTE ERROR uri=${state.uri} '
++            'name=${state.name} error=${state.error}');
++        return _RouteErrorScreen(location: state.uri.toString());
++      },
+       // Deep link redirect: if a link arrives pointing at an event page but
+       // permissions haven't been shown yet, save the path and send the user
+       // through the permission screen first.
+@@ -404,7 +408,9 @@ class AppRouter {
+ }
+ 
+ class _RouteErrorScreen extends StatelessWidget {
+-  const _RouteErrorScreen();
++  final String? location;
++  const _RouteErrorScreen({this.location});
+ 
+   @override
+   Widget build(BuildContext context) {
+@@ -423,6 +429,17 @@ class _RouteErrorScreen extends StatelessWidget {
+                 'The link may be outdated or the page may no longer be available.',
+                 style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
+                 textAlign: TextAlign.center,
+               ),
++              if (location != null) ...[
++                const SizedBox(height: 8),
++                Text(
++                  'Link: $location',
++                  style: text.bodySmall
++                      ?.copyWith(color: colors.onSurfaceVariant),
++                  textAlign: TextAlign.center,
++                ),
++              ],
+               const SizedBox(height: 24),
+               FilledButton.icon(
+                 onPressed: () => context.go('/'),
+-- 
+2.39.5

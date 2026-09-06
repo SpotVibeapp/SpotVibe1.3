@@ -402,7 +402,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get premiumPerk5Title => 'Contact button';
 
   @override
-  String get premiumPerk5Subtitle => 'Phone, website, and organizer contact tools';
+  String get premiumPerk5Subtitle =>
+      'Phone, website, and organizer contact tools';
 
   @override
   String get premiumPerk6Title => 'No ads';
@@ -420,7 +421,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get premiumPerk8Title => 'Rich media gallery';
 
   @override
-  String get premiumPerk8Subtitle => 'Up to 5 photos and 3 short videos on every event';
+  String get premiumPerk8Subtitle =>
+      'Up to 5 photos and 3 short videos on every event';
 
   @override
   String get trialLabel => '7-day free trial';
@@ -755,19 +757,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiArtDirection => 'Art direction (optional)';
 
   @override
-  String get aiArtDirectionHint => 'e.g. blue neon pool tables, elegant lighting, open space for a title';
+  String get aiArtDirectionHint =>
+      'e.g. blue neon pool tables, elegant lighting, open space for a title';
 
   @override
-  String get aiArtworkOnly => 'AI creates the artwork only. Poster Studio adds the exact event details. Review the result before publishing; it is not sent to SpotVibe for manual approval. Do not use misleading logos, celebrity likenesses, or copyrighted characters.';
+  String get aiArtworkOnly =>
+      'AI creates the artwork only. Poster Studio adds the exact event details. Review the result before publishing; it is not sent to SpotVibe for manual approval. Do not use misleading logos, celebrity likenesses, or copyrighted characters.';
 
   @override
   String get posterStudio => 'Poster Studio';
 
   @override
-  String get posterStudioIntro => 'Design a share-ready poster using the exact details from this event. If you change an event detail, reopen Poster Studio to refresh the poster.';
+  String get posterStudioIntro =>
+      'Design a share-ready poster using the exact details from this event. If you change an event detail, reopen Poster Studio to refresh the poster.';
 
   @override
-  String get posterExactDetails => 'SpotVibe writes the title, date, time, venue, and price from this form. AI is not asked to create these details.';
+  String get posterExactDetails =>
+      'SpotVibe writes the title, date, time, venue, and price from this form. AI is not asked to create these details.';
 
   @override
   String get posterTemplate => 'Template';
@@ -806,10 +812,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sharePoster => 'Share poster';
 
   @override
-  String get posterCaptureFailed => 'Could not create the poster. Please try again.';
+  String get posterCaptureFailed =>
+      'Could not create the poster. Please try again.';
 
   @override
-  String get posterSharingMobileOnly => 'Poster sharing is available in the Android app.';
+  String get posterSharingMobileOnly =>
+      'Poster sharing is available in the Android app.';
 
   @override
   String get createSharePoster => 'Create & share full poster';
@@ -818,7 +826,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get posterCoverStays => 'Your current event cover stays unchanged.';
 
   @override
-  String get posterTitleVenueRequired => 'Add an event title and venue before creating a poster.';
+  String get posterTitleVenueRequired =>
+      'Add an event title and venue before creating a poster.';
 
   @override
   String eventPhotosCount(int current, int maximum) {
@@ -826,13 +835,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get photoGalleryHint => 'Add up to 5 photos total. Your cover photo counts as the first.';
+  String get photoGalleryHint =>
+      'Add up to 5 photos total. Your cover photo counts as the first.';
 
   @override
-  String get photoGalleryFreeHint => 'Free listings include 1 cover photo. Premium unlocks up to 5 photos.';
+  String get photoGalleryFreeHint =>
+      'Free listings include 1 cover photo. Premium unlocks up to 5 photos.';
 
   @override
-  String get videoGalleryFreeHint => 'Free listings include 1 short video. Premium unlocks up to 3 videos.';
+  String get videoGalleryFreeHint =>
+      'Free listings include 1 short video. Premium unlocks up to 3 videos.';
 
   @override
   String get noAdditionalPhotos => 'Add photos from your library or camera.';
@@ -863,10 +875,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get videoGalleryHint => 'Add up to 3 short videos. Each can be up to 30 seconds.';
+  String get videoGalleryHint =>
+      'Add up to 3 short videos. Each can be up to 30 seconds.';
 
   @override
-  String get noVideosYet => 'No videos yet. Add one from your library or camera.';
+  String get noVideosYet =>
+      'No videos yet. Add one from your library or camera.';
 
   @override
   String videoNumber(int number) {
@@ -893,13 +907,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get mediaPremiumPerk => 'Premium unlocks up to 5 photos and 3 videos per event.';
+  String get photos => 'Photos';
+
+  @override
+  String get mediaPremiumPerk =>
+      'Premium unlocks up to 5 photos and 3 videos per event.';
 
   @override
   String get unlockMediaGallery => 'Unlock full gallery';
-
-  @override
-  String get photos => 'Photos';
 
   @override
   String get videos => 'Videos';
@@ -1885,8 +1900,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your administrator account can test the full 5-photo and 3-video media allowance, plus all creator tools without a subscription.';
 
   @override
-  String get eventCreationGuideReviewTitle =>
-      '4. Review, publish, and share';
+  String get eventCreationGuideReviewTitle => '4. Review, publish, and share';
 
   @override
   String get eventCreationGuideReviewBody =>
@@ -1909,8 +1923,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sendTestNotification => 'Send test notification';
 
   @override
-  String get notificationTestAlertTitle =>
-      'SpotVibe notifications are working';
+  String get notificationTestAlertTitle => 'SpotVibe notifications are working';
 
   @override
   String get notificationTestAlertBody =>
@@ -1972,12 +1985,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Update this name on events I already posted';
 
   @override
-  String get profileNameRequired =>
-      'Enter a company or organizer name.';
+  String get profileNameRequired => 'Enter a company or organizer name.';
 
   @override
-  String get profileNameTooLong =>
-      'Name must be 100 characters or fewer.';
+  String get profileNameTooLong => 'Name must be 100 characters or fewer.';
 
   @override
   String get profileUpdated => 'Profile updated.';
@@ -1990,8 +2001,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Describe what you want to do and see real local events — with optional road-trip picks.';
 
   @override
-  String get askSpotVibeSignIn =>
-      'Sign in to get real event recommendations.';
+  String get askSpotVibeSignIn => 'Sign in to get real event recommendations.';
 
   @override
   String get aiSearchIntro =>
@@ -2022,8 +2032,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiSearchPromptFood => 'Food and drink events this week';
 
   @override
-  String get aiSearchHint =>
-      'e.g. comedy Friday, outdoor art, or live jazz';
+  String get aiSearchHint => 'e.g. comedy Friday, outdoor art, or live jazz';
 
   @override
   String get aiSearchEmptyQuery => 'Tell SpotVibe what you want to find.';

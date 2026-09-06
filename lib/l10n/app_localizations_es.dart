@@ -408,7 +408,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get premiumPerk5Title => 'Botón de contacto';
 
   @override
-  String get premiumPerk5Subtitle => 'Teléfono, sitio web y herramientas de contacto';
+  String get premiumPerk5Subtitle =>
+      'Teléfono, sitio web y herramientas de contacto';
 
   @override
   String get premiumPerk6Title => 'Sin anuncios';
@@ -427,7 +428,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get premiumPerk8Title => 'Galería multimedia';
 
   @override
-  String get premiumPerk8Subtitle => 'Hasta 5 fotos y 3 videos cortos en cada evento';
+  String get premiumPerk8Subtitle =>
+      'Hasta 5 fotos y 3 videos cortos en cada evento';
 
   @override
   String get trialLabel => 'prueba gratuita de 7 días';
@@ -764,19 +766,23 @@ class AppLocalizationsEs extends AppLocalizations {
   String get aiArtDirection => 'Dirección artística (opcional)';
 
   @override
-  String get aiArtDirectionHint => 'p. ej., mesas de billar con neón azul, iluminación elegante y espacio para el título';
+  String get aiArtDirectionHint =>
+      'p. ej., mesas de billar con neón azul, iluminación elegante y espacio para el título';
 
   @override
-  String get aiArtworkOnly => 'La IA crea solo el arte. Poster Studio agrega los datos exactos del evento. Revisa el resultado antes de publicar; no se envía a SpotVibe para aprobación manual. No uses logotipos engañosos, imágenes de celebridades ni personajes protegidos por derechos de autor.';
+  String get aiArtworkOnly =>
+      'La IA crea solo el arte. Poster Studio agrega los datos exactos del evento. Revisa el resultado antes de publicar; no se envía a SpotVibe para aprobación manual. No uses logotipos engañosos, imágenes de celebridades ni personajes protegidos por derechos de autor.';
 
   @override
   String get posterStudio => 'Estudio de pósteres';
 
   @override
-  String get posterStudioIntro => 'Diseña un póster listo para compartir usando los datos exactos de este evento. Si cambias un dato, abre de nuevo el Estudio de pósteres para actualizarlo.';
+  String get posterStudioIntro =>
+      'Diseña un póster listo para compartir usando los datos exactos de este evento. Si cambias un dato, abre de nuevo el Estudio de pósteres para actualizarlo.';
 
   @override
-  String get posterExactDetails => 'SpotVibe escribe el título, fecha, hora, venue y precio desde este formulario. No se le pide a la IA que cree estos datos.';
+  String get posterExactDetails =>
+      'SpotVibe escribe el título, fecha, hora, venue y precio desde este formulario. No se le pide a la IA que cree estos datos.';
 
   @override
   String get posterTemplate => 'Plantilla';
@@ -815,10 +821,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sharePoster => 'Compartir póster';
 
   @override
-  String get posterCaptureFailed => 'No se pudo crear el póster. Inténtalo de nuevo.';
+  String get posterCaptureFailed =>
+      'No se pudo crear el póster. Inténtalo de nuevo.';
 
   @override
-  String get posterSharingMobileOnly => 'Compartir pósteres está disponible en la app de Android.';
+  String get posterSharingMobileOnly =>
+      'Compartir pósteres está disponible en la app de Android.';
 
   @override
   String get createSharePoster => 'Crear y compartir póster completo';
@@ -827,7 +835,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get posterCoverStays => 'La portada actual del evento no cambia.';
 
   @override
-  String get posterTitleVenueRequired => 'Agrega un título y venue antes de crear un póster.';
+  String get posterTitleVenueRequired =>
+      'Agrega un título y venue antes de crear un póster.';
 
   @override
   String eventPhotosCount(int current, int maximum) {
@@ -835,13 +844,16 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get photoGalleryHint => 'Agrega hasta 5 fotos en total. La portada cuenta como la primera.';
+  String get photoGalleryHint =>
+      'Agrega hasta 5 fotos en total. La portada cuenta como la primera.';
 
   @override
-  String get photoGalleryFreeHint => 'Los eventos gratis incluyen 1 foto de portada. Premium desbloquea hasta 5 fotos.';
+  String get photoGalleryFreeHint =>
+      'Los eventos gratis incluyen 1 foto de portada. Premium desbloquea hasta 5 fotos.';
 
   @override
-  String get videoGalleryFreeHint => 'Los eventos gratis incluyen 1 video corto. Premium desbloquea hasta 3 videos.';
+  String get videoGalleryFreeHint =>
+      'Los eventos gratis incluyen 1 video corto. Premium desbloquea hasta 3 videos.';
 
   @override
   String get noAdditionalPhotos => 'Agrega fotos desde tu biblioteca o cámara.';
@@ -872,10 +884,12 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get videoGalleryHint => 'Agrega hasta 3 videos cortos. Cada uno puede durar hasta 30 segundos.';
+  String get videoGalleryHint =>
+      'Agrega hasta 3 videos cortos. Cada uno puede durar hasta 30 segundos.';
 
   @override
-  String get noVideosYet => 'Aún no hay videos. Agrega uno desde tu biblioteca o cámara.';
+  String get noVideosYet =>
+      'Aún no hay videos. Agrega uno desde tu biblioteca o cámara.';
 
   @override
   String videoNumber(int number) {
@@ -902,13 +916,14 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get mediaPremiumPerk => 'Premium desbloquea hasta 5 fotos y 3 videos por evento.';
+  String get photos => 'Fotos';
+
+  @override
+  String get mediaPremiumPerk =>
+      'Premium desbloquea hasta 5 fotos y 3 videos por evento.';
 
   @override
   String get unlockMediaGallery => 'Desbloquear galería completa';
-
-  @override
-  String get photos => 'Fotos';
 
   @override
   String get videos => 'Videos';
@@ -1850,8 +1865,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Acceso de prueba de administrador';
 
   @override
-  String get eventCreationGuideDetailsTitle =>
-      '1. Empieza con los detalles';
+  String get eventCreationGuideDetailsTitle => '1. Empieza con los detalles';
 
   @override
   String get eventCreationGuideDetailsBody =>
@@ -1865,8 +1879,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Elige primero una foto de portada. Los creadores Premium pueden generar un fondo promocional con IA. Poster Studio crea un póster separado para compartir con el título, fecha, hora, venue y precio exactos de este formulario.';
 
   @override
-  String get eventCreationGuideMediaTitle =>
-      '3. Agrega medios según tu plan';
+  String get eventCreationGuideMediaTitle => '3. Agrega medios según tu plan';
 
   @override
   String get eventCreationGuidePlanIntro =>
@@ -1905,8 +1918,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Tu cuenta de administrador puede probar el límite completo de 5 fotos y 3 videos, además de todas las herramientas de creador sin suscripción.';
 
   @override
-  String get eventCreationGuideReviewTitle =>
-      '4. Revisa, publica y comparte';
+  String get eventCreationGuideReviewTitle => '4. Revisa, publica y comparte';
 
   @override
   String get eventCreationGuideReviewBody =>
@@ -2034,23 +2046,20 @@ class AppLocalizationsEs extends AppLocalizations {
   String get aiSearchTryPrompt => 'Prueba una de estas opciones';
 
   @override
-  String get aiSearchPromptMusic =>
-      'Música en vivo este fin de semana';
+  String get aiSearchPromptMusic => 'Música en vivo este fin de semana';
 
   @override
   String get aiSearchPromptFamily => 'Eventos familiares mañana';
 
   @override
-  String get aiSearchPromptFood =>
-      'Eventos de comida y bebida esta semana';
+  String get aiSearchPromptFood => 'Eventos de comida y bebida esta semana';
 
   @override
   String get aiSearchHint =>
       'p. ej., comedia el viernes, arte al aire libre o jazz en vivo';
 
   @override
-  String get aiSearchEmptyQuery =>
-      'Dile a SpotVibe qué quieres encontrar.';
+  String get aiSearchEmptyQuery => 'Dile a SpotVibe qué quieres encontrar.';
 
   @override
   String get aiSearchSearching => 'Buscando eventos reales…';

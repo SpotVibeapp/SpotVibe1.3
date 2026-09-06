@@ -101,20 +101,22 @@ void main() async {
     return;
   }
 
-  runApp(SpotVibeApp(
-    userRepository: backend.users,
-    eventRepository: backend.events,
-    rsvpRepository: backend.rsvps,
-    userEventRepository: backend.userEvents,
-    claimRepository: backend.claims,
-    foundingRepository: backend.founding,
-    moderationRepository: backend.moderation,
-    partnerPromoRepository: backend.partnerPromoCodes,
-    revenueCatService: revenueCatService,
-    notificationService: notificationService,
-    permissionService: permissionService,
-    initialLocation: initialLocation,
-  ));
+  runApp(
+    SpotVibeApp(
+      userRepository: backend.users,
+      eventRepository: backend.events,
+      rsvpRepository: backend.rsvps,
+      userEventRepository: backend.userEvents,
+      claimRepository: backend.claims,
+      foundingRepository: backend.founding,
+      moderationRepository: backend.moderation,
+      partnerPromoRepository: backend.partnerPromoCodes,
+      revenueCatService: revenueCatService,
+      notificationService: notificationService,
+      permissionService: permissionService,
+      initialLocation: initialLocation,
+    ),
+  );
 }
 
 class _AppBackend {
@@ -156,9 +158,7 @@ Locale _effectiveLocale(LocaleProvider provider) {
 /// or `null` when a release build cannot reach Firebase.
 Future<_AppBackend?> _createBackend() async {
   try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     debugPrint('Firebase initialized — auth + events/RSVPs enabled.');
     final events = FirebaseEventRepository();
     await events.ensureSeeded();
@@ -301,39 +301,34 @@ class _SpotVibeAppState extends State<SpotVibeApp> {
         Provider<ModerationRepository>(create: (_) => widget.moderationRepository),
         Provider<PartnerPromoRepository>(create: (_) => widget.partnerPromoRepository),
         ChangeNotifierProvider(
-          create: (ctx) => ModerationProvider(
-            repository: ctx.read<ModerationRepository>(),
-            claimsRepository: ctx.read<EventClaimRepository>(),
-          ),
+          create:
+              (ctx) => ModerationProvider(
+                repository: ctx.read<ModerationRepository>(),
+                claimsRepository: ctx.read<EventClaimRepository>(),
+              ),
         ),
         ChangeNotifierProvider(
-          create: (ctx) => PartnerPromoProvider(
-            repository: ctx.read<PartnerPromoRepository>(),
-          ),
+          create: (ctx) => PartnerPromoProvider(repository: ctx.read<PartnerPromoRepository>()),
         ),
         Provider(
-          create: (ctx) => EventAnalyticsService(
-            repository: ctx.read<UserEventRepository>(),
-          ),
+          create: (ctx) => EventAnalyticsService(repository: ctx.read<UserEventRepository>()),
         ),
         Provider(create: (_) => NotificationRepository()),
         Provider(create: (_) => NotificationPreferencesRepository()),
         Provider(create: (_) => OnboardingRepository()),
         Provider(create: (_) => PersonalizationRepository()),
         ChangeNotifierProvider(
-          create: (ctx) =>
-              NotificationProvider(repository: ctx.read<NotificationRepository>()),
+          create: (ctx) => NotificationProvider(repository: ctx.read<NotificationRepository>()),
         ),
         ChangeNotifierProvider(
-          create: (ctx) => PersonalizationProvider(
-            repository: ctx.read<PersonalizationRepository>(),
-            service: const PersonalizationService(),
-          ),
+          create:
+              (ctx) => PersonalizationProvider(
+                repository: ctx.read<PersonalizationRepository>(),
+                service: const PersonalizationService(),
+              ),
         ),
         ChangeNotifierProvider(
-          create: (ctx) => FollowProvider(
-            repository: ctx.read<FollowRepository>(),
-          ),
+          create: (ctx) => FollowProvider(repository: ctx.read<FollowRepository>()),
         ),
         Provider(create: (_) => widget.revenueCatService),
         Provider(create: (_) => widget.notificationService),
@@ -341,11 +336,12 @@ class _SpotVibeAppState extends State<SpotVibeApp> {
         ChangeNotifierProvider(create: (_) => ThemeProvider()..loadTheme()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()..load()),
         ChangeNotifierProvider(
-          create: (ctx) => AuthProvider(
-            service: AuthService(repository: ctx.read<UserRepository>()),
-            notificationService: ctx.read<NotificationService>(),
-            revenueCatService: ctx.read<RevenueCatService>(),
-          )..restoreSession(),
+          create:
+              (ctx) => AuthProvider(
+                service: AuthService(repository: ctx.read<UserRepository>()),
+                notificationService: ctx.read<NotificationService>(),
+                revenueCatService: ctx.read<RevenueCatService>(),
+              )..restoreSession(),
         ),
         ChangeNotifierProvider(
           create: (ctx) {
