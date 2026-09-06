@@ -8,7 +8,7 @@
 	</array>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
-		<string>applinks:spotvibe.app</string>
+		<string>applinks:spotvibeapp.net</string>
 		<string>applinks:spotvibe-cfa08.web.app</string>
 	</array>
 </dict>

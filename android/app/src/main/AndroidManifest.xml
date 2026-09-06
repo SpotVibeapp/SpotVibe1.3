@@ -15,13 +15,27 @@
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="https" android:host="spotvibe.app" android:pathPattern="/event/.*"/>
+                <data android:scheme="https" android:host="spotvibeapp.net" android:pathPattern="/event/.*"/>
             </intent-filter>
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="https" android:host="spotvibe.app" android:pathPattern="/user-event/.*"/>
+                <data android:scheme="https" android:host="spotvibeapp.net" android:pathPattern="/user-event/.*"/>
+            </intent-filter>
+            <!-- Live Firebase Hosting domain (the current share-link base until
+                 the spotvibeapp.net custom domain is connected). -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="spotvibe-cfa08.web.app" android:pathPattern="/event/.*"/>
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="spotvibe-cfa08.web.app" android:pathPattern="/user-event/.*"/>
             </intent-filter>
             <!-- PRIMIO_ADDED: app_links — custom spotvibe:// scheme for app_links runtime URI delivery -->
             <intent-filter>

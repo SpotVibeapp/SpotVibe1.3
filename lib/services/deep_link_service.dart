@@ -7,10 +7,27 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Base URL used for all SpotVibe deep links.
 /// On Android this triggers the intent-filter; on iOS the associated domain.
-const String kDeepLinkBase = 'https://spotvibe.app';
+/// Base URL used for all SpotVibe share links.
+///
+/// Defaults to the live Firebase Hosting domain until the custom domain
+/// `spotvibeapp.net` is connected in Firebase Hosting + DNS (the app already
+/// accepts both hosts when OPENING links). Once the custom domain is live,
+/// build with `--dart-define=SPOTVIBE_LINK_BASE=https://spotvibeapp.net`
+/// (or flip this default).
+const String kDeepLinkBase = String.fromEnvironment(
+  'SPOTVIBE_LINK_BASE',
+  defaultValue: 'https://spotvibe-cfa08.web.app',
+);
 
-/// Hosts that map to in-app event routes.
-const Set<String> _kDeepLinkHosts = {'spotvibe.app', 'www.spotvibe.app'};
+/// Hosts that map to in-app event routes: the custom domain (apex + www,
+/// once connected) and the Firebase Hosting domains (live fallback + any
+/// links already shared from earlier builds).
+const Set<String> _kDeepLinkHosts = {
+  'spotvibeapp.net',
+  'www.spotvibeapp.net',
+  'spotvibe-cfa08.web.app',
+  'spotvibe-cfa08.firebaseapp.com',
+};
 
 /// Custom URI schemes that map to in-app event routes.
 const Set<String> _kDeepLinkSchemes = {'spotvibe'};

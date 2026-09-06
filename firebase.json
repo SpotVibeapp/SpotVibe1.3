@@ -1,1 +1,49 @@
-{"storage":{"rules":"storage.rules"},"firestore":{"rules":"firestore.rules","indexes":"firestore.indexes.json"},"functions":{"source":"functions"},"hosting":{"public":"legal_site","ignore":["firebase.json","**/node_modules/**"]},"flutter":{"platforms":{"android":{"default":{"projectId":"spotvibe-cfa08","appId":"1:626183324233:android:5d94d7c955711aedd8f598","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"spotvibe-cfa08","configurations":{"android":"1:626183324233:android:5d94d7c955711aedd8f598"}}}}}}
+{
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "functions": {
+    "source": "functions"
+  },
+  "hosting": {
+    "site": "spotvibe-cfa08",
+    "public": "legal_site",
+    "ignore": [
+      "firebase.json",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/event/**",
+        "destination": "/link.html"
+      },
+      {
+        "source": "/user-event/**",
+        "destination": "/link.html"
+      }
+    ]
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "spotvibe-cfa08",
+          "appId": "1:626183324233:android:5d94d7c955711aedd8f598",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "spotvibe-cfa08",
+          "configurations": {
+            "android": "1:626183324233:android:5d94d7c955711aedd8f598"
+          }
+        }
+      }
+    }
+  }
+}
