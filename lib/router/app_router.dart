@@ -143,7 +143,7 @@ class AppRouter {
                   expiryService: expiry,
                   personalizationProvider: personalization,
                   analytics: context.read<EventAnalyticsService>(),
-                )..loadEvents(),
+                )..initialize(),
               ),
             ],
             child: const EventsScreen(),
@@ -164,7 +164,7 @@ class AppRouter {
                   service: ctx.read<EventService>(),
                   notificationService: notifs,
                   expiryService: expiry,
-                )..loadEvents(),
+                )..initialize(),
               ),
             ],
             child: const EventMapScreen(),
@@ -246,7 +246,7 @@ class AppRouter {
             create: (_) => EventProvider(
               service: _eventService(context, eventRepo),
               expiryService: context.read<EventExpiryService>(),
-            )..loadEvents(),
+            )..initialize(),
             child: const SavedEventsScreen(),
           );
         },

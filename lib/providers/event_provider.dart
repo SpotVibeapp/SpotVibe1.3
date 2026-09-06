@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/event.dart';
 import '../services/event_analytics_service.dart';
 import '../services/event_expiry_service.dart';
 import '../services/event_service.dart';
+import '../services/location_service.dart';
 import '../services/notification_service.dart';
 import 'personalization_provider.dart';
 
@@ -234,18 +236,37 @@ class EventProvider extends ChangeNotifier {
   }
 
   /// Store the user's GPS coordinates and reload so results are sorted by distance.
+  /// The fix is persisted so the next launch restores it instantly while the
+  /// fresh auto-locate fix arrives.
   void setUserLocation(double lat, double lng) {
     _userLat = lat;
     _userLng = lng;
     _sortByDistance = true;
+    unawaited(LocationService.saveLastLocation(lat, lng));
     loadEvents();
     notifyListeners();
+  }
+
+  /// Restores the last known location (if fresh), then loads the feed.
+  /// Replaces the plain `loadEvents()` call at provider creation so relaunches
+  /// don't flash the default-market feed while GPS resolves.
+  Future<void> initialize() async {
+    try {
+      final last = await LocationService.loadLastLocation();
+      if (last != null) {
+        _userLat = last.lat;
+        _userLng = last.lng;
+        _sortByDistance = true;
+      }
+    } catch (_) {}
+    await loadEvents();
   }
 
   void clearUserLocation() {
     _userLat = null;
     _userLng = null;
     _sortByDistance = false;
+    unawaited(LocationService.clearLastLocation());
     loadEvents();
     notifyListeners();
   }
