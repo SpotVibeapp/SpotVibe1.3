@@ -91,6 +91,7 @@ class _DetailContent extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final appColors = Theme.of(context).extension<AppColorsExtension>()!;
     final l10n = AppLocalizations.of(context)!;
+    final isAdmin = context.watch<AuthProvider>().isAdmin;
     final catColor = categoryAccent(event.category);
 
     return Scaffold(
@@ -111,7 +112,7 @@ class _DetailContent extends StatelessWidget {
                   event: event,
                 ),
               ),
-              if (context.read<AuthProvider>().isAdmin)
+              if (isAdmin)
                 IconButton(
                   icon: const Icon(Icons.delete_outline_rounded),
                   tooltip: l10n.adminRemoveEvent,
@@ -254,9 +255,11 @@ class _DetailContent extends StatelessWidget {
                       links: event.socialLinks,
                     ),
                   ],
-                  const SizedBox(height: AppTheme.spacingLg),
-                  ClaimVenueBanner(event: event),
-                  if (event.showsAds) ...[
+                  if (!isAdmin) ...[
+                    const SizedBox(height: AppTheme.spacingLg),
+                    ClaimVenueBanner(event: event),
+                  ],
+                  if (!isAdmin && event.showsAds) ...[
                     const SizedBox(height: AppTheme.spacingLg),
                     const EventPageAd(),
                   ],

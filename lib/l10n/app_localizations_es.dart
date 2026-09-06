@@ -1592,6 +1592,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get adminDashboard => 'Panel de administración';
 
   @override
+  String get adminAccountAccess => 'Acceso de administrador';
+
+  @override
+  String get adminAccountAccessBody =>
+      'Todas las herramientas de creador y Premium están habilitadas para esta cuenta.';
+
+  @override
   String get adminReports => 'Reportes';
 
   @override
@@ -1895,7 +1902,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get eventCreationGuideAdminNote =>
-      'Tu cuenta de administrador puede probar el límite completo de 5 fotos y 3 videos. La comparación de Gratis y Premium de arriba es la que ven los creadores.';
+      'Tu cuenta de administrador puede probar el límite completo de 5 fotos y 3 videos, además de todas las herramientas de creador sin suscripción.';
 
   @override
   String get eventCreationGuideReviewTitle =>

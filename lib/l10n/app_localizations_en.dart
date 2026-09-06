@@ -1580,6 +1580,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminDashboard => 'Admin Dashboard';
 
   @override
+  String get adminAccountAccess => 'Administrator access';
+
+  @override
+  String get adminAccountAccessBody =>
+      'All creator and Premium tools are enabled for this account.';
+
+  @override
   String get adminReports => 'Reports';
 
   @override
@@ -1875,7 +1882,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventCreationGuideAdminNote =>
-      'Your admin account can test the full 5-photo and 3-video media allowance. The Free and Premium comparison above is what creators see.';
+      'Your administrator account can test the full 5-photo and 3-video media allowance, plus all creator tools without a subscription.';
 
   @override
   String get eventCreationGuideReviewTitle =>

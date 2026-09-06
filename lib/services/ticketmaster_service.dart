@@ -21,10 +21,16 @@ const String kTicketmasterApiKey = String.fromEnvironment(
   'TICKETMASTER_API_KEY',
 );
 
+/// Recent start window used to find Ticketmaster events that may still be
+/// happening now. They remain in the feed only when Ticketmaster supplies an
+/// explicit end time that is still ahead; SpotVibe never invents one.
+const kTicketmasterOngoingLookback = Duration(hours: 24);
+
 /// Formats an exact UTC lower-bound accepted by the Discovery API.
 ///
-/// A lower-bound is required because the API's ascending first page may
-/// otherwise contain historical listings that the app correctly removes.
+/// A lower-bound prevents an ascending first page from being consumed by old
+/// listings that the app correctly removes. The short lookback above keeps
+/// source-defined ongoing events eligible as well as future events.
 String ticketmasterStartDateTime(DateTime time) {
   final utc = time.toUtc();
   String twoDigits(int value) => value.toString().padLeft(2, '0');
@@ -65,7 +71,7 @@ class TicketmasterService {
     double? lat,
     double? lng,
     double radiusMiles = 40,
-    int size = 80,
+    int size = 200,
   }) async {
     if (!isConfigured) {
       debugPrint('Ticketmaster: no API key. '
@@ -74,17 +80,19 @@ class TicketmasterService {
     }
 
     try {
-      // The Discovery API can include historical events unless a start window
-      // is supplied. Because results are sorted ascending, those past rows can
-      // consume the first page and leave every other city looking empty after
-      // the client correctly hides expired listings.
+      // Include a small source-defined live-event window as well as future
+      // listings. A strict `startDateTime: now` would permanently remove an
+      // ongoing Ticketmaster event after a feed refresh, even when the API
+      // supplied a real end time.
       final now = _clock();
       final params = <String, dynamic>{
         'apikey': _apiKey,
         'countryCode': 'US',
         'size': size.clamp(1, 200),
         'sort': 'date,asc',
-        'startDateTime': ticketmasterStartDateTime(now),
+        'startDateTime': ticketmasterStartDateTime(
+          now.subtract(kTicketmasterOngoingLookback),
+        ),
         'radius': radiusMiles.round().clamp(1, 200),
         'unit': 'miles',
         'includeTBA': 'no',
@@ -124,15 +132,16 @@ class TicketmasterService {
         final event = eventFromTicketmaster(Map<String, dynamic>.from(item));
         if (event == null) continue;
         if (looksLikeStandaloneAddon(event.title)) continue;
-        if (!event.dateTime.isAfter(now)) {
-          continue;
-        }
+        // Future listings are visible normally. A started listing stays
+        // visible only if its source supplied a real end after `now`.
+        if (!event.isVisibleAt(now: now)) continue;
         events.add(event);
         _byId[event.id] = event;
       }
       return events;
-    } catch (e) {
-      debugPrint('Ticketmaster search failed: $e');
+    } catch (error) {
+      // Dio errors can contain the complete request URL, including the key.
+      debugPrint('Ticketmaster search failed (${error.runtimeType}).');
       return const [];
     }
   }
@@ -152,8 +161,9 @@ class TicketmasterService {
       final event = eventFromTicketmaster(Map<String, dynamic>.from(data));
       if (event != null) _byId[event.id] = event;
       return event;
-    } catch (e) {
-      debugPrint('Ticketmaster getEventById failed: $e');
+    } catch (error) {
+      // Avoid logging a Dio request URL that could include the API key.
+      debugPrint('Ticketmaster getEventById failed (${error.runtimeType}).');
       return null;
     }
   }
@@ -290,11 +300,35 @@ DateTime? _parseStart(Map<String, dynamic> json) {
   if (dates is! Map) return null;
   final start = dates['start'];
   if (start is! Map) return null;
-  final dateTime = start['dateTime'] as String?;
-  if (dateTime != null) return DateTime.tryParse(dateTime)?.toLocal();
+  final dateTime = (start['dateTime'] as String?)?.trim();
+  if (dateTime != null && dateTime.isNotEmpty) {
+    final parsed = DateTime.tryParse(dateTime);
+    if (parsed != null) return parsed.toLocal();
+  }
   final localDate = start['localDate'] as String?;
   final localTime = start['localTime'] as String? ?? '19:00:00';
   if (localDate == null) return null;
+  return DateTime.tryParse('${localDate}T$localTime');
+}
+
+/// Reads Ticketmaster's explicit event end only. Unlike the start parser,
+/// there is deliberately no default end time: a made-up duration could keep a
+/// finished event in the discovery feed and falsely label it as live.
+DateTime? _parseEnd(Map<String, dynamic> json) {
+  final dates = json['dates'];
+  if (dates is! Map) return null;
+  final end = dates['end'];
+  if (end is! Map) return null;
+
+  final dateTime = (end['dateTime'] as String?)?.trim();
+  if (dateTime != null && dateTime.isNotEmpty) {
+    final parsed = DateTime.tryParse(dateTime);
+    if (parsed != null) return parsed.toLocal();
+  }
+
+  final localDate = end['localDate'] as String?;
+  final localTime = end['localTime'] as String?;
+  if (localDate == null || localTime == null || localTime.isEmpty) return null;
   return DateTime.tryParse('${localDate}T$localTime');
 }
 
@@ -305,6 +339,10 @@ Event? eventFromTicketmaster(Map<String, dynamic> json) {
   if (id == null || name == null || name.trim().isEmpty) return null;
   final start = _parseStart(json);
   if (start == null) return null;
+  final rawEnd = _parseEnd(json);
+  // Ignore malformed/source-inconsistent ends rather than claiming an event
+  // is live past its real boundary.
+  final end = rawEnd != null && rawEnd.isAfter(start) ? rawEnd : null;
 
   String venueName = '';
   String address = '';
@@ -365,6 +403,7 @@ Event? eventFromTicketmaster(Map<String, dynamic> json) {
     title: name.trim(),
     description: description,
     dateTime: start,
+    endDateTime: end,
     location: venueName,
     address: address,
     city: city,

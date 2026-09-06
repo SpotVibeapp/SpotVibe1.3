@@ -96,7 +96,7 @@ class _UserEventDetailContent extends StatelessWidget {
                 ),
               ),
               if (isCreator) ...[
-                if (event.isCreatorPro)
+                if (event.isCreatorPro || auth.isAdmin)
                   IconButton(
                     icon: const Icon(Icons.bar_chart_rounded),
                     tooltip: 'Analytics',
@@ -335,7 +335,7 @@ class _UserEventDetailContent extends StatelessWidget {
                   AttendeesSection(accent: categoryAccent(event.category)),
                   const SizedBox(height: AppTheme.spacingLg),
                   CommentSection(accent: categoryAccent(event.category)),
-                  if (!event.isCreatorPro) ...[
+                  if (!event.isCreatorPro && !auth.isAdmin) ...[
                     const SizedBox(height: AppTheme.spacingLg),
                     const EventPageAd(),
                   ],

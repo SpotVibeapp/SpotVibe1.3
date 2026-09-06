@@ -204,22 +204,28 @@ class EventCreationGuide extends StatelessWidget {
                     l10n.eventCreationGuideMediaTitle,
                     style: text.titleMedium?.copyWith(fontWeight: FontWeight.w800),
                   ),
-                  const SizedBox(height: AppTheme.spacingXs),
-                  Text(
-                    l10n.eventCreationGuidePlanIntro,
-                    style: text.bodySmall?.copyWith(color: colors.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: AppTheme.spacingMd),
-                  _CreatorPlanComparison(
-                    isPremium: isPremium,
-                    isAdmin: isAdmin,
-                    premiumColor: premiumColor,
-                  ),
-                  const SizedBox(height: AppTheme.spacingSm),
-                  _SharedToolsNote(text: l10n.eventCreationGuideSharedTools),
                   if (isAdmin) ...[
                     const SizedBox(height: AppTheme.spacingSm),
+                    // Administrators already have full creator access. Show
+                    // the capability note without a Free/Premium comparison
+                    // or subscription promotion.
                     _AdminAccessNote(text: l10n.eventCreationGuideAdminNote),
+                  ] else ...[
+                    const SizedBox(height: AppTheme.spacingXs),
+                    Text(
+                      l10n.eventCreationGuidePlanIntro,
+                      style: text.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: AppTheme.spacingMd),
+                    _CreatorPlanComparison(
+                      isPremium: isPremium,
+                      isAdmin: false,
+                      premiumColor: premiumColor,
+                    ),
+                    const SizedBox(height: AppTheme.spacingSm),
+                    _SharedToolsNote(text: l10n.eventCreationGuideSharedTools),
                   ],
                   const SizedBox(height: AppTheme.spacingLg),
                   _GuideStep(

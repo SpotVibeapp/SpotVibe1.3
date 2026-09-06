@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/user_event.dart';
+import '../providers/auth_provider.dart';
 import '../providers/user_events_provider.dart';
 import '../theme/theme.dart';
 
@@ -26,11 +27,16 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<UserEventsProvider>();
+    final isAdmin = context.watch<AuthProvider>().isAdmin;
     final colors = Theme.of(context).colorScheme;
     final appColors = Theme.of(context).extension<AppColorsExtension>()!;
     final text = Theme.of(context).textTheme;
 
-    final proEvents = provider.events.where((e) => e.isCreatorPro).toList();
+    // Admins have role-based analytics access for all of their own events,
+    // including listings created before Premium fields existed.
+    final proEvents = isAdmin
+        ? provider.events
+        : provider.events.where((event) => event.isCreatorPro).toList();
 
     return Scaffold(
       backgroundColor: colors.surface,
@@ -60,10 +66,16 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.campaign_rounded, color: Colors.white, size: AppTheme.iconSm),
+                            Icon(
+                              isAdmin
+                                  ? Icons.admin_panel_settings_rounded
+                                  : Icons.campaign_rounded,
+                              color: Colors.white,
+                              size: AppTheme.iconSm,
+                            ),
                             const SizedBox(width: AppTheme.spacingXs),
                             Text(
-                              'PREMIUM',
+                              isAdmin ? 'ADMINISTRATOR' : 'PREMIUM',
                               style: text.labelSmall?.copyWith(
                                 color: Colors.white70,
                                 fontWeight: FontWeight.w800,
@@ -105,10 +117,15 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
             )
           else if (proEvents.isEmpty)
             SliverFillRemaining(
-              child: _EmptyDashboard(colors: colors, appColors: appColors, text: text),
+              child: _EmptyDashboard(
+                colors: colors,
+                appColors: appColors,
+                text: text,
+                isAdmin: isAdmin,
+              ),
             )
           else ...[
-            // Aggregate summary across all pro events
+            // Aggregate summary across the events available to this account
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
@@ -131,7 +148,7 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
               ),
             ),
 
-            // One insight card per Creator Pro event
+            // One insight card per available creator event
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) => Padding(
@@ -493,7 +510,14 @@ class _EmptyDashboard extends StatelessWidget {
   final ColorScheme colors;
   final AppColorsExtension appColors;
   final TextTheme text;
-  const _EmptyDashboard({required this.colors, required this.appColors, required this.text});
+  final bool isAdmin;
+
+  const _EmptyDashboard({
+    required this.colors,
+    required this.appColors,
+    required this.text,
+    required this.isAdmin,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -513,10 +537,15 @@ class _EmptyDashboard extends StatelessWidget {
               child: const Icon(Icons.campaign_rounded, color: Colors.white, size: AppTheme.iconLg),
             ),
             const SizedBox(height: AppTheme.spacingLg),
-            Text('No Premium events yet', style: text.headlineSmall),
+            Text(
+              isAdmin ? 'No events yet' : 'No Premium events yet',
+              style: text.headlineSmall,
+            ),
             const SizedBox(height: AppTheme.spacingSm),
             Text(
-              'Create your first Premium event to start tracking searches, views, and RSVPs.',
+              isAdmin
+                  ? 'Create your first event to start tracking searches, views, and RSVPs.'
+                  : 'Create your first Premium event to start tracking searches, views, and RSVPs.',
               style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
@@ -524,7 +553,7 @@ class _EmptyDashboard extends StatelessWidget {
             FilledButton.icon(
               onPressed: () => context.push('/create-event'),
               icon: const Icon(Icons.add_rounded),
-              label: const Text('Create a Premium event'),
+              label: Text(isAdmin ? 'Create an event' : 'Create a Premium event'),
               style: FilledButton.styleFrom(
                 backgroundColor: appColors.creatorTeal,
                 foregroundColor: Colors.white,

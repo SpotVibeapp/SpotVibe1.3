@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../data/pricing.dart';
 import '../l10n/app_localizations.dart';
+import '../providers/auth_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../theme/theme.dart';
 
@@ -21,17 +22,26 @@ class _PaywallScreenState extends State<PaywallScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SubscriptionProvider>().initialize();
+      if (!mounted) return;
+      // Admin access is role-based, not a store subscription. Do not initialize
+      // or surface a purchase flow for an administrator who opens this route.
+      if (!context.read<AuthProvider>().isAdmin) {
+        context.read<SubscriptionProvider>().initialize();
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
     final sub = context.watch<SubscriptionProvider>();
     final colors = Theme.of(context).colorScheme;
     final appColors = Theme.of(context).extension<AppColorsExtension>()!;
     final text = Theme.of(context).textTheme;
 
+    if (auth.isAdmin) {
+      return _AdminAccessView(onClose: () => Navigator.of(context).pop(true));
+    }
     if (sub.isSubscribed) {
       return _AlreadySubscribedView(onClose: () => Navigator.of(context).pop(true));
     }
@@ -470,6 +480,46 @@ class _TermsRow extends StatelessWidget {
           ],
         ),
         textAlign: TextAlign.center,
+      ),
+    );
+  }
+}
+
+class _AdminAccessView extends StatelessWidget {
+  final VoidCallback onClose;
+
+  const _AdminAccessView({required this.onClose});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.spacingXl),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.admin_panel_settings_rounded,
+                size: 72,
+                color: AppTheme.brandViolet,
+              ),
+              const SizedBox(height: AppTheme.spacingLg),
+              Text(l10n.adminAccountAccess, style: text.headlineSmall),
+              const SizedBox(height: AppTheme.spacingSm),
+              Text(
+                l10n.adminAccountAccessBody,
+                style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppTheme.spacingXl),
+              ElevatedButton(onPressed: onClose, child: Text(l10n.continueBtn)),
+            ],
+          ),
+        ),
       ),
     );
   }
