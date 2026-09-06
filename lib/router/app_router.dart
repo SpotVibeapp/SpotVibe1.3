@@ -468,6 +468,12 @@ class _EventDeepLinkLoader extends StatefulWidget {
 class _EventDeepLinkLoaderState extends State<_EventDeepLinkLoader> {
   Event? _event;
   bool _loading = true;
+  bool _notFound = false;
+
+  late final EventService _service = EventService(
+    repository: widget.eventRepo,
+    ticketmaster: widget.ticketmaster,
+  );
 
   @override
   void initState() {
@@ -476,14 +482,27 @@ class _EventDeepLinkLoaderState extends State<_EventDeepLinkLoader> {
   }
 
   Future<void> _load() async {
-    var event = await widget.eventRepo.getEventById(widget.eventId);
-    event ??= await widget.ticketmaster.getEventById(widget.eventId);
+    final Event? event;
+    try {
+      // Repository (curated/created) first, then live Ticketmaster — the
+      // same resolution order and save-overlay as the main feed.
+      event = await _service.getEventById(widget.eventId);
+    } catch (e) {
+      debugPrint('Deep-link event load failed for ${widget.eventId}: $e');
+      event = null;
+    }
     if (!mounted) return;
     if (event == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Event not found or no longer available.')),
-      );
-      context.go('/');
+      // Show an inline "not available" state. Navigating away here (the old
+      // SnackBar + context.go('/')) fired during the cold-start navigation
+      // and surfaced as the router error page ("We could not open that
+      // page") instead of a useful message.
+      debugPrint(
+          'Deep-link event not found: ${widget.eventId} (repo + Ticketmaster both empty)');
+      setState(() {
+        _notFound = true;
+        _loading = false;
+      });
       return;
     }
     setState(() {
@@ -494,12 +513,50 @@ class _EventDeepLinkLoaderState extends State<_EventDeepLinkLoader> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading || _event == null) {
+    if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (_notFound || _event == null) {
+      final colors = Theme.of(context).colorScheme;
+      final text = Theme.of(context).textTheme;
+      return Scaffold(
+        appBar: AppBar(title: const Text('Event')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.event_busy_rounded,
+                    size: 56, color: colors.onSurfaceVariant),
+                const SizedBox(height: 16),
+                Text(
+                  'This event is no longer available.',
+                  style: text.titleLarge,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'It may have ended, or the listing source did not respond.',
+                  style: text.bodyMedium
+                      ?.copyWith(color: colors.onSurfaceVariant),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () => context.go('/'),
+                  icon: const Icon(Icons.home_rounded),
+                  label: const Text('Browse events'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
     }
     return MultiProvider(
       providers: [
-        Provider(create: (_) => EventService(repository: widget.eventRepo)),
+        Provider(create: (_) => _service),
         ChangeNotifierProvider(
           create: (ctx) => EventProvider(
             service: ctx.read<EventService>(),
