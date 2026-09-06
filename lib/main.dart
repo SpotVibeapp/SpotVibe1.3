@@ -70,16 +70,25 @@ void main() async {
   //   3. /permissions          — first-ever launch (permissions not yet asked)
   //   4. /                     — all subsequent normal launches
   String initialLocation = '/';
+  String? coldLinkUri;
+  String? coldLinkUri;
 
   if (!kIsWeb) {
     try {
       final appLinks = AppLinks();
       final coldUri = await appLinks.getInitialLink();
       if (coldUri != null) {
+        debugPrint('[deepLink] cold-start uri=$coldUri');
         final path = DeepLinkService.pathFromUri(coldUri.toString());
-        if (path != null) initialLocation = path;
+        debugPrint('[deepLink] cold-start parsed path=$path');
+        if (path != null) {
+          initialLocation = path;
+          coldLinkUri = coldUri.toString();
+        }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[deepLink] cold-start read failed: $e');
+    }
   }
 
   if (initialLocation == '/') {
@@ -244,6 +253,8 @@ class SpotVibeApp extends StatefulWidget {
   final NotificationService notificationService;
   final PermissionService permissionService;
   final String initialLocation;
+  final String? initialLinkUri;
+  final String? initialLinkUri;
 
   const SpotVibeApp({
     super.key,
@@ -259,29 +270,72 @@ class SpotVibeApp extends StatefulWidget {
     required this.notificationService,
     required this.permissionService,
     required this.initialLocation,
+    this.initialLinkUri,
   });
 
   @override
   State<SpotVibeApp> createState() => _SpotVibeAppState();
 }
 
-class _SpotVibeAppState extends State<SpotVibeApp> {
+class _SpotVibeAppState extends State<SpotVibeApp>
+    with WidgetsBindingObserver {
   late final GoRouter _router;
+  final AppLinks _appLinks = AppLinks();
+  String? _lastResumeLinkUri;
+  final AppLinks _appLinks = AppLinks();
+  String? _lastResumeLinkUri;
 
   @override
   void initState() {
     super.initState();
     _router = AppRouter.build(initialLocation: widget.initialLocation);
-
+    _lastResumeLinkUri = widget.initialLinkUri;
     if (!kIsWeb) {
+      WidgetsBinding.instance.addObserver(this);
       // app_links: handles https App Links, universal links, and spotvibe://
       // custom-scheme URIs while the app is running.
       final appLinks = AppLinks();
       appLinks.uriLinkStream.listen((uri) {
+        debugPrint('[deepLink] stream uri=$uri');
         final path = DeepLinkService.pathFromUri(uri.toString());
+        debugPrint('[deepLink] stream parsed path=$path');
         if (path != null) _router.go(path);
       });
     }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!kIsWeb && state == AppLifecycleState.resumed) {
+      _checkLatestLink();
+    }
+  }
+
+  Future<void> _checkLatestLink() async {
+    try {
+      final uri = await _appLinks.getLatestLink();
+      if (uri == null) {
+        debugPrint('[deepLink] resume-check: no link');
+        return;
+      }
+      if (uri.toString() == _lastResumeLinkUri) {
+        debugPrint('[deepLink] resume-check skip duplicate: $uri');
+        return;
+      }
+      _lastResumeLinkUri = uri.toString();
+      debugPrint('[deepLink] resume-check uri=$uri');
+      final path = DeepLinkService.pathFromUri(uri.toString());
+      debugPrint('[deepLink] resume-check parsed path=$path');
+      if (path != null) _router.go(path);
+    } catch (e) {
+      debugPrint('[deepLink] resume-check failed: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    if (!kIsWeb) WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   @override
