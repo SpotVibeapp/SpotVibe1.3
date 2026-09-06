@@ -152,12 +152,18 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       _brandColorController.text = e.brandColor ?? '';
       _brandLogoController.text = e.brandLogoUrl ?? '';
     }
+    // Administrator creator access is role-based, not a store purchase. Apply
+    // it before the first frame so no upgrade promo flashes on this form.
+    if (context.read<AuthProvider>().isAdmin) {
+      _isCreatorPro = true;
+    }
     // Pro subscribers get unlimited creation — pre-confirm for them after first frame.
     // A first-time creator also sees the plan-aware guide once the form exists.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       final sub = context.read<SubscriptionProvider>();
-      if (sub.isSubscribed) {
+      final auth = context.read<AuthProvider>();
+      if (sub.isSubscribed || auth.isAdmin) {
         setState(() {
           _isCreatorPro = true;
         });
@@ -600,6 +606,12 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   }
 
   Future<void> _openPaywall() async {
+    // Admins have role-based creator access and must never be sent through a
+    // subscription purchase flow just to use an included tool.
+    if (context.read<AuthProvider>().isAdmin) {
+      if (mounted) setState(() => _isCreatorPro = true);
+      return;
+    }
     final result = await context.push<bool>('/paywall');
     if (result == true && mounted) {
       setState(() {
@@ -665,6 +677,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     }
     final socialLinks = EventSocialLinks.fromInput(rawSocialLinks);
     final auth = context.read<AuthProvider>();
+    // Admin access is equivalent to creator Premium capability for event
+    // tools, without creating or implying a billing entitlement.
+    final hasCreatorAccess = _isCreatorPro || auth.isAdmin;
     final subCheck = context.read<SubscriptionProvider>();
     // Admins post unlimited official events without the free-plan cap.
     if (!_isEditing && !subCheck.isSubscribed && !auth.isAdmin) {
@@ -829,14 +844,14 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       mapLink: _mapLinkController.text.trim().isEmpty ? null : _mapLinkController.text.trim(),
       chatLink: _chatLinkController.text.trim().isEmpty ? null : _chatLinkController.text.trim(),
       isPremiumListing: _isPremiumListing,
-      isCreatorPro: _isCreatorPro,
-      recurringType: _isCreatorPro ? _recurringType : RecurringType.none,
-      contactPhone: _isCreatorPro ? _contactPhoneController.text.trim() : null,
-      contactWebsite: _isCreatorPro ? _contactWebsiteController.text.trim() : null,
-      contactSocial: _isCreatorPro ? _contactSocialController.text.trim() : null,
+      isCreatorPro: hasCreatorAccess,
+      recurringType: hasCreatorAccess ? _recurringType : RecurringType.none,
+      contactPhone: hasCreatorAccess ? _contactPhoneController.text.trim() : null,
+      contactWebsite: hasCreatorAccess ? _contactWebsiteController.text.trim() : null,
+      contactSocial: hasCreatorAccess ? _contactSocialController.text.trim() : null,
       socialLinks: socialLinks,
-      brandColor: _isCreatorPro ? _brandColorController.text.trim() : null,
-      brandLogoUrl: _isCreatorPro ? _brandLogoController.text.trim() : null,
+      brandColor: hasCreatorAccess ? _brandColorController.text.trim() : null,
+      brandLogoUrl: hasCreatorAccess ? _brandLogoController.text.trim() : null,
     );
 
     if (!mounted) return;
@@ -864,6 +879,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     final provider = context.watch<CreateEventProvider>();
     final sub = context.watch<SubscriptionProvider>();
     final auth = context.watch<AuthProvider>();
+    final hasCreatorAccess = sub.isSubscribed || auth.isAdmin;
     final mediaAllowance = eventMediaAllowance(
       isPremium: sub.isSubscribed,
       isAdmin: auth.isAdmin,
@@ -911,8 +927,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 isAdmin: auth.isAdmin,
                 onUpgrade: _openPaywall,
               ),
-              const SizedBox(height: AppTheme.spacingSm),
-              EventCreationGuideCard(onOpen: _openEventCreationGuide),
+              if (!auth.isAdmin) ...[
+                const SizedBox(height: AppTheme.spacingSm),
+                EventCreationGuideCard(onOpen: _openEventCreationGuide),
+              ],
               const SizedBox(height: AppTheme.spacingLg),
             ],
 
@@ -1237,7 +1255,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
             // ── Premium section ──────────────────────────────────────────────
             _CreatorProSection(
-              isCreatorPro: _isCreatorPro,
+              isCreatorPro: _isCreatorPro || auth.isAdmin,
+              isAdmin: auth.isAdmin,
               recurringType: _recurringType,
               contactPhoneController: _contactPhoneController,
               contactWebsiteController: _contactWebsiteController,
@@ -1254,7 +1273,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               icon: const Icon(Icons.publish_rounded),
               label: Text(_isEditing
                   ? l10n.saveChanges
-                  : sub.isSubscribed
+                  : hasCreatorAccess
                       ? l10n.publishPremium
                       : l10n.publishFree),
             ),
@@ -1348,6 +1367,7 @@ class _OrganizerSocialLinksForm extends StatelessWidget {
 
 class _CreatorProSection extends StatelessWidget {
   final bool isCreatorPro;
+  final bool isAdmin;
   final RecurringType recurringType;
   final TextEditingController contactPhoneController;
   final TextEditingController contactWebsiteController;
@@ -1359,6 +1379,7 @@ class _CreatorProSection extends StatelessWidget {
 
   const _CreatorProSection({
     required this.isCreatorPro,
+    required this.isAdmin,
     required this.recurringType,
     required this.contactPhoneController,
     required this.contactWebsiteController,
@@ -1472,8 +1493,11 @@ class _CreatorProSection extends StatelessWidget {
               const Icon(Icons.campaign_rounded, color: Colors.white, size: AppTheme.iconSm),
               const SizedBox(width: AppTheme.spacingXs),
               Text(
-                l10n.premiumFeaturesUnlocked,
-                style: text.labelMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+                isAdmin ? l10n.adminAccountAccess : l10n.premiumFeaturesUnlocked,
+                style: text.labelMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/theme.dart';
@@ -47,6 +49,7 @@ class _SearchHeaderState extends State<SearchHeader> {
 
   OverlayEntry? _overlayEntry;
   List<String> _suggestions = [];
+  Timer? _keywordSearchDebounce;
 
   @override
   void initState() {
@@ -59,6 +62,21 @@ class _SearchHeaderState extends State<SearchHeader> {
   }
 
   void _rebuild() => setState(() {});
+
+  /// Avoid starting one live Ticketmaster request per typed character. The
+  /// final text still searches quickly, while keeping within the provider's
+  /// request-rate limits and preventing stale partial-city responses.
+  void _scheduleKeywordSearch(String query) {
+    _keywordSearchDebounce?.cancel();
+    _keywordSearchDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (mounted) widget.onSearch(query);
+    });
+  }
+
+  void _searchKeywordNow(String query) {
+    _keywordSearchDebounce?.cancel();
+    widget.onSearch(query);
+  }
 
   void _onFocusChange() {
     if (!_keywordFocus.hasFocus) {
@@ -99,7 +117,7 @@ class _SearchHeaderState extends State<SearchHeader> {
     _keywordController.text = suggestion;
     _keywordController.selection =
         TextSelection.collapsed(offset: suggestion.length);
-    widget.onSearch(suggestion);
+    _searchKeywordNow(suggestion);
     _hideOverlay();
     _keywordFocus.unfocus();
   }
@@ -121,6 +139,7 @@ class _SearchHeaderState extends State<SearchHeader> {
 
   @override
   void dispose() {
+    _keywordSearchDebounce?.cancel();
     _hideOverlay();
     _keywordController.removeListener(_rebuild);
     _areaController.removeListener(_rebuild);
@@ -159,11 +178,14 @@ class _SearchHeaderState extends State<SearchHeader> {
                   child: TextField(
                     controller: _keywordController,
                     focusNode: _keywordFocus,
-                    onChanged: (v) {
-                      widget.onSearch(v);
-                      _updateSuggestions(v);
+                    onChanged: (value) {
+                      _scheduleKeywordSearch(value);
+                      _updateSuggestions(value);
                     },
-                    onSubmitted: (_) => _hideOverlay(),
+                    onSubmitted: (value) {
+                      _searchKeywordNow(value);
+                      _hideOverlay();
+                    },
                     textInputAction: TextInputAction.search,
                     decoration: InputDecoration(
                       hintText: l10n.searchHint,
@@ -195,7 +217,7 @@ class _SearchHeaderState extends State<SearchHeader> {
                                     ),
                                     onPressed: () {
                                       _keywordController.clear();
-                                      widget.onSearch('');
+                                      _searchKeywordNow('');
                                       _hideOverlay();
                                     },
                                   ),

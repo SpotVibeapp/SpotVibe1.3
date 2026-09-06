@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/user_event.dart';
+import '../providers/auth_provider.dart';
 import '../providers/user_events_provider.dart';
 import '../theme/theme.dart';
 import '../widgets/user_events/user_event_card.dart';
@@ -26,12 +27,15 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<UserEventsProvider>();
+    final isAdmin = context.watch<AuthProvider>().isAdmin;
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
 
     final appColors = Theme.of(context).extension<AppColorsExtension>()!;
 
-    final hasProEvents = provider.events.any((e) => e.isCreatorPro);
+    // Administrators receive creator tools through their role, even for
+    // listings posted before the role-aware access flag was added.
+    final hasProEvents = isAdmin || provider.events.any((e) => e.isCreatorPro);
 
     return Scaffold(
       appBar: AppBar(
@@ -50,7 +54,7 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
           ),
         ],
       ),
-      body: _buildBody(provider, colors, appColors, text),
+      body: _buildBody(provider, colors, appColors, text, isAdmin),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/create-event'),
         icon: const Icon(Icons.add_rounded),
@@ -61,7 +65,13 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
     );
   }
 
-  Widget _buildBody(UserEventsProvider provider, ColorScheme colors, AppColorsExtension appColors, TextTheme text) {
+  Widget _buildBody(
+    UserEventsProvider provider,
+    ColorScheme colors,
+    AppColorsExtension appColors,
+    TextTheme text,
+    bool isAdmin,
+  ) {
     if (provider.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -90,7 +100,7 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
       return _EmptyMyEventsState(onCreateTap: () => context.push('/create-event'));
     }
 
-    final hasAnyCreatorPro = provider.events.any((e) => e.isCreatorPro);
+    final hasAnyCreatorPro = isAdmin || provider.events.any((e) => e.isCreatorPro);
 
     return ListView.separated(
       padding: const EdgeInsets.all(AppTheme.spacingMd),
@@ -111,7 +121,7 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
               onEdit: () => context.push('/edit-event/${event.id}'),
               onDelete: () => _confirmDelete(context, event),
             ),
-            if (event.isCreatorPro) ...[
+            if (event.isCreatorPro || isAdmin) ...[
               const SizedBox(height: AppTheme.spacingXs),
               _EventAnalyticsRow(event: event, appColors: appColors, text: text),
             ],

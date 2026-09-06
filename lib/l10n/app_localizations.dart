@@ -2935,6 +2935,18 @@ abstract class AppLocalizations {
   /// **'Admin Dashboard'**
   String get adminDashboard;
 
+  /// No description provided for @adminAccountAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Administrator access'**
+  String get adminAccountAccess;
+
+  /// No description provided for @adminAccountAccessBody.
+  ///
+  /// In en, this message translates to:
+  /// **'All creator and Premium tools are enabled for this account.'**
+  String get adminAccountAccessBody;
+
   /// No description provided for @adminReports.
   ///
   /// In en, this message translates to:

@@ -194,7 +194,9 @@ class ProfileScreen extends StatelessWidget {
 
                 KeyedSubtree(
                   key: _tourKeyPremium,
-                  child: _ProTile(sub: sub, appColors: appColors, text: text),
+                  child: auth.isAdmin
+                      ? _AdminAccessTile(text: text)
+                      : _ProTile(sub: sub, appColors: appColors, text: text),
                 ),
                 KeyedSubtree(
                   key: _tourKeyMyEvents,
@@ -284,8 +286,12 @@ class ProfileScreen extends StatelessWidget {
             steps: [
               TourStep(
                 targetKey: _tourKeyPremium,
-                title: l10n.tourProfile1Title,
-                description: l10n.tourProfile1Body,
+                title: auth.isAdmin
+                    ? l10n.adminAccountAccess
+                    : l10n.tourProfile1Title,
+                description: auth.isAdmin
+                    ? l10n.adminAccountAccessBody
+                    : l10n.tourProfile1Body,
               ),
               TourStep(
                 targetKey: _tourKeyLanguage,
@@ -683,6 +689,73 @@ class _ProTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Replaces the store subscription promo for administrators. Admin access is
+/// role-based and must never imply a store purchase or send the admin to a
+/// paywall.
+class _AdminAccessTile extends StatelessWidget {
+  final TextTheme text;
+
+  const _AdminAccessTile({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppTheme.spacingSm),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.spacingMd,
+        vertical: AppTheme.spacingMd,
+      ),
+      decoration: BoxDecoration(
+        color: AppTheme.brandViolet.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(
+          color: AppTheme.brandViolet.withValues(alpha: 0.40),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppTheme.spacingSm),
+            decoration: BoxDecoration(
+              color: AppTheme.brandViolet.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+            ),
+            child: const Icon(
+              Icons.admin_panel_settings_rounded,
+              size: AppTheme.iconMd,
+              color: AppTheme.brandViolet,
+            ),
+          ),
+          const SizedBox(width: AppTheme.spacingMd),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.adminAccountAccess,
+                  style: text.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  l10n.adminAccountAccessBody,
+                  style: text.labelSmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(
+            Icons.verified_rounded,
+            color: AppTheme.brandViolet,
+          ),
+        ],
       ),
     );
   }

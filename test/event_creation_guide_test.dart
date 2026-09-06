@@ -87,6 +87,22 @@ void main() {
     expect(openedPremium, isTrue);
   });
 
+  testWidgets('administrator guide omits subscription promotion', (tester) async {
+    await tester.pumpWidget(
+      _testApp(
+        EventCreationGuide(
+          isPremium: false,
+          isAdmin: true,
+          onClose: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('Admin test access'), findsOneWidget);
+    expect(find.text('Explore Premium'), findsNothing);
+    expect(find.text('Free plan'), findsNothing);
+  });
+
   testWidgets('Premium creator guide identifies active access and media allowance',
       (tester) async {
     await tester.pumpWidget(

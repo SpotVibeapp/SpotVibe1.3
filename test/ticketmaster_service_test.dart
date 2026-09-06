@@ -3,11 +3,63 @@ import 'package:spotvibe_app/models/event.dart';
 import 'package:spotvibe_app/services/ticketmaster_service.dart';
 
 void main() {
-  test('formats a UTC future lower-bound for Ticketmaster searches', () {
+  test('formats a UTC lower-bound for Ticketmaster searches', () {
     expect(
       ticketmasterStartDateTime(DateTime.utc(2026, 9, 5, 18, 4, 9, 999)),
       '2026-09-05T18:04:09Z',
     );
+    expect(kTicketmasterOngoingLookback, const Duration(hours: 24));
+  });
+
+  test('preserves an explicit Ticketmaster event end time for live visibility',
+      () {
+    final event = eventFromTicketmaster({
+      'id': 'live-with-end',
+      'name': 'Live Source Event',
+      'dates': {
+        'start': {'dateTime': '2026-09-05T18:00:00Z'},
+        'end': {'dateTime': '2026-09-05T22:00:00Z'},
+      },
+    });
+
+    expect(event, isNotNull);
+    expect(event!.endDateTime?.toUtc(), DateTime.utc(2026, 9, 5, 22));
+    expect(
+      event.isVisibleAt(now: DateTime.utc(2026, 9, 5, 20)),
+      isTrue,
+    );
+    expect(
+      event.isVisibleAt(now: DateTime.utc(2026, 9, 5, 22)),
+      isFalse,
+    );
+  });
+
+  test('reads a local Ticketmaster end only when its time is supplied', () {
+    final event = eventFromTicketmaster({
+      'id': 'local-end',
+      'name': 'Local Source Event',
+      'dates': {
+        'start': {'localDate': '2026-09-05', 'localTime': '18:00:00'},
+        'end': {'localDate': '2026-09-05', 'localTime': '22:00:00'},
+      },
+    });
+
+    expect(event, isNotNull);
+    expect(event!.endDateTime, DateTime(2026, 9, 5, 22));
+  });
+
+  test('does not invent a Ticketmaster end time when the source lacks one', () {
+    final event = eventFromTicketmaster({
+      'id': 'unknown-end',
+      'name': 'Source Event Without End',
+      'dates': {
+        'start': {'dateTime': '2026-09-05T18:00:00Z'},
+        'end': {'dateTime': '2026-09-05T17:00:00Z'},
+      },
+    });
+
+    expect(event, isNotNull);
+    expect(event!.endDateTime, isNull);
   });
 
   test('picks the widest 16:9 Ticketmaster image', () {
