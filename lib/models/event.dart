@@ -228,8 +228,9 @@ class Event {
   /// label instead of a misleading "Free" (or a crash on a null cost).
   String get costLabel {
     if (isFree) return 'Free';
-    if (cost == null) return 'Tickets';
-    return '\$${cost.toStringAsFixed(2)}';
+    final c = cost;
+    if (c == null) return 'Tickets';
+    return '\$${c.toStringAsFixed(2)}';
   }
 
   /// Cover first, followed by up to four additional event photos.

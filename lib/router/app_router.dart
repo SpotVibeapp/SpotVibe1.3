@@ -482,7 +482,7 @@ class _EventDeepLinkLoaderState extends State<_EventDeepLinkLoader> {
   }
 
   Future<void> _load() async {
-    final Event? event;
+    Event? event;
     try {
       // Repository (curated/created) first, then live Ticketmaster — the
       // same resolution order and save-overlay as the main feed.

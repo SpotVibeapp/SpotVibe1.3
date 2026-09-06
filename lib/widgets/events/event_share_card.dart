@@ -81,8 +81,12 @@ class ShareEventData {
       );
 
   bool get isFree => !isTicketed && (cost == null || cost == 0);
-  String get costLabel =>
-      isFree ? 'Free' : (cost == null ? 'Tickets' : '\$${cost.toStringAsFixed(2)}');
+  String get costLabel {
+    if (isFree) return 'Free';
+    final c = cost;
+    if (c == null) return 'Tickets';
+    return '\$${c.toStringAsFixed(2)}';
+  }
   String get fullLocation =>
       [location, city].where((part) => part.isNotEmpty).join(', ');
 }
