@@ -77,16 +77,16 @@ void main() async {
       final appLinks = AppLinks();
       final coldUri = await appLinks.getInitialLink();
       if (coldUri != null) {
-        debugPrint('[deepLink] cold-start uri=$coldUri');
+        if (kDebugMode) debugPrint('[deepLink] cold-start uri=$coldUri');
         final path = DeepLinkService.pathFromUri(coldUri.toString());
-        debugPrint('[deepLink] cold-start parsed path=$path');
+        if (kDebugMode) debugPrint('[deepLink] cold-start parsed path=$path');
         if (path != null) {
           initialLocation = path;
           coldLinkUri = coldUri.toString();
         }
       }
     } catch (e) {
-      debugPrint('[deepLink] cold-start read failed: $e');
+      if (kDebugMode) debugPrint('[deepLink] cold-start read failed: $e');
     }
   }
 
@@ -294,10 +294,10 @@ class _SpotVibeAppState extends State<SpotVibeApp>
       // instance as the resume check — two instances would double-handle the
       // warm-tap delivery.
       _appLinks.uriLinkStream.listen((uri) {
-        debugPrint('[deepLink] stream uri=$uri');
+        if (kDebugMode) debugPrint('[deepLink] stream uri=$uri');
         _lastResumeLinkUri = uri.toString();
         final path = DeepLinkService.pathFromUri(uri.toString());
-        debugPrint('[deepLink] stream parsed path=$path');
+        if (kDebugMode) debugPrint('[deepLink] stream parsed path=$path');
         if (path != null) _router.go(path);
       });
     }
@@ -314,20 +314,22 @@ class _SpotVibeAppState extends State<SpotVibeApp>
     try {
       final uri = await _appLinks.getLatestLink();
       if (uri == null) {
-        debugPrint('[deepLink] resume-check: no link');
+        if (kDebugMode) debugPrint('[deepLink] resume-check: no link');
         return;
       }
       if (uri.toString() == _lastResumeLinkUri) {
-        debugPrint('[deepLink] resume-check skip duplicate: $uri');
+        if (kDebugMode) {
+          debugPrint('[deepLink] resume-check skip duplicate: $uri');
+        }
         return;
       }
       _lastResumeLinkUri = uri.toString();
-      debugPrint('[deepLink] resume-check uri=$uri');
+      if (kDebugMode) debugPrint('[deepLink] resume-check uri=$uri');
       final path = DeepLinkService.pathFromUri(uri.toString());
-      debugPrint('[deepLink] resume-check parsed path=$path');
+      if (kDebugMode) debugPrint('[deepLink] resume-check parsed path=$path');
       if (path != null) _router.go(path);
     } catch (e) {
-      debugPrint('[deepLink] resume-check failed: $e');
+      if (kDebugMode) debugPrint('[deepLink] resume-check failed: $e');
     }
   }
 

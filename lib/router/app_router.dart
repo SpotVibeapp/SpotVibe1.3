@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -62,10 +63,12 @@ class AppRouter {
       // recoverable error page makes invalid deep links and route bugs visible
       // during testing instead of looking like a random app refresh.
       errorBuilder: (_, state) {
-        debugPrint(
-          '[deepLink] ROUTE ERROR uri=${state.uri} '
-          'name=${state.name} error=${state.error}',
-        );
+        if (kDebugMode) {
+          debugPrint(
+            '[deepLink] ROUTE ERROR uri=${state.uri} '
+            'name=${state.name} error=${state.error}',
+          );
+        }
         return const _RouteErrorScreen();
       },
       // Deep link redirect: if a link arrives pointing at an event page but
