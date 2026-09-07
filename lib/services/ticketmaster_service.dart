@@ -26,6 +26,39 @@ const String kTicketmasterApiKey = String.fromEnvironment(
 /// explicit end time that is still ahead; SpotVibe never invents one.
 const kTicketmasterOngoingLookback = Duration(hours: 24);
 
+/// Largest page the Discovery API will return.
+const int kTicketmasterPageSize = 200;
+
+/// Most pages fetched per search. Ticketmaster caps deep paging at
+/// `size * page < 1000`, so 5 full pages is the hard ceiling; 3 keeps every
+/// feed refresh (once a minute) inside the 5 req/s and 5000/day quotas.
+const int kTicketmasterMaxPages = 3;
+
+/// Ticketmaster rejects radii above 200 miles.
+const double kTicketmasterMaxRadiusMiles = 200;
+
+/// Whole-mile radius accepted by the Discovery API. Non-finite or tiny
+/// values fall back to 1 mile; anything above the API ceiling is clamped
+/// rather than rejected with a 400.
+int ticketmasterRadiusParam(double miles) {
+  if (!miles.isFinite) return 1;
+  return _clampInt(miles.round(), 1, kTicketmasterMaxRadiusMiles.round());
+}
+
+/// `num.clamp` is typed as returning `num`; this keeps ints as ints.
+int _clampInt(int value, int min, int max) =>
+    value < min ? min : (value > max ? max : value);
+
+/// Number of pages a search may fetch: the caller's budget, cut down so
+/// `size * page` never crosses Ticketmaster's 1000-item deep-paging limit.
+int ticketmasterPageBudget(int pageSize, int maxPages) {
+  if (pageSize <= 0 || maxPages <= 0) return 0;
+  // Page indices are 0-based; the last allowed index p satisfies
+  // pageSize * p < 1000, so the count is that index + 1.
+  final deepPagingCap = ((1000 - 1) ~/ pageSize) + 1;
+  return maxPages < deepPagingCap ? maxPages : deepPagingCap;
+}
+
 /// Formats an exact UTC lower-bound accepted by the Discovery API.
 ///
 /// A lower-bound prevents an ascending first page from being consumed by old
@@ -71,7 +104,8 @@ class TicketmasterService {
     double? lat,
     double? lng,
     double radiusMiles = 40,
-    int size = 200,
+    int size = kTicketmasterPageSize,
+    int maxPages = kTicketmasterMaxPages,
   }) async {
     if (!isConfigured) {
       debugPrint('Ticketmaster: no API key. '
@@ -85,15 +119,16 @@ class TicketmasterService {
       // ongoing Ticketmaster event after a feed refresh, even when the API
       // supplied a real end time.
       final now = _clock();
+      final pageSize = _clampInt(size, 1, kTicketmasterPageSize);
       final params = <String, dynamic>{
         'apikey': _apiKey,
         'countryCode': 'US',
-        'size': size.clamp(1, 200),
+        'size': pageSize,
         'sort': 'date,asc',
         'startDateTime': ticketmasterStartDateTime(
           now.subtract(kTicketmasterOngoingLookback),
         ),
-        'radius': radiusMiles.round().clamp(1, 200),
+        'radius': ticketmasterRadiusParam(radiusMiles),
         'unit': 'miles',
         'includeTBA': 'no',
         'includeTBD': 'no',
@@ -118,25 +153,42 @@ class TicketmasterService {
         return const [];
       }
 
-      final response = await _dio.get(_endpoint, queryParameters: params);
-      final data = response.data;
-      if (data is! Map) return const [];
-      final embedded = data['_embedded'];
-      if (embedded is! Map) return const [];
-      final raw = embedded['events'];
-      if (raw is! List) return const [];
-
+      // Walk pages in date order until one comes back short (no more
+      // listings) or the page budget is spent. The first page is fetched
+      // even if a later one fails, so a flaky page 2 degrades to "fewer
+      // events" rather than an empty feed.
       final events = <Event>[];
-      for (final item in raw) {
-        if (item is! Map) continue;
-        final event = eventFromTicketmaster(Map<String, dynamic>.from(item));
-        if (event == null) continue;
-        if (looksLikeStandaloneAddon(event.title)) continue;
-        // Future listings are visible normally. A started listing stays
-        // visible only if its source supplied a real end after `now`.
-        if (!event.isVisibleAt(now: now)) continue;
-        events.add(event);
-        _byId[event.id] = event;
+      final pages = ticketmasterPageBudget(pageSize, maxPages);
+      for (var page = 0; page < pages; page++) {
+        final List<dynamic> raw;
+        try {
+          final response = await _dio.get(
+            _endpoint,
+            queryParameters: {...params, 'page': page},
+          );
+          raw = _eventsFromPage(response.data);
+        } catch (error) {
+          if (page == 0) rethrow;
+          debugPrint(
+            'Ticketmaster page $page failed (${error.runtimeType}); '
+            'keeping ${events.length} events from earlier pages.',
+          );
+          break;
+        }
+
+        for (final item in raw) {
+          if (item is! Map) continue;
+          final event = eventFromTicketmaster(Map<String, dynamic>.from(item));
+          if (event == null) continue;
+          if (looksLikeStandaloneAddon(event.title)) continue;
+          // Future listings are visible normally. A started listing stays
+          // visible only if its source supplied a real end after `now`.
+          if (!event.isVisibleAt(now: now)) continue;
+          events.add(event);
+          _byId[event.id] = event;
+        }
+
+        if (raw.length < pageSize) break;
       }
       return events;
     } catch (error) {
@@ -144,6 +196,16 @@ class TicketmasterService {
       debugPrint('Ticketmaster search failed (${error.runtimeType}).');
       return const [];
     }
+  }
+
+  /// Pulls the raw event list out of one Discovery response body. An empty
+  /// list also covers the "no results" shape, where `_embedded` is absent.
+  static List<dynamic> _eventsFromPage(Object? data) {
+    if (data is! Map) return const [];
+    final embedded = data['_embedded'];
+    if (embedded is! Map) return const [];
+    final raw = embedded['events'];
+    return raw is List ? raw : const [];
   }
 
   Future<Event?> getEventById(String id) async {

@@ -1,6 +1,66 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spotvibe_app/models/event.dart';
 import 'package:spotvibe_app/services/ticketmaster_service.dart';
+
+/// Serves canned Discovery pages keyed by the `page` query param and
+/// records every request so tests can assert on what was sent.
+class _FakeDiscoveryAdapter implements HttpClientAdapter {
+  _FakeDiscoveryAdapter(this.pages, {this.failPages = const {}});
+
+  /// page index -> list of event JSON objects.
+  final Map<int, List<Map<String, dynamic>>> pages;
+  final Set<int> failPages;
+  final List<Uri> requests = [];
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    requests.add(options.uri);
+    final page = int.parse(options.uri.queryParameters['page'] ?? '0');
+    if (failPages.contains(page)) {
+      return ResponseBody.fromString('{"fault":"boom"}', 500,
+          headers: {Headers.contentTypeHeader: ['application/json']});
+    }
+    final events = pages[page] ?? const <Map<String, dynamic>>[];
+    final body = events.isEmpty
+        ? <String, dynamic>{'page': {'number': page}}
+        : <String, dynamic>{
+            '_embedded': {'events': events},
+            'page': {'number': page},
+          };
+    return ResponseBody.fromString(jsonEncode(body), 200,
+        headers: {Headers.contentTypeHeader: ['application/json']});
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+/// A minimal future Ticketmaster listing; [n] keeps ids and titles
+/// unique so nothing collapses in dedupe.
+Map<String, dynamic> _listing(int n) => {
+      'id': 'G5v$n',
+      'name': 'Show number $n',
+      'dates': {
+        'start': {'dateTime': '2027-01-01T20:00:00Z'},
+      },
+    };
+
+TicketmasterService _serviceWith(_FakeDiscoveryAdapter adapter) {
+  final dio = Dio()..httpClientAdapter = adapter;
+  return TicketmasterService(
+    dio: dio,
+    apiKey: 'test-key',
+    clock: () => DateTime.utc(2026, 9, 7, 12),
+  );
+}
 
 void main() {
   test('formats a UTC lower-bound for Ticketmaster searches', () {
@@ -259,5 +319,154 @@ void main() {
     expect(tm.isConfigured, isFalse);
     final events = await tm.search(city: 'El Paso', stateCode: 'TX');
     expect(events, isEmpty);
+  });
+
+  group('radius parameter', () {
+    test('rounds to whole miles and clamps to the API ceiling', () {
+      expect(ticketmasterRadiusParam(25.0), 25);
+      expect(ticketmasterRadiusParam(37.6), 38);
+      expect(ticketmasterRadiusParam(0.2), 1);
+      expect(ticketmasterRadiusParam(-5), 1);
+      expect(ticketmasterRadiusParam(200), 200);
+      expect(ticketmasterRadiusParam(999), 200);
+      expect(ticketmasterRadiusParam(double.nan), 1);
+      expect(ticketmasterRadiusParam(double.infinity), 1);
+    });
+
+    test('is sent to the API as requested', () async {
+      final adapter = _FakeDiscoveryAdapter({0: [_listing(1)]});
+      final tm = _serviceWith(adapter);
+
+      await tm.search(lat: 31.76, lng: -106.49, radiusMiles: 75);
+
+      expect(adapter.requests, hasLength(1));
+      final q = adapter.requests.single.queryParameters;
+      expect(q['radius'], '75');
+      expect(q['unit'], 'miles');
+      expect(q['latlong'], '31.7600,-106.4900');
+      expect(q['size'], '$kTicketmasterPageSize');
+      expect(q['page'], '0');
+    });
+  });
+
+  group('page budget', () {
+    test('honours the caller budget below the deep-paging cap', () {
+      expect(ticketmasterPageBudget(200, 3), 3);
+      expect(ticketmasterPageBudget(200, 1), 1);
+    });
+
+    test('never lets size * page reach 1000', () {
+      // size 200: pages 0..4 allowed (200*4 = 800 < 1000), page 5 is not.
+      expect(ticketmasterPageBudget(200, 50), 5);
+      // size 100: pages 0..9.
+      expect(ticketmasterPageBudget(100, 50), 10);
+      // size 1000: only page 0 (1000*1 is not < 1000).
+      expect(ticketmasterPageBudget(1000, 50), 1);
+    });
+
+    test('is zero for nonsense input', () {
+      expect(ticketmasterPageBudget(0, 3), 0);
+      expect(ticketmasterPageBudget(200, 0), 0);
+      expect(ticketmasterPageBudget(-1, -1), 0);
+    });
+  });
+
+  group('pagination', () {
+    test('stops after a short page without asking for the next one',
+        () async {
+      // Page size 3: page 0 is full, page 1 is short -> no page 2 call.
+      final adapter = _FakeDiscoveryAdapter({
+        0: [_listing(1), _listing(2), _listing(3)],
+        1: [_listing(4)],
+        2: [_listing(99)], // must never be requested
+      });
+      final tm = _serviceWith(adapter);
+
+      final events = await tm.search(
+          lat: 31.76, lng: -106.49, size: 3, maxPages: 5);
+
+      expect(
+        events.map((e) => e.id),
+        ['tm_G5v1', 'tm_G5v2', 'tm_G5v3', 'tm_G5v4'],
+      );
+      expect(
+        adapter.requests.map((u) => u.queryParameters['page']),
+        ['0', '1'],
+      );
+    });
+
+    test('stops at maxPages even when every page is full', () async {
+      final adapter = _FakeDiscoveryAdapter({
+        0: [_listing(1), _listing(2)],
+        1: [_listing(3), _listing(4)],
+        2: [_listing(5), _listing(6)],
+      });
+      final tm = _serviceWith(adapter);
+
+      final events = await tm.search(
+          lat: 31.76, lng: -106.49, size: 2, maxPages: 2);
+
+      expect(events, hasLength(4));
+      expect(adapter.requests, hasLength(2));
+    });
+
+    test('a single short page makes exactly one request', () async {
+      final adapter = _FakeDiscoveryAdapter({0: [_listing(1)]});
+      final tm = _serviceWith(adapter);
+
+      final events = await tm.search(lat: 31.76, lng: -106.49);
+
+      expect(events, hasLength(1));
+      expect(adapter.requests, hasLength(1));
+    });
+
+    test('an empty result set is a normal empty list', () async {
+      final adapter = _FakeDiscoveryAdapter({});
+      final tm = _serviceWith(adapter);
+
+      expect(await tm.search(lat: 31.76, lng: -106.49), isEmpty);
+      expect(adapter.requests, hasLength(1));
+    });
+
+    test('keeps earlier pages when a later page fails', () async {
+      final adapter = _FakeDiscoveryAdapter(
+        {
+          0: [_listing(1), _listing(2)],
+          1: [_listing(3), _listing(4)],
+        },
+        failPages: {1},
+      );
+      final tm = _serviceWith(adapter);
+
+      final events = await tm.search(
+          lat: 31.76, lng: -106.49, size: 2, maxPages: 3);
+
+      expect(events.map((e) => e.id), ['tm_G5v1', 'tm_G5v2']);
+    });
+
+    test('a failing first page still degrades to an empty list', () async {
+      final adapter = _FakeDiscoveryAdapter(
+        {0: [_listing(1)]},
+        failPages: {0},
+      );
+      final tm = _serviceWith(adapter);
+
+      expect(await tm.search(lat: 31.76, lng: -106.49), isEmpty);
+    });
+
+    test('paged events are all resolvable by id afterwards', () async {
+      final adapter = _FakeDiscoveryAdapter({
+        0: [_listing(1), _listing(2)],
+        1: [_listing(3)],
+      });
+      final tm = _serviceWith(adapter);
+      await tm.search(lat: 31.76, lng: -106.49, size: 2);
+
+      // Served from the search cache: no extra request.
+      final before = adapter.requests.length;
+      final hit = await tm.getEventById('tm_G5v3');
+      expect(hit?.title, 'Show number 3');
+      expect(adapter.requests.length, before);
+    });
   });
 }

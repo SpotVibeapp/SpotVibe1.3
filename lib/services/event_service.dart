@@ -986,6 +986,27 @@ const Map<String, String> _zipToCity = {
   '829':'Casper','830':'Rock Springs','831':'Rock Springs',
 };
 
+/// Ticketmaster pull radius when the user has not shared a location: wide
+/// enough to cover the El Paso metro plus Las Cruces without dragging in
+/// the whole state.
+const double kDefaultTicketmasterRadiusMiles = 40;
+
+/// Maps the feed's radius slider to the radius sent to Ticketmaster.
+///
+/// The slider tops out at 100, which the feed treats as "any distance"; the
+/// haversine filter is skipped there, so the fetch has to cover the whole
+/// region on its own. Anything below that is fetched as-is: the local
+/// haversine filter then trims by the exact value, so pulling a bit less than
+/// before is never a regression, and pulling more means the slider is finally
+/// honoured instead of silently capped at 40.
+double ticketmasterRadiusForFeed(double searchRadius) {
+  if (!searchRadius.isFinite || searchRadius <= 0) {
+    return kDefaultTicketmasterRadiusMiles;
+  }
+  if (searchRadius >= 100) return kTicketmasterMaxRadiusMiles;
+  return searchRadius;
+}
+
 /// Ticketmaster's documented classifications used for unambiguous SpotVibe
 /// categories. Other categories remain broad because mapping them would hide
 /// real listings under Ticketmaster's different taxonomy.
@@ -1056,6 +1077,9 @@ class EventService {
   /// drops same-show duplicates. Placeholder Ticketmaster seed rows
   /// (Chihuahuas / Coliseum / Sun Bowl / symphony) are dropped once the
   /// API returns real dates for those venues.
+  ///
+  /// [radiusMiles] is only meaningful for coordinate searches; city searches
+  /// let Ticketmaster scope by the named city instead.
   Future<List<Event>> _withLiveListings({
     required List<Event> local,
     String? city,
@@ -1064,6 +1088,7 @@ class EventService {
     String? category,
     double? lat,
     double? lng,
+    double radiusMiles = kDefaultTicketmasterRadiusMiles,
   }) async {
     final tm = _ticketmaster;
     if (tm == null || !tm.isConfigured) {
@@ -1076,6 +1101,7 @@ class EventService {
       classificationName: _ticketmasterClassificationFor(category),
       lat: lat,
       lng: lng,
+      radiusMiles: radiusMiles,
     );
     var curated = local;
     if (remote.isNotEmpty) {
@@ -1184,12 +1210,20 @@ class EventService {
     } else {
       final events = await _repository.getUpcomingEvents();
       filtered = events.where((e) => e.isVisibleAt()).toList();
+      // Pull as far as the feed will actually show. With GPS the haversine
+      // filter below trims to [searchRadius] (or nothing at all for "any
+      // distance"); without GPS the slider is not applied and the El Paso
+      // bias below clips to the default radius, so fetch exactly that.
+      final hasGps = userLat != null && userLng != null;
       filtered = await _withLiveListings(
         local: filtered,
         keyword: searchQuery,
         category: category,
         lat: userLat ?? kElPasoLat,
         lng: userLng ?? kElPasoLng,
+        radiusMiles: hasGps
+            ? ticketmasterRadiusForFeed(searchRadius)
+            : kDefaultTicketmasterRadiusMiles,
       );
       // Default city bias: El Paso metro when the user hasn't searched a
       // city and hasn't shared GPS yet. Nearby GPS still wins via the
@@ -1200,7 +1234,7 @@ class EventService {
           if (e.latitude == 0 && e.longitude == 0) return false;
           return _haversineDistanceMiles(
                 kElPasoLat, kElPasoLng, e.latitude, e.longitude) <=
-              40;
+              kDefaultTicketmasterRadiusMiles;
         }).toList();
         if (nearby.isNotEmpty) filtered = nearby;
       }

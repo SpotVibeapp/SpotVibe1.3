@@ -7,6 +7,7 @@ import 'package:spotvibe_app/repositories/event_repository.dart';
 import 'package:spotvibe_app/providers/event_provider.dart';
 import 'package:spotvibe_app/repositories/user_event_repository.dart';
 import 'package:spotvibe_app/services/event_service.dart';
+import 'package:spotvibe_app/services/ticketmaster_service.dart';
 
 class _FixedEventRepository implements EventRepository {
   final List<Event> events;
@@ -265,5 +266,29 @@ void main() {
       (await repository.getEventById(other.id))!.organizerName,
       'Another organizer',
     );
+  });
+
+  group('ticketmasterRadiusForFeed', () {
+    test('passes an ordinary slider value straight through', () {
+      expect(ticketmasterRadiusForFeed(5), 5);
+      expect(ticketmasterRadiusForFeed(25), 25);
+      expect(ticketmasterRadiusForFeed(60), 60);
+      expect(ticketmasterRadiusForFeed(99.9), 99.9);
+    });
+
+    test('"any distance" (100) fetches the widest radius the API allows',
+        () {
+      expect(ticketmasterRadiusForFeed(100), kTicketmasterMaxRadiusMiles);
+      expect(ticketmasterRadiusForFeed(150), kTicketmasterMaxRadiusMiles);
+    });
+
+    test('garbage falls back to the default pull radius', () {
+      expect(ticketmasterRadiusForFeed(0), kDefaultTicketmasterRadiusMiles);
+      expect(ticketmasterRadiusForFeed(-1), kDefaultTicketmasterRadiusMiles);
+      expect(
+        ticketmasterRadiusForFeed(double.nan),
+        kDefaultTicketmasterRadiusMiles,
+      );
+    });
   });
 }
