@@ -174,4 +174,61 @@ void main() {
     expect(out.single.id, 'tm_abc123');
     expect(out.single.imageUrl, contains('county_coliseum'));
   });
+  test('same show on Ticketmaster and SeatGeek keeps the Ticketmaster row', () {
+    final tm = _event(
+      id: 'tm_G5vZ9',
+      title: 'Khruangbin',
+      location: 'Abraham Chavez Theatre',
+      dateTime: night,
+      imageUrl: 'https://s1.ticketm.net/dam/a/khruangbin.jpg',
+      source: EventSource.ticketmaster,
+      sourceUrl: 'https://ticketmaster.com/event/G5vZ9',
+      description: 'Official Ticketmaster listing with tickets and seating.',
+    );
+    final sg = _event(
+      id: 'sg_6162405',
+      title: 'Khruangbin',
+      location: 'Abraham Chavez Theatre',
+      dateTime: night.add(const Duration(minutes: 30)),
+      imageUrl: 'https://seatgeek.com/images/performers/khruangbin/huge.jpg',
+      source: EventSource.seatgeek,
+      sourceUrl: 'https://seatgeek.com/khruangbin-tickets/6162405',
+      description: 'Official SeatGeek listing with tickets and seating.',
+    );
+    // Order must not matter.
+    for (final input in [
+      [tm, sg],
+      [sg, tm],
+    ]) {
+      final out = dedupeEvents(input);
+      expect(out, hasLength(1));
+      expect(out.single.id, 'tm_G5vZ9');
+      expect(out.single.source, EventSource.ticketmaster);
+    }
+  });
+
+  test('a SeatGeek row still beats a curated placeholder for the same show',
+      () {
+    final local = _event(
+      id: 'evt_ep_chavez',
+      title: 'Khruangbin',
+      location: 'Abraham Chavez Theatre',
+      dateTime: night,
+      imageUrl: 'assets/venues/abraham_chavez.jpg',
+      source: EventSource.ticketmaster,
+    );
+    final sg = _event(
+      id: 'sg_6162405',
+      title: 'Khruangbin',
+      location: 'Abraham Chavez Theatre',
+      dateTime: night,
+      source: EventSource.seatgeek,
+      sourceUrl: 'https://seatgeek.com/khruangbin-tickets/6162405',
+    );
+    final out = dedupeEvents([local, sg]);
+    expect(out, hasLength(1));
+    expect(out.single.id, 'sg_6162405');
+    // …but borrows the real venue photo the placeholder had.
+    expect(out.single.imageUrl, contains('abraham_chavez'));
+  });
 }

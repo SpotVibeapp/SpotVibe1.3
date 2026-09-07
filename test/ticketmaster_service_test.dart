@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spotvibe_app/models/event.dart';
+import 'package:spotvibe_app/services/live_event_source.dart';
 import 'package:spotvibe_app/services/ticketmaster_service.dart';
 
 /// Serves canned Discovery pages keyed by the `page` query param and
@@ -319,6 +320,44 @@ void main() {
     expect(tm.isConfigured, isFalse);
     final events = await tm.search(city: 'El Paso', stateCode: 'TX');
     expect(events, isEmpty);
+  });
+
+  test('is a LiveEventSource that owns tm_ ids', () {
+    final tm = TicketmasterService(apiKey: 'k');
+    expect(tm, isA<LiveEventSource>());
+    expect(tm.source, EventSource.ticketmaster);
+    expect(tm.ownsId('tm_G5v1'), isTrue);
+    expect(tm.ownsId('sg_1'), isFalse);
+  });
+
+  group('category → classificationName', () {
+    test('maps the unambiguous SpotVibe categories only', () {
+      expect(ticketmasterClassificationFor('Music'), 'Music');
+      expect(ticketmasterClassificationFor('Sports'), 'Sports');
+      expect(ticketmasterClassificationFor('Arts'), 'Arts & Theatre');
+      expect(ticketmasterClassificationFor('Family'), 'Family');
+      expect(ticketmasterClassificationFor('Film'), 'Film');
+      expect(ticketmasterClassificationFor('Food'), isNull);
+      expect(ticketmasterClassificationFor('All'), isNull);
+      expect(ticketmasterClassificationFor(null), isNull);
+    });
+
+    test('is sent to the API for a mapped category and omitted otherwise',
+        () async {
+      final adapter = _FakeDiscoveryAdapter({0: [_listing(1)]});
+      final tm = _serviceWith(adapter);
+
+      await tm.search(city: 'El Paso', stateCode: 'TX', category: 'Arts');
+      await tm.search(city: 'El Paso', stateCode: 'TX', category: 'Food');
+
+      expect(adapter.requests, hasLength(2));
+      expect(adapter.requests[0].queryParameters['classificationName'],
+          'Arts & Theatre');
+      expect(
+        adapter.requests[1].queryParameters.containsKey('classificationName'),
+        isFalse,
+      );
+    });
   });
 
   group('radius parameter', () {

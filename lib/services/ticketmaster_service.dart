@@ -5,6 +5,7 @@ import '../data/el_paso_events.dart';
 import '../data/event_dedupe.dart';
 import '../data/event_images.dart';
 import '../models/event.dart';
+import 'live_event_source.dart';
 
 export '../data/event_images.dart';
 
@@ -64,6 +65,26 @@ int ticketmasterPageBudget(int pageSize, int maxPages) {
 /// A lower-bound prevents an ascending first page from being consumed by old
 /// listings that the app correctly removes. The short lookback above keeps
 /// source-defined ongoing events eligible as well as future events.
+/// Ticketmaster's documented classifications for the SpotVibe categories
+/// that map unambiguously. Other categories stay broad because forcing them
+/// into Ticketmaster's different taxonomy would hide real listings.
+String? ticketmasterClassificationFor(String? category) {
+  switch (category) {
+    case 'Music':
+      return 'Music';
+    case 'Sports':
+      return 'Sports';
+    case 'Arts':
+      return 'Arts & Theatre';
+    case 'Family':
+      return 'Family';
+    case 'Film':
+      return 'Film';
+    default:
+      return null;
+  }
+}
+
 String ticketmasterStartDateTime(DateTime time) {
   final utc = time.toUtc();
   String twoDigits(int value) => value.toString().padLeft(2, '0');
@@ -72,7 +93,7 @@ String ticketmasterStartDateTime(DateTime time) {
       '${twoDigits(utc.hour)}:${twoDigits(utc.minute)}:${twoDigits(utc.second)}Z';
 }
 
-class TicketmasterService {
+class TicketmasterService implements LiveEventSource {
   TicketmasterService({
     Dio? dio,
     String? apiKey,
@@ -92,15 +113,23 @@ class TicketmasterService {
   static const _endpoint =
       'https://app.ticketmaster.com/discovery/v2/events.json';
 
+  @override
+  EventSource get source => EventSource.ticketmaster;
+
+  @override
   bool get isConfigured => _apiKey.isNotEmpty;
+
+  @override
+  bool ownsId(String id) => id.startsWith('tm_');
 
   final Map<String, Event> _byId = {};
 
+  @override
   Future<List<Event>> search({
     String? city,
     String? stateCode,
     String? keyword,
-    String? classificationName,
+    String? category,
     double? lat,
     double? lng,
     double radiusMiles = 40,
@@ -138,9 +167,9 @@ class TicketmasterService {
       if (cleanedKeyword.isNotEmpty) {
         params['keyword'] = cleanedKeyword;
       }
-      final cleanedClassification = classificationName?.trim() ?? '';
-      if (cleanedClassification.isNotEmpty) {
-        params['classificationName'] = cleanedClassification;
+      final classification = ticketmasterClassificationFor(category);
+      if (classification != null) {
+        params['classificationName'] = classification;
       }
       if (lat != null && lng != null) {
         params['latlong'] = '${lat.toStringAsFixed(4)},${lng.toStringAsFixed(4)}';
@@ -208,10 +237,11 @@ class TicketmasterService {
     return raw is List ? raw : const [];
   }
 
+  @override
   Future<Event?> getEventById(String id) async {
     final cached = _byId[id];
     if (cached != null) return cached;
-    if (!isConfigured || !id.startsWith('tm_')) return null;
+    if (!isConfigured || !ownsId(id)) return null;
     final tmId = id.substring(3);
     try {
       final response = await _dio.get(

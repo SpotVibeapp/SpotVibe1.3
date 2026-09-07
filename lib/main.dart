@@ -41,7 +41,9 @@ import 'services/deep_link_service.dart';
 import 'services/notification_service.dart';
 import 'services/permission_service.dart';
 import 'services/personalization_service.dart';
+import 'services/live_event_source.dart';
 import 'services/revenue_cat_service.dart';
+import 'services/seatgeek_service.dart';
 import 'services/ticketmaster_service.dart';
 import 'providers/follow_provider.dart';
 import 'providers/personalization_provider.dart';
@@ -347,6 +349,16 @@ class _SpotVibeAppState extends State<SpotVibeApp>
         ChangeNotifierProvider(create: (_) => EventExpiryService()),
         Provider<EventRepository>(create: (_) => widget.eventRepository),
         Provider(create: (_) => TicketmasterService()),
+        Provider(create: (_) => SeatGeekService()),
+        // Every live listing provider the feed merges. Adding a source is
+        // one new LiveEventSource file plus one line here; an unconfigured
+        // key just means that provider contributes nothing.
+        Provider<List<LiveEventSource>>(
+          create: (ctx) => List<LiveEventSource>.unmodifiable([
+            ctx.read<TicketmasterService>(),
+            ctx.read<SeatGeekService>(),
+          ]),
+        ),
         Provider<UserRepository>(create: (_) => widget.userRepository),
         Provider(create: (_) => FollowRepository()),
         Provider<RsvpRepository>(create: (_) => widget.rsvpRepository),

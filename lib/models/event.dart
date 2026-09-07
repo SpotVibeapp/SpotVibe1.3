@@ -11,6 +11,7 @@ enum EventSource {
   twitter,
   google,
   ticketmaster,
+  seatgeek,
   local;
 
   String get displayName {
@@ -25,6 +26,8 @@ enum EventSource {
         return 'Google';
       case EventSource.ticketmaster:
         return 'Ticketmaster';
+      case EventSource.seatgeek:
+        return 'SeatGeek';
       case EventSource.local:
         return 'Local';
     }
@@ -42,6 +45,8 @@ enum EventSource {
         return const Color(0xFF4285F4);
       case EventSource.ticketmaster:
         return const Color(0xFF026CDF);
+      case EventSource.seatgeek:
+        return const Color(0xFFFF5B49);
       case EventSource.local:
         return const Color(0xFF6C5CE7);
     }
@@ -59,6 +64,8 @@ enum EventSource {
         return Icons.g_mobiledata_rounded;
       case EventSource.ticketmaster:
         return Icons.confirmation_number_rounded;
+      case EventSource.seatgeek:
+        return Icons.local_activity_rounded;
       case EventSource.local:
         return Icons.location_city_rounded;
     }

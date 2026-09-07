@@ -42,14 +42,17 @@ import '../screens/saved_events_screen.dart';
 import '../screens/venue_claim_screen.dart';
 import '../services/deep_link_service.dart';
 import '../services/event_service.dart';
-import '../services/ticketmaster_service.dart';
+import '../services/live_event_source.dart';
 import '../services/notification_service.dart';
 import '../services/permission_service.dart';
 import '../services/user_event_service.dart';
 
 class AppRouter {
   static EventService _eventService(BuildContext context, EventRepository eventRepo) {
-    return EventService(repository: eventRepo, ticketmaster: context.read<TicketmasterService>());
+    return EventService(
+      repository: eventRepo,
+      sources: context.read<List<LiveEventSource>>(),
+    );
   }
 
   /// Build the router.  [initialLocation] is resolved at startup:
@@ -213,7 +216,7 @@ class AppRouter {
             return _EventDeepLinkLoader(
               eventId: eventId,
               eventRepo: eventRepo,
-              ticketmaster: context.read<TicketmasterService>(),
+              sources: context.read<List<LiveEventSource>>(),
               rsvpRepo: rsvpRepo,
               notifs: notifs,
               auth: auth,
@@ -435,7 +438,7 @@ class _RouteErrorScreen extends StatelessWidget {
 class _EventDeepLinkLoader extends StatefulWidget {
   final String eventId;
   final EventRepository eventRepo;
-  final TicketmasterService ticketmaster;
+  final List<LiveEventSource> sources;
   final RsvpRepository rsvpRepo;
   final NotificationService notifs;
   final AuthProvider auth;
@@ -443,7 +446,7 @@ class _EventDeepLinkLoader extends StatefulWidget {
   const _EventDeepLinkLoader({
     required this.eventId,
     required this.eventRepo,
-    required this.ticketmaster,
+    required this.sources,
     required this.rsvpRepo,
     required this.notifs,
     required this.auth,
@@ -460,7 +463,7 @@ class _EventDeepLinkLoaderState extends State<_EventDeepLinkLoader> {
 
   late final EventService _service = EventService(
     repository: widget.eventRepo,
-    ticketmaster: widget.ticketmaster,
+    sources: widget.sources,
   );
 
   @override
@@ -472,8 +475,9 @@ class _EventDeepLinkLoaderState extends State<_EventDeepLinkLoader> {
   Future<void> _load() async {
     Event? event;
     try {
-      // Repository (curated/created) first, then live Ticketmaster — the
-      // same resolution order and save-overlay as the main feed.
+      // Repository (curated/created) first, then whichever live provider
+      // owns the id prefix (tm_, sg_) — the same resolution order and
+      // save-overlay as the main feed.
       event = await _service.getEventById(widget.eventId);
     } catch (e) {
       debugPrint('Deep-link event load failed for ${widget.eventId}: $e');
@@ -485,7 +489,7 @@ class _EventDeepLinkLoaderState extends State<_EventDeepLinkLoader> {
       // SnackBar + context.go('/')) fired during the cold-start navigation
       // and surfaced as the router error page ("We could not open that
       // page") instead of a useful message.
-      debugPrint('Deep-link event not found: ${widget.eventId} (repo + Ticketmaster both empty)');
+      debugPrint('Deep-link event not found: ${widget.eventId} (repo + live providers all empty)');
       setState(() {
         _notFound = true;
         _loading = false;

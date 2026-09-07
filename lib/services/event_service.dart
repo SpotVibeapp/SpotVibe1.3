@@ -1,9 +1,11 @@
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import '../data/el_paso_events.dart';
 import '../data/event_dedupe.dart';
 import '../models/event.dart';
 import '../models/event_save.dart';
 import '../repositories/event_repository.dart';
+import 'live_event_source.dart';
 import 'ticketmaster_service.dart';
 
 // ── Zip prefix → US state abbreviation ────────────────────────────────────────
@@ -1007,35 +1009,40 @@ double ticketmasterRadiusForFeed(double searchRadius) {
   return searchRadius;
 }
 
-/// Ticketmaster's documented classifications used for unambiguous SpotVibe
-/// categories. Other categories remain broad because mapping them would hide
-/// real listings under Ticketmaster's different taxonomy.
-String? _ticketmasterClassificationFor(String? category) {
-  switch (category) {
-    case 'Music':
-      return 'Music';
-    case 'Sports':
-      return 'Sports';
-    case 'Arts':
-      return 'Arts & Theatre';
-    case 'Family':
-      return 'Family';
-    case 'Film':
-      return 'Film';
-    default:
-      return null;
-  }
-}
-
 class EventService {
   final EventRepository _repository;
-  final TicketmasterService? _ticketmaster;
 
+  /// Live listing providers merged into the curated feed. Order matters only
+  /// for deep-link dispatch (first source whose [LiveEventSource.ownsId]
+  /// claims the id wins); the feed merge is order-independent because
+  /// [dedupeEvents] decides by row quality, not position.
+  final List<LiveEventSource> _sources;
+
+  /// [sources] is the full provider list. [ticketmaster] is kept as a
+  /// convenience for the common single-provider wiring and is appended to
+  /// [sources] when given. Neither is required: with no providers the feed is
+  /// purely curated, which is exactly how tests construct the service.
   EventService({
     required EventRepository repository,
+    List<LiveEventSource> sources = const [],
     TicketmasterService? ticketmaster,
   })  : _repository = repository,
-        _ticketmaster = ticketmaster;
+        _sources = [
+          ...sources,
+          if (ticketmaster != null &&
+              !sources.any((s) => identical(s, ticketmaster)))
+            ticketmaster,
+        ];
+
+  /// Providers that have credentials this build. Unconfigured providers are
+  /// silently skipped so a missing key means fewer events, never an error.
+  List<LiveEventSource> get _activeSources =>
+      _sources.where((s) => s.isConfigured).toList(growable: false);
+
+  /// Sources that are wired in, whether or not they hold a key.
+  @visibleForTesting
+  List<EventSource> get liveSourceKinds =>
+      _sources.map((s) => s.source).toList(growable: false);
 
   /// Whether [query] is an exact recognized city, state, or ZIP search.
   ///
@@ -1090,46 +1097,118 @@ class EventService {
     double? lng,
     double radiusMiles = kDefaultTicketmasterRadiusMiles,
   }) async {
-    final tm = _ticketmaster;
-    if (tm == null || !tm.isConfigured) {
+    final active = _activeSources;
+    if (active.isEmpty) {
       return dedupeEvents(local);
     }
-    final remote = await tm.search(
-      city: city,
-      stateCode: state,
-      keyword: keyword,
-      classificationName: _ticketmasterClassificationFor(category),
-      lat: lat,
-      lng: lng,
-      radiusMiles: radiusMiles,
+
+    // Fan out to every configured provider at once. Each call is isolated:
+    // a provider that throws, times out, or returns garbage contributes an
+    // empty list and the others still land. The feed can shrink; it cannot
+    // blank out or crash because one vendor had a bad minute.
+    final perSource = await Future.wait(
+      active.map((source) => _searchSourceSafely(
+            source,
+            city: city,
+            state: state,
+            keyword: keyword,
+            category: category,
+            lat: lat,
+            lng: lng,
+            radiusMiles: radiusMiles,
+          )),
     );
+    final remote = <Event>[];
+    final sourcesThatAnswered = <EventSource>{};
+    for (var i = 0; i < active.length; i++) {
+      if (perSource[i].isEmpty) continue;
+      remote.addAll(perSource[i]);
+      sourcesThatAnswered.add(active[i].source);
+    }
+
+    // Curated rows that stand in for a provider's live listings are dropped
+    // only once that provider actually answered; a quiet provider keeps its
+    // placeholders on screen.
     var curated = local;
-    if (remote.isNotEmpty) {
+    if (sourcesThatAnswered.isNotEmpty) {
       curated = local
           .where((e) =>
               !(e.id.startsWith('evt_ep_') &&
-                  e.source == EventSource.ticketmaster))
+                  sourcesThatAnswered.contains(e.source)))
           .toList();
     }
+    // Cross-provider duplicates (same title, venue, day under `tm_` and
+    // `sg_` ids) collapse in dedupeEvents by fingerprint; source-aware
+    // quality scoring picks the row to keep.
     return dedupeEvents([...curated, ...remote])
         .where((event) => event.isVisibleAt())
         .toList();
   }
 
+  Future<List<Event>> _searchSourceSafely(
+    LiveEventSource source, {
+    String? city,
+    String? state,
+    String? keyword,
+    String? category,
+    double? lat,
+    double? lng,
+    required double radiusMiles,
+  }) async {
+    try {
+      final results = await source.search(
+        city: city,
+        stateCode: state,
+        keyword: keyword,
+        category: category,
+        lat: lat,
+        lng: lng,
+        radiusMiles: radiusMiles,
+      );
+      // Defensive: a provider must only return rows it owns so dedupe
+      // quality and deep-link dispatch stay truthful.
+      return results
+          .where((e) => e.source == source.source && source.ownsId(e.id))
+          .toList(growable: false);
+    } catch (error) {
+      debugPrint(
+        'Live source ${source.source.name} failed (${error.runtimeType}); '
+        'continuing without it.',
+      );
+      return const [];
+    }
+  }
+
   Future<Event?> getEventById(String id) async {
     final local = await _repository.getEventById(id);
     if (local != null) return local;
-    final remote = await _ticketmaster?.getEventById(id);
+    // Dispatch on id prefix: `tm_` → Ticketmaster, `sg_` → SeatGeek, and so
+    // on. A provider that claims the prefix but is unconfigured or fails
+    // returns null, and the deep-link loader shows its not-found screen.
+    Event? remote;
+    for (final source in _sources) {
+      if (!source.ownsId(id)) continue;
+      try {
+        remote = await source.getEventById(id);
+      } catch (error) {
+        debugPrint(
+          'Live source ${source.source.name} lookup failed '
+          '(${error.runtimeType}).',
+        );
+        remote = null;
+      }
+      if (remote != null) break;
+    }
     if (remote == null) return null;
-    // Ticketmaster events never pass through the repository — apply the
-    // user's saved flags here so bookmarks survive cold-start deep links.
+    // Live events never pass through the repository — apply the user's
+    // saved flags here so bookmarks survive cold-start deep links.
     return (await _withSaves([remote])).first;
   }
 
   /// Applies the user's bookmark / interested flags to every event —
-  /// including live Ticketmaster listings merged after the repository read.
-  /// Without this, bookmarks on Ticketmaster events were wiped on every
-  /// feed refresh (which runs once per minute).
+  /// including live Ticketmaster/SeatGeek listings merged after the
+  /// repository read. Without this, bookmarks on live events were wiped on
+  /// every feed refresh (which runs once per minute).
   Future<List<Event>> _withSaves(List<Event> events) async {
     if (events.isEmpty) return events;
     try {

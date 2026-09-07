@@ -163,23 +163,54 @@ the app still runs on mocks.
 
 Default feed: curated El Paso venues (County Coliseum, Southwest University
 Park, Plaza Theatre, Franklin Mountains, Hueco Tanks, …) merged with live
-Ticketmaster listings for that area. Searching another city uses Ticketmaster
-only — the app never invents events. Duplicate title + venue + day rows are
-collapsed, preferring the Ticketmaster row (official event photo + ticket
-URL). Deploy `firestore.rules` so the El Paso seed can be written.
+listings from every configured provider (Ticketmaster, SeatGeek) for that
+area. Searching another city uses the live providers only — the app never
+invents events. Duplicate title + venue + day rows are collapsed across
+providers, preferring the Ticketmaster row (primary box-office link) over
+SeatGeek, and either over a curated placeholder. Deploy `firestore.rules` so
+the El Paso seed can be written.
 
-### Ticketmaster (live listings + official images)
+### Live listing providers (Ticketmaster, SeatGeek)
 
-1. Create a free API key at https://developer.ticketmaster.com/
-2. Run with the key as a dart-define (never commit it):
+Each provider is a `LiveEventSource` (`lib/services/live_event_source.dart`)
+registered in `main.dart`. `EventService` queries all configured providers in
+parallel; one failing or missing provider means fewer rows, never an empty
+feed or a crash. Adding a provider is one new file implementing
+`LiveEventSource` plus one line in the `main.dart` provider list.
+
+Keys are passed at build/run time and must never be committed:
+
+| Provider     | Get a key                                  | dart-define            |
+| ------------ | ------------------------------------------ | ---------------------- |
+| Ticketmaster | https://developer.ticketmaster.com/        | `TICKETMASTER_API_KEY` |
+| SeatGeek     | https://seatgeek.com/account/develop       | `SEATGEEK_CLIENT_ID`   |
 
 ```bash
-flutter run --dart-define=TICKETMASTER_API_KEY=your_key_here
+flutter run \
+  --dart-define=TICKETMASTER_API_KEY=your_key_here \
+  --dart-define=SEATGEEK_CLIENT_ID=your_client_id_here
 ```
 
-Without a key the feed still shows the curated El Paso seed (real venues,
+or keep them in an untracked `secrets.json` (already in `.gitignore`):
+
+```json
+{
+  "TICKETMASTER_API_KEY": "your_key_here",
+  "SEATGEEK_CLIENT_ID": "your_client_id_here"
+}
+```
+
+```bash
+flutter run --dart-define-from-file=secrets.json
+flutter build appbundle --release --dart-define-from-file=secrets.json
+```
+
+Without any key the feed still shows the curated El Paso seed (real venues,
 Wikimedia venue photos) and stays empty for other cities instead of faking
-listings.
+listings. With only one key, only that provider contributes.
+
+Event ids are prefixed per provider (`tm_`, `sg_`) so share links and
+cold-start deep links resolve against the right API.
 
 ### Organizer social links and event sharing
 

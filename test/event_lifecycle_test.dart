@@ -7,6 +7,7 @@ import 'package:spotvibe_app/repositories/event_repository.dart';
 import 'package:spotvibe_app/providers/event_provider.dart';
 import 'package:spotvibe_app/repositories/user_event_repository.dart';
 import 'package:spotvibe_app/services/event_service.dart';
+import 'package:spotvibe_app/services/live_event_source.dart';
 import 'package:spotvibe_app/services/ticketmaster_service.dart';
 
 class _FixedEventRepository implements EventRepository {
@@ -77,6 +78,89 @@ class _ControlledEventRepository implements EventRepository {
     required bool bookmarked,
     required bool interested,
   }) async {}
+}
+
+/// A scripted live provider: hands back [results] (or throws [error]) and
+/// records what it was asked, so tests can pin the fan-out contract.
+class _FakeLiveSource implements LiveEventSource {
+  _FakeLiveSource(
+    this.source, {
+    required this.prefix,
+    this.results = const [],
+    this.error,
+    this.configured = true,
+  });
+
+  @override
+  final EventSource source;
+  final String prefix;
+  final List<Event> results;
+  final Object? error;
+  final bool configured;
+  int searchCalls = 0;
+  int lookupCalls = 0;
+
+  @override
+  bool get isConfigured => configured;
+
+  @override
+  bool ownsId(String id) => id.startsWith(prefix);
+
+  @override
+  Future<List<Event>> search({
+    String? city,
+    String? stateCode,
+    String? keyword,
+    String? category,
+    double? lat,
+    double? lng,
+    double radiusMiles = 40,
+  }) async {
+    searchCalls++;
+    if (error != null) throw error!;
+    return results;
+  }
+
+  @override
+  Future<Event?> getEventById(String id) async {
+    lookupCalls++;
+    if (error != null) throw error!;
+    for (final event in results) {
+      if (event.id == id) return event;
+    }
+    return null;
+  }
+}
+
+/// A live-provider row: same title/venue/day as another provider's row
+/// means the same show, which dedupe must collapse.
+Event _liveEvent({
+  required String id,
+  required EventSource source,
+  required DateTime startsAt,
+  String title = 'Khruangbin',
+  String venue = 'Abraham Chavez Theatre',
+}) {
+  return Event(
+    id: id,
+    title: title,
+    description: '$title at $venue.',
+    dateTime: startsAt,
+    endDateTime: startsAt.add(const Duration(hours: 3)),
+    location: venue,
+    address: '1 Civic Center Plaza',
+    city: 'El Paso',
+    state: 'TX',
+    imageUrl: '',
+    isTicketed: true,
+    category: 'Music',
+    organizerName: venue,
+    organizerAvatarUrl: '',
+    latitude: 31.7574,
+    longitude: -106.4907,
+    source: source,
+    sourceUrl: 'https://example.test/$id',
+  );
 }
 
 Event _event({
@@ -289,6 +373,236 @@ void main() {
         ticketmasterRadiusForFeed(double.nan),
         kDefaultTicketmasterRadiusMiles,
       );
+    });
+  });
+  group('multi-source live listings', () {
+    // Noon, five days out: far enough to be upcoming, and a 30-minute
+    // offset can never roll the fingerprint onto another day.
+    final today = DateTime.now();
+    final start = DateTime(today.year, today.month, today.day + 5, 12);
+
+    test('the same show from two providers collapses to one row, TM wins',
+        () async {
+      final tmRow = _liveEvent(
+        id: 'tm_G5vABC',
+        source: EventSource.ticketmaster,
+        startsAt: start,
+      );
+      final sgRow = _liveEvent(
+        id: 'sg_6162405',
+        source: EventSource.seatgeek,
+        startsAt: start.add(const Duration(minutes: 30)),
+      );
+      final service = EventService(
+        repository: _FixedEventRepository(const []),
+        sources: [
+          // SeatGeek first on purpose: order must not decide the winner.
+          _FakeLiveSource(EventSource.seatgeek,
+              prefix: 'sg_', results: [sgRow]),
+          _FakeLiveSource(EventSource.ticketmaster,
+              prefix: 'tm_', results: [tmRow]),
+        ],
+      );
+
+      final events = await service.getUpcomingEvents(
+        userLat: 31.7619,
+        userLng: -106.485,
+        searchRadius: 25,
+      );
+
+      expect(events.map((e) => e.id), ['tm_G5vABC']);
+      expect(events.single.source, EventSource.ticketmaster);
+    });
+
+    test('different shows from different providers are all kept', () async {
+      final service = EventService(
+        repository: _FixedEventRepository(const []),
+        sources: [
+          _FakeLiveSource(EventSource.ticketmaster, prefix: 'tm_', results: [
+            _liveEvent(
+              id: 'tm_1',
+              source: EventSource.ticketmaster,
+              startsAt: start,
+              title: 'Sun Bowl Parade',
+            ),
+          ]),
+          _FakeLiveSource(EventSource.seatgeek, prefix: 'sg_', results: [
+            _liveEvent(
+              id: 'sg_1',
+              source: EventSource.seatgeek,
+              startsAt: start,
+              title: 'El Paso Chihuahuas vs Round Rock Express',
+              venue: 'Southwest University Park',
+            ),
+          ]),
+        ],
+      );
+
+      final events = await service.getUpcomingEvents(
+        userLat: 31.7619,
+        userLng: -106.485,
+        searchRadius: 25,
+      );
+
+      expect(events.map((e) => e.id).toSet(), {'tm_1', 'sg_1'});
+    });
+
+    test('one provider throwing still leaves the others on the feed',
+        () async {
+      final good = _FakeLiveSource(EventSource.seatgeek, prefix: 'sg_', results: [
+        _liveEvent(id: 'sg_ok', source: EventSource.seatgeek, startsAt: start),
+      ]);
+      final bad = _FakeLiveSource(
+        EventSource.ticketmaster,
+        prefix: 'tm_',
+        error: StateError('ticketmaster is down'),
+      );
+      final curated = _event(
+        id: 'curated',
+        startsAt: start,
+        endsAt: start.add(const Duration(hours: 2)),
+      );
+      final service = EventService(
+        repository: _FixedEventRepository([curated]),
+        sources: [bad, good],
+      );
+
+      final events = await service.getUpcomingEvents();
+
+      expect(bad.searchCalls, 1);
+      expect(good.searchCalls, 1);
+      expect(events.map((e) => e.id).toSet(), {'curated', 'sg_ok'});
+    });
+
+    test('every provider failing degrades to the curated feed, not a crash',
+        () async {
+      final curated = _event(
+        id: 'curated',
+        startsAt: start,
+        endsAt: start.add(const Duration(hours: 2)),
+      );
+      final service = EventService(
+        repository: _FixedEventRepository([curated]),
+        sources: [
+          _FakeLiveSource(EventSource.ticketmaster,
+              prefix: 'tm_', error: Exception('boom')),
+          _FakeLiveSource(EventSource.seatgeek,
+              prefix: 'sg_', error: Exception('boom')),
+        ],
+      );
+
+      expect(
+        (await service.getUpcomingEvents()).map((e) => e.id),
+        ['curated'],
+      );
+    });
+
+    test('unconfigured providers are never called', () async {
+      final idle = _FakeLiveSource(
+        EventSource.seatgeek,
+        prefix: 'sg_',
+        configured: false,
+        results: [
+          _liveEvent(id: 'sg_x', source: EventSource.seatgeek, startsAt: start),
+        ],
+      );
+      final service = EventService(
+        repository: _FixedEventRepository(const []),
+        sources: [idle],
+      );
+
+      expect(await service.getUpcomingEvents(), isEmpty);
+      expect(idle.searchCalls, 0);
+    });
+
+    test('rows a provider does not own are dropped before merging', () async {
+      final lying = _FakeLiveSource(EventSource.seatgeek, prefix: 'sg_', results: [
+        _liveEvent(id: 'sg_mine', source: EventSource.seatgeek, startsAt: start),
+        _liveEvent(
+          id: 'tm_not_mine',
+          source: EventSource.ticketmaster,
+          startsAt: start,
+          title: 'Something else',
+        ),
+      ]);
+      final service = EventService(
+        repository: _FixedEventRepository(const []),
+        sources: [lying],
+      );
+
+      final events = await service.getUpcomingEvents();
+
+      expect(events.map((e) => e.id), ['sg_mine']);
+    });
+
+    test('the legacy ticketmaster: parameter still wires a single source',
+        () async {
+      final service = EventService(
+        repository: _FixedEventRepository(const []),
+        ticketmaster: TicketmasterService(apiKey: ''),
+      );
+
+      expect(service.liveSourceKinds, [EventSource.ticketmaster]);
+      // Unconfigured, so it contributes nothing and hits no network.
+      expect(await service.getUpcomingEvents(), isEmpty);
+    });
+
+    group('getEventById dispatch', () {
+      test('routes each prefix to the provider that owns it', () async {
+        final tm = _FakeLiveSource(EventSource.ticketmaster, prefix: 'tm_', results: [
+          _liveEvent(id: 'tm_1', source: EventSource.ticketmaster, startsAt: start),
+        ]);
+        final sg = _FakeLiveSource(EventSource.seatgeek, prefix: 'sg_', results: [
+          _liveEvent(id: 'sg_1', source: EventSource.seatgeek, startsAt: start),
+        ]);
+        final service = EventService(
+          repository: _FixedEventRepository(const []),
+          sources: [tm, sg],
+        );
+
+        expect((await service.getEventById('sg_1'))?.id, 'sg_1');
+        expect(tm.lookupCalls, 0);
+        expect(sg.lookupCalls, 1);
+
+        expect((await service.getEventById('tm_1'))?.id, 'tm_1');
+        expect(tm.lookupCalls, 1);
+        expect(sg.lookupCalls, 1);
+
+        expect(await service.getEventById('evt_ep_9'), isNull);
+        expect(tm.lookupCalls, 1);
+        expect(sg.lookupCalls, 1);
+      });
+
+      test('the repository wins over live providers', () async {
+        final local = _event(
+          id: 'sg_local_copy',
+          startsAt: start,
+          endsAt: start.add(const Duration(hours: 1)),
+        );
+        final sg = _FakeLiveSource(EventSource.seatgeek, prefix: 'sg_', results: [
+          _liveEvent(id: 'sg_local_copy', source: EventSource.seatgeek, startsAt: start),
+        ]);
+        final service = EventService(
+          repository: _FixedEventRepository([local]),
+          sources: [sg],
+        );
+
+        expect(await service.getEventById('sg_local_copy'), same(local));
+        expect(sg.lookupCalls, 0);
+      });
+
+      test('a provider throwing on lookup yields null for the not-found screen',
+          () async {
+        final service = EventService(
+          repository: _FixedEventRepository(const []),
+          sources: [
+            _FakeLiveSource(EventSource.seatgeek,
+                prefix: 'sg_', error: Exception('offline')),
+          ],
+        );
+
+        expect(await service.getEventById('sg_404'), isNull);
+      });
     });
   });
 }

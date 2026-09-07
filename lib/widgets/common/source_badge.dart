@@ -8,10 +8,10 @@ class SourceBadge extends StatelessWidget {
 
   const SourceBadge({super.key, required this.source, this.compact = false});
 
-  /// Only Ticketmaster is an official listing source. Social badges on
-  /// curated events were not how those events were found.
+  /// Only live ticketing APIs are official listing sources. Social badges
+  /// on curated events were not how those events were found.
   static bool isHonest(EventSource source) =>
-      source == EventSource.ticketmaster;
+      source == EventSource.ticketmaster || source == EventSource.seatgeek;
 
   @override
   Widget build(BuildContext context) {

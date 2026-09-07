@@ -90,7 +90,16 @@ Event _withBestImage(Event winner, Event loser) {
 
 int _quality(Event event) {
   var score = 0;
-  if (event.id.startsWith('tm_')) score += 40;
+  // Live provider rows beat curated placeholders (official photo, real
+  // ticket URL). Keyed on the id prefix, not `source`: curated seed rows
+  // borrow the Ticketmaster badge but must never outrank the real listing.
+  // Ticketmaster edges SeatGeek because its link is the primary box office
+  // rather than a marketplace mirror of the same show.
+  if (event.id.startsWith('tm_')) {
+    score += 40;
+  } else if (event.id.startsWith('sg_')) {
+    score += 35;
+  }
   if (_hasRealImage(event)) score += 30;
   if (event.sourceUrl != null && event.sourceUrl!.isNotEmpty) score += 10;
   if (event.description.length > 80) score += 5;
@@ -101,8 +110,9 @@ int _quality(Event event) {
   return score;
 }
 
-/// Drops exact id dupes and same-show listings. Prefers Ticketmaster rows
-/// (official photos + ticket URLs) over curated placeholders.
+/// Drops exact id dupes and same-show listings. Prefers live ticketing
+/// rows (official photos + ticket URLs) over curated placeholders, and
+/// collapses the same show when two providers both list it.
 List<Event> dedupeEvents(List<Event> events) {
   final byId = <String, Event>{};
   for (final event in events) {
