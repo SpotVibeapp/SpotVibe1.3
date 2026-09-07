@@ -165,10 +165,15 @@ Default feed: curated El Paso venues (County Coliseum, Southwest University
 Park, Plaza Theatre, Franklin Mountains, Hueco Tanks, …) merged with live
 listings from every configured provider (Ticketmaster, SeatGeek) for that
 area. Searching another city uses the live providers only — the app never
-invents events. Duplicate title + venue + day rows are collapsed across
-providers, preferring the Ticketmaster row (primary box-office link) over
-SeatGeek, and either over a curated placeholder. Deploy `firestore.rules` so
-the El Paso seed can be written.
+invents events. The same show listed twice (same day, same venue, same
+title) is collapsed across providers — tolerant of venue spellings
+("Theatre"/"Theater", "UTEP Don Haskins Center"/"Don Haskins Center"), tour
+names and support acts in titles, accents, and "A at B" vs "B vs A" sports
+forms, with coordinates as a tie-breaker (`lib/data/event_dedupe.dart`).
+The Ticketmaster row wins (primary box-office link) over SeatGeek, and either
+over a curated placeholder; the survivor borrows the other's photo or
+coordinates when it lacks them. Deploy `firestore.rules` so the El Paso seed
+can be written.
 
 ### Live listing providers (Ticketmaster, SeatGeek)
 
