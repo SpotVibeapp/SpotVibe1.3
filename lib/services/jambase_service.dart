@@ -387,9 +387,13 @@ class JamBaseService implements LiveEventSource {
           '(check JAMBASE_API_KEY and the plan at data.jambase.com).',
         );
       } else if (status == 429) {
-        _pausedUntil = now.add(kJamBaseRateLimitPause);
+        // Hourly/burst limit (monthly overage is billed, not refused).
+        // Honour Retry-After when it is a sane number of seconds.
+        final pause = _retryAfter(error.response?.headers) ??
+            kJamBaseRateLimitPause;
+        _pausedUntil = now.add(pause);
         debugPrint('JamBase rate limited; pausing for '
-            '${kJamBaseRateLimitPause.inMinutes} minutes.');
+            '${pause.inSeconds} seconds.');
       } else {
         debugPrint('JamBase request failed '
             '(${error.type}${status == null ? '' : ', HTTP $status'}).');
@@ -399,6 +403,20 @@ class JamBaseService implements LiveEventSource {
       debugPrint('JamBase request failed (${error.runtimeType}).');
       return null;
     }
+  }
+
+  /// `Retry-After` in seconds, clamped between the default pause and an
+  /// hour (the rolling window). Null when absent or not a plain number.
+  static Duration? _retryAfter(Headers? headers) {
+    final raw = headers?.value('retry-after');
+    if (raw == null) return null;
+    var seconds = int.tryParse(raw.trim());
+    if (seconds == null) return null;
+    const floor = kJamBaseRateLimitPause;
+    const ceiling = Duration(hours: 1);
+    if (seconds < floor.inSeconds) seconds = floor.inSeconds;
+    if (seconds > ceiling.inSeconds) seconds = ceiling.inSeconds;
+    return Duration(seconds: seconds);
   }
 
   Future<bool> _reserveCall(DateTime now) async {
@@ -549,15 +567,32 @@ class JamBaseService implements LiveEventSource {
 
   /// JamBase says whether a further page exists; trust it over a page count
   /// so a short final page is never followed by a wasted request.
+  ///
+  /// `pagination.nextPage` is an absolute URL in v3
+  /// (`https://api.data.jambase.com/v3/events?page=2`), a bare number in
+  /// older payloads, and absent on the last page. `totalPages` is the
+  /// fallback when the field is missing or unreadable.
   static bool _hasNextPage(Object? data, int page) {
     if (data is! Map) return false;
     final pagination = data['pagination'];
     if (pagination is! Map) return false;
-    final next = pagination['nextPage'];
-    if (next is num) return next > page;
-    if (next is String) return (int.tryParse(next) ?? 0) > page;
+    final nextPage = _pageNumber(pagination['nextPage']);
+    if (nextPage != null) return nextPage > page;
     final totalPages = pagination['totalPages'];
     return totalPages is num && totalPages > page;
+  }
+
+  /// The page number carried by a `nextPage` value, or null when it does
+  /// not name one (absent, empty, or a URL without a `page` parameter).
+  static int? _pageNumber(Object? value) {
+    if (value is num) return value.toInt();
+    if (value is! String || value.trim().isEmpty) return null;
+    final text = value.trim();
+    final direct = int.tryParse(text);
+    if (direct != null) return direct;
+    final uri = Uri.tryParse(text);
+    final param = uri?.queryParameters['page'];
+    return param == null ? null : int.tryParse(param);
   }
 
   @override

@@ -16,6 +16,8 @@ class _FakeJamBaseAdapter implements HttpClientAdapter {
     this.failPages = const {},
     this.singles = const {},
     this.statusForAll,
+    this.retryAfterSeconds,
+    this.numericNextPage = false,
   });
 
   /// page number (1-indexed) -> event JSON objects.
@@ -27,13 +29,25 @@ class _FakeJamBaseAdapter implements HttpClientAdapter {
 
   /// When set, every request answers with this status and a problem body.
   final int? statusForAll;
+
+  /// `Retry-After` header (seconds) sent with [statusForAll] responses.
+  final int? retryAfterSeconds;
+
+  /// Emit `pagination.nextPage` as a bare number (older payloads) instead
+  /// of the absolute URL v3 documents.
+  final bool numericNextPage;
   final List<RequestOptions> requests = [];
 
   List<Uri> get uris => requests.map((r) => r.uri).toList(growable: false);
 
-  static ResponseBody _json(Object body, int status) =>
+  static ResponseBody _json(
+    Object body,
+    int status, {
+    Map<String, List<String>> extraHeaders = const {},
+  }) =>
       ResponseBody.fromString(jsonEncode(body), status, headers: {
         Headers.contentTypeHeader: ['application/json'],
+        ...extraHeaders,
       });
 
   @override
@@ -45,7 +59,12 @@ class _FakeJamBaseAdapter implements HttpClientAdapter {
     requests.add(options);
     final status = statusForAll;
     if (status != null) {
-      return _json({'status': status, 'title': 'error'}, status);
+      final retry = retryAfterSeconds;
+      return _json(
+        {'status': status, 'title': 'error'},
+        status,
+        extraHeaders: retry == null ? const {} : {'retry-after': ['$retry']},
+      );
     }
     final last = options.uri.pathSegments.last;
     if (last.startsWith('jambase:')) {
@@ -59,6 +78,15 @@ class _FakeJamBaseAdapter implements HttpClientAdapter {
     final lastPage = pages.keys.isEmpty
         ? 1
         : pages.keys.reduce((a, b) => a > b ? a : b);
+    // v3 documents nextPage/previousPage as absolute URLs; the last page
+    // carries neither.
+    String pageUrl(int p) =>
+        options.uri.replace(queryParameters: {
+          ...options.uri.queryParameters,
+          'page': '$p',
+        }).toString();
+    Object? link(int? p) =>
+        p == null ? null : (numericNextPage ? p : pageUrl(p));
     return _json({
       'success': true,
       'pagination': {
@@ -66,8 +94,8 @@ class _FakeJamBaseAdapter implements HttpClientAdapter {
         'perPage': 100,
         'totalItems': pages.values.fold<int>(0, (n, l) => n + l.length),
         'totalPages': lastPage,
-        'nextPage': page < lastPage ? page + 1 : null,
-        'previousPage': page > 1 ? page - 1 : null,
+        if (page < lastPage) 'nextPage': link(page + 1),
+        if (page > 1) 'previousPage': link(page - 1),
       },
       'events': events,
     }, 200);
@@ -500,6 +528,19 @@ void main() {
       expect(adapter.uris.last.queryParameters['page'], '2');
     });
 
+    test('walks pages when nextPage is a bare number too', () async {
+      final adapter = _FakeJamBaseAdapter({
+        1: List.generate(100, (i) => _concert(i)),
+        2: [_concert(200)],
+      }, numericNextPage: true);
+      final service = _serviceWith(adapter);
+
+      final events = await service.search(lat: 31.76, lng: -106.48);
+
+      expect(events, hasLength(101));
+      expect(adapter.requests, hasLength(2));
+    });
+
     test('stops after a short page without asking for another', () async {
       final adapter = _FakeJamBaseAdapter({1: [_concert(1), _concert(2)]});
       final service = _serviceWith(adapter);
@@ -662,6 +703,26 @@ void main() {
 
       expect(adapter.requests, hasLength(1));
       expect(await service.callsThisMonth(), 1);
+    });
+
+    test('a 429 with Retry-After pauses for that long (bounded)', () async {
+      final adapter =
+          _FakeJamBaseAdapter({}, statusForAll: 429, retryAfterSeconds: 900);
+      var now = _now;
+      final service = _serviceWith(
+        adapter,
+        clock: () => now,
+        cacheTtl: Duration.zero,
+      );
+
+      await service.search(lat: 31.76, lng: -106.48);
+      now = now.add(kJamBaseRateLimitPause);
+      await service.search(lat: 31.76, lng: -106.48);
+      expect(adapter.requests, hasLength(1), reason: 'still inside 900 s');
+
+      now = now.add(const Duration(minutes: 11));
+      await service.search(lat: 31.76, lng: -106.48);
+      expect(adapter.requests, hasLength(2));
     });
 
     test('a 429 pauses requests instead of retrying every minute', () async {
