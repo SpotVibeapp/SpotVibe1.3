@@ -118,6 +118,10 @@
          not declare advertising-ID use to Google Play. -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID"
         tools:node="remove"/>
+    <!-- Privacy Sandbox AdServices ad-id permission, injected by transitive
+         Play Services libraries. The app has no ads, so remove it too. -->
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID"
+        tools:node="remove"/>
     <!-- PRIMIO_ADDED: permission_handler — location permission for nearby event discovery -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
