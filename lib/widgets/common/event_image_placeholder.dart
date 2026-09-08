@@ -90,7 +90,12 @@ class EventCoverImage extends StatelessWidget {
       fit: fit,
       width: double.infinity,
       height: height,
-      placeholder: (_, __) => Container(color: placeholderColor, height: height),
+      // Show the branded poster WHILE loading, not an empty coloured box.
+      // Remote venue photos (e.g. Wikimedia FilePath redirects) can hang or
+      // fail; the poster guarantees a card is never blank, and the real photo
+      // fades in over it once it arrives.
+      fadeInDuration: const Duration(milliseconds: 250),
+      placeholder: (_, __) => _poster(),
       errorWidget: (_, __, ___) => _poster(),
     );
   }
@@ -202,6 +207,10 @@ class UniqueEventCover extends StatelessWidget {
     final icon = _iconForCategory(category);
     final compact = height != null && height! < 130;
 
+    final categoryLabel = category.isEmpty
+        ? 'Event'
+        : category[0].toUpperCase() + category.substring(1);
+
     return Container(
       height: height,
       width: double.infinity,
@@ -216,6 +225,33 @@ class UniqueEventCover extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           Positioned.fill(child: CustomPaint(painter: _CoverPatternPainter(seed: hash))),
+          // Large category glyph watermark — makes the poster feel designed
+          // rather than empty, and hints at what kind of event it is.
+          Positioned(
+            right: compact ? -8 : -6,
+            bottom: compact ? -10 : -6,
+            child: Icon(
+              icon,
+              size: compact ? 84 : 132,
+              color: Colors.white.withValues(alpha: 0.12),
+            ),
+          ),
+          // Bottom scrim so title text stays legible over the pattern/glyph.
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.28),
+                  ],
+                  stops: const [0.45, 1.0],
+                ),
+              ),
+            ),
+          ),
           Padding(
             padding: EdgeInsets.all(compact ? 10 : 16),
             child: Column(
@@ -243,7 +279,39 @@ class UniqueEventCover extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    Icon(icon, color: Colors.white70, size: compact ? 18 : 22),
+                    // Category chip — reads as an intentional label, not a
+                    // lonely stray icon.
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: compact ? 8 : 10,
+                        vertical: compact ? 3 : 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(icon,
+                              color: Colors.white,
+                              size: compact ? 12 : 14),
+                          if (!compact) ...[
+                            const SizedBox(width: 5),
+                            Text(
+                              categoryLabel,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 11,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   ],
                 ),
                 const Spacer(),
@@ -261,15 +329,25 @@ class UniqueEventCover extends StatelessWidget {
                   ),
                 if (venue.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Text(
-                    venue,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.82),
-                      fontWeight: FontWeight.w600,
-                      fontSize: compact ? 10 : 12,
-                    ),
+                  Row(
+                    children: [
+                      Icon(Icons.place_rounded,
+                          color: Colors.white.withValues(alpha: 0.82),
+                          size: compact ? 11 : 13),
+                      const SizedBox(width: 3),
+                      Expanded(
+                        child: Text(
+                          venue,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.82),
+                            fontWeight: FontWeight.w600,
+                            fontSize: compact ? 10 : 12,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ],
