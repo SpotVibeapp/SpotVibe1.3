@@ -112,6 +112,12 @@
         tools:node="remove"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         tools:node="remove"/>
+    <!-- The app does not use ads or an advertising ID. Plugins (e.g.
+         awesome_notifications / Play Services pulled transitively) inject the
+         AD_ID permission into the merged manifest; remove it so the app does
+         not declare advertising-ID use to Google Play. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID"
+        tools:node="remove"/>
     <!-- PRIMIO_ADDED: permission_handler — location permission for nearby event discovery -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
