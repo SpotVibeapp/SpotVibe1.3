@@ -6,6 +6,55 @@ Do them in roughly this order.
 
 ---
 
+## ✅ STATUS — Closed beta PUBLISHED (2026-09-08)
+
+The first **Closed testing** release is live on Google Play and has passed review.
+
+- **Track:** Closed testing — "Beta 09/08/26"
+- **Version:** `1.0.1+9` (versionCode **9**)
+- **Build flags used:** `--dart-define-from-file=secrets.json`
+  `--dart-define=REVIEWER_PREMIUM_EMAIL=beta-review@spotvibeapp.com`
+
+### Play Console fill-in guides written this session
+- `PLAY_APP_CONTENT.md` — Data safety, content rating, target audience, ads, store listing copy.
+- `ADS_PLAN.md` — banner-ads-for-free-users plan (deferred past first beta).
+- `HIDDEN_GEMS_PLAN.md` — "hidden gems" positioning + build plan (awaiting tier decision).
+- `TESTER_INVITE.md` — copy-paste message to send testers (this session).
+
+### VersionCode history (Play burns each code permanently — always go up)
+| Code | Notes |
+|---|---|
+| 1, 2 | Early uploads (old TM key + media perms). Do not reuse. |
+| 3 | Had `READ_MEDIA_*` perms. |
+| 4, 5 | Consumed by deleted uploads (codes stay burned after deletion). |
+| 6, 7 | Removed `READ_MEDIA_*` from app manifest + `tools:node="remove"`. |
+| 8 | Stripped `com.google.android.gms.permission.AD_ID`. |
+| **9** | Also stripped `ACCESS_ADSERVICES_AD_ID`. **← current published build.** |
+
+### Manifest permission notes (why the version churn happened)
+- Media picking uses `image_picker` → Android Photo Picker, so no `READ_MEDIA_*`
+  permission is needed. Plugins inject them anyway; we strip them via
+  `tools:node="remove"` in `android/app/src/main/AndroidManifest.xml`.
+- The app has **no ads / no ad SDK**, but plugins injected `AD_ID` /
+  `ACCESS_ADSERVICES_AD_ID`; those are also stripped. The built manifest is
+  clean (verified: `Select-String ... -Pattern "AD_ID"` returns nothing).
+- ⚠️ **Advertising ID declaration:** despite the clean bundle, Play Console would
+  not accept "No" (stale-state / older bundles in history), so the declaration
+  was set to **Yes → purpose: App functionality**, with Data safety
+  "Advertising ID = collected" to match. This is over-declared for the current
+  build. **When real ads (AdMob) are added (see `ADS_PLAN.md`) it becomes
+  accurate.** Revisit if you ever want it back to an honest "No."
+
+### Still open before PRODUCTION (not just beta)
+1. **Ticketmaster key rotation** — confirm the build that testers get was built
+   with the *rotated* key in `secrets.json`, not the leaked one (§1 below).
+2. **Reviewer Premium flag** — the `REVIEWER_PREMIUM_EMAIL` dart-define must be
+   **omitted** from any public production build (it grants Premium to that one
+   account without a purchase). Only use it for review/testing builds.
+3. `flutter analyze` / `flutter test` after all the manifest edits (Open Item #1).
+
+---
+
 ## 0. Validate the code changes on your machine
 
 No Flutter SDK exists in my sandbox, so please run locally:
