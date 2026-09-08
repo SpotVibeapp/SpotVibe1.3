@@ -97,8 +97,11 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+    <!-- READ_MEDIA_IMAGES / READ_MEDIA_VIDEO intentionally NOT declared:
+         media selection uses image_picker, which routes gallery access through
+         the Android Photo Picker (no runtime permission required). Declaring the
+         broad READ_MEDIA_* permissions would trigger Google Play's Photo & Video
+         Permissions policy review for access we do not need. -->
     <!-- PRIMIO_ADDED: permission_handler — location permission for nearby event discovery -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
