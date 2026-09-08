@@ -601,7 +601,14 @@ _ResolvedLocation? _resolveLocation(String input) {
       final st = _cityToState[city]!;
       // Capitalise words for display
       final displayCity = city.split(' ').map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
-      return _ResolvedLocation(city: displayCity, state: st, zip: '');
+      final coords = _cityCoords[city];
+      return _ResolvedLocation(
+        city: displayCity,
+        state: st,
+        zip: '',
+        lat: coords?[0],
+        lng: coords?[1],
+      );
     }
   }
 
@@ -610,7 +617,14 @@ _ResolvedLocation? _resolveLocation(String input) {
     if (lower.contains(city)) {
       final st = _cityToState[city]!;
       final displayCity = city.split(' ').map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
-      return _ResolvedLocation(city: displayCity, state: st, zip: '');
+      final coords = _cityCoords[city];
+      return _ResolvedLocation(
+        city: displayCity,
+        state: st,
+        zip: '',
+        lat: coords?[0],
+        lng: coords?[1],
+      );
     }
   }
 
@@ -621,8 +635,86 @@ class _ResolvedLocation {
   final String city;
   final String state;
   final String zip;
-  const _ResolvedLocation({required this.city, required this.state, required this.zip});
+
+  /// Metro-centre coordinates when known. When present, an area search uses a
+  /// `latlong` + radius Ticketmaster query (covering the whole metro, incl.
+  /// suburban venues) instead of an exact `city` name match, which silently
+  /// drops shows at venues in neighbouring municipalities (e.g. a "Denver"
+  /// concert actually at Red Rocks / Fiddler's Green / the Mission Ballroom).
+  final double? lat;
+  final double? lng;
+
+  const _ResolvedLocation({
+    required this.city,
+    required this.state,
+    required this.zip,
+    this.lat,
+    this.lng,
+  });
 }
+
+/// Approximate centre coordinates for major US metros, keyed by the lowercase
+/// city name used in [_cityToState]. Used to turn an area search into a
+/// whole-metro `latlong` Ticketmaster query. A city missing here still works —
+/// it just falls back to the older exact-city-name match.
+const Map<String, List<double>> _cityCoords = {
+  'new york': [40.7128, -74.0060],
+  'new york city': [40.7128, -74.0060],
+  'nyc': [40.7128, -74.0060],
+  'brooklyn': [40.6782, -73.9442],
+  'los angeles': [34.0522, -118.2437],
+  'la': [34.0522, -118.2437],
+  'san diego': [32.7157, -117.1611],
+  'san jose': [37.3382, -121.8863],
+  'san francisco': [37.7749, -122.4194],
+  'sf': [37.7749, -122.4194],
+  'oakland': [37.8044, -122.2712],
+  'sacramento': [38.5816, -121.4944],
+  'houston': [29.7604, -95.3698],
+  'dallas': [32.7767, -96.7970],
+  'austin': [30.2672, -97.7431],
+  'san antonio': [29.4241, -98.4936],
+  'fort worth': [32.7555, -97.3308],
+  'el paso': [31.7619, -106.4850],
+  'miami': [25.7617, -80.1918],
+  'jacksonville': [30.3322, -81.6557],
+  'tampa': [27.9506, -82.4572],
+  'orlando': [28.5383, -81.3792],
+  'chicago': [41.8781, -87.6298],
+  'philadelphia': [39.9526, -75.1652],
+  'philly': [39.9526, -75.1652],
+  'pittsburgh': [40.4406, -79.9959],
+  'columbus': [39.9612, -82.9988],
+  'cleveland': [41.4993, -81.6944],
+  'cincinnati': [39.1031, -84.5120],
+  'atlanta': [33.7490, -84.3880],
+  'charlotte': [35.2271, -80.8431],
+  'raleigh': [35.7796, -78.6382],
+  'detroit': [42.3314, -83.0458],
+  'grand rapids': [42.9634, -85.6681],
+  'nashville': [36.1627, -86.7816],
+  'memphis': [35.1495, -90.0490],
+  'seattle': [47.6062, -122.3321],
+  'denver': [39.7392, -104.9903],
+  'colorado springs': [38.8339, -104.8214],
+  'boston': [42.3601, -71.0589],
+  'phoenix': [33.4484, -112.0740],
+  'las vegas': [36.1699, -115.1398],
+  'portland': [45.5152, -122.6784],
+  'minneapolis': [44.9778, -93.2650],
+  'kansas city': [39.0997, -94.5786],
+  'st louis': [38.6270, -90.1994],
+  'saint louis': [38.6270, -90.1994],
+  'salt lake city': [40.7608, -111.8910],
+  'new orleans': [29.9511, -90.0715],
+  'baltimore': [39.2904, -76.6122],
+  'washington': [38.9072, -77.0369],
+  'milwaukee': [43.0389, -87.9065],
+  'albuquerque': [35.0844, -106.6504],
+  'oklahoma city': [35.4676, -97.5164],
+  'louisville': [38.2527, -85.7585],
+  'indianapolis': [39.7684, -86.1581],
+};
 
 /// Returns the largest / capital city for a given state code.
 String _capitalForState(String stateCode) {
@@ -1261,10 +1353,18 @@ class EventService {
           state: resolved.state,
           zip: resolved.zip.isNotEmpty ? resolved.zip : explicitAreaQuery,
         );
+        // When we know the metro's coordinates, search Ticketmaster by
+        // latlong + radius so venues in neighbouring municipalities (Red Rocks
+        // for Denver, Fiddler's Green, etc.) are included. Only fall back to an
+        // exact `city` match for metros we have no coordinates for.
+        final hasCoords = resolved.lat != null && resolved.lng != null;
         filtered = await _withLiveListings(
           local: filtered,
-          city: resolved.city,
-          state: resolved.state,
+          city: hasCoords ? null : resolved.city,
+          state: hasCoords ? null : resolved.state,
+          lat: resolved.lat,
+          lng: resolved.lng,
+          radiusMiles: kDefaultTicketmasterRadiusMiles,
           keyword: searchQuery,
           category: category,
         );
