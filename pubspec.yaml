@@ -2,7 +2,7 @@ name: spotvibe_app
 description: SpotVibe — local events discovery app
 publish_to: 'none'
 
-version: 1.0.1+6
+version: 1.0.1+7
 
 environment:
   sdk: ^3.7.2

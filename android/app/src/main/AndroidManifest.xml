@@ -108,6 +108,8 @@
         tools:node="remove"/>
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"
         tools:node="remove"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
+        tools:node="remove"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         tools:node="remove"/>
     <!-- PRIMIO_ADDED: permission_handler — location permission for nearby event discovery -->
