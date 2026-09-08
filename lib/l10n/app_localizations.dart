@@ -3762,6 +3762,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No matching live listings were returned for this area.'**
   String get aiSearchNoResultsHere;
+
+  /// No description provided for @poweredByJamBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Powered by JamBase'**
+  String get poweredByJamBase;
+
+  /// No description provided for @viewOnJamBase.
+  ///
+  /// In en, this message translates to:
+  /// **'View on JamBase'**
+  String get viewOnJamBase;
 }
 
 class _AppLocalizationsDelegate

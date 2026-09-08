@@ -363,10 +363,13 @@ int _quality(Event event) {
   // Live provider rows beat curated placeholders (official photo, real
   // ticket URL). Keyed on the id prefix, not `source`: curated seed rows
   // borrow the Ticketmaster badge but must never outrank the real listing.
-  // Ticketmaster edges SeatGeek because its link is the primary box office
-  // rather than a marketplace mirror of the same show.
+  // Ticketmaster edges the rest because its link is the primary box office;
+  // JamBase links to the venue's or promoter's own ticketing, which beats
+  // SeatGeek's marketplace mirror of the same show.
   if (event.id.startsWith('tm_')) {
     score += 40;
+  } else if (event.id.startsWith('jb_')) {
+    score += 37;
   } else if (event.id.startsWith('sg_')) {
     score += 35;
   }

@@ -1137,9 +1137,9 @@ class EventService {
                   sourcesThatAnswered.contains(e.source)))
           .toList();
     }
-    // Cross-provider duplicates (same title, venue, day under `tm_` and
-    // `sg_` ids) collapse in dedupeEvents by fingerprint; source-aware
-    // quality scoring picks the row to keep.
+    // Cross-provider duplicates (the same show under `tm_`, `sg_` and `jb_`
+    // ids) collapse in dedupeEvents; source-aware quality scoring picks the
+    // row to keep.
     return dedupeEvents([...curated, ...remote])
         .where((event) => event.isVisibleAt())
         .toList();
@@ -1182,9 +1182,10 @@ class EventService {
   Future<Event?> getEventById(String id) async {
     final local = await _repository.getEventById(id);
     if (local != null) return local;
-    // Dispatch on id prefix: `tm_` → Ticketmaster, `sg_` → SeatGeek, and so
-    // on. A provider that claims the prefix but is unconfigured or fails
-    // returns null, and the deep-link loader shows its not-found screen.
+    // Dispatch on id prefix: `tm_` → Ticketmaster, `sg_` → SeatGeek, `jb_` →
+    // JamBase, and so on. A provider that claims the prefix but is
+    // unconfigured or fails returns null, and the deep-link loader shows its
+    // not-found screen.
     Event? remote;
     for (final source in _sources) {
       if (!source.ownsId(id)) continue;

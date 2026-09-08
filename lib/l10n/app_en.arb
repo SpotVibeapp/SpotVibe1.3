@@ -973,5 +973,7 @@
       }
     }
   },
-  "aiSearchNoResultsHere": "No matching live listings were returned for this area."
+  "aiSearchNoResultsHere": "No matching live listings were returned for this area.",
+  "poweredByJamBase": "Powered by JamBase",
+  "viewOnJamBase": "View on JamBase"
 }

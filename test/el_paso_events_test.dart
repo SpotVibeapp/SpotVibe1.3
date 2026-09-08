@@ -74,6 +74,7 @@ void main() {
     expect(events.every((e) => e.interestedCount == 0), isTrue);
     expect(SourceBadge.isHonest(EventSource.ticketmaster), isTrue);
     expect(SourceBadge.isHonest(EventSource.seatgeek), isTrue);
+    expect(SourceBadge.isHonest(EventSource.jambase), isTrue);
     expect(SourceBadge.isHonest(EventSource.facebook), isFalse);
     expect(SourceBadge.isHonest(EventSource.local), isFalse);
   });

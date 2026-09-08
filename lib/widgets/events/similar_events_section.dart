@@ -7,6 +7,7 @@ import '../../models/event.dart';
 import '../../providers/event_provider.dart';
 import '../../theme/theme.dart';
 import '../common/event_image_placeholder.dart';
+import '../common/jambase_attribution.dart';
 
 class SimilarEventsSection extends StatelessWidget {
   final Event currentEvent;
@@ -53,6 +54,13 @@ class SimilarEventsSection extends StatelessWidget {
             },
           ),
         ),
+        // The detail page above already attributes its own JamBase row; this
+        // covers a JamBase show appearing only in the carousel.
+        if (currentEvent.source != EventSource.jambase)
+          JamBaseAttribution(
+            events: similar,
+            padding: const EdgeInsets.only(top: AppTheme.spacingSm),
+          ),
       ],
     );
   }

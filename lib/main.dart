@@ -38,10 +38,11 @@ import 'services/event_analytics_service.dart';
 import 'services/event_expiry_service.dart';
 import 'services/auth_service.dart';
 import 'services/deep_link_service.dart';
+import 'services/jambase_service.dart';
+import 'services/live_event_source.dart';
 import 'services/notification_service.dart';
 import 'services/permission_service.dart';
 import 'services/personalization_service.dart';
-import 'services/live_event_source.dart';
 import 'services/revenue_cat_service.dart';
 import 'services/seatgeek_service.dart';
 import 'services/ticketmaster_service.dart';
@@ -350,6 +351,9 @@ class _SpotVibeAppState extends State<SpotVibeApp>
         Provider<EventRepository>(create: (_) => widget.eventRepository),
         Provider(create: (_) => TicketmasterService()),
         Provider(create: (_) => SeatGeekService()),
+        // Answers persist across launches: the Developer plan is 1,000
+        // requests a month, and the feed refreshes every minute.
+        Provider(create: (_) => JamBaseService(store: PrefsJamBaseStore())),
         // Every live listing provider the feed merges. Adding a source is
         // one new LiveEventSource file plus one line here; an unconfigured
         // key just means that provider contributes nothing.
@@ -357,6 +361,7 @@ class _SpotVibeAppState extends State<SpotVibeApp>
           create: (ctx) => List<LiveEventSource>.unmodifiable([
             ctx.read<TicketmasterService>(),
             ctx.read<SeatGeekService>(),
+            ctx.read<JamBaseService>(),
           ]),
         ),
         Provider<UserRepository>(create: (_) => widget.userRepository),

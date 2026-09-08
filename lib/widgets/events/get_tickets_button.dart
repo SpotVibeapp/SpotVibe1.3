@@ -19,6 +19,18 @@ class GetTicketsButton extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
     final isTicketmaster = event.source == EventSource.ticketmaster;
+    final isJamBase = event.source == EventSource.jambase;
+    // JamBase rows open the ticket link exactly as supplied (a licence
+    // condition) — that is what [event.sourceUrl] holds. A show with no
+    // ticket offer falls back to its jambase.com page, so say so.
+    final opensJamBasePage =
+        isJamBase && (Uri.tryParse(url)?.host.endsWith('jambase.com') ?? false);
+    final label = isTicketmaster
+        ? l10n.getTicketsOnTm
+        : (opensJamBasePage ? l10n.viewOnJamBase : l10n.getTickets);
+    final background = isTicketmaster
+        ? EventSource.ticketmaster.brandColor
+        : (isJamBase ? EventSource.jambase.brandColor : colors.primary);
 
     return SizedBox(
       width: double.infinity,
@@ -33,11 +45,10 @@ class GetTicketsButton extends StatelessWidget {
           }
         },
         icon: const Icon(Icons.confirmation_number_rounded),
-        label: Text(isTicketmaster ? l10n.getTicketsOnTm : l10n.getTickets),
+        label: Text(label),
         style: FilledButton.styleFrom(
           minimumSize: const Size(double.infinity, AppTheme.buttonHeight),
-          backgroundColor:
-              isTicketmaster ? EventSource.ticketmaster.brandColor : colors.primary,
+          backgroundColor: background,
           foregroundColor: Colors.white,
         ),
       ),

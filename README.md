@@ -163,19 +163,20 @@ the app still runs on mocks.
 
 Default feed: curated El Paso venues (County Coliseum, Southwest University
 Park, Plaza Theatre, Franklin Mountains, Hueco Tanks, …) merged with live
-listings from every configured provider (Ticketmaster, SeatGeek) for that
-area. Searching another city uses the live providers only — the app never
+listings from every configured provider (Ticketmaster, SeatGeek, JamBase)
+for that area. Searching another city uses the live providers only — the app never
 invents events. The same show listed twice (same day, same venue, same
 title) is collapsed across providers — tolerant of venue spellings
 ("Theatre"/"Theater", "UTEP Don Haskins Center"/"Don Haskins Center"), tour
 names and support acts in titles, accents, and "A at B" vs "B vs A" sports
 forms, with coordinates as a tie-breaker (`lib/data/event_dedupe.dart`).
-The Ticketmaster row wins (primary box-office link) over SeatGeek, and either
-over a curated placeholder; the survivor borrows the other's photo or
-coordinates when it lacks them. Deploy `firestore.rules` so the El Paso seed
+The Ticketmaster row wins (primary box-office link) over JamBase (the
+venue's or promoter's own ticketing), which wins over SeatGeek (marketplace
+mirror), and any of them over a curated placeholder; the survivor borrows the
+other's photo or coordinates when it lacks them. Deploy `firestore.rules` so the El Paso seed
 can be written.
 
-### Live listing providers (Ticketmaster, SeatGeek)
+### Live listing providers (Ticketmaster, SeatGeek, JamBase)
 
 Each provider is a `LiveEventSource` (`lib/services/live_event_source.dart`)
 registered in `main.dart`. `EventService` queries all configured providers in
@@ -189,11 +190,13 @@ Keys are passed at build/run time and must never be committed:
 | ------------ | ------------------------------------------ | ---------------------- |
 | Ticketmaster | https://developer.ticketmaster.com/        | `TICKETMASTER_API_KEY` |
 | SeatGeek     | https://seatgeek.com/account/develop       | `SEATGEEK_CLIENT_ID`   |
+| JamBase      | https://data.jambase.com/pricing           | `JAMBASE_API_KEY`      |
 
 ```bash
 flutter run \
   --dart-define=TICKETMASTER_API_KEY=your_key_here \
-  --dart-define=SEATGEEK_CLIENT_ID=your_client_id_here
+  --dart-define=SEATGEEK_CLIENT_ID=your_client_id_here \
+  --dart-define=JAMBASE_API_KEY=jbd_your_key_here
 ```
 
 or keep them in an untracked `secrets.json` (already in `.gitignore`):
@@ -201,7 +204,8 @@ or keep them in an untracked `secrets.json` (already in `.gitignore`):
 ```json
 {
   "TICKETMASTER_API_KEY": "your_key_here",
-  "SEATGEEK_CLIENT_ID": "your_client_id_here"
+  "SEATGEEK_CLIENT_ID": "your_client_id_here",
+  "JAMBASE_API_KEY": "jbd_your_key_here"
 }
 ```
 
@@ -214,8 +218,32 @@ Without any key the feed still shows the curated El Paso seed (real venues,
 Wikimedia venue photos) and stays empty for other cities instead of faking
 listings. With only one key, only that provider contributes.
 
-Event ids are prefixed per provider (`tm_`, `sg_`) so share links and
+Event ids are prefixed per provider (`tm_`, `sg_`, `jb_`) so share links and
 cold-start deep links resolve against the right API.
+
+**JamBase specifics** (`lib/services/jambase_service.dart`). JamBase covers
+club shows, bar gigs and festivals the arena ticketers miss, so it is the
+provider closest to SpotVibe's local-first mission — but it is music only and
+its free Developer plan has conditions the code is built around:
+
+- *Attribution is a licence term.* Every screen that shows a JamBase row
+  renders a "Powered by JamBase" link (`JamBaseAttribution`; feed pages,
+  event detail, saved events, Ask SpotVibe results), and the Get Tickets
+  button opens the primary ticket URL from the response unmodified, or the
+  show's JamBase page when there is no ticket link.
+- *Quota.* The Developer plan is 1,000 requests a month per key, shared by
+  every install, and overage is billed ($0.05 per call) rather than blocked.
+  The feed refreshes every minute, so answers are cached for two hours and
+  persisted across launches (`PrefsJamBaseStore`), cache keys are coarse
+  (coordinates to two decimals, radius buckets of 25/50/100/200 miles, one
+  key per calendar day), keywords are never sent (`EventService` filters
+  locally), non-music categories never call, and each device stops calling
+  at 150 requests a month and serves its cache instead. A rejected key
+  (401/403) disables the source for the session; a 429 pauses it for five
+  minutes. Watch usage at https://data.jambase.com/account.
+- *Non-commercial.* The Developer plan is for non-commercial use. Before
+  SpotVibe earns money from screens that show JamBase data, move to a paid
+  plan or drop the provider (it is one line in `main.dart`).
 
 ### Organizer social links and event sharing
 

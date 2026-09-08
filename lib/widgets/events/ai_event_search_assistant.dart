@@ -8,6 +8,7 @@ import '../../models/event.dart';
 import '../../services/ai_event_search_service.dart';
 import '../../services/event_service.dart';
 import '../../theme/theme.dart';
+import '../common/jambase_attribution.dart';
 
 /// A prominent Home-screen entry point for conversational event discovery.
 class AskSpotVibeCard extends StatelessWidget {
@@ -400,6 +401,12 @@ class _AiEventSearchAssistantState extends State<_AiEventSearchAssistant> {
                             group: group,
                             onOpenEvent: widget.onOpenEvent,
                           ),
+                        JamBaseAttribution(
+                          events: [
+                            for (final group in _groups) ...group.events,
+                          ],
+                          padding: EdgeInsets.zero,
+                        ),
                       ],
                     ),
                   ),

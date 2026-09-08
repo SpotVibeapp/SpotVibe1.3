@@ -973,5 +973,7 @@
       }
     }
   },
-  "aiSearchNoResultsHere": "No se encontraron eventos activos que coincidan en esta zona."
+  "aiSearchNoResultsHere": "No se encontraron eventos activos que coincidan en esta zona.",
+  "poweredByJamBase": "Con tecnología de JamBase",
+  "viewOnJamBase": "Ver en JamBase"
 }

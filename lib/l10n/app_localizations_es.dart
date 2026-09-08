@@ -2085,4 +2085,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get aiSearchNoResultsHere =>
       'No se encontraron eventos activos que coincidan en esta zona.';
+
+  @override
+  String get poweredByJamBase => 'Con tecnología de JamBase';
+
+  @override
+  String get viewOnJamBase => 'Ver en JamBase';
 }

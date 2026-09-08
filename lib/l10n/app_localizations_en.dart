@@ -2061,4 +2061,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aiSearchNoResultsHere =>
       'No matching live listings were returned for this area.';
+
+  @override
+  String get poweredByJamBase => 'Powered by JamBase';
+
+  @override
+  String get viewOnJamBase => 'View on JamBase';
 }

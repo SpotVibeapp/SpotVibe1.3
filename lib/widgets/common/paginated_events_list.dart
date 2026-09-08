@@ -6,6 +6,7 @@ import '../../providers/event_provider.dart';
 import '../../providers/personalization_provider.dart';
 import '../../theme/theme.dart';
 import '../events/event_card.dart';
+import 'jambase_attribution.dart';
 
 const int kEventsPerPage = 15;
 
@@ -105,6 +106,9 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
     final provider = widget.eventProvider;
 
     final headerCount = widget.feedHeader.length;
+    // Licence condition: any page showing a JamBase row ends with a
+    // "Powered by JamBase" link. Empty for pages without one.
+    final showAttribution = JamBaseAttribution.needed(page);
 
     return Column(
       children: [
@@ -112,9 +116,12 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.only(bottom: AppTheme.spacingXs),
-            itemCount: headerCount + 1 + page.length,
+            itemCount: headerCount + 1 + page.length + (showAttribution ? 1 : 0),
             itemBuilder: (ctx, i) {
               if (i < headerCount) return widget.feedHeader[i];
+              if (i == headerCount + 1 + page.length) {
+                return JamBaseAttribution(events: page);
+              }
 
               if (i == headerCount) {
                 return _EventCountBanner(

@@ -20,6 +20,7 @@ import '../widgets/events/organizer_social_links.dart';
 import '../widgets/common/app_avatar.dart';
 import '../widgets/common/event_image_placeholder.dart';
 import '../widgets/common/guided_tour.dart';
+import '../widgets/common/jambase_attribution.dart';
 import '../widgets/common/section_title.dart';
 import '../widgets/common/source_badge.dart';
 import '../widgets/common/user_action_sheet.dart';
@@ -224,6 +225,10 @@ class _DetailContent extends StatelessWidget {
                   GetTicketsButton(event: event),
                   if (event.sourceUrl != null && event.sourceUrl!.isNotEmpty)
                     const SizedBox(height: AppTheme.spacingSm),
+                  JamBaseAttribution(
+                    events: [event],
+                    padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
+                  ),
                   QuickActionsSection(event: event),
                   const SizedBox(height: AppTheme.spacingLg),
                   PracticalDetailsSection(event: event),

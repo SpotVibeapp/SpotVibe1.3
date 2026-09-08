@@ -12,6 +12,7 @@ enum EventSource {
   google,
   ticketmaster,
   seatgeek,
+  jambase,
   local;
 
   String get displayName {
@@ -28,6 +29,8 @@ enum EventSource {
         return 'Ticketmaster';
       case EventSource.seatgeek:
         return 'SeatGeek';
+      case EventSource.jambase:
+        return 'JamBase';
       case EventSource.local:
         return 'Local';
     }
@@ -47,6 +50,8 @@ enum EventSource {
         return const Color(0xFF026CDF);
       case EventSource.seatgeek:
         return const Color(0xFFFF5B49);
+      case EventSource.jambase:
+        return const Color(0xFF1F8A70);
       case EventSource.local:
         return const Color(0xFF6C5CE7);
     }
@@ -66,6 +71,8 @@ enum EventSource {
         return Icons.confirmation_number_rounded;
       case EventSource.seatgeek:
         return Icons.local_activity_rounded;
+      case EventSource.jambase:
+        return Icons.music_note_rounded;
       case EventSource.local:
         return Icons.location_city_rounded;
     }
