@@ -41,11 +41,13 @@ class AppConfig {
 
   /// Direct URL for the authenticated Gen 2 Ask SpotVibe endpoint.
   ///
-  /// Set this after deploying `searchEventAssistant` with:
+  /// Like [aiPromoFunctionUrl], this routes directly to the backing Cloud Run
+  /// service because the Workspace Domain Restricted Sharing policy blocks the
+  /// `allUsers` invoker binding; the callable still requires a valid Firebase
+  /// Auth token. Override when recreating the service with:
   /// `--dart-define=AI_EVENT_SEARCH_FUNCTION_URL=https://...a.run.app`.
-  /// It is public routing information, not an AI-provider secret.
   static const String aiEventSearchFunctionUrl = String.fromEnvironment(
     'AI_EVENT_SEARCH_FUNCTION_URL',
-    defaultValue: '',
+    defaultValue: 'https://searcheventassistant-kfzltbt5ja-uc.a.run.app',
   );
 }
