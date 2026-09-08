@@ -421,6 +421,7 @@ class _SpotVibeAppState extends State<SpotVibeApp>
               service: ctx.read<RevenueCatService>(),
               founding: ctx.read<FoundingMemberRepository>(),
               currentUserId: () => ctx.read<AuthProvider>().user?.id,
+              currentUserEmail: () => ctx.read<AuthProvider>().user?.email,
             );
             // Keep the subscription labels in the active language.
             final localeProvider = ctx.read<LocaleProvider>();
@@ -428,6 +429,10 @@ class _SpotVibeAppState extends State<SpotVibeApp>
             localeProvider.addListener(() {
               sub.setLocale(_effectiveLocale(localeProvider));
             });
+            // Re-check account-derived access (e.g. the store-review Premium
+            // override) whenever the signed-in user changes.
+            final authProvider = ctx.read<AuthProvider>();
+            authProvider.addListener(sub.refreshAccountAccess);
             sub.initialize();
             return sub;
           },

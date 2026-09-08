@@ -14,21 +14,49 @@ const _kLocalPremiumUntil = 'sv_local_premium_until_ms';
 const _kLocalFounding = 'sv_local_founding_member';
 const _kLocalTrialStarted = 'sv_local_trial_started';
 
+/// Optional store-review override. When SpotVibe is built with
+/// `--dart-define=REVIEWER_PREMIUM_EMAIL=someone@example.com`, the account whose
+/// email matches is treated as Premium without a real purchase, so a Google
+/// Play reviewer can inspect Premium-gated content. This is empty in a normal
+/// production build, so the override never ships to the public — only the
+/// specific testing build you compile with the flag can grant it.
+const String _kReviewerPremiumEmail =
+    String.fromEnvironment('REVIEWER_PREMIUM_EMAIL');
+
 class SubscriptionProvider extends ChangeNotifier {
   final RevenueCatService _service;
   final FoundingMemberRepository _founding;
   final String? Function()? _currentUserId;
+  final String? Function()? _currentUserEmail;
 
   SubscriptionProvider({
     required RevenueCatService service,
     FoundingMemberRepository? founding,
     String? Function()? currentUserId,
+    String? Function()? currentUserEmail,
   })  : _service = service,
         _founding = founding ?? MockFoundingMemberRepository(),
-        _currentUserId = currentUserId;
+        _currentUserId = currentUserId,
+        _currentUserEmail = currentUserEmail;
 
   bool _isSubscribed = false;
-  bool get isSubscribed => _isSubscribed;
+
+  /// True when the signed-in account is the build-configured review account.
+  /// Always false in a build without `REVIEWER_PREMIUM_EMAIL`, so it has no
+  /// effect on real users.
+  bool get _reviewerPremiumActive {
+    if (_kReviewerPremiumEmail.isEmpty) return false;
+    final email = _currentUserEmail?.call();
+    if (email == null || email.isEmpty) return false;
+    return email.trim().toLowerCase() ==
+        _kReviewerPremiumEmail.trim().toLowerCase();
+  }
+
+  bool get isSubscribed => _isSubscribed || _reviewerPremiumActive;
+
+  /// Re-evaluate account-derived access after a sign-in/sign-out so a reviewer
+  /// override is reflected immediately. Safe to call at any time.
+  void refreshAccountAccess() => notifyListeners();
 
   bool _isInTrial = false;
   bool get isInTrial => _isInTrial;
