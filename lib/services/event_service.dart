@@ -440,12 +440,13 @@ const Map<String, String> _cityToState = {
   'carson city':'NV','elko':'NV',
   // Additional New Hampshire
   'nashua':'NH','concord nh':'NH','derry':'NH','rochester nh':'NH',
-  'dover nh':'NH','merrimack':'NH','londonderry':'NH',
+  'dover nh':'NH','merrimack':'NH','londonderry':'NH','manchester':'NH',
   // Additional New Jersey
   'woodbridge nj':'NJ','hamilton nj':'NJ','edison nj':'NJ',
   'toms river':'NJ','clifton':'NJ','cherry hill':'NJ','brick nj':'NJ',
   'passaic':'NJ','middletown nj':'NJ','union city nj':'NJ',
   'gloucester township':'NJ','ocean township':'NJ','bayonne':'NJ',
+  'atlantic city':'NJ',
   // Additional New Mexico
   'rio rancho':'NM','roswell nm':'NM','alamogordo':'NM','clovis nm':'NM',
   'carlsbad nm':'NM','hobbs':'NM','farmington nm':'NM',
@@ -460,9 +461,10 @@ const Map<String, String> _cityToState = {
   'jacksonville nc':'NC','huntersville':'NC','chapel hill':'NC',
   'mooresville':'NC','burlington nc':'NC','wilson nc':'NC',
   'rocky mount':'NC','kannapolis':'NC','apex nc':'NC','hickory':'NC',
+  'asheville':'NC',
   // Additional North Dakota
   'grand forks':'ND','minot':'ND',
-  'mandan':'ND','west fargo':'ND','jamestown nd':'ND',
+  'mandan':'ND','west fargo':'ND','jamestown nd':'ND','fargo':'ND',
   // Additional Ohio
   'hamilton oh':'OH','lorain':'OH','springfield oh':'OH','lakewood oh':'OH',
   'elyria':'OH','newark oh':'OH','kettering':'OH','mentor oh':'OH',
@@ -507,7 +509,7 @@ const Map<String, String> _cityToState = {
   // Additional Utah
   'st george':'UT','layton':'UT','south jordan':'UT','millcreek':'UT',
   'taylorsville':'UT','murray ut':'UT','lehi':'UT','herriman':'UT',
-  'logan ut':'UT','draper':'UT','bountiful ut':'UT','cottonwood heights':'UT',
+  'logan ut':'UT','draper':'UT','bountiful ut':'UT','cottonwood heights':'UT','ogden':'UT',
   // Additional Vermont
   'burlington vt':'VT','south burlington':'VT','colchester vt':'VT',
   'rutland':'VT','essex vt':'VT','bennington':'VT',
@@ -577,20 +579,31 @@ _ResolvedLocation? _resolveLocation(String input) {
     if (state != null) {
       // Find the canonical city for this zip prefix via reverse lookup in _cityToState
       final city = _zipToCity[prefix] ?? _capitalForState(state);
-      return _ResolvedLocation(city: city, state: state, zip: input.trim());
+      return _withCoords(
+        city.toLowerCase(),
+        _ResolvedLocation(city: city, state: state, zip: input.trim()),
+      );
     }
   }
 
   // 2. Exact 2-letter state abbreviation → return state capital
   final upper = input.trim().toUpperCase();
   if (upper.length == 2 && _stateNameToCode.values.contains(upper)) {
-    return _ResolvedLocation(city: _capitalForState(upper), state: upper, zip: '');
+    final city = _capitalForState(upper);
+    return _withCoords(
+      city.toLowerCase(),
+      _ResolvedLocation(city: city, state: upper, zip: ''),
+    );
   }
 
   // 3. Full state name
   final stateCode = _stateNameToCode[lower];
   if (stateCode != null) {
-    return _ResolvedLocation(city: _capitalForState(stateCode), state: stateCode, zip: '');
+    final city = _capitalForState(stateCode);
+    return _withCoords(
+      city.toLowerCase(),
+      _ResolvedLocation(city: city, state: stateCode, zip: ''),
+    );
   }
 
   // 4. City name lookup (longest match first so "new york city" beats "york")
@@ -601,13 +614,9 @@ _ResolvedLocation? _resolveLocation(String input) {
       final st = _cityToState[city]!;
       // Capitalise words for display
       final displayCity = city.split(' ').map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
-      final coords = _cityCoords[city];
-      return _ResolvedLocation(
-        city: displayCity,
-        state: st,
-        zip: '',
-        lat: coords?[0],
-        lng: coords?[1],
+      return _withCoords(
+        city,
+        _ResolvedLocation(city: displayCity, state: st, zip: ''),
       );
     }
   }
@@ -617,13 +626,9 @@ _ResolvedLocation? _resolveLocation(String input) {
     if (lower.contains(city)) {
       final st = _cityToState[city]!;
       final displayCity = city.split(' ').map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
-      final coords = _cityCoords[city];
-      return _ResolvedLocation(
-        city: displayCity,
-        state: st,
-        zip: '',
-        lat: coords?[0],
-        lng: coords?[1],
+      return _withCoords(
+        city,
+        _ResolvedLocation(city: displayCity, state: st, zip: ''),
       );
     }
   }
@@ -644,76 +649,366 @@ class _ResolvedLocation {
   final double? lat;
   final double? lng;
 
+  /// Search radius to pair with [lat]/[lng]. A tight radius for a known metro
+  /// centre, a wide one when we only know the state centroid.
+  final double radiusMiles;
+
   const _ResolvedLocation({
     required this.city,
     required this.state,
     required this.zip,
     this.lat,
     this.lng,
+    this.radiusMiles = kDefaultTicketmasterRadiusMiles,
   });
 }
+
+/// Fills in metro/state coordinates for a resolved city so an area search runs
+/// as a real `latlong` + radius Ticketmaster query. Prefers a precise metro
+/// centre (tight radius); otherwise falls back to the state centroid (wide
+/// radius) so *any* city in [_cityToState] still returns venues across the
+/// state instead of an empty exact-city match. Returns the same location
+/// unchanged when we know nothing (truly unmapped input).
+_ResolvedLocation _withCoords(String cityKey, _ResolvedLocation base) {
+  final metro = _cityCoords[cityKey];
+  if (metro != null) {
+    return _ResolvedLocation(
+      city: base.city,
+      state: base.state,
+      zip: base.zip,
+      lat: metro[0],
+      lng: metro[1],
+      radiusMiles: kMetroTicketmasterRadiusMiles,
+    );
+  }
+  final state = _stateCoords[base.state];
+  if (state != null) {
+    return _ResolvedLocation(
+      city: base.city,
+      state: base.state,
+      zip: base.zip,
+      lat: state[0],
+      lng: state[1],
+      radiusMiles: kStateTicketmasterRadiusMiles,
+    );
+  }
+  return base;
+}
+
+/// Tight radius for a known metro centre — covers suburban venues without
+/// bleeding into the next city.
+const double kMetroTicketmasterRadiusMiles = 45;
+
+/// Wide radius used when we only know the state centroid, so a small town still
+/// surfaces the nearest big-venue shows. Clamped to the Ticketmaster ceiling.
+const double kStateTicketmasterRadiusMiles = 150;
+
+/// Approximate geographic centre of every US state (plus DC), keyed by USPS
+/// code. Used as the coordinate fallback for any city we have a state for but
+/// no precise metro centre, so an area search still runs as a real latlong
+/// query rather than an exact-city match that silently returns nothing.
+const Map<String, List<double>> _stateCoords = {
+  'AL': [32.806671, -86.791130],
+  'AK': [61.370716, -152.404419],
+  'AZ': [33.729759, -111.431221],
+  'AR': [34.969704, -92.373123],
+  'CA': [36.116203, -119.681564],
+  'CO': [39.059811, -105.311104],
+  'CT': [41.597782, -72.755371],
+  'DE': [39.318523, -75.507141],
+  'DC': [38.897438, -77.026817],
+  'FL': [27.766279, -81.686783],
+  'GA': [33.040619, -83.643074],
+  'HI': [21.094318, -157.498337],
+  'ID': [44.240459, -114.478828],
+  'IL': [40.349457, -88.986137],
+  'IN': [39.849426, -86.258278],
+  'IA': [42.011539, -93.210526],
+  'KS': [38.526600, -96.726486],
+  'KY': [37.668140, -84.670067],
+  'LA': [31.169546, -91.867805],
+  'ME': [44.693947, -69.381927],
+  'MD': [39.063946, -76.802101],
+  'MA': [42.230171, -71.530106],
+  'MI': [43.326618, -84.536095],
+  'MN': [45.694454, -93.900192],
+  'MS': [32.741646, -89.678696],
+  'MO': [38.456085, -92.288368],
+  'MT': [46.921925, -110.454353],
+  'NE': [41.125370, -98.268082],
+  'NV': [38.313515, -117.055374],
+  'NH': [43.452492, -71.563896],
+  'NJ': [40.298904, -74.521011],
+  'NM': [34.840515, -106.248482],
+  'NY': [42.165726, -74.948051],
+  'NC': [35.630066, -79.806419],
+  'ND': [47.528912, -99.784012],
+  'OH': [40.388783, -82.764915],
+  'OK': [35.565342, -96.928917],
+  'OR': [44.572021, -122.070938],
+  'PA': [40.590752, -77.209755],
+  'RI': [41.680893, -71.511780],
+  'SC': [33.856892, -80.945007],
+  'SD': [44.299782, -99.438828],
+  'TN': [35.747845, -86.692345],
+  'TX': [31.054487, -97.563461],
+  'UT': [40.150032, -111.862434],
+  'VT': [44.045876, -72.710686],
+  'VA': [37.769337, -78.169968],
+  'WA': [47.400902, -121.490494],
+  'WV': [38.491226, -80.954453],
+  'WI': [44.268543, -89.616508],
+  'WY': [42.755966, -107.302490],
+};
 
 /// Approximate centre coordinates for major US metros, keyed by the lowercase
 /// city name used in [_cityToState]. Used to turn an area search into a
 /// whole-metro `latlong` Ticketmaster query. A city missing here still works —
 /// it just falls back to the older exact-city-name match.
 const Map<String, List<double>> _cityCoords = {
+  // New York
   'new york': [40.7128, -74.0060],
   'new york city': [40.7128, -74.0060],
   'nyc': [40.7128, -74.0060],
+  'manhattan': [40.7831, -73.9712],
   'brooklyn': [40.6782, -73.9442],
+  'queens': [40.7282, -73.7949],
+  'bronx': [40.8448, -73.8648],
+  'staten island': [40.5795, -74.1502],
+  'buffalo': [42.8864, -78.8784],
+  'rochester': [43.1566, -77.6088],
+  'yonkers': [40.9312, -73.8988],
+  'albany': [42.6526, -73.7562],
+  // California
   'los angeles': [34.0522, -118.2437],
   'la': [34.0522, -118.2437],
+  'hollywood': [34.0928, -118.3287],
+  'santa monica': [34.0195, -118.4912],
+  'long beach': [33.7701, -118.1937],
   'san diego': [32.7157, -117.1611],
   'san jose': [37.3382, -121.8863],
   'san francisco': [37.7749, -122.4194],
   'sf': [37.7749, -122.4194],
   'oakland': [37.8044, -122.2712],
+  'berkeley': [37.8715, -122.2730],
   'sacramento': [38.5816, -121.4944],
+  'fresno': [36.7378, -119.7871],
+  'irvine': [33.6846, -117.8265],
+  'anaheim': [33.8366, -117.9143],
+  'riverside': [33.9806, -117.3755],
+  'stockton': [37.9577, -121.2908],
+  'bakersfield': [35.3733, -119.0187],
+  'san bernardino': [34.1083, -117.2898],
+  // Texas
   'houston': [29.7604, -95.3698],
   'dallas': [32.7767, -96.7970],
   'austin': [30.2672, -97.7431],
   'san antonio': [29.4241, -98.4936],
   'fort worth': [32.7555, -97.3308],
   'el paso': [31.7619, -106.4850],
+  'arlington': [32.7357, -97.1081],
+  'corpus christi': [27.8006, -97.3964],
+  'plano': [33.0198, -96.6989],
+  'lubbock': [33.5779, -101.8552],
+  'garland': [32.9126, -96.6389],
+  'irving': [32.8140, -96.9489],
+  'laredo': [27.5306, -99.4803],
+  // Florida
   'miami': [25.7617, -80.1918],
   'jacksonville': [30.3322, -81.6557],
   'tampa': [27.9506, -82.4572],
   'orlando': [28.5383, -81.3792],
+  'fort lauderdale': [26.1224, -80.1373],
+  'st pete': [27.7676, -82.6403],
+  'saint pete': [27.7676, -82.6403],
+  'saint petersburg': [27.7676, -82.6403],
+  'tallahassee': [30.4383, -84.2807],
+  'hialeah': [25.8576, -80.2781],
+  'pensacola': [30.4213, -87.2169],
+  // Illinois
   'chicago': [41.8781, -87.6298],
+  'aurora': [41.7606, -88.3201],
+  'naperville': [41.7508, -88.1535],
+  'joliet': [41.5250, -88.0817],
+  'rockford': [42.2711, -89.0940],
+  'springfield': [39.7817, -89.6501],
+  'peoria': [40.6936, -89.5890],
+  'elgin': [42.0354, -88.2826],
+  // Pennsylvania
   'philadelphia': [39.9526, -75.1652],
   'philly': [39.9526, -75.1652],
   'pittsburgh': [40.4406, -79.9959],
+  'allentown': [40.6084, -75.4902],
+  'erie': [42.1292, -80.0851],
+  'harrisburg': [40.2732, -76.8867],
+  'scranton': [41.4090, -75.6624],
+  // Ohio
   'columbus': [39.9612, -82.9988],
   'cleveland': [41.4993, -81.6944],
   'cincinnati': [39.1031, -84.5120],
+  'toledo': [41.6528, -83.5379],
+  'akron': [41.0814, -81.5190],
+  'dayton': [39.7589, -84.1916],
+  // Georgia
   'atlanta': [33.7490, -84.3880],
+  'savannah': [32.0809, -81.0912],
+  'augusta': [33.4735, -82.0105],
+  'columbus ga': [32.4610, -84.9877],
+  'macon': [32.8407, -83.6324],
+  // North Carolina
   'charlotte': [35.2271, -80.8431],
   'raleigh': [35.7796, -78.6382],
+  'greensboro': [36.0726, -79.7920],
+  'durham': [35.9940, -78.8986],
+  'winston-salem': [36.0999, -80.2442],
+  'asheville': [35.5951, -82.5515],
+  // Michigan
   'detroit': [42.3314, -83.0458],
   'grand rapids': [42.9634, -85.6681],
+  'ann arbor': [42.2808, -83.7430],
+  'lansing': [42.7325, -84.5555],
+  'flint': [43.0125, -83.6875],
+  // Tennessee
   'nashville': [36.1627, -86.7816],
   'memphis': [35.1495, -90.0490],
+  'knoxville': [35.9606, -83.9207],
+  'chattanooga': [35.0456, -85.3097],
+  // Washington
   'seattle': [47.6062, -122.3321],
+  'spokane': [47.6588, -117.4260],
+  'tacoma': [47.2529, -122.4443],
+  'bellevue': [47.6101, -122.2015],
+  // Colorado
   'denver': [39.7392, -104.9903],
   'colorado springs': [38.8339, -104.8214],
+  'aurora co': [39.7294, -104.8319],
+  'boulder': [40.0150, -105.2705],
+  'fort collins': [40.5853, -105.0844],
+  // Massachusetts
   'boston': [42.3601, -71.0589],
+  'worcester': [42.2626, -71.8023],
+  'cambridge': [42.3736, -71.1097],
+  'springfield ma': [42.1015, -72.5898],
+  // Arizona
   'phoenix': [33.4484, -112.0740],
+  'tucson': [32.2226, -110.9747],
+  'mesa': [33.4152, -111.8315],
+  'scottsdale': [33.4942, -111.9261],
+  'tempe': [33.4255, -111.9400],
+  'glendale': [33.5387, -112.1860],
+  // Nevada
   'las vegas': [36.1699, -115.1398],
+  'reno': [39.5296, -119.8138],
+  'henderson': [36.0395, -114.9817],
+  // Oregon
   'portland': [45.5152, -122.6784],
+  'eugene': [44.0521, -123.0868],
+  'salem': [44.9429, -123.0351],
+  // Minnesota
   'minneapolis': [44.9778, -93.2650],
+  'st paul': [44.9537, -93.0900],
+  'saint paul': [44.9537, -93.0900],
+  'duluth': [46.7867, -92.1005],
+  // Missouri
   'kansas city': [39.0997, -94.5786],
   'st louis': [38.6270, -90.1994],
-  'saint louis': [38.6270, -90.1994],
+  'st. louis': [38.6270, -90.1994],
+  'springfield mo': [37.2090, -93.2923],
+  // Utah
   'salt lake city': [40.7608, -111.8910],
+  'provo': [40.2338, -111.6585],
+  'ogden': [41.2230, -111.9738],
+  // Louisiana
   'new orleans': [29.9511, -90.0715],
+  'baton rouge': [30.4515, -91.1871],
+  'shreveport': [32.5252, -93.7502],
+  // Maryland
   'baltimore': [39.2904, -76.6122],
+  // DC
   'washington': [38.9072, -77.0369],
+  'dc': [38.9072, -77.0369],
+  // Wisconsin
   'milwaukee': [43.0389, -87.9065],
+  'madison': [43.0731, -89.4012],
+  'green bay': [44.5133, -88.0133],
+  // New Mexico
   'albuquerque': [35.0844, -106.6504],
+  'santa fe': [35.6870, -105.9378],
+  'las cruces': [32.3199, -106.7637],
+  // Oklahoma
   'oklahoma city': [35.4676, -97.5164],
+  'tulsa': [36.1540, -95.9928],
+  // Kentucky
   'louisville': [38.2527, -85.7585],
+  'lexington': [38.0406, -84.5037],
+  // Indiana
   'indianapolis': [39.7684, -86.1581],
+  'fort wayne': [41.0793, -85.1394],
+  // Virginia
+  'virginia beach': [36.8529, -75.9780],
+  'richmond': [37.5407, -77.4360],
+  'norfolk': [36.8508, -76.2859],
+  'arlington va': [38.8816, -77.0910],
+  // New Jersey
+  'newark': [40.7357, -74.1724],
+  'jersey city': [40.7178, -74.0431],
+  'atlantic city': [39.3643, -74.4229],
+  // Connecticut
+  'hartford': [41.7658, -72.6734],
+  'new haven': [41.3083, -72.9279],
+  'bridgeport': [41.1792, -73.1894],
+  // Iowa
+  'des moines': [41.5868, -93.6250],
+  'cedar rapids': [41.9779, -91.6656],
+  // Kansas
+  'wichita': [37.6872, -97.3301],
+  'topeka': [39.0473, -95.6752],
+  // Arkansas
+  'little rock': [34.7465, -92.2896],
+  // Alabama
+  'birmingham': [33.5186, -86.8104],
+  'montgomery': [32.3668, -86.3000],
+  'huntsville': [34.7304, -86.5861],
+  'mobile': [30.6954, -88.0399],
+  // South Carolina
+  'columbia sc': [34.0007, -81.0348],
+  'columbia mo': [38.9517, -92.3341],
+  'columbia tn': [35.6151, -87.0353],
+  'charleston': [32.7765, -79.9311],
+  'greenville nc': [35.6127, -77.3664],
+  'myrtle beach': [33.6891, -78.8867],
+  // Mississippi
+  'jackson ms': [32.2988, -90.1848],
+  // Nebraska
+  'omaha': [41.2565, -95.9345],
+  'lincoln ne': [40.8136, -96.7026],
+  // Idaho
+  'boise': [43.6150, -116.2023],
+  // Hawaii
+  'honolulu': [21.3069, -157.8583],
+  // Alaska
+  'anchorage': [61.2181, -149.9003],
+  // Maine
+  'south portland': [43.6415, -70.2409],
+  'bangor': [44.8012, -68.7778],
+  // New Hampshire
+  'manchester': [42.9956, -71.4548],
+  // Rhode Island
+  'providence': [41.8240, -71.4128],
+  // Delaware
+  'wilmington': [39.7391, -75.5398],
+  // Montana
+  'billings': [45.7833, -108.5007],
+  // North Dakota
+  'fargo': [46.8772, -96.7898],
+  // South Dakota
+  'sioux falls': [43.5460, -96.7313],
+  // West Virginia
+  'charleston wv': [38.3498, -81.6326],
+  // Vermont
+  'burlington vt': [44.4759, -73.2121],
+  // Wyoming
+  'cheyenne': [41.1400, -104.8202],
 };
 
 /// Returns the largest / capital city for a given state code.
@@ -1353,10 +1648,11 @@ class EventService {
           state: resolved.state,
           zip: resolved.zip.isNotEmpty ? resolved.zip : explicitAreaQuery,
         );
-        // When we know the metro's coordinates, search Ticketmaster by
+        // When we know coordinates for the location, search Ticketmaster by
         // latlong + radius so venues in neighbouring municipalities (Red Rocks
-        // for Denver, Fiddler's Green, etc.) are included. Only fall back to an
-        // exact `city` match for metros we have no coordinates for.
+        // for Denver, Fiddler's Green, etc.) are included. A precise metro uses
+        // a tight radius; a state-centroid fallback uses a wide one. Only fall
+        // back to an exact `city` match when we have no coordinates at all.
         final hasCoords = resolved.lat != null && resolved.lng != null;
         filtered = await _withLiveListings(
           local: filtered,
@@ -1364,7 +1660,7 @@ class EventService {
           state: hasCoords ? null : resolved.state,
           lat: resolved.lat,
           lng: resolved.lng,
-          radiusMiles: kDefaultTicketmasterRadiusMiles,
+          radiusMiles: resolved.radiusMiles,
           keyword: searchQuery,
           category: category,
         );
