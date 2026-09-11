@@ -39,6 +39,7 @@ import '../screens/gem_detail_screen.dart';
 import '../screens/legal_document_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/my_events_screen.dart';
+import '../screens/my_gems_screen.dart';
 import '../screens/paywall_screen.dart';
 import '../data/legal.dart';
 import '../screens/profile_screen.dart';
@@ -202,6 +203,10 @@ class AppRouter {
             final gem = state.extra;
             return SubmitGemScreen(gem: gem is Gem ? gem : null);
           },
+        ),
+        GoRoute(
+          path: '/my-gems',
+          builder: (context, state) => const MyGemsScreen(),
         ),
         GoRoute(
           path: '/gem',

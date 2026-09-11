@@ -177,6 +177,30 @@ class FirebaseUserRepository implements UserRepository {
     }
   }
 
+  @override
+  Future<void> reportContent({
+    required String contentType,
+    required String contentId,
+    String reportedUserId = '',
+    required String reason,
+  }) async {
+    try {
+      await _db.collection('user_reports').add({
+        // Stored in the same `user_reports` queue the admin dashboard reads.
+        'reportedUserId': reportedUserId,
+        'reportedById': _auth.currentUser?.uid,
+        'contentType': contentType,
+        'contentId': contentId,
+        'reason': reason.isEmpty
+            ? 'Reported $contentType'
+            : '[$contentType] $reason',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {
+      // Reporting should never crash the app.
+    }
+  }
+
   // ── Account deletion ──────────────────────────────────────────────────────
 
   @override

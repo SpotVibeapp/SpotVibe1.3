@@ -2329,6 +2329,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gemHiddenBadge => 'Oculta';
 
   @override
+  String get myGemsTitle => 'Mis joyas';
+
+  @override
+  String get myGemsEmptyTitle => 'Aún no has agregado joyas';
+
+  @override
+  String get myGemsEmptySubtitle =>
+      'Comparte un lugar local que te encante y aparecerá aquí.';
+
+  @override
   String get mapTitle => 'Mapa';
 
   @override

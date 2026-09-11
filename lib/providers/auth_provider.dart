@@ -162,6 +162,23 @@ class AuthProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
+  /// Files a moderation report against an event or hidden gem.
+  Future<void> reportContent({
+    required String contentType,
+    required String contentId,
+    String reportedUserId = '',
+    required String reason,
+  }) async {
+    try {
+      await _service.reportContent(
+        contentType: contentType,
+        contentId: contentId,
+        reportedUserId: reportedUserId,
+        reason: reason,
+      );
+    } catch (_) {}
+  }
+
   Future<void> addFriend(String userId, {String friendName = 'this user'}) async {
     try {
       await _service.addFriend(userId);

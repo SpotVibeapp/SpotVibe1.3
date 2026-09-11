@@ -207,6 +207,11 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 _SettingsTile(
+                  icon: Icons.diamond_outlined,
+                  label: l10n.myGemsTitle,
+                  onTap: () => context.push('/my-gems'),
+                ),
+                _SettingsTile(
                   icon: Icons.map_outlined,
                   label: l10n.map,
                   onTap: () => context.push('/map'),

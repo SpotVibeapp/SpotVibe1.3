@@ -120,6 +120,12 @@ class Event {
   final bool isCreatorPro;
   final String? featuredWeekKey;
   final bool isUserCreated;
+
+  /// The SpotVibe user id of the creator, for user-created events. Empty for
+  /// external listings (Ticketmaster/SeatGeek/JamBase), which have no account
+  /// to follow, block, or attribute a report to.
+  final String creatorId;
+
   /// Public organizer profile links associated with this event.
   final EventSocialLinks socialLinks;
 
@@ -155,6 +161,7 @@ class Event {
     this.isCreatorPro = false,
     this.featuredWeekKey,
     this.isUserCreated = false,
+    this.creatorId = '',
     this.socialLinks = const EventSocialLinks.empty(),
   });
 
@@ -189,6 +196,7 @@ class Event {
     bool? isCreatorPro,
     String? featuredWeekKey,
     bool? isUserCreated,
+    String? creatorId,
     EventSocialLinks? socialLinks,
   }) =>
       Event(
@@ -224,6 +232,7 @@ class Event {
         isCreatorPro: isCreatorPro ?? this.isCreatorPro,
         featuredWeekKey: featuredWeekKey ?? this.featuredWeekKey,
         isUserCreated: isUserCreated ?? this.isUserCreated,
+        creatorId: creatorId ?? this.creatorId,
         socialLinks: socialLinks ?? this.socialLinks,
       );
 

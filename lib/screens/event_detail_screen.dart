@@ -542,7 +542,11 @@ class _OrganizerRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final auth = context.read<AuthProvider>();
     final follow = context.read<FollowProvider>();
-    const organizerId = 'organizer_1';
+    // Follow/block only make sense for a real SpotVibe member behind a
+    // user-created event. External listings (Ticketmaster, SeatGeek, JamBase)
+    // have no account to follow or block — offer only Report on those.
+    final organizerId = event.creatorId;
+    final hasRealOrganizer = event.isUserCreated && organizerId.isNotEmpty;
     return Row(
       children: [
         AppAvatar(imageUrl: event.organizerAvatarUrl, size: AppTheme.avatarMd, fallbackName: event.organizerName),
@@ -558,45 +562,84 @@ class _OrganizerRow extends StatelessWidget {
         ),
         if (auth.isLoggedIn)
           IconButton(
-            onPressed: () => UserActionSheet.show(
-              context,
-              userName: event.organizerName,
-              isFollowing: follow.isFollowing(auth.user!.id, organizerId),
-              onToggleFollow: () {
-                final nowFollowing = follow.toggleFollow(auth.user!.id, organizerId);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(nowFollowing
-                        ? l10n.followingName(event.organizerName)
-                        : l10n.unfollowedName(event.organizerName)),
-                  ),
+            onPressed: () {
+              if (hasRealOrganizer) {
+                UserActionSheet.show(
+                  context,
+                  userName: event.organizerName,
+                  isFollowing: follow.isFollowing(auth.user!.id, organizerId),
+                  onToggleFollow: () {
+                    final nowFollowing =
+                        follow.toggleFollow(auth.user!.id, organizerId);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(nowFollowing
+                            ? l10n.followingName(event.organizerName)
+                            : l10n.unfollowedName(event.organizerName)),
+                      ),
+                    );
+                  },
+                  onBlock: () {
+                    auth.blockUser(organizerId);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(l10n.userBlocked)));
+                  },
+                  onReport: () =>
+                      _showReportDialog(context, auth, organizerId),
                 );
-              },
-              onBlock: () {
-                auth.blockUser(organizerId);
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.userBlocked)));
-              },
-              onReport: () => _showReportDialog(context, auth),
-            ),
+              } else {
+                // External event: a report-only bottom sheet.
+                _showReportOnlySheet(context, auth, organizerId);
+              }
+            },
             icon: Icon(Icons.more_horiz_rounded, color: colors.onSurfaceVariant),
           ),
       ],
     );
   }
 
-  void _showReportDialog(BuildContext context, AuthProvider auth) {
+  void _showReportOnlySheet(
+      BuildContext context, AuthProvider auth, String organizerId) {
+    final l10n = AppLocalizations.of(context)!;
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.flag_outlined),
+              title: Text(l10n.reportEvent),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showReportDialog(context, auth, organizerId);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showReportDialog(
+      BuildContext context, AuthProvider auth, String organizerId) {
     final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l10n.reportUser),
+        title: Text(l10n.reportEvent),
         content: TextField(controller: controller, decoration: InputDecoration(hintText: l10n.reasonForReporting), maxLines: 3),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
           ElevatedButton(
             onPressed: () {
-              auth.reportUser('organizer_1', controller.text);
+              auth.reportContent(
+                contentType: 'event',
+                contentId: event.id,
+                reportedUserId: organizerId,
+                reason: controller.text,
+              );
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.reportSubmitted)));
             },

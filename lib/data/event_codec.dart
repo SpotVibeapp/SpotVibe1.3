@@ -118,6 +118,7 @@ Event eventFromMap(String id, Map<String, dynamic> data) {
     featuredWeekKey: data['featuredWeekKey'] as String?,
     isUserCreated: data['kind'] == 'user' ||
         (data['creatorId'] as String?)?.isNotEmpty == true,
+    creatorId: data['creatorId'] as String? ?? '',
     socialLinks: EventSocialLinks.fromStorage(data['socialLinks']),
   );
 }
@@ -198,6 +199,7 @@ Map<String, dynamic> userEventToMap(UserCreatedEvent event) {
         isCreatorPro: event.isCreatorPro,
         featuredWeekKey: event.featuredWeekKey,
         isUserCreated: true,
+        creatorId: event.creatorId,
         socialLinks: event.socialLinks,
       ),
       kind: 'user',

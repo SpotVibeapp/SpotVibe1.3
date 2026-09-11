@@ -144,6 +144,20 @@ class AuthService {
     await _repository.reportUser(userId, reason);
   }
 
+  Future<void> reportContent({
+    required String contentType,
+    required String contentId,
+    String reportedUserId = '',
+    required String reason,
+  }) async {
+    await _repository.reportContent(
+      contentType: contentType,
+      contentId: contentId,
+      reportedUserId: reportedUserId,
+      reason: reason,
+    );
+  }
+
   Future<void> addFriend(String userId) async {
     await _repository.addFriend(userId);
   }

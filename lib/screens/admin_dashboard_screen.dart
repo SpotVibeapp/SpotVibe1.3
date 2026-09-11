@@ -252,8 +252,19 @@ class _ReportCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppTheme.spacingSm),
+          if (report.contentType.isNotEmpty)
+            Text(
+              '${report.contentType.toUpperCase()} · ${report.contentId}',
+              style: text.labelSmall?.copyWith(
+                color: colors.error,
+                fontWeight: FontWeight.w700,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           Text(
-            l10n.adminReportedUser(report.reportedUserId),
+            l10n.adminReportedUser(
+                report.reportedUserId.isEmpty ? '—' : report.reportedUserId),
             style: text.labelSmall?.copyWith(color: colors.onSurfaceVariant),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

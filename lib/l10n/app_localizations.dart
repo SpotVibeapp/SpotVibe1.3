@@ -4183,6 +4183,24 @@ abstract class AppLocalizations {
   /// **'Hidden'**
   String get gemHiddenBadge;
 
+  /// No description provided for @myGemsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My gems'**
+  String get myGemsTitle;
+
+  /// No description provided for @myGemsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You haven\'t added any gems yet'**
+  String get myGemsEmptyTitle;
+
+  /// No description provided for @myGemsEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share a local place you love and it\'ll show up here.'**
+  String get myGemsEmptySubtitle;
+
   /// No description provided for @mapTitle.
   ///
   /// In en, this message translates to:

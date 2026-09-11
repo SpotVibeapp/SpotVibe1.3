@@ -51,6 +51,17 @@ abstract class UserRepository {
   Future<void> blockUser(String userId);
   Future<void> reportUser(String userId, String reason);
 
+  /// Files a moderation report against a piece of content (an event or a
+  /// hidden gem) rather than a user. [contentType] is e.g. 'event' or 'gem',
+  /// [contentId] is that item's id, and [reportedUserId] is the content's
+  /// creator when known (may be empty for external-source events).
+  Future<void> reportContent({
+    required String contentType,
+    required String contentId,
+    String reportedUserId = '',
+    required String reason,
+  });
+
   /// Permanently deletes the signed-in user's account and associated data.
   ///
   /// [password] re-authenticates email/password accounts (Firebase requires a

@@ -95,6 +95,8 @@ class FirebaseModerationRepository implements ModerationRepository {
           reportedUserId: data['reportedUserId'] as String? ?? '',
           reportedById: data['reportedById'] as String? ?? '',
           reason: data['reason'] as String? ?? '',
+          contentType: data['contentType'] as String? ?? '',
+          contentId: data['contentId'] as String? ?? '',
           createdAt: ms != null
               ? DateTime.fromMillisecondsSinceEpoch(ms)
               : DateTime.now(),

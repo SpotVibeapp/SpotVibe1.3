@@ -99,6 +99,44 @@ class _GemDetailScreenState extends State<GemDetailScreen> {
     }
   }
 
+  Future<void> _report() async {
+    final l10n = AppLocalizations.of(context)!;
+    if (!_canInteract) {
+      _snack(l10n.gemsSignInToInteract);
+      return;
+    }
+    final controller = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.gemReport),
+        content: TextField(
+          controller: controller,
+          maxLines: 3,
+          decoration: InputDecoration(hintText: l10n.reasonForReporting),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.submit),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    await _auth.reportContent(
+      contentType: 'gem',
+      contentId: _gem.id,
+      reportedUserId: _gem.creatorId,
+      reason: controller.text,
+    );
+    if (mounted) _snack(l10n.reportSubmitted);
+  }
+
   Future<void> _load() async {
     final viewerId = _auth.user?.id;
     try {
@@ -201,7 +239,7 @@ class _GemDetailScreenState extends State<GemDetailScreen> {
             expandedHeight: 220,
             pinned: true,
             actions: [
-              if (_canManage)
+              if (_canManage || _canInteract)
                 PopupMenuButton<String>(
                   icon: const Icon(Icons.more_vert_rounded),
                   onSelected: (value) {
@@ -209,31 +247,47 @@ class _GemDetailScreenState extends State<GemDetailScreen> {
                       _edit();
                     } else if (value == 'delete') {
                       _delete();
+                    } else if (value == 'report') {
+                      _report();
                     }
                   },
                   itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          const Icon(Icons.edit_outlined, size: 20),
-                          const SizedBox(width: AppTheme.spacingSm),
-                          Text(l10n.gemEdit),
-                        ],
+                    if (_canManage)
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.edit_outlined, size: 20),
+                            const SizedBox(width: AppTheme.spacingSm),
+                            Text(l10n.gemEdit),
+                          ],
+                        ),
                       ),
-                    ),
-                    PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete_outline_rounded,
-                              size: 20, color: colors.error),
-                          const SizedBox(width: AppTheme.spacingSm),
-                          Text(l10n.gemDelete,
-                              style: TextStyle(color: colors.error)),
-                        ],
+                    if (_canManage)
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline_rounded,
+                                size: 20, color: colors.error),
+                            const SizedBox(width: AppTheme.spacingSm),
+                            Text(l10n.gemDelete,
+                                style: TextStyle(color: colors.error)),
+                          ],
+                        ),
                       ),
-                    ),
+                    // Signed-in users who don't own the gem can report it.
+                    if (!_canManage)
+                      PopupMenuItem(
+                        value: 'report',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.flag_outlined, size: 20),
+                            const SizedBox(width: AppTheme.spacingSm),
+                            Text(l10n.gemReport),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
             ],

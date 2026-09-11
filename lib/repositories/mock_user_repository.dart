@@ -92,6 +92,16 @@ class MockUserRepository implements UserRepository {
   }
 
   @override
+  Future<void> reportContent({
+    required String contentType,
+    required String contentId,
+    String reportedUserId = '',
+    required String reason,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+  }
+
+  @override
   Future<void> deleteAccount({String? password}) async {
     await Future.delayed(const Duration(milliseconds: 400));
     _currentUser = null;

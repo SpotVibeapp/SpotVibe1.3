@@ -1099,7 +1099,21 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               preview: _localCoverPath != null && !kIsWeb
                   ? Image.file(File(_localCoverPath!), fit: BoxFit.cover)
                   : (_imageUrlController.text.isNotEmpty
-                      ? Image.network(_imageUrlController.text, fit: BoxFit.cover)
+                      ? Image.network(
+                          _imageUrlController.text,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, _, __) => Container(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest,
+                            alignment: Alignment.center,
+                            child: Icon(
+                              Icons.broken_image_outlined,
+                              color:
+                                  Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        )
                       : null),
               onLibrary: () => _pickCover(camera: false),
               onCamera: () => _pickCover(camera: true),
