@@ -309,24 +309,23 @@ class _SubmitGemScreenState extends State<SubmitGemScreen> {
           ),
         ),
         const SizedBox(height: AppTheme.spacingXs),
-        Row(
-          children: [
-            OutlinedButton.icon(
-              onPressed: _locating ? null : _usePreciseLocation,
-              icon: _locating
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Icon(_preciseCaptured
-                      ? Icons.check_circle_rounded
-                      : Icons.my_location_rounded),
-              label: Text(_preciseCaptured
-                  ? l10n.gemLocationCaptured
-                  : l10n.gemUsePreciseLocation),
-            ),
-          ],
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            onPressed: _locating ? null : _usePreciseLocation,
+            icon: _locating
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Icon(_preciseCaptured
+                    ? Icons.check_circle_rounded
+                    : Icons.my_location_rounded),
+            label: Text(_preciseCaptured
+                ? l10n.gemLocationCaptured
+                : l10n.gemUsePreciseLocation),
+          ),
         ),
         if (!_preciseCaptured)
           Padding(
