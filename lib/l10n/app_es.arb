@@ -975,5 +975,27 @@
   },
   "aiSearchNoResultsHere": "No se encontraron eventos activos que coincidan en esta zona.",
   "poweredByJamBase": "Con tecnología de JamBase",
-  "viewOnJamBase": "Ver en JamBase"
+  "viewOnJamBase": "Ver en JamBase",
+  "navDiscover": "Descubrir",
+  "navGems": "Joyas",
+  "navMap": "Mapa",
+  "gemsTitle": "Joyas Ocultas",
+  "gemsSubtitle": "Lugares locales pasados por alto que vale la pena descubrir",
+  "gemsSearchHint": "Buscar una ciudad",
+  "gemsUseMyLocation": "Usar mi ubicación",
+  "gemsShowingIn": "Mostrando joyas en {area}",
+  "@gemsShowingIn": {
+    "placeholders": {
+      "area": {
+        "type": "String"
+      }
+    }
+  },
+  "gemsAllCategories": "Todas",
+  "gemsEmptyTitle": "Aún no hay joyas por aquí",
+  "gemsEmptySubtitle": "Prueba con una ciudad cercana o usa tu ubicación para explorar lugares locales poco conocidos cerca de ti.",
+  "gemsAttribution": "Lugares de los colaboradores de OpenStreetMap",
+  "gemsGoodToKnow": "Bueno saberlo",
+  "gemsDirections": "Cómo llegar",
+  "gemsWebsite": "Sitio web"
 }

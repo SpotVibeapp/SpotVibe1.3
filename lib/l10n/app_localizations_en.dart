@@ -2067,4 +2067,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewOnJamBase => 'View on JamBase';
+
+  @override
+  String get navDiscover => 'Discover';
+
+  @override
+  String get navGems => 'Gems';
+
+  @override
+  String get navMap => 'Map';
+
+  @override
+  String get gemsTitle => 'Hidden Gems';
+
+  @override
+  String get gemsSubtitle => 'Overlooked local places worth discovering';
+
+  @override
+  String get gemsSearchHint => 'Search a city';
+
+  @override
+  String get gemsUseMyLocation => 'Use my location';
+
+  @override
+  String gemsShowingIn(String area) {
+    return 'Showing gems in $area';
+  }
+
+  @override
+  String get gemsAllCategories => 'All';
+
+  @override
+  String get gemsEmptyTitle => 'No gems found here yet';
+
+  @override
+  String get gemsEmptySubtitle =>
+      'Try a nearby city, or use your location to explore overlooked local spots around you.';
+
+  @override
+  String get gemsAttribution => 'Places from OpenStreetMap contributors';
+
+  @override
+  String get gemsGoodToKnow => 'Good to know';
+
+  @override
+  String get gemsDirections => 'Directions';
+
+  @override
+  String get gemsWebsite => 'Website';
 }

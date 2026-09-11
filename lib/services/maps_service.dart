@@ -65,6 +65,41 @@ class MapsService {
     return false;
   }
 
+  /// Open directions to a raw coordinate (used by Hidden Gems, which are places
+  /// identified by lat/lng rather than [Event]s).
+  static Future<bool> openDirectionsToCoords(
+    double lat,
+    double lng, {
+    String? label,
+  }) async {
+    final dest = '$lat,$lng';
+    final candidates = <Uri>[];
+    if (!kIsWeb) {
+      if (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS) {
+        candidates.add(Uri.parse('https://maps.apple.com/?daddr=$dest'));
+      } else if (defaultTargetPlatform == TargetPlatform.android) {
+        final q = label != null && label.trim().isNotEmpty
+            ? '$dest(${Uri.encodeComponent(label)})'
+            : dest;
+        candidates.add(Uri.parse('geo:$dest?q=$q'));
+      }
+    }
+    candidates.add(Uri.parse(
+        'https://www.google.com/maps/dir/?api=1&destination=$dest'));
+
+    for (final uri in candidates) {
+      try {
+        final launched =
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (launched) return true;
+      } catch (_) {
+        // try next
+      }
+    }
+    return false;
+  }
+
   static Future<bool> openTickets(String url) async {
     final uri = Uri.tryParse(url);
     if (uri == null || !(uri.isScheme('http') || uri.isScheme('https'))) {

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../screens/notification_preferences_screen.dart';
 import '../screens/notifications_screen.dart';
 import '../models/event.dart';
+import '../models/gem.dart';
 import '../models/user_event.dart';
 import '../providers/notification_provider.dart';
 import '../providers/notification_preferences_provider.dart';
@@ -12,6 +13,7 @@ import '../repositories/notification_preferences_repository.dart';
 import '../providers/auth_provider.dart';
 import '../providers/create_event_provider.dart';
 import '../providers/event_provider.dart';
+import '../providers/gem_provider.dart';
 import '../providers/personalization_provider.dart';
 import '../providers/rsvp_provider.dart';
 import '../providers/user_events_provider.dart';
@@ -31,6 +33,8 @@ import '../repositories/onboarding_repository.dart';
 import '../screens/permission_prompt_screen.dart';
 import '../screens/event_detail_screen.dart';
 import '../screens/events_screen.dart';
+import '../screens/gems_screen.dart';
+import '../screens/gem_detail_screen.dart';
 import '../screens/legal_document_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/my_events_screen.dart';
@@ -174,6 +178,28 @@ class AppRouter {
               ],
               child: const EventMapScreen(),
             );
+          },
+        ),
+        GoRoute(
+          path: '/gems',
+          builder: (context, state) {
+            return ChangeNotifierProvider(
+              create: (_) => GemProvider(),
+              child: const GemsScreen(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/gem',
+          builder: (context, state) {
+            final gem = state.extra;
+            if (gem is! Gem) {
+              return ChangeNotifierProvider(
+                create: (_) => GemProvider(),
+                child: const GemsScreen(),
+              );
+            }
+            return GemDetailScreen(gem: gem);
           },
         ),
         // Top-level route so deep links work on cold start (no state.extra needed).

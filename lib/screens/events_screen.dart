@@ -154,6 +154,36 @@ class _EventsScreenState extends State<EventsScreen> {
     final hasAreaQuery = eventProvider.areaQuery.isNotEmpty;
 
     return Scaffold(
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: 0,
+        onDestinationSelected: (index) {
+          switch (index) {
+            case 1:
+              context.push('/gems');
+              break;
+            case 2:
+              context.push('/map');
+              break;
+          }
+        },
+        destinations: [
+          NavigationDestination(
+            icon: const Icon(Icons.explore_outlined),
+            selectedIcon: const Icon(Icons.explore_rounded),
+            label: l10n.navDiscover,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.diamond_outlined),
+            selectedIcon: const Icon(Icons.diamond_rounded),
+            label: l10n.navGems,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.map_outlined),
+            selectedIcon: const Icon(Icons.map_rounded),
+            label: l10n.navMap,
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

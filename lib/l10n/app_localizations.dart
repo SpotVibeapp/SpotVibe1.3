@@ -3774,6 +3774,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View on JamBase'**
   String get viewOnJamBase;
+
+  /// No description provided for @navDiscover.
+  ///
+  /// In en, this message translates to:
+  /// **'Discover'**
+  String get navDiscover;
+
+  /// No description provided for @navGems.
+  ///
+  /// In en, this message translates to:
+  /// **'Gems'**
+  String get navGems;
+
+  /// No description provided for @navMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Map'**
+  String get navMap;
+
+  /// No description provided for @gemsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden Gems'**
+  String get gemsTitle;
+
+  /// No description provided for @gemsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Overlooked local places worth discovering'**
+  String get gemsSubtitle;
+
+  /// No description provided for @gemsSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search a city'**
+  String get gemsSearchHint;
+
+  /// No description provided for @gemsUseMyLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Use my location'**
+  String get gemsUseMyLocation;
+
+  /// No description provided for @gemsShowingIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing gems in {area}'**
+  String gemsShowingIn(String area);
+
+  /// No description provided for @gemsAllCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get gemsAllCategories;
+
+  /// No description provided for @gemsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No gems found here yet'**
+  String get gemsEmptyTitle;
+
+  /// No description provided for @gemsEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a nearby city, or use your location to explore overlooked local spots around you.'**
+  String get gemsEmptySubtitle;
+
+  /// No description provided for @gemsAttribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Places from OpenStreetMap contributors'**
+  String get gemsAttribution;
+
+  /// No description provided for @gemsGoodToKnow.
+  ///
+  /// In en, this message translates to:
+  /// **'Good to know'**
+  String get gemsGoodToKnow;
+
+  /// No description provided for @gemsDirections.
+  ///
+  /// In en, this message translates to:
+  /// **'Directions'**
+  String get gemsDirections;
+
+  /// No description provided for @gemsWebsite.
+  ///
+  /// In en, this message translates to:
+  /// **'Website'**
+  String get gemsWebsite;
 }
 
 class _AppLocalizationsDelegate

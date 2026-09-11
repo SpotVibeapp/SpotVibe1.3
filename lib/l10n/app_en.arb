@@ -975,5 +975,27 @@
   },
   "aiSearchNoResultsHere": "No matching live listings were returned for this area.",
   "poweredByJamBase": "Powered by JamBase",
-  "viewOnJamBase": "View on JamBase"
+  "viewOnJamBase": "View on JamBase",
+  "navDiscover": "Discover",
+  "navGems": "Gems",
+  "navMap": "Map",
+  "gemsTitle": "Hidden Gems",
+  "gemsSubtitle": "Overlooked local places worth discovering",
+  "gemsSearchHint": "Search a city",
+  "gemsUseMyLocation": "Use my location",
+  "gemsShowingIn": "Showing gems in {area}",
+  "@gemsShowingIn": {
+    "placeholders": {
+      "area": {
+        "type": "String"
+      }
+    }
+  },
+  "gemsAllCategories": "All",
+  "gemsEmptyTitle": "No gems found here yet",
+  "gemsEmptySubtitle": "Try a nearby city, or use your location to explore overlooked local spots around you.",
+  "gemsAttribution": "Places from OpenStreetMap contributors",
+  "gemsGoodToKnow": "Good to know",
+  "gemsDirections": "Directions",
+  "gemsWebsite": "Website"
 }

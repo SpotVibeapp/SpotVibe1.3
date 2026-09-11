@@ -101,3 +101,44 @@ doesn't need it.
 I will not write feature code until you answer 1 (and 2/3/4 as relevant). The copy shift in Part 1
 I can do as its own small commit the moment you say go.
 ```
+
+---
+
+## IMPLEMENTED (national, auto-sourced) — build log
+
+Shipped a **national, zero-curation** Hidden Gems feature. Decision: the "no
+per-city reprogramming" requirement ruled out hand curation, so gems are pulled
+live from **OpenStreetMap via the Overpass API** (free, keyless) for whatever
+area the user is in or searches. Any city the geocoder knows works instantly.
+
+**Files added**
+- `lib/models/gem.dart` — `Gem` model + `GemCategory` (broad set: trails,
+  parks, viewpoints, pools/water, nature, museums, art/murals, historic,
+  landmarks, attractions).
+- `lib/services/gem_source.dart` — Overpass client. Multi-mirror failover,
+  30-min in-memory cache, distance-ranked, NEVER throws (empty list on failure).
+- `lib/providers/gem_provider.dart` — loads by GPS or typed city, category
+  filter, exposes only categories present in results.
+- `lib/widgets/gems/gem_cover.dart` — branded gradient cover (same honest
+  fallback principle as event covers; no AI, no scraped photos).
+- `lib/screens/gems_screen.dart` — Gems tab: search a city / use my location,
+  category chips, cards, OSM attribution.
+- `lib/screens/gem_detail_screen.dart` — place detail, "good to know" tags,
+  Directions + Website actions, attribution.
+
+**Wiring**
+- `event_service.dart` — new public `resolvePlaceCoordinates()` / `GeoPlace`
+  reuse the metro+state coordinate tables so gems geocode any city.
+- `maps_service.dart` — `openDirectionsToCoords()` for lat/lng places.
+- `app_router.dart` — `/gems` and `/gem` routes (each provides its own
+  `GemProvider`).
+- `events_screen.dart` — bottom `NavigationBar`: Discover / Gems / Map.
+- l10n — 15 new keys across `app_en.arb`, `app_es.arb`, and all three generated
+  `app_localizations*.dart`.
+
+**Attribution:** UI shows "Places from OpenStreetMap contributors" (ODbL).
+
+**Not done / future:** optional curated "featured gem" overlay per city;
+photos (OSM rarely has usable image URLs — branded cover used instead);
+gem results as pins on the existing map; caching to Firestore if Overpass
+rate-limits become an issue at scale.

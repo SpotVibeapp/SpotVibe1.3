@@ -564,6 +564,40 @@ String _normalizedLocationText(String input) => input
     .replaceAll(RegExp(r'\s+'), ' ')
     .trim();
 
+/// A resolved place with coordinates, exposed for features outside the event
+/// feed (e.g. the Hidden Gems tab) that need to turn a typed city into a point.
+@immutable
+class GeoPlace {
+  final String city;
+  final String state;
+  final double lat;
+  final double lng;
+  final double radiusMiles;
+  const GeoPlace({
+    required this.city,
+    required this.state,
+    required this.lat,
+    required this.lng,
+    required this.radiusMiles,
+  });
+}
+
+/// Public geocoder: resolve a free-text location (city, "City, ST", state, or
+/// zip) to coordinates using the same metro/state tables the event feed uses.
+/// Returns null when the input maps to no known place. Reused by the Gems tab
+/// so it works in any city with zero extra per-city work.
+GeoPlace? resolvePlaceCoordinates(String input) {
+  final resolved = _resolveLocation(input);
+  if (resolved?.lat == null || resolved?.lng == null) return null;
+  return GeoPlace(
+    city: resolved!.city,
+    state: resolved.state,
+    lat: resolved.lat!,
+    lng: resolved.lng!,
+    radiusMiles: resolved.radiusMiles,
+  );
+}
+
 _ResolvedLocation? _resolveLocation(String input) {
   // Search surfaces, including Ask SpotVibe, display locations as
   // "City, ST". Normalize comma/whitespace separators before the existing
