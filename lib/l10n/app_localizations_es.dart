@@ -2140,4 +2140,26 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get gemsWebsite => 'Sitio web';
+
+  @override
+  String get mapTitle => 'Mapa';
+
+  @override
+  String get mapResetView => 'Restablecer vista';
+
+  @override
+  String get mapViewEvent => 'Ver evento';
+
+  @override
+  String get mapViewGem => 'Ver joya';
+
+  @override
+  String mapEventsLayer(int count) {
+    return '$count eventos';
+  }
+
+  @override
+  String mapGemsLayer(int count) {
+    return '$count joyas';
+  }
 }

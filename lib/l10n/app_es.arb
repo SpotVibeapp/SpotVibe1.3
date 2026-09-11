@@ -997,5 +997,25 @@
   "gemsAttribution": "Lugares de los colaboradores de OpenStreetMap",
   "gemsGoodToKnow": "Bueno saberlo",
   "gemsDirections": "Cómo llegar",
-  "gemsWebsite": "Sitio web"
+  "gemsWebsite": "Sitio web",
+  "mapTitle": "Mapa",
+  "mapResetView": "Restablecer vista",
+  "mapViewEvent": "Ver evento",
+  "mapViewGem": "Ver joya",
+  "mapEventsLayer": "{count} eventos",
+  "@mapEventsLayer": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mapGemsLayer": "{count} joyas",
+  "@mapGemsLayer": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

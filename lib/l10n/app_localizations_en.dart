@@ -2115,4 +2115,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gemsWebsite => 'Website';
+
+  @override
+  String get mapTitle => 'Map';
+
+  @override
+  String get mapResetView => 'Reset view';
+
+  @override
+  String get mapViewEvent => 'View Event';
+
+  @override
+  String get mapViewGem => 'View Gem';
+
+  @override
+  String mapEventsLayer(int count) {
+    return '$count events';
+  }
+
+  @override
+  String mapGemsLayer(int count) {
+    return '$count gems';
+  }
 }

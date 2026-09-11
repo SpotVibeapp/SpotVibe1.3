@@ -997,5 +997,25 @@
   "gemsAttribution": "Places from OpenStreetMap contributors",
   "gemsGoodToKnow": "Good to know",
   "gemsDirections": "Directions",
-  "gemsWebsite": "Website"
+  "gemsWebsite": "Website",
+  "mapTitle": "Map",
+  "mapResetView": "Reset view",
+  "mapViewEvent": "View Event",
+  "mapViewGem": "View Gem",
+  "mapEventsLayer": "{count} events",
+  "@mapEventsLayer": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mapGemsLayer": "{count} gems",
+  "@mapGemsLayer": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

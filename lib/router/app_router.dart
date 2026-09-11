@@ -175,6 +175,7 @@ class AppRouter {
                         expiryService: expiry,
                       )..initialize(),
                 ),
+                ChangeNotifierProvider(create: (_) => GemProvider()),
               ],
               child: const EventMapScreen(),
             );

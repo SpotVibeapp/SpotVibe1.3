@@ -3864,6 +3864,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Website'**
   String get gemsWebsite;
+
+  /// No description provided for @mapTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Map'**
+  String get mapTitle;
+
+  /// No description provided for @mapResetView.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset view'**
+  String get mapResetView;
+
+  /// No description provided for @mapViewEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'View Event'**
+  String get mapViewEvent;
+
+  /// No description provided for @mapViewGem.
+  ///
+  /// In en, this message translates to:
+  /// **'View Gem'**
+  String get mapViewGem;
+
+  /// No description provided for @mapEventsLayer.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} events'**
+  String mapEventsLayer(int count);
+
+  /// No description provided for @mapGemsLayer.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} gems'**
+  String mapGemsLayer(int count);
 }
 
 class _AppLocalizationsDelegate
