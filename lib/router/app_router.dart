@@ -34,6 +34,7 @@ import '../screens/permission_prompt_screen.dart';
 import '../screens/event_detail_screen.dart';
 import '../screens/events_screen.dart';
 import '../screens/gems_screen.dart';
+import '../screens/submit_gem_screen.dart';
 import '../screens/gem_detail_screen.dart';
 import '../screens/legal_document_screen.dart';
 import '../screens/login_screen.dart';
@@ -46,6 +47,7 @@ import '../screens/saved_events_screen.dart';
 import '../screens/venue_claim_screen.dart';
 import '../services/deep_link_service.dart';
 import '../services/event_service.dart';
+import '../services/gem_service.dart';
 import '../services/live_event_source.dart';
 import '../services/notification_service.dart';
 import '../services/permission_service.dart';
@@ -175,7 +177,10 @@ class AppRouter {
                         expiryService: expiry,
                       )..initialize(),
                 ),
-                ChangeNotifierProvider(create: (_) => GemProvider()),
+                ChangeNotifierProvider(
+                  create: (ctx) =>
+                      GemProvider(service: ctx.read<GemService>()),
+                ),
               ],
               child: const EventMapScreen(),
             );
@@ -185,10 +190,14 @@ class AppRouter {
           path: '/gems',
           builder: (context, state) {
             return ChangeNotifierProvider(
-              create: (_) => GemProvider(),
+              create: (ctx) => GemProvider(service: ctx.read<GemService>()),
               child: const GemsScreen(),
             );
           },
+        ),
+        GoRoute(
+          path: '/gems/add',
+          builder: (context, state) => const SubmitGemScreen(),
         ),
         GoRoute(
           path: '/gem',
@@ -196,7 +205,7 @@ class AppRouter {
             final gem = state.extra;
             if (gem is! Gem) {
               return ChangeNotifierProvider(
-                create: (_) => GemProvider(),
+                create: (ctx) => GemProvider(service: ctx.read<GemService>()),
                 child: const GemsScreen(),
               );
             }

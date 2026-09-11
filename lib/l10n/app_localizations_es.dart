@@ -2127,10 +2127,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get gemsEmptySubtitle =>
-      'Prueba con una ciudad cercana o usa tu ubicación para explorar lugares locales poco conocidos cerca de ti.';
+      'Sé la primera persona en compartir una joya escondida en esta zona.';
 
   @override
-  String get gemsAttribution => 'Lugares de los colaboradores de OpenStreetMap';
+  String get gemsAttribution => 'Compartido por la comunidad de SpotVibe';
 
   @override
   String get gemsGoodToKnow => 'Bueno saberlo';
@@ -2140,6 +2140,150 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get gemsWebsite => 'Sitio web';
+
+  @override
+  String get gemsAddButton => 'Agregar joya';
+
+  @override
+  String get gemsAddTitle => 'Agregar una joya escondida';
+
+  @override
+  String get gemsSignInToAdd => 'Inicia sesión para agregar una joya';
+
+  @override
+  String get gemsSignInToInteract =>
+      'Inicia sesión para dar me gusta y comentar';
+
+  @override
+  String get gemNameLabel => 'Nombre';
+
+  @override
+  String get gemNameHint => 'p. ej. mirador del Cañón McKelligon';
+
+  @override
+  String get gemCategoryLabel => 'Categoría';
+
+  @override
+  String get gemSummaryLabel => 'Por qué es una joya';
+
+  @override
+  String get gemSummaryHint =>
+      'Una línea sobre lo que hace especial a este lugar';
+
+  @override
+  String get gemDescriptionLabel => 'Descripción';
+
+  @override
+  String get gemDescriptionHint =>
+      'Consejos, mejor hora para visitar, cómo llegar…';
+
+  @override
+  String get gemLocationLabel => 'Ubicación';
+
+  @override
+  String get gemLocationHint => 'Ciudad, barrio o punto de referencia';
+
+  @override
+  String get gemUsePreciseLocation => 'Usar mi ubicación actual';
+
+  @override
+  String get gemLocationCaptured => 'Ubicación precisa registrada';
+
+  @override
+  String get gemLocationNeeded =>
+      'Agrega una ubicación para que otros la encuentren';
+
+  @override
+  String get gemPhotosLabel => 'Fotos';
+
+  @override
+  String get gemAddPhoto => 'Agregar foto';
+
+  @override
+  String get gemPhotosOptional => 'Las fotos son opcionales';
+
+  @override
+  String get gemSubmit => 'Compartir joya';
+
+  @override
+  String get gemSubmitting => 'Compartiendo…';
+
+  @override
+  String get gemSubmitSuccess => 'Tu joya está publicada. ¡Gracias por compartir!';
+
+  @override
+  String get gemSubmitRejected =>
+      'No se pudo publicar tu joya porque podría infringir nuestras normas comunitarias.';
+
+  @override
+  String get gemSubmitError => 'Algo salió mal. Inténtalo de nuevo.';
+
+  @override
+  String get gemNameRequired => 'Agrega un nombre';
+
+  @override
+  String get gemSummaryRequired => 'Agrega un resumen breve';
+
+  @override
+  String get gemLocationRequired => 'Agrega una ubicación';
+
+  @override
+  String gemLikes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count me gusta',
+      one: '1 me gusta',
+      zero: 'Sin me gusta',
+    );
+    return _temp0;
+  }
+
+  @override
+  String gemComments(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count comentarios',
+      one: '1 comentario',
+      zero: 'Sin comentarios',
+    );
+    return _temp0;
+  }
+
+  @override
+  String get gemCommentHint => 'Agrega un comentario…';
+
+  @override
+  String get gemCommentPost => 'Publicar';
+
+  @override
+  String get gemCommentEmpty => 'Sé la primera persona en comentar';
+
+  @override
+  String get gemCommentRejected =>
+      'No se pudo publicar tu comentario porque podría infringir nuestras normas comunitarias.';
+
+  @override
+  String get gemCommentError =>
+      'No se pudo publicar tu comentario. Inténtalo de nuevo.';
+
+  @override
+  String gemAddedBy(String name) {
+    return 'Agregado por $name';
+  }
+
+  @override
+  String get gemDelete => 'Eliminar joya';
+
+  @override
+  String get gemDeleteConfirm => '¿Eliminar esta joya? No se puede deshacer.';
+
+  @override
+  String get gemDeleted => 'Joya eliminada';
+
+  @override
+  String get gemReport => 'Reportar';
 
   @override
   String get mapTitle => 'Mapa';

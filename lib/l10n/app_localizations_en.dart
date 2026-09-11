@@ -2098,14 +2098,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gemsAllCategories => 'All';
 
   @override
-  String get gemsEmptyTitle => 'No gems found here yet';
+  String get gemsEmptyTitle => 'No gems here yet';
 
   @override
   String get gemsEmptySubtitle =>
-      'Try a nearby city, or use your location to explore overlooked local spots around you.';
+      'Be the first to share a hidden gem in this area.';
 
   @override
-  String get gemsAttribution => 'Places from OpenStreetMap contributors';
+  String get gemsAttribution => 'Shared by the SpotVibe community';
 
   @override
   String get gemsGoodToKnow => 'Good to know';
@@ -2115,6 +2115,145 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gemsWebsite => 'Website';
+
+  @override
+  String get gemsAddButton => 'Add a gem';
+
+  @override
+  String get gemsAddTitle => 'Add a hidden gem';
+
+  @override
+  String get gemsSignInToAdd => 'Sign in to add a gem';
+
+  @override
+  String get gemsSignInToInteract => 'Sign in to like and comment';
+
+  @override
+  String get gemNameLabel => 'Name';
+
+  @override
+  String get gemNameHint => 'e.g. McKelligon Canyon overlook';
+
+  @override
+  String get gemCategoryLabel => 'Category';
+
+  @override
+  String get gemSummaryLabel => 'Why it\'s a gem';
+
+  @override
+  String get gemSummaryHint => 'One line on what makes this place special';
+
+  @override
+  String get gemDescriptionLabel => 'Description';
+
+  @override
+  String get gemDescriptionHint => 'Tips, best time to visit, how to find it…';
+
+  @override
+  String get gemLocationLabel => 'Location';
+
+  @override
+  String get gemLocationHint => 'City, neighborhood, or landmark';
+
+  @override
+  String get gemUsePreciseLocation => 'Use my current location';
+
+  @override
+  String get gemLocationCaptured => 'Precise location captured';
+
+  @override
+  String get gemLocationNeeded => 'Add a location so others can find it';
+
+  @override
+  String get gemPhotosLabel => 'Photos';
+
+  @override
+  String get gemAddPhoto => 'Add photo';
+
+  @override
+  String get gemPhotosOptional => 'Photos are optional';
+
+  @override
+  String get gemSubmit => 'Share gem';
+
+  @override
+  String get gemSubmitting => 'Sharing…';
+
+  @override
+  String get gemSubmitSuccess => 'Your gem is live. Thanks for sharing!';
+
+  @override
+  String get gemSubmitRejected =>
+      'Your gem couldn\'t be posted because it may violate our community guidelines.';
+
+  @override
+  String get gemSubmitError => 'Something went wrong. Please try again.';
+
+  @override
+  String get gemNameRequired => 'Please add a name';
+
+  @override
+  String get gemSummaryRequired => 'Please add a short summary';
+
+  @override
+  String get gemLocationRequired => 'Please add a location';
+
+  @override
+  String gemLikes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count likes',
+      one: '1 like',
+      zero: 'No likes',
+    );
+    return _temp0;
+  }
+
+  @override
+  String gemComments(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count comments',
+      one: '1 comment',
+      zero: 'No comments',
+    );
+    return _temp0;
+  }
+
+  @override
+  String get gemCommentHint => 'Add a comment…';
+
+  @override
+  String get gemCommentPost => 'Post';
+
+  @override
+  String get gemCommentEmpty => 'Be the first to comment';
+
+  @override
+  String get gemCommentRejected =>
+      'Your comment couldn\'t be posted because it may violate our community guidelines.';
+
+  @override
+  String get gemCommentError => 'Couldn\'t post your comment. Please try again.';
+
+  @override
+  String gemAddedBy(String name) {
+    return 'Added by $name';
+  }
+
+  @override
+  String get gemDelete => 'Delete gem';
+
+  @override
+  String get gemDeleteConfirm => 'Delete this gem? This can\'t be undone.';
+
+  @override
+  String get gemDeleted => 'Gem deleted';
+
+  @override
+  String get gemReport => 'Report';
 
   @override
   String get mapTitle => 'Map';

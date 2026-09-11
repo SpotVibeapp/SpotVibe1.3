@@ -980,7 +980,7 @@
   "navGems": "Gems",
   "navMap": "Map",
   "gemsTitle": "Hidden Gems",
-  "gemsSubtitle": "Overlooked local places worth discovering",
+  "gemsSubtitle": "Local places worth discovering, shared by the community",
   "gemsSearchHint": "Search a city",
   "gemsUseMyLocation": "Use my location",
   "gemsShowingIn": "Showing gems in {area}",
@@ -992,12 +992,72 @@
     }
   },
   "gemsAllCategories": "All",
-  "gemsEmptyTitle": "No gems found here yet",
-  "gemsEmptySubtitle": "Try a nearby city, or use your location to explore overlooked local spots around you.",
-  "gemsAttribution": "Places from OpenStreetMap contributors",
+  "gemsEmptyTitle": "No gems here yet",
+  "gemsEmptySubtitle": "Be the first to share a hidden gem in this area.",
+  "gemsAttribution": "Shared by the SpotVibe community",
   "gemsGoodToKnow": "Good to know",
   "gemsDirections": "Directions",
   "gemsWebsite": "Website",
+  "gemsAddButton": "Add a gem",
+  "gemsAddTitle": "Add a hidden gem",
+  "gemsSignInToAdd": "Sign in to add a gem",
+  "gemsSignInToInteract": "Sign in to like and comment",
+  "gemNameLabel": "Name",
+  "gemNameHint": "e.g. McKelligon Canyon overlook",
+  "gemCategoryLabel": "Category",
+  "gemSummaryLabel": "Why it's a gem",
+  "gemSummaryHint": "One line on what makes this place special",
+  "gemDescriptionLabel": "Description",
+  "gemDescriptionHint": "Tips, best time to visit, how to find it…",
+  "gemLocationLabel": "Location",
+  "gemLocationHint": "City, neighborhood, or landmark",
+  "gemUsePreciseLocation": "Use my current location",
+  "gemLocationCaptured": "Precise location captured",
+  "gemLocationNeeded": "Add a location so others can find it",
+  "gemPhotosLabel": "Photos",
+  "gemAddPhoto": "Add photo",
+  "gemPhotosOptional": "Photos are optional",
+  "gemSubmit": "Share gem",
+  "gemSubmitting": "Sharing…",
+  "gemSubmitSuccess": "Your gem is live. Thanks for sharing!",
+  "gemSubmitRejected": "Your gem couldn't be posted because it may violate our community guidelines.",
+  "gemSubmitError": "Something went wrong. Please try again.",
+  "gemNameRequired": "Please add a name",
+  "gemSummaryRequired": "Please add a short summary",
+  "gemLocationRequired": "Please add a location",
+  "gemLikes": "{count, plural, =0{No likes} =1{1 like} other{{count} likes}}",
+  "@gemLikes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gemComments": "{count, plural, =0{No comments} =1{1 comment} other{{count} comments}}",
+  "@gemComments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gemCommentHint": "Add a comment…",
+  "gemCommentPost": "Post",
+  "gemCommentEmpty": "Be the first to comment",
+  "gemCommentRejected": "Your comment couldn't be posted because it may violate our community guidelines.",
+  "gemCommentError": "Couldn't post your comment. Please try again.",
+  "gemAddedBy": "Added by {name}",
+  "@gemAddedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "gemDelete": "Delete gem",
+  "gemDeleteConfirm": "Delete this gem? This can't be undone.",
+  "gemDeleted": "Gem deleted",
+  "gemReport": "Report",
   "mapTitle": "Map",
   "mapResetView": "Reset view",
   "mapViewEvent": "View Event",

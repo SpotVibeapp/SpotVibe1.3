@@ -15,6 +15,7 @@ import 'providers/notification_provider.dart';
 import 'providers/moderation_provider.dart';
 import 'providers/partner_promo_provider.dart';
 import 'repositories/firebase_event_repository.dart';
+import 'repositories/firebase_gem_repository.dart';
 import 'repositories/firebase_rsvp_repository.dart';
 import 'repositories/firebase_user_event_repository.dart';
 import 'repositories/firebase_user_repository.dart';
@@ -24,6 +25,7 @@ import 'repositories/moderation_repository.dart';
 import 'repositories/onboarding_repository.dart';
 import 'repositories/event_claim_repository.dart';
 import 'repositories/founding_member_repository.dart';
+import 'repositories/gem_repository.dart';
 import 'repositories/event_repository.dart';
 import 'repositories/notification_preferences_repository.dart';
 import 'repositories/notification_repository.dart';
@@ -34,6 +36,7 @@ import 'repositories/user_event_repository.dart';
 import 'repositories/user_repository.dart';
 import 'router/app_router.dart';
 import 'services/ai_moderation_service.dart';
+import 'services/gem_service.dart';
 import 'services/event_analytics_service.dart';
 import 'services/event_expiry_service.dart';
 import 'services/auth_service.dart';
@@ -118,6 +121,7 @@ void main() async {
       eventRepository: backend.events,
       rsvpRepository: backend.rsvps,
       userEventRepository: backend.userEvents,
+      gemRepository: backend.gems,
       claimRepository: backend.claims,
       foundingRepository: backend.founding,
       moderationRepository: backend.moderation,
@@ -136,6 +140,7 @@ class _AppBackend {
   final EventRepository events;
   final RsvpRepository rsvps;
   final UserEventRepository userEvents;
+  final GemRepository gems;
   final EventClaimRepository claims;
   final FoundingMemberRepository founding;
   final ModerationRepository moderation;
@@ -145,6 +150,7 @@ class _AppBackend {
     required this.events,
     required this.rsvps,
     required this.userEvents,
+    required this.gems,
     required this.claims,
     required this.founding,
     required this.moderation,
@@ -179,6 +185,7 @@ Future<_AppBackend?> _createBackend() async {
       events: events,
       rsvps: FirebaseRsvpRepository(),
       userEvents: FirebaseUserEventRepository(),
+      gems: FirebaseGemRepository(),
       claims: FirebaseEventClaimRepository(),
       founding: FirebaseFoundingMemberRepository(),
       moderation: FirebaseModerationRepository(),
@@ -196,6 +203,7 @@ Future<_AppBackend?> _createBackend() async {
       events: MockEventRepository(),
       rsvps: MockRsvpRepository(),
       userEvents: UserEventRepository(),
+      gems: GemRepository(),
       claims: MockEventClaimRepository(),
       founding: MockFoundingMemberRepository(),
       moderation: MockModerationRepository(),
@@ -248,6 +256,7 @@ class SpotVibeApp extends StatefulWidget {
   final EventRepository eventRepository;
   final RsvpRepository rsvpRepository;
   final UserEventRepository userEventRepository;
+  final GemRepository gemRepository;
   final EventClaimRepository claimRepository;
   final FoundingMemberRepository foundingRepository;
   final ModerationRepository moderationRepository;
@@ -264,6 +273,7 @@ class SpotVibeApp extends StatefulWidget {
     required this.eventRepository,
     required this.rsvpRepository,
     required this.userEventRepository,
+    required this.gemRepository,
     required this.claimRepository,
     required this.foundingRepository,
     required this.moderationRepository,
@@ -349,6 +359,13 @@ class _SpotVibeAppState extends State<SpotVibeApp>
         Provider(create: (_) => AiModerationService()),
         ChangeNotifierProvider(create: (_) => EventExpiryService()),
         Provider<EventRepository>(create: (_) => widget.eventRepository),
+        Provider<GemRepository>(create: (_) => widget.gemRepository),
+        Provider<GemService>(
+          create: (ctx) => GemService(
+            repository: ctx.read<GemRepository>(),
+            moderation: ctx.read<AiModerationService>(),
+          ),
+        ),
         Provider(create: (_) => TicketmasterService()),
         Provider(create: (_) => SeatGeekService()),
         // Answers persist across launches: the Developer plan is 1,000

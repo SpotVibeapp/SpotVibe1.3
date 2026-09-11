@@ -27,6 +27,72 @@ class GemCover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Real user photo takes precedence; fall back to the branded gradient.
+    if (gem.imageUrl.isNotEmpty) {
+      return SizedBox(
+        height: height,
+        width: double.infinity,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              gem.imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _gradient(),
+              loadingBuilder: (context, child, progress) =>
+                  progress == null ? child : _gradient(),
+            ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Color(0x55000000)],
+                ),
+              ),
+            ),
+            _categoryBadge(),
+          ],
+        ),
+      );
+    }
+    return _gradient();
+  }
+
+  Widget _categoryBadge() {
+    return Align(
+      alignment: Alignment.topLeft,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.28),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(gem.category.icon,
+                  size: 14, color: Colors.white.withValues(alpha: 0.95)),
+              const SizedBox(width: 5),
+              Text(
+                gem.category.label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _gradient() {
     final seed = gem.id.hashCode.abs();
     final palette = _palettes[seed % _palettes.length];
 

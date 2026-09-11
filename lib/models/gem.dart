@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// A "hidden gem" — an overlooked local *place* worth discovering, as opposed
-/// to an [Event] which is something happening at a time. Gems are sourced
-/// nationally (any city) from OpenStreetMap via the Overpass API, so the app
-/// needs zero per-city curation: a search resolves to coordinates and gems are
-/// fetched for that area on the fly.
+/// A user-submitted "hidden gem" — an overlooked local *place* worth
+/// discovering (a mountain trail, a quiet neighborhood pool, a park, a mural,
+/// a viewpoint, a small museum, and so on).
 ///
-/// Gems are first-party discovery content, not licensed event listings, so they
-/// live in a parallel pipeline from [LiveEventSource]; nothing here touches the
-/// Ticketmaster / JamBase / SeatGeek quota logic.
+/// Gems are community content, free for everyone to submit, browse, like, and
+/// comment on. They are moderated the same way user events are: a client-side
+/// check blocks obvious violations before write, and a Cloud Function hides
+/// anything matching the banned-word list after write (`hidden = true`).
 enum GemCategory {
   trail,
   park,
@@ -19,7 +18,19 @@ enum GemCategory {
   art,
   historic,
   landmark,
-  attraction;
+  foodDrink,
+  attraction,
+  other;
+
+  /// Stable string stored in Firestore (never localize the stored value).
+  String get key => name;
+
+  static GemCategory fromKey(String? key) {
+    return GemCategory.values.firstWhere(
+      (c) => c.name == key,
+      orElse: () => GemCategory.other,
+    );
+  }
 
   /// Broad display label shown on chips and cards.
   String get label {
@@ -42,8 +53,12 @@ enum GemCategory {
         return 'Historic';
       case GemCategory.landmark:
         return 'Landmarks';
+      case GemCategory.foodDrink:
+        return 'Food & Drink';
       case GemCategory.attraction:
         return 'Attractions';
+      case GemCategory.other:
+        return 'Other';
     }
   }
 
@@ -67,81 +82,124 @@ enum GemCategory {
         return Icons.account_balance_rounded;
       case GemCategory.landmark:
         return Icons.location_city_rounded;
+      case GemCategory.foodDrink:
+        return Icons.restaurant_rounded;
       case GemCategory.attraction:
         return Icons.attractions_rounded;
+      case GemCategory.other:
+        return Icons.place_rounded;
     }
   }
 }
 
 @immutable
 class Gem {
-  /// Prefixed, stable id (e.g. `osm_node_12345`) so gems never collide with
-  /// event ids and cold-start deep links can round-trip.
   final String id;
+  final String creatorId;
+  final String creatorName;
+
   final String name;
   final GemCategory category;
+
+  /// One-line "why it's a gem" hook shown on the card.
+  final String summary;
+
+  /// Longer description shown on the detail page.
+  final String description;
+
   final double latitude;
   final double longitude;
 
-  /// One-line "why it's a gem" blurb, derived from tags when OSM has no
-  /// description of its own.
-  final String summary;
-
-  /// Longer free-text description when the source provides one.
-  final String? description;
-
-  /// Best-effort human address / locality (may be just a city).
+  /// Free-text location the submitter typed (e.g. "McKelligon Canyon, El Paso").
   final String address;
-  final String? city;
-  final String? state;
+  final String city;
+  final String state;
 
-  /// Optional outbound links surfaced on the detail page.
-  final String? website;
-  final String? phone;
-  final String? imageUrl;
+  /// Ordered photo gallery; first entry is the cover. Empty → branded cover.
+  final List<String> imageUrls;
 
-  /// Raw OSM tag hints kept for richer detail rendering (opening hours,
-  /// fees, wheelchair access, etc.). Always safe to be empty.
-  final Map<String, String> details;
+  final int likeCount;
+  final int commentCount;
+
+  /// Whether the current viewer has liked this gem (set client-side).
+  final bool likedByMe;
+
+  /// Moderation: hidden gems are excluded from public browsing.
+  final bool hidden;
+
+  final DateTime createdAt;
 
   const Gem({
     required this.id,
+    required this.creatorId,
+    required this.creatorName,
     required this.name,
     required this.category,
+    required this.summary,
+    required this.description,
     required this.latitude,
     required this.longitude,
-    required this.summary,
     required this.address,
-    this.description,
-    this.city,
-    this.state,
-    this.website,
-    this.phone,
-    this.imageUrl,
-    this.details = const {},
+    this.city = '',
+    this.state = '',
+    this.imageUrls = const [],
+    this.likeCount = 0,
+    this.commentCount = 0,
+    this.likedByMe = false,
+    this.hidden = false,
+    required this.createdAt,
   });
 
+  String get imageUrl => imageUrls.isEmpty ? '' : imageUrls.first;
+
   Gem copyWith({
-    String? summary,
-    String? address,
-    String? city,
-    String? state,
+    List<String>? imageUrls,
+    int? likeCount,
+    int? commentCount,
+    bool? likedByMe,
+    bool? hidden,
   }) {
     return Gem(
       id: id,
+      creatorId: creatorId,
+      creatorName: creatorName,
       name: name,
       category: category,
+      summary: summary,
+      description: description,
       latitude: latitude,
       longitude: longitude,
-      summary: summary ?? this.summary,
-      description: description,
-      address: address ?? this.address,
-      city: city ?? this.city,
-      state: state ?? this.state,
-      website: website,
-      phone: phone,
-      imageUrl: imageUrl,
-      details: details,
+      address: address,
+      city: city,
+      state: state,
+      imageUrls: imageUrls ?? this.imageUrls,
+      likeCount: likeCount ?? this.likeCount,
+      commentCount: commentCount ?? this.commentCount,
+      likedByMe: likedByMe ?? this.likedByMe,
+      hidden: hidden ?? this.hidden,
+      createdAt: createdAt,
     );
   }
+}
+
+/// A comment on a gem. Mirrors the events/{id}/comments moderation model.
+@immutable
+class GemComment {
+  final String id;
+  final String authorId;
+  final String authorName;
+  final String authorAvatarUrl;
+  final String text;
+  final bool hidden;
+  final DateTime createdAt;
+
+  const GemComment({
+    required this.id,
+    required this.authorId,
+    required this.authorName,
+    this.authorAvatarUrl = '',
+    required this.text,
+    this.hidden = false,
+    required this.createdAt,
+  });
 }

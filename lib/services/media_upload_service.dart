@@ -130,6 +130,23 @@ class MediaUploadService {
     );
   }
 
+  /// Uploads a photo for a community hidden gem. Stored under the submitter's
+  /// uid so Storage rules can verify ownership.
+  Future<String> uploadGemPhoto({
+    required String gemId,
+    required String localPath,
+    required int slot,
+  }) {
+    final uid = _requireUid();
+    final stamp = DateTime.now().millisecondsSinceEpoch;
+    return _upload(
+      localPath: localPath,
+      refPath: 'gems/$uid/$gemId/photo_${slot + 1}_$stamp.jpg',
+      contentType: 'image/jpeg',
+      maxBytes: maxPhotoBytes,
+    );
+  }
+
   Future<String> uploadEventVideo({
     required String eventId,
     required String localPath,

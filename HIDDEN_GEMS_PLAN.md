@@ -142,3 +142,60 @@ area the user is in or searches. Any city the geocoder knows works instantly.
 photos (OSM rarely has usable image URLs — branded cover used instead);
 gem results as pins on the existing map; caching to Firestore if Overpass
 rate-limits become an issue at scale.
+
+---
+
+## PIVOT (2026-09): Hidden Gems → USER-GENERATED
+
+Overpass/OpenStreetMap auto-generation was abandoned: even after hardening the
+client (lighter query, GET fallback, richer logging) gems never loaded on
+device. Hidden Gems is now **community content** — users submit gems, everyone
+browses free, signed-in users like and comment. Moderation still applies.
+
+**Model** — `lib/models/gem.dart` rewritten as a UGC place: `creatorId`,
+`creatorName`, `name`, `category`, `summary`, `description`, `lat/lng`,
+`address/city/state`, `imageUrls`, `likeCount`, `commentCount`, `likedByMe`,
+`hidden`, `createdAt`. Added `GemComment`. `GemCategory` expanded
+(trail/park/viewpoint/water/nature/museum/art/historic/landmark/foodDrink/
+attraction/other) with stable `.key` for Firestore.
+
+**Data / persistence**
+- `lib/data/gem_codec.dart` — Firestore map ⇄ Gem/GemComment.
+- `lib/repositories/gem_repository.dart` — abstract + in-memory fallback
+  (distance filtering, likes, comments).
+- `lib/repositories/firebase_gem_repository.dart` — `gems/{id}` +
+  `gems/{id}/comments/{id}` + `gems/{id}/likes/{uid}`; `_guard()` falls back to
+  in-memory (mirrors FirebaseUserEventRepository).
+- `lib/services/gem_service.dart` — validation + client-side AI moderation
+  (moderateFields/moderateText → GemWriteResult), like toggle, comments,
+  ownership-checked delete. `maxGemPhotos = 5`.
+
+**UI**
+- `lib/providers/gem_provider.dart` — loads from GemService by GPS/typed
+  location or `loadAll()`; category filter.
+- `lib/screens/gems_screen.dart` — list + "Add a gem" FAB (signed-in only).
+- `lib/screens/submit_gem_screen.dart` — NEW. name/category/summary/description,
+  location (precise GPS pin AND/OR typed place via resolvePlaceCoordinates),
+  up to 5 photos (MediaUploadService.uploadGemPhoto). Route `/gems/add`.
+- `lib/screens/gem_detail_screen.dart` — rewritten: like button + comment
+  composer/list (both signed-in only, both moderated), directions, added-by.
+- `lib/widgets/gems/gem_cover.dart` — shows real photo when present, branded
+  gradient fallback otherwise.
+
+**Backend / rules**
+- `firestore.rules` — `gems/{id}` (public read; create signed-in & owner;
+  update owner/admin or like/comment counters only; delete owner/admin),
+  `gems/{id}/likes/{uid}` (owner), `gems/{id}/comments/{id}` (mirror events).
+- `storage.rules` — `gems/{uid}/{gemId}/{file}` owner-write, public read, 6 MB
+  image only.
+- `functions/index.js` — `moderateGem` + `moderateGemComment` onDocumentCreated
+  triggers hide banned-word content (mirror moderateUserEvent/moderateComment).
+
+**Wiring** — `main.dart`: `_AppBackend.gems`, `FirebaseGemRepository` (real) /
+`GemRepository` (mock), top-level `Provider<GemRepository>` +
+`Provider<GemService>`. `app_router.dart` builds GemProvider from GemService.
+l10n — 51 gem keys across en/es + 3 generated (672 total each).
+
+**Deploy note:** run `firebase deploy --only firestore:rules,storage,functions`
+to publish gem rules + moderation triggers. (Ask-SpotVibe gcloud invoker
+re-lock note is unrelated to these triggers.)

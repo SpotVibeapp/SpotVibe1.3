@@ -3865,6 +3865,240 @@ abstract class AppLocalizations {
   /// **'Website'**
   String get gemsWebsite;
 
+  /// No description provided for @gemsAddButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a gem'**
+  String get gemsAddButton;
+
+  /// No description provided for @gemsAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a hidden gem'**
+  String get gemsAddTitle;
+
+  /// No description provided for @gemsSignInToAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to add a gem'**
+  String get gemsSignInToAdd;
+
+  /// No description provided for @gemsSignInToInteract.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to like and comment'**
+  String get gemsSignInToInteract;
+
+  /// No description provided for @gemNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get gemNameLabel;
+
+  /// No description provided for @gemNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. McKelligon Canyon overlook'**
+  String get gemNameHint;
+
+  /// No description provided for @gemCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get gemCategoryLabel;
+
+  /// No description provided for @gemSummaryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Why it\'s a gem'**
+  String get gemSummaryLabel;
+
+  /// No description provided for @gemSummaryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'One line on what makes this place special'**
+  String get gemSummaryHint;
+
+  /// No description provided for @gemDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get gemDescriptionLabel;
+
+  /// No description provided for @gemDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tips, best time to visit, how to find it…'**
+  String get gemDescriptionHint;
+
+  /// No description provided for @gemLocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get gemLocationLabel;
+
+  /// No description provided for @gemLocationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'City, neighborhood, or landmark'**
+  String get gemLocationHint;
+
+  /// No description provided for @gemUsePreciseLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Use my current location'**
+  String get gemUsePreciseLocation;
+
+  /// No description provided for @gemLocationCaptured.
+  ///
+  /// In en, this message translates to:
+  /// **'Precise location captured'**
+  String get gemLocationCaptured;
+
+  /// No description provided for @gemLocationNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a location so others can find it'**
+  String get gemLocationNeeded;
+
+  /// No description provided for @gemPhotosLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get gemPhotosLabel;
+
+  /// No description provided for @gemAddPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo'**
+  String get gemAddPhoto;
+
+  /// No description provided for @gemPhotosOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos are optional'**
+  String get gemPhotosOptional;
+
+  /// No description provided for @gemSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Share gem'**
+  String get gemSubmit;
+
+  /// No description provided for @gemSubmitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing…'**
+  String get gemSubmitting;
+
+  /// No description provided for @gemSubmitSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Your gem is live. Thanks for sharing!'**
+  String get gemSubmitSuccess;
+
+  /// No description provided for @gemSubmitRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Your gem couldn\'t be posted because it may violate our community guidelines.'**
+  String get gemSubmitRejected;
+
+  /// No description provided for @gemSubmitError.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get gemSubmitError;
+
+  /// No description provided for @gemNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please add a name'**
+  String get gemNameRequired;
+
+  /// No description provided for @gemSummaryRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please add a short summary'**
+  String get gemSummaryRequired;
+
+  /// No description provided for @gemLocationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please add a location'**
+  String get gemLocationRequired;
+
+  /// No description provided for @gemLikes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No likes} =1{1 like} other{{count} likes}}'**
+  String gemLikes(int count);
+
+  /// No description provided for @gemComments.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No comments} =1{1 comment} other{{count} comments}}'**
+  String gemComments(int count);
+
+  /// No description provided for @gemCommentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a comment…'**
+  String get gemCommentHint;
+
+  /// No description provided for @gemCommentPost.
+  ///
+  /// In en, this message translates to:
+  /// **'Post'**
+  String get gemCommentPost;
+
+  /// No description provided for @gemCommentEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Be the first to comment'**
+  String get gemCommentEmpty;
+
+  /// No description provided for @gemCommentRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Your comment couldn\'t be posted because it may violate our community guidelines.'**
+  String get gemCommentRejected;
+
+  /// No description provided for @gemCommentError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t post your comment. Please try again.'**
+  String get gemCommentError;
+
+  /// No description provided for @gemAddedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Added by {name}'**
+  String gemAddedBy(String name);
+
+  /// No description provided for @gemDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete gem'**
+  String get gemDelete;
+
+  /// No description provided for @gemDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this gem? This can\'t be undone.'**
+  String get gemDeleteConfirm;
+
+  /// No description provided for @gemDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Gem deleted'**
+  String get gemDeleted;
+
+  /// No description provided for @gemReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get gemReport;
+
   /// No description provided for @mapTitle.
   ///
   /// In en, this message translates to:

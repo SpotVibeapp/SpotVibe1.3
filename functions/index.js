@@ -10,6 +10,8 @@
  *  - bannedUserCleanup   Firestore trigger — purges a banned user's content
  *  - moderateComment     Firestore trigger — hides comments containing banned words
  *  - moderateUserEvent   Firestore trigger — hides user events containing banned words
+ *  - moderateGem         Firestore trigger — hides gems containing banned words
+ *  - moderateGemComment  Firestore trigger — hides gem comments containing banned words
  *  - promoteAdmin        callable — adds a user to the `admins/{uid}` roster
  *  - seedCuratedEvents   callable — seeds the El Paso curated feed (Admin SDK)
  *  - searchEventAssistant callable — converts natural-language requests into
@@ -160,6 +162,43 @@ async function commitDeletions(refs) {
  */
 exports.moderateComment = onDocumentCreated(
   'events/{eventId}/comments/{commentId}',
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
+    const text = snap.get('text') || '';
+    if (containsBanned(text)) {
+      await snap.ref.update({
+        hidden: true,
+        flaggedReason: 'banned-word',
+        moderatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+  }
+);
+
+/**
+ * Server-side moderation for community hidden gems. Hides any gem whose text
+ * matches the blocklist (client-side filtering can be bypassed).
+ */
+exports.moderateGem = onDocumentCreated('gems/{gemId}', async (event) => {
+  const snap = event.data;
+  if (!snap) return;
+  const text = `${snap.get('name') || ''} ${snap.get('summary') || ''} ` +
+    `${snap.get('description') || ''} ${snap.get('address') || ''}`;
+  if (containsBanned(text)) {
+    await snap.ref.update({
+      hidden: true,
+      flaggedReason: 'banned-word',
+      moderatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+});
+
+/**
+ * Server-side moderation for gem comments.
+ */
+exports.moderateGemComment = onDocumentCreated(
+  'gems/{gemId}/comments/{commentId}',
   async (event) => {
     const snap = event.data;
     if (!snap) return;

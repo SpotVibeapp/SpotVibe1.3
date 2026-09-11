@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/gem.dart';
+import '../providers/auth_provider.dart';
 import '../providers/gem_provider.dart';
 import '../services/location_service.dart';
 import '../theme/theme.dart';
@@ -55,9 +56,25 @@ class _GemsScreenState extends State<GemsScreen> {
         label: 'Near you',
       );
     } else {
-      // Fall back to El Paso so the tab is never empty on first open.
-      await provider.loadForQuery('El Paso');
+      // No location permission yet — show the newest community gems anywhere.
+      await provider.loadAll();
     }
+  }
+
+  void _addGem() {
+    final l10n = AppLocalizations.of(context)!;
+    final auth = context.read<AuthProvider>();
+    if (!auth.isLoggedIn || auth.isGuest) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.gemsSignInToAdd)),
+      );
+      return;
+    }
+    context.push('/gems/add').then((added) {
+      if (added == true && mounted) {
+        context.read<GemProvider>().refresh();
+      }
+    });
   }
 
   Future<void> _useMyLocation() async {
@@ -100,6 +117,11 @@ class _GemsScreenState extends State<GemsScreen> {
     final provider = context.watch<GemProvider>();
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _addGem,
+        icon: const Icon(Icons.add_location_alt_rounded),
+        label: Text(l10n.gemsAddButton),
+      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
