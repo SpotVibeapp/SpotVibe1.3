@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
@@ -47,6 +48,56 @@ class _GemDetailScreenState extends State<GemDetailScreen> {
 
   bool get _canInteract =>
       _auth.isLoggedIn && !_auth.isGuest && (_auth.user?.id.isNotEmpty ?? false);
+
+  /// True when the signed-in user owns this gem (or is an admin) — they may
+  /// edit or delete it.
+  bool get _canManage =>
+      _auth.isAdmin ||
+      (_canInteract && _auth.user?.id == _gem.creatorId);
+
+  Future<void> _edit() async {
+    final changed = await context.push('/gems/add', extra: _gem);
+    if (changed == true && mounted) {
+      await _load();
+    }
+  }
+
+  Future<void> _delete() async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.gemDelete),
+        content: Text(l10n.gemDeleteConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.gemDelete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await _service.deleteGem(
+        _gem.id,
+        _auth.user?.id ?? '',
+        isAdmin: _auth.isAdmin,
+      );
+      if (!mounted) return;
+      _snack(l10n.gemDeleted);
+      context.pop(true);
+    } catch (_) {
+      if (mounted) _snack(l10n.gemSubmitError);
+    }
+  }
 
   Future<void> _load() async {
     final viewerId = _auth.user?.id;
@@ -149,6 +200,43 @@ class _GemDetailScreenState extends State<GemDetailScreen> {
           SliverAppBar(
             expandedHeight: 220,
             pinned: true,
+            actions: [
+              if (_canManage)
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert_rounded),
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      _edit();
+                    } else if (value == 'delete') {
+                      _delete();
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.edit_outlined, size: 20),
+                          const SizedBox(width: AppTheme.spacingSm),
+                          Text(l10n.gemEdit),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete_outline_rounded,
+                              size: 20, color: colors.error),
+                          const SizedBox(width: AppTheme.spacingSm),
+                          Text(l10n.gemDelete,
+                              style: TextStyle(color: colors.error)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: GestureDetector(
                 onTap: () {

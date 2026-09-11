@@ -121,6 +121,38 @@ class FirebaseGemRepository extends GemRepository {
       );
 
   @override
+  Future<Gem> updateGem(Gem gem) {
+    return _guard(() async {
+      // Only overwrite the editable content fields, so like/comment counters
+      // and createdAtMs written by other clients/functions are preserved.
+      final map = gemToMap(gem);
+      map.remove('likeCount');
+      map.remove('commentCount');
+      map.remove('createdAtMs');
+      await _gems.doc(gem.id).set(map, SetOptions(merge: true));
+      return gem;
+    }, () => super.updateGem(gem));
+  }
+
+  @override
+  Future<void> setHidden(String gemId, bool hidden) {
+    return _guard(() async {
+      await _gems.doc(gemId).update({'hidden': hidden});
+    }, () => super.setHidden(gemId, hidden));
+  }
+
+  @override
+  Future<List<Gem>> getAllForModeration({int limit = 300}) {
+    return _guard(() async {
+      final snap = await _gems
+          .orderBy('createdAtMs', descending: true)
+          .limit(limit)
+          .get();
+      return snap.docs.map((d) => gemFromMap(d.id, d.data())).toList();
+    }, () => super.getAllForModeration(limit: limit));
+  }
+
+  @override
   Future<void> deleteGem(String id) {
     return _guard(() async {
       await _gems.doc(id).delete();

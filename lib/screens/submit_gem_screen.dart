@@ -14,11 +14,17 @@ import '../services/location_service.dart';
 import '../services/media_upload_service.dart';
 import '../theme/theme.dart';
 
-/// Lets a signed-in user submit a community hidden gem: name, category, why
-/// it's a gem, description, a location (precise GPS pin and/or typed place),
-/// and optional photos. Text is moderated before it goes live.
+/// Lets a signed-in user submit — or edit — a community hidden gem: name,
+/// category, why it's a gem, description, a location (precise GPS pin and/or
+/// typed place), and optional photos. Text is moderated before it goes live.
+///
+/// Pass [gem] to edit an existing gem instead of creating a new one. Only the
+/// original creator (or an admin) reaches this route in edit mode.
 class SubmitGemScreen extends StatefulWidget {
-  const SubmitGemScreen({super.key});
+  final Gem? gem;
+  const SubmitGemScreen({super.key, this.gem});
+
+  bool get isEditing => gem != null;
 
   @override
   State<SubmitGemScreen> createState() => _SubmitGemScreenState();
@@ -43,8 +49,33 @@ class _SubmitGemScreenState extends State<SubmitGemScreen> {
   double? _lng;
   bool _preciseCaptured = false;
   bool _locating = false;
+
+  /// Already-uploaded photo URLs kept from the gem being edited.
+  final List<String> _existingUrls = [];
+
+  /// Newly-picked local files to upload on save.
   final List<String> _photoPaths = [];
+
   bool _submitting = false;
+
+  int get _totalPhotos => _existingUrls.length + _photoPaths.length;
+
+  @override
+  void initState() {
+    super.initState();
+    final gem = widget.gem;
+    if (gem != null) {
+      _nameController.text = gem.name;
+      _summaryController.text = gem.summary;
+      _descriptionController.text = gem.description;
+      _locationController.text = gem.address;
+      _category = gem.category;
+      _lat = gem.latitude;
+      _lng = gem.longitude;
+      _preciseCaptured = gem.latitude != 0 || gem.longitude != 0;
+      _existingUrls.addAll(gem.imageUrls.where((u) => u.isNotEmpty));
+    }
+  }
 
   @override
   void dispose() {
@@ -94,14 +125,18 @@ class _SubmitGemScreenState extends State<SubmitGemScreen> {
   }
 
   Future<void> _addPhoto() async {
-    if (_photoPaths.length >= GemService.maxGemPhotos) return;
+    if (_totalPhotos >= GemService.maxGemPhotos) return;
     final path = await _media.pickImage(fromCamera: false);
     if (path == null || !mounted) return;
     setState(() => _photoPaths.add(path));
   }
 
-  void _removePhoto(int index) {
+  void _removeNewPhoto(int index) {
     setState(() => _photoPaths.removeAt(index));
+  }
+
+  void _removeExistingPhoto(int index) {
+    setState(() => _existingUrls.removeAt(index));
   }
 
   Future<void> _submit() async {
@@ -114,7 +149,7 @@ class _SubmitGemScreenState extends State<SubmitGemScreen> {
     String city = '';
     String state = '';
     final typed = _locationController.text.trim();
-    if (lat == null || lng == null) {
+    if (lat == null || lng == null || (lat == 0 && lng == 0)) {
       final place = resolvePlaceCoordinates(typed);
       if (place == null) {
         _snack(l10n.gemLocationRequired);
@@ -141,15 +176,18 @@ class _SubmitGemScreenState extends State<SubmitGemScreen> {
 
     setState(() => _submitting = true);
     try {
-      // Upload photos first (if any) so the created gem carries their URLs.
-      final gemId = const Uuid().v4();
-      final imageUrls = <String>[];
+      // Reuse the existing id when editing so photos land in the same folder
+      // and the same document is overwritten.
+      final gemId = widget.gem?.id ?? const Uuid().v4();
+
+      // Keep the photos the user did not remove, then upload any new files.
+      final imageUrls = <String>[..._existingUrls];
       for (var i = 0; i < _photoPaths.length; i++) {
         try {
           final url = await _media.uploadGemPhoto(
             gemId: gemId,
             localPath: _photoPaths[i],
-            slot: i,
+            slot: imageUrls.length,
           );
           imageUrls.add(url);
         } catch (_) {
@@ -157,28 +195,49 @@ class _SubmitGemScreenState extends State<SubmitGemScreen> {
         }
       }
 
-      final result = await service.createGem(
-        creatorId: auth.user!.id,
-        creatorName: auth.user!.displayName,
-        name: _nameController.text,
-        category: _category,
-        summary: _summaryController.text,
-        description: _descriptionController.text,
-        latitude: lat,
-        longitude: lng,
-        address: typed,
-        city: city,
-        state: state,
-        imageUrls: imageUrls,
-      );
+      final GemWriteResult result;
+      if (widget.isEditing) {
+        result = await service.updateGem(
+          gemId: gemId,
+          requestingUserId: auth.user!.id,
+          isAdmin: auth.isAdmin,
+          name: _nameController.text,
+          category: _category,
+          summary: _summaryController.text,
+          description: _descriptionController.text,
+          latitude: lat,
+          longitude: lng,
+          address: typed,
+          city: city,
+          state: state,
+          imageUrls: imageUrls,
+        );
+      } else {
+        result = await service.createGem(
+          creatorId: auth.user!.id,
+          creatorName: auth.user!.displayName,
+          name: _nameController.text,
+          category: _category,
+          summary: _summaryController.text,
+          description: _descriptionController.text,
+          latitude: lat,
+          longitude: lng,
+          address: typed,
+          city: city,
+          state: state,
+          imageUrls: imageUrls,
+        );
+      }
 
       if (!mounted) return;
       if (result.isRejected) {
         setState(() => _submitting = false);
-        _snack(l10n.gemSubmitRejected);
+        _snack(widget.isEditing
+            ? l10n.gemUpdateRejected
+            : l10n.gemSubmitRejected);
         return;
       }
-      _snack(l10n.gemSubmitSuccess);
+      _snack(widget.isEditing ? l10n.gemUpdateSuccess : l10n.gemSubmitSuccess);
       context.pop(true);
     } catch (e) {
       if (!mounted) return;
@@ -196,9 +255,12 @@ class _SubmitGemScreenState extends State<SubmitGemScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
+    final editing = widget.isEditing;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.gemsAddTitle)),
+      appBar: AppBar(
+        title: Text(editing ? l10n.gemsEditTitle : l10n.gemsAddTitle),
+      ),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -259,8 +321,10 @@ class _SubmitGemScreenState extends State<SubmitGemScreen> {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(Icons.send_rounded),
-                label: Text(_submitting ? l10n.gemSubmitting : l10n.gemSubmit),
+                    : Icon(editing ? Icons.save_rounded : Icons.send_rounded),
+                label: Text(_submitting
+                    ? (editing ? l10n.gemUpdating : l10n.gemSubmitting)
+                    : (editing ? l10n.gemUpdate : l10n.gemSubmit)),
               ),
               const SizedBox(height: AppTheme.spacingLg),
             ],
@@ -364,38 +428,42 @@ class _SubmitGemScreenState extends State<SubmitGemScreen> {
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
-              for (var i = 0; i < _photoPaths.length; i++)
-                Padding(
-                  padding: const EdgeInsets.only(right: AppTheme.spacingSm),
-                  child: Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusMedium),
-                        child: Image.file(
-                          File(_photoPaths[i]),
-                          width: 96,
-                          height: 96,
-                          fit: BoxFit.cover,
-                        ),
+              // Already-uploaded photos (edit mode).
+              for (var i = 0; i < _existingUrls.length; i++)
+                _photoTile(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                    child: Image.network(
+                      _existingUrls[i],
+                      width: 96,
+                      height: 96,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 96,
+                        height: 96,
+                        color: colors.surfaceContainerHighest,
+                        child: Icon(Icons.broken_image_outlined,
+                            color: colors.onSurfaceVariant),
                       ),
-                      Positioned(
-                        top: 2,
-                        right: 2,
-                        child: InkWell(
-                          onTap: () => _removePhoto(i),
-                          child: CircleAvatar(
-                            radius: 12,
-                            backgroundColor: Colors.black54,
-                            child: const Icon(Icons.close,
-                                size: 14, color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
+                  onRemove: () => _removeExistingPhoto(i),
                 ),
-              if (_photoPaths.length < GemService.maxGemPhotos)
+              // Newly-picked local files.
+              for (var i = 0; i < _photoPaths.length; i++)
+                _photoTile(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                    child: Image.file(
+                      File(_photoPaths[i]),
+                      width: 96,
+                      height: 96,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  onRemove: () => _removeNewPhoto(i),
+                ),
+              if (_totalPhotos < GemService.maxGemPhotos)
                 InkWell(
                   onTap: _addPhoto,
                   borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
@@ -423,6 +491,29 @@ class _SubmitGemScreenState extends State<SubmitGemScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _photoTile({required Widget child, required VoidCallback onRemove}) {
+    return Padding(
+      padding: const EdgeInsets.only(right: AppTheme.spacingSm),
+      child: Stack(
+        children: [
+          child,
+          Positioned(
+            top: 2,
+            right: 2,
+            child: InkWell(
+              onTap: onRemove,
+              child: const CircleAvatar(
+                radius: 12,
+                backgroundColor: Colors.black54,
+                child: Icon(Icons.close, size: 14, color: Colors.white),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -394,6 +394,7 @@ class _SpotVibeAppState extends State<SpotVibeApp>
               (ctx) => ModerationProvider(
                 repository: ctx.read<ModerationRepository>(),
                 claimsRepository: ctx.read<EventClaimRepository>(),
+                gemService: ctx.read<GemService>(),
               ),
         ),
         ChangeNotifierProvider(

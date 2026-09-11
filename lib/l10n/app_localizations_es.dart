@@ -2286,6 +2286,49 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gemReport => 'Reportar';
 
   @override
+  String get gemsEditTitle => 'Editar joya escondida';
+
+  @override
+  String get gemEdit => 'Editar joya';
+
+  @override
+  String get gemUpdate => 'Guardar cambios';
+
+  @override
+  String get gemUpdating => 'Guardando…';
+
+  @override
+  String get gemUpdateSuccess => 'Tus cambios se guardaron.';
+
+  @override
+  String get gemUpdateRejected =>
+      'No se pudieron guardar tus cambios porque podrían infringir nuestras normas de la comunidad.';
+
+  @override
+  String get adminGems => 'Joyas';
+
+  @override
+  String get adminNoGems => 'No hay joyas para moderar';
+
+  @override
+  String get adminSearchGemsHint => 'Buscar joyas';
+
+  @override
+  String get gemHide => 'Ocultar';
+
+  @override
+  String get gemUnhide => 'Mostrar';
+
+  @override
+  String get gemHidden => 'Joya oculta';
+
+  @override
+  String get gemUnhidden => 'Joya visible de nuevo';
+
+  @override
+  String get gemHiddenBadge => 'Oculta';
+
+  @override
   String get mapTitle => 'Mapa';
 
   @override

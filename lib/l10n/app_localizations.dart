@@ -4099,6 +4099,90 @@ abstract class AppLocalizations {
   /// **'Report'**
   String get gemReport;
 
+  /// No description provided for @gemsEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit hidden gem'**
+  String get gemsEditTitle;
+
+  /// No description provided for @gemEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit gem'**
+  String get gemEdit;
+
+  /// No description provided for @gemUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get gemUpdate;
+
+  /// No description provided for @gemUpdating.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get gemUpdating;
+
+  /// No description provided for @gemUpdateSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Your changes are saved.'**
+  String get gemUpdateSuccess;
+
+  /// No description provided for @gemUpdateRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Your changes couldn\'t be saved because they may violate our community guidelines.'**
+  String get gemUpdateRejected;
+
+  /// No description provided for @adminGems.
+  ///
+  /// In en, this message translates to:
+  /// **'Gems'**
+  String get adminGems;
+
+  /// No description provided for @adminNoGems.
+  ///
+  /// In en, this message translates to:
+  /// **'No gems to moderate'**
+  String get adminNoGems;
+
+  /// No description provided for @adminSearchGemsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search gems'**
+  String get adminSearchGemsHint;
+
+  /// No description provided for @gemHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get gemHide;
+
+  /// No description provided for @gemUnhide.
+  ///
+  /// In en, this message translates to:
+  /// **'Unhide'**
+  String get gemUnhide;
+
+  /// No description provided for @gemHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Gem hidden'**
+  String get gemHidden;
+
+  /// No description provided for @gemUnhidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Gem visible again'**
+  String get gemUnhidden;
+
+  /// No description provided for @gemHiddenBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get gemHiddenBadge;
+
   /// No description provided for @mapTitle.
   ///
   /// In en, this message translates to:

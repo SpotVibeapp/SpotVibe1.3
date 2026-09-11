@@ -197,7 +197,11 @@ class AppRouter {
         ),
         GoRoute(
           path: '/gems/add',
-          builder: (context, state) => const SubmitGemScreen(),
+          builder: (context, state) {
+            // A Gem passed via extra opens the form in edit mode.
+            final gem = state.extra;
+            return SubmitGemScreen(gem: gem is Gem ? gem : null);
+          },
         ),
         GoRoute(
           path: '/gem',

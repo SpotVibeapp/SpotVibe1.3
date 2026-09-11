@@ -101,14 +101,89 @@ class GemService {
     return GemWriteResult.ok(created);
   }
 
-  Future<void> deleteGem(String gemId, String requestingUserId) async {
+  /// Update an existing gem's editable fields after moderating the new text.
+  /// Only the original creator (or an admin) may edit. Returns a rejection
+  /// result when the content is blocked.
+  Future<GemWriteResult<Gem>> updateGem({
+    required String gemId,
+    required String requestingUserId,
+    bool isAdmin = false,
+    required String name,
+    required GemCategory category,
+    required String summary,
+    required String description,
+    required double latitude,
+    required double longitude,
+    required String address,
+    String city = '',
+    String state = '',
+    List<String> imageUrls = const [],
+  }) async {
+    final existing = await _repository.getGemById(gemId);
+    if (existing == null) {
+      throw StateError('This gem no longer exists.');
+    }
+    if (!isAdmin && existing.creatorId != requestingUserId) {
+      throw StateError('Only the person who added this gem can edit it.');
+    }
+    if (name.trim().isEmpty) throw ArgumentError('A name is required.');
+    if (summary.trim().isEmpty) throw ArgumentError('A short summary is required.');
+    if (latitude == 0 && longitude == 0) {
+      throw ArgumentError('A location is required.');
+    }
+    if (imageUrls.length > maxGemPhotos) {
+      throw ArgumentError('Gems can include up to $maxGemPhotos photos.');
+    }
+
+    final moderation = await _moderation.moderateFields([
+      name,
+      summary,
+      description,
+      address,
+    ]);
+    if (moderation.isRejected) {
+      return GemWriteResult.rejected(moderation);
+    }
+
+    final updated = existing.copyWith(
+      name: name.trim(),
+      category: category,
+      summary: summary.trim(),
+      description: description.trim(),
+      latitude: latitude,
+      longitude: longitude,
+      address: address.trim(),
+      city: city.trim(),
+      state: state.trim(),
+      imageUrls: imageUrls,
+    );
+    final saved = await _repository.updateGem(updated);
+    return GemWriteResult.ok(saved);
+  }
+
+  Future<void> deleteGem(
+    String gemId,
+    String requestingUserId, {
+    bool isAdmin = false,
+  }) async {
     final gem = await _repository.getGemById(gemId);
     if (gem == null) return;
-    if (gem.creatorId != requestingUserId) {
+    if (!isAdmin && gem.creatorId != requestingUserId) {
       throw StateError('Only the person who added this gem can remove it.');
     }
     await _repository.deleteGem(gemId);
   }
+
+  // ── Admin moderation ────────────────────────────────────────────────────
+
+  /// Every gem regardless of hidden state, newest first (admin dashboard).
+  Future<List<Gem>> getAllForModeration({int limit = 300}) =>
+      _repository.getAllForModeration(limit: limit);
+
+  /// Hide (or unhide) a gem so it is excluded from public browsing without
+  /// permanently deleting it. Admin-gated by Firestore rules.
+  Future<void> setGemHidden(String gemId, bool hidden) =>
+      _repository.setHidden(gemId, hidden);
 
   Future<bool> toggleLike(String gemId, String uid) {
     if (uid.isEmpty || uid == 'guest') {

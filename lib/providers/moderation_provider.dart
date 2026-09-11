@@ -2,27 +2,35 @@ import 'package:flutter/foundation.dart';
 
 import '../models/event.dart';
 import '../models/event_claim.dart';
+import '../models/gem.dart';
 import '../models/user_report.dart';
 import '../repositories/event_claim_repository.dart';
 import '../repositories/moderation_repository.dart';
+import '../services/gem_service.dart';
 
 /// State for the admin dashboard: the open report list, the events feed,
-/// pending venue claims, and the ban list.
+/// pending venue claims, community gems, and the ban list.
 class ModerationProvider extends ChangeNotifier {
   final ModerationRepository _repository;
   final EventClaimRepository _claimsRepository;
+  final GemService _gemService;
 
   ModerationProvider({
     required ModerationRepository repository,
     required EventClaimRepository claimsRepository,
+    required GemService gemService,
   })  : _repository = repository,
-        _claimsRepository = claimsRepository;
+        _claimsRepository = claimsRepository,
+        _gemService = gemService;
 
   List<UserReport> _reports = [];
   List<UserReport> get reports => _reports;
 
   List<Event> _events = [];
   List<Event> get events => _events;
+
+  List<Gem> _gems = [];
+  List<Gem> get gems => _gems;
 
   List<EventClaim> _claims = [];
   List<EventClaim> get claims => _claims;
@@ -47,11 +55,13 @@ class ModerationProvider extends ChangeNotifier {
         _repository.getEvents(),
         _claimsRepository.getClaims(),
         _repository.getBannedUserIds(),
+        _gemService.getAllForModeration(),
       ]);
       _reports = results[0] as List<UserReport>;
       _events = results[1] as List<Event>;
       _claims = results[2] as List<EventClaim>;
       _bannedUserIds = results[3] as List<String>;
+      _gems = results[4] as List<Gem>;
     } catch (_) {}
     _loading = false;
     notifyListeners();
@@ -80,6 +90,40 @@ class ModerationProvider extends ChangeNotifier {
     try {
       await _repository.deleteEvent(eventId);
       _events = _events.where((e) => e.id != eventId).toList();
+      ok = true;
+    } catch (_) {}
+    _busy = false;
+    notifyListeners();
+    return ok;
+  }
+
+  /// Hide or unhide a community gem so it drops out of (or returns to) public
+  /// browsing without deleting it.
+  Future<bool> setGemHidden(String gemId, bool hidden) async {
+    _busy = true;
+    notifyListeners();
+    var ok = false;
+    try {
+      await _gemService.setGemHidden(gemId, hidden);
+      _gems = _gems
+          .map((g) => g.id == gemId ? g.copyWith(hidden: hidden) : g)
+          .toList();
+      ok = true;
+    } catch (_) {}
+    _busy = false;
+    notifyListeners();
+    return ok;
+  }
+
+  /// Permanently deletes a community gem.
+  Future<bool> deleteGem(String gemId) async {
+    _busy = true;
+    notifyListeners();
+    var ok = false;
+    try {
+      // Admin delete: requestingUserId is irrelevant when isAdmin is true.
+      await _gemService.deleteGem(gemId, '', isAdmin: true);
+      _gems = _gems.where((g) => g.id != gemId).toList();
       ok = true;
     } catch (_) {}
     _busy = false;

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../models/event.dart';
 import '../models/event_claim.dart';
+import '../models/gem.dart';
 import '../models/user_report.dart';
 import '../providers/moderation_provider.dart';
 import '../providers/partner_promo_provider.dart';
@@ -49,11 +50,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final promoCodes = context.watch<PartnerPromoProvider>();
 
     return DefaultTabController(
-      length: 4,
+      length: 5,
       child: Scaffold(
         appBar: AppBar(
           title: Text(l10n.adminDashboard),
           bottom: TabBar(
+            isScrollable: true,
             tabs: [
               Tab(
                 icon: const Icon(Icons.flag_rounded),
@@ -62,6 +64,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Tab(
                 icon: const Icon(Icons.event_rounded),
                 text: l10n.adminEvents,
+              ),
+              Tab(
+                icon: const Icon(Icons.diamond_outlined),
+                text: l10n.adminGems,
               ),
               Tab(
                 icon: const Icon(Icons.store_rounded),
@@ -80,6 +86,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 children: [
                   _ReportsTab(provider: mod),
                   _EventsTab(provider: mod, search: _search),
+                  _GemsTab(provider: mod),
                   _ClaimsTab(provider: mod),
                   AdminPartnerPromoCodesTab(provider: promoCodes),
                 ],
@@ -664,6 +671,240 @@ class _EventRow extends StatelessWidget {
             icon: const Icon(Icons.delete_outline_rounded),
             color: colors.error,
             tooltip: l10n.adminRemoveEvent,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Gems tab ──────────────────────────────────────────────────────────────────
+
+class _GemsTab extends StatefulWidget {
+  final ModerationProvider provider;
+
+  const _GemsTab({required this.provider});
+
+  @override
+  State<_GemsTab> createState() => _GemsTabState();
+}
+
+class _GemsTabState extends State<_GemsTab> {
+  final TextEditingController _search = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _search.addListener(_onSearch);
+  }
+
+  @override
+  void dispose() {
+    _search.removeListener(_onSearch);
+    _search.dispose();
+    super.dispose();
+  }
+
+  void _onSearch() => setState(() {});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    final provider = widget.provider;
+
+    final query = _search.text.toLowerCase().trim();
+    final gems = query.isEmpty
+        ? provider.gems
+        : provider.gems
+            .where((g) =>
+                g.name.toLowerCase().contains(query) ||
+                g.address.toLowerCase().contains(query) ||
+                g.creatorName.toLowerCase().contains(query))
+            .toList();
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(AppTheme.spacingMd),
+          child: TextField(
+            controller: _search,
+            decoration: InputDecoration(
+              hintText: l10n.adminSearchGemsHint,
+              prefixIcon: const Icon(Icons.search_rounded),
+            ),
+          ),
+        ),
+        Expanded(
+          child: gems.isEmpty
+              ? Center(
+                  child: Text(
+                    l10n.adminNoGems,
+                    style:
+                        text.bodyLarge?.copyWith(color: colors.onSurfaceVariant),
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(AppTheme.spacingMd, 0,
+                      AppTheme.spacingMd, AppTheme.spacingMd),
+                  itemCount: gems.length,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(height: AppTheme.spacingSm),
+                  itemBuilder: (context, index) {
+                    final gem = gems[index];
+                    return _GemRow(
+                      gem: gem,
+                      busy: provider.busy,
+                      onOpen: () => context.push('/gem', extra: gem),
+                      onToggleHidden: () => _toggleHidden(context, gem),
+                      onDelete: () => _delete(context, gem),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _toggleHidden(BuildContext context, Gem gem) async {
+    final l10n = AppLocalizations.of(context)!;
+    final ok = await widget.provider.setGemHidden(gem.id, !gem.hidden);
+    if (!context.mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(gem.hidden ? l10n.gemUnhidden : l10n.gemHidden),
+        ),
+      );
+    }
+  }
+
+  Future<void> _delete(BuildContext context, Gem gem) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.gemDelete),
+        content: Text(l10n.gemDeleteConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.gemDelete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    final ok = await widget.provider.deleteGem(gem.id);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ok ? l10n.gemDeleted : '…')),
+    );
+  }
+}
+
+class _GemRow extends StatelessWidget {
+  final Gem gem;
+  final bool busy;
+  final VoidCallback onOpen;
+  final VoidCallback onToggleHidden;
+  final VoidCallback onDelete;
+
+  const _GemRow({
+    required this.gem,
+    required this.busy,
+    required this.onOpen,
+    required this.onToggleHidden,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.spacingMd,
+        vertical: AppTheme.spacingSm,
+      ),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(gem.category.icon, size: 20, color: colors.primary),
+          const SizedBox(width: AppTheme.spacingSm),
+          Expanded(
+            child: InkWell(
+              onTap: onOpen,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          gem.name,
+                          style: text.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (gem.hidden) ...[
+                        const SizedBox(width: AppTheme.spacingXs),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: colors.errorContainer,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            l10n.gemHiddenBadge,
+                            style: text.labelSmall?.copyWith(
+                              color: colors.onErrorContainer,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  Text(
+                    '${gem.creatorName} · ${gem.address}',
+                    style: text.labelSmall
+                        ?.copyWith(color: colors.onSurfaceVariant),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: busy ? null : onToggleHidden,
+            icon: Icon(gem.hidden
+                ? Icons.visibility_rounded
+                : Icons.visibility_off_rounded),
+            tooltip: gem.hidden ? l10n.gemUnhide : l10n.gemHide,
+          ),
+          IconButton(
+            onPressed: busy ? null : onDelete,
+            icon: const Icon(Icons.delete_outline_rounded),
+            color: colors.error,
+            tooltip: l10n.gemDelete,
           ),
         ],
       ),

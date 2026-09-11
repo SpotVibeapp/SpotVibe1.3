@@ -55,6 +55,30 @@ class GemRepository {
     return stored;
   }
 
+  /// Overwrites the editable fields of an existing gem, preserving its id,
+  /// creator, counters and creation time.
+  Future<Gem> updateGem(Gem gem) async {
+    final idx = _memory.indexWhere((g) => g.id == gem.id);
+    if (idx < 0) return gem;
+    _memory[idx] = gem;
+    return gem;
+  }
+
+  /// Admin moderation: hide or unhide a gem without deleting it.
+  Future<void> setHidden(String gemId, bool hidden) async {
+    final idx = _memory.indexWhere((g) => g.id == gemId);
+    if (idx >= 0) {
+      _memory[idx] = _memory[idx].copyWith(hidden: hidden);
+    }
+  }
+
+  /// Returns every gem regardless of hidden state — for admin moderation.
+  Future<List<Gem>> getAllForModeration({int limit = 300}) async {
+    final list = List<Gem>.from(_memory)
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list.take(limit).toList();
+  }
+
   Gem _withId(Gem gem, String id) => Gem(
         id: id,
         creatorId: gem.creatorId,

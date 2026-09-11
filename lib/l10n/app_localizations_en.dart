@@ -2256,6 +2256,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gemReport => 'Report';
 
   @override
+  String get gemsEditTitle => 'Edit hidden gem';
+
+  @override
+  String get gemEdit => 'Edit gem';
+
+  @override
+  String get gemUpdate => 'Save changes';
+
+  @override
+  String get gemUpdating => 'Saving…';
+
+  @override
+  String get gemUpdateSuccess => 'Your changes are saved.';
+
+  @override
+  String get gemUpdateRejected =>
+      'Your changes couldn\'t be saved because they may violate our community guidelines.';
+
+  @override
+  String get adminGems => 'Gems';
+
+  @override
+  String get adminNoGems => 'No gems to moderate';
+
+  @override
+  String get adminSearchGemsHint => 'Search gems';
+
+  @override
+  String get gemHide => 'Hide';
+
+  @override
+  String get gemUnhide => 'Unhide';
+
+  @override
+  String get gemHidden => 'Gem hidden';
+
+  @override
+  String get gemUnhidden => 'Gem visible again';
+
+  @override
+  String get gemHiddenBadge => 'Hidden';
+
+  @override
   String get mapTitle => 'Map';
 
   @override
