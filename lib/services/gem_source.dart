@@ -1,4 +1,4 @@
-import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:dio/dio.dart';
@@ -23,9 +23,12 @@ class GemSource {
   GemSource({Dio? dio})
       : _dio = dio ??
             Dio(BaseOptions(
-              connectTimeout: const Duration(seconds: 8),
-              receiveTimeout: const Duration(seconds: 25),
-              sendTimeout: const Duration(seconds: 8),
+              connectTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 30),
+              sendTimeout: const Duration(seconds: 10),
+              // Accept any status so we can read error bodies instead of the
+              // client throwing before we can log what went wrong.
+              validateStatus: (_) => true,
               headers: const {
                 'User-Agent':
                     'SpotVibe/1.0 (https://spotvibe.app; hello@spotvibeapp.com)',
@@ -38,6 +41,7 @@ class GemSource {
   static const List<String> _endpoints = [
     'https://overpass-api.de/api/interpreter',
     'https://overpass.kumi.systems/api/interpreter',
+    'https://overpass.private.coffee/api/interpreter',
     'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   ];
 
@@ -54,7 +58,8 @@ class GemSource {
     double radiusMiles = 25,
     int limit = 80,
   }) async {
-    final radiusMeters = (radiusMiles * 1609.34).round().clamp(1000, 80000);
+    // Cap the radius: a huge `around` makes free Overpass mirrors time out.
+    final radiusMeters = (radiusMiles * 1609.34).round().clamp(1000, 40000);
     final key =
         '${lat.toStringAsFixed(2)}:${lng.toStringAsFixed(2)}:$radiusMeters';
     final cached = _cache[key];
@@ -63,86 +68,103 @@ class GemSource {
     }
 
     final query = _buildQuery(lat, lng, radiusMeters);
+
     for (final endpoint in _endpoints) {
-      try {
-        final res = await _dio.post<dynamic>(
-          endpoint,
-          data: {'data': query},
-          options: Options(
-            contentType: Headers.formUrlEncodedContentType,
-            responseType: ResponseType.json,
-          ),
-        );
-        final data = res.data;
-        if (data is! Map || data['elements'] is! List) continue;
-        final gems = _parse(
-          (data['elements'] as List).cast<dynamic>(),
-          originLat: lat,
-          originLng: lng,
-        );
-        if (gems.isEmpty) {
-          // A valid-but-empty answer is still authoritative; cache briefly.
-          _cache[key] = _CacheEntry(gems, DateTime.now().add(_cacheTtl));
-          return const [];
-        }
-        _cache[key] = _CacheEntry(gems, DateTime.now().add(_cacheTtl));
-        return gems.take(limit).toList();
-      } catch (error) {
-        debugPrint(
-          'Overpass mirror failed ($endpoint): ${error.runtimeType}; trying next.',
-        );
-        // Try the next mirror.
-      }
+      final elements = await _requestElements(endpoint, query);
+      if (elements == null) continue; // this mirror failed; try the next
+      final gems = _parse(elements, originLat: lat, originLng: lng);
+      _cache[key] = _CacheEntry(gems, DateTime.now().add(_cacheTtl));
+      return gems.take(limit).toList();
     }
     return const [];
   }
 
+  /// Query one mirror. Returns the parsed `elements` list, or null when this
+  /// mirror should be skipped (network error, non-200, or unparseable body).
+  /// Tries POST first, then a GET fallback which some mirrors accept when a
+  /// POST is blocked by a proxy.
+  Future<List<dynamic>?> _requestElements(
+      String endpoint, String query) async {
+    for (final usePost in [true, false]) {
+      try {
+        final Response<dynamic> res;
+        if (usePost) {
+          res = await _dio.post<dynamic>(
+            endpoint,
+            data: 'data=${Uri.encodeQueryComponent(query)}',
+            options: Options(
+              contentType: Headers.formUrlEncodedContentType,
+              responseType: ResponseType.plain,
+            ),
+          );
+        } else {
+          res = await _dio.get<dynamic>(
+            endpoint,
+            queryParameters: {'data': query},
+            options: Options(responseType: ResponseType.plain),
+          );
+        }
+
+        final status = res.statusCode ?? 0;
+        if (status != 200) {
+          debugPrint(
+            'Overpass ${usePost ? 'POST' : 'GET'} $endpoint -> HTTP $status '
+            '${_snippet(res.data)}',
+          );
+          continue; // try GET, or next mirror
+        }
+
+        final body = res.data;
+        final Map<String, dynamic> json;
+        if (body is String) {
+          json = jsonDecode(body) as Map<String, dynamic>;
+        } else if (body is Map) {
+          json = body.cast<String, dynamic>();
+        } else {
+          continue;
+        }
+        final elements = json['elements'];
+        if (elements is List) return elements;
+      } on DioException catch (e) {
+        debugPrint(
+          'Overpass ${usePost ? 'POST' : 'GET'} $endpoint failed: '
+          '${e.type} ${e.message ?? ''} '
+          '${e.response?.statusCode ?? ''}',
+        );
+      } catch (e) {
+        debugPrint('Overpass $endpoint parse error: ${e.runtimeType}');
+      }
+    }
+    return null;
+  }
+
+  String _snippet(dynamic data) {
+    final s = data?.toString() ?? '';
+    return s.length > 120 ? s.substring(0, 120) : s;
+  }
+
   /// Build a compact Overpass QL query covering the broad "interesting places"
-  /// set the product cares about. `[out:json]` + `out center` gives a single
-  /// representative coordinate for ways/relations too.
+  /// set the product cares about. Uses `nwr` + regex so the whole thing is a
+  /// handful of statements (light enough for the free mirrors). `out center`
+  /// gives a single representative coordinate for ways/relations too.
   String _buildQuery(double lat, double lng, int radiusMeters) {
     final around = 'around:$radiusMeters,$lat,$lng';
-    // Each line is a targeted tag filter. Kept tight so the payload stays small
-    // and relevant (no benches, bins, or generic amenities).
     final filters = <String>[
-      // Trails & hiking
+      // Parks, gardens, nature reserves, water parks, pools.
+      'nwr["leisure"~"^(park|garden|nature_reserve|water_park|swimming_pool)\$"]["name"]($around);',
+      // Protected natural areas.
+      'nwr["boundary"="protected_area"]["name"]($around);',
+      // Tourism: viewpoints, museums, galleries, artwork, attractions, zoos…
+      'nwr["tourism"~"^(viewpoint|museum|gallery|artwork|attraction|theme_park|zoo|aquarium)\$"]["name"]($around);',
+      // Natural landmarks.
+      'nwr["natural"~"^(peak|waterfall)\$"]["name"]($around);',
+      // Historic sites.
+      'nwr["historic"]["name"]($around);',
+      // Named hiking trails and routes.
       'way["highway"="path"]["name"]($around);',
       'relation["route"="hiking"]["name"]($around);',
-      // Parks, gardens, nature & recreation
-      'node["leisure"="park"]["name"]($around);',
-      'way["leisure"="park"]["name"]($around);',
-      'way["leisure"="garden"]["name"]($around);',
-      'way["leisure"="nature_reserve"]["name"]($around);',
-      'node["leisure"="nature_reserve"]["name"]($around);',
-      'way["boundary"="protected_area"]["name"]($around);',
-      // Viewpoints & natural features
-      'node["tourism"="viewpoint"]["name"]($around);',
-      'node["natural"="peak"]["name"]($around);',
-      'node["natural"="waterfall"]["name"]($around);',
-      // Pools & swimming
-      'node["leisure"="swimming_pool"]["name"]($around);',
-      'way["leisure"="swimming_pool"]["name"]($around);',
-      'node["leisure"="water_park"]["name"]($around);',
-      'way["leisure"="water_park"]["name"]($around);',
-      // Museums, galleries, art
-      'node["tourism"="museum"]["name"]($around);',
-      'way["tourism"="museum"]["name"]($around);',
-      'node["tourism"="gallery"]["name"]($around);',
-      'node["tourism"="artwork"]["name"]($around);',
-      'node["historic"="memorial"]["name"]($around);',
-      // Historic sites & landmarks
-      'node["historic"="monument"]["name"]($around);',
-      'way["historic"="monument"]["name"]($around);',
-      'node["historic"="ruins"]["name"]($around);',
-      'way["historic"]["name"]["historic"!="memorial"]($around);',
-      // Attractions
-      'node["tourism"="attraction"]["name"]($around);',
-      'way["tourism"="attraction"]["name"]($around);',
-      'node["tourism"="theme_park"]["name"]($around);',
-      'node["tourism"="zoo"]["name"]($around);',
-      'node["tourism"="aquarium"]["name"]($around);',
     ];
-    return '[out:json][timeout:25];(${filters.join()});out center 300;';
+    return '[out:json][timeout:25];(${filters.join()});out center 250;';
   }
 
   List<Gem> _parse(
