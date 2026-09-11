@@ -188,6 +188,7 @@ class _EventMapScreenState extends State<EventMapScreen> {
             top: AppTheme.spacingMd,
             left: AppTheme.spacingMd,
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 _LayerChip(
                   label: l10n.mapEventsLayer(eventMarkers.length),
