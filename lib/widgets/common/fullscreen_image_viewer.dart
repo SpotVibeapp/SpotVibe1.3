@@ -73,7 +73,7 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
     if (controller.value != Matrix4.identity()) {
       controller.value = Matrix4.identity();
     } else {
-      controller.value = Matrix4.identity()..scale(2.5);
+      controller.value = Matrix4.diagonal3Values(2.5, 2.5, 1);
     }
   }
 
