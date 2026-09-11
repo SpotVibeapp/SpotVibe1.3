@@ -17,44 +17,73 @@ class LocationService {
   }) async {
     if (kIsWeb) return null;
 
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return null;
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return null;
 
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied && requestPermission) {
-      permission = await Geolocator.requestPermission();
-    }
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied && requestPermission) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return null;
+      }
+
+      Position? lastKnownPosition;
+      try {
+        lastKnownPosition = await Geolocator.getLastKnownPosition();
+      } catch (_) {
+        // A current GPS fix can still succeed when Android has no cached value.
+      }
+
+      try {
+        final position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.medium,
+            timeLimit: Duration(seconds: 20),
+          ),
+        );
+        final coords = (lat: position.latitude, lng: position.longitude);
+        await saveLastLocation(coords.lat, coords.lng);
+        return coords;
+      } catch (_) {
+        if (lastKnownPosition == null) return null;
+        final coords = (
+          lat: lastKnownPosition.latitude,
+          lng: lastKnownPosition.longitude,
+        );
+        await saveLastLocation(coords.lat, coords.lng);
+        return coords;
+      }
+    } catch (e) {
+      // checkPermission()/requestPermission()/isLocationServiceEnabled() can
+      // throw platform exceptions (e.g. a request already in progress). Never
+      // let that surface as a silent unhandled async error — the caller treats
+      // null as "location unavailable" and shows guidance.
+      debugPrint('LocationService.getCurrentLocation failed: $e');
       return null;
     }
+  }
 
-    Position? lastKnownPosition;
+  /// True when the user has permanently denied location access, so the app
+  /// should point them at system settings rather than re-prompting.
+  Future<bool> isPermanentlyDenied() async {
+    if (kIsWeb) return false;
     try {
-      lastKnownPosition = await Geolocator.getLastKnownPosition();
+      final permission = await Geolocator.checkPermission();
+      return permission == LocationPermission.deniedForever;
     } catch (_) {
-      // A current GPS fix can still succeed when Android has no cached value.
+      return false;
     }
+  }
 
+  /// Opens the OS app-settings screen so the user can grant location access.
+  Future<void> openAppSettings() async {
+    if (kIsWeb) return;
     try {
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-          timeLimit: Duration(seconds: 20),
-        ),
-      );
-      final coords = (lat: position.latitude, lng: position.longitude);
-      await saveLastLocation(coords.lat, coords.lng);
-      return coords;
-    } catch (_) {
-      if (lastKnownPosition == null) return null;
-      final coords = (
-        lat: lastKnownPosition.latitude,
-        lng: lastKnownPosition.longitude,
-      );
-      await saveLastLocation(coords.lat, coords.lng);
-      return coords;
-    }
+      await Geolocator.openAppSettings();
+    } catch (_) {}
   }
 
   // ── Last-known-location persistence ───────────────────────────────────────

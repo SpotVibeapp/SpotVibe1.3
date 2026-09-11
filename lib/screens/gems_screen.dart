@@ -26,6 +26,7 @@ class _GemsScreenState extends State<GemsScreen> {
   final _searchController = TextEditingController();
   final _locationService = LocationService();
   bool _bootstrapped = false;
+  bool _locating = false;
 
   @override
   void initState() {
@@ -53,7 +54,7 @@ class _GemsScreenState extends State<GemsScreen> {
       await provider.loadForCoordinates(
         lat: coords.lat,
         lng: coords.lng,
-        label: 'Near you',
+        label: AppLocalizations.of(context)!.nearYou,
       );
     } else {
       // No location permission yet — show the newest community gems anywhere.
@@ -78,20 +79,34 @@ class _GemsScreenState extends State<GemsScreen> {
   }
 
   Future<void> _useMyLocation() async {
+    if (_locating) return;
+    final l10n = AppLocalizations.of(context)!;
     final provider = context.read<GemProvider>();
+    setState(() => _locating = true);
     final coords =
         await _locationService.getCurrentLocation(requestPermission: true);
     if (!mounted) return;
+    setState(() => _locating = false);
     if (coords != null) {
       _searchController.clear();
       await provider.loadForCoordinates(
         lat: coords.lat,
         lng: coords.lng,
-        label: 'Near you',
+        label: l10n.nearYou,
       );
     } else {
+      final permanentlyDenied = await _locationService.isPermanentlyDenied();
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Location unavailable. Try searching a city.')),
+        SnackBar(
+          content: Text(l10n.couldNotGetLocation),
+          action: permanentlyDenied
+              ? SnackBarAction(
+                  label: l10n.openSettings,
+                  onPressed: _locationService.openAppSettings,
+                )
+              : null,
+        ),
       );
     }
   }
@@ -179,8 +194,14 @@ class _GemsScreenState extends State<GemsScreen> {
                   ),
                   const SizedBox(width: AppTheme.spacingSm),
                   IconButton.filledTonal(
-                    onPressed: _useMyLocation,
-                    icon: const Icon(Icons.my_location_rounded),
+                    onPressed: _locating ? null : _useMyLocation,
+                    icon: _locating
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.my_location_rounded),
                     tooltip: l10n.gemsUseMyLocation,
                   ),
                 ],

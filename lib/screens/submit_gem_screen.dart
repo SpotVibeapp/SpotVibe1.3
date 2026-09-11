@@ -32,12 +32,17 @@ class _SubmitGemScreenState extends State<SubmitGemScreen> {
   final _locationController = TextEditingController();
 
   final _locationService = LocationService();
-  final _media = MediaUploadService();
+
+  // Constructed lazily inside methods (not as a field): building it touches
+  // FirebaseStorage.instance, which must not run during State construction or
+  // the whole screen can fail to mount and render blank.
+  MediaUploadService get _media => MediaUploadService();
 
   GemCategory _category = GemCategory.other;
   double? _lat;
   double? _lng;
   bool _preciseCaptured = false;
+  bool _locating = false;
   final List<String> _photoPaths = [];
   bool _submitting = false;
 
@@ -52,9 +57,12 @@ class _SubmitGemScreenState extends State<SubmitGemScreen> {
 
   Future<void> _usePreciseLocation() async {
     final l10n = AppLocalizations.of(context)!;
+    if (_locating) return;
+    setState(() => _locating = true);
     final coords =
         await _locationService.getCurrentLocation(requestPermission: true);
     if (!mounted) return;
+    setState(() => _locating = false);
     if (coords != null) {
       setState(() {
         _lat = coords.lat;
@@ -63,7 +71,25 @@ class _SubmitGemScreenState extends State<SubmitGemScreen> {
       });
       _snack(l10n.gemLocationCaptured);
     } else {
-      _snack(l10n.gemsUseMyLocation);
+      await _showLocationUnavailable(l10n);
+    }
+  }
+
+  Future<void> _showLocationUnavailable(AppLocalizations l10n) async {
+    final permanentlyDenied = await _locationService.isPermanentlyDenied();
+    if (!mounted) return;
+    if (permanentlyDenied) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.couldNotGetLocation),
+          action: SnackBarAction(
+            label: l10n.openSettings,
+            onPressed: _locationService.openAppSettings,
+          ),
+        ),
+      );
+    } else {
+      _snack(l10n.couldNotGetLocation);
     }
   }
 
@@ -286,10 +312,16 @@ class _SubmitGemScreenState extends State<SubmitGemScreen> {
         Row(
           children: [
             OutlinedButton.icon(
-              onPressed: _usePreciseLocation,
-              icon: Icon(_preciseCaptured
-                  ? Icons.check_circle_rounded
-                  : Icons.my_location_rounded),
+              onPressed: _locating ? null : _usePreciseLocation,
+              icon: _locating
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(_preciseCaptured
+                      ? Icons.check_circle_rounded
+                      : Icons.my_location_rounded),
               label: Text(_preciseCaptured
                   ? l10n.gemLocationCaptured
                   : l10n.gemUsePreciseLocation),
