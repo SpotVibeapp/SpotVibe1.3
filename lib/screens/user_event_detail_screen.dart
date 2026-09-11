@@ -19,6 +19,7 @@ import '../widgets/events/organizer_social_links.dart';
 import '../widgets/events/story_card.dart';
 import '../widgets/common/app_avatar.dart';
 import '../widgets/common/event_image_placeholder.dart';
+import '../widgets/common/fullscreen_image_viewer.dart';
 import '../widgets/events/attendees_section.dart';
 import '../widgets/events/comment_section.dart';
 import '../widgets/events/rsvp_button.dart';
@@ -111,10 +112,19 @@ class _UserEventDetailContent extends StatelessWidget {
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: event.imageUrl.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: event.imageUrl,
-                      fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) => EventImagePlaceholder(category: event.category),
+                  ? GestureDetector(
+                      onTap: () {
+                        final urls = event.allImageUrls
+                            .where((u) => u.isNotEmpty)
+                            .toList();
+                        if (urls.isEmpty) return;
+                        FullscreenImageViewer.open(context, imageUrls: urls);
+                      },
+                      child: CachedNetworkImage(
+                        imageUrl: event.imageUrl,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, __, ___) => EventImagePlaceholder(category: event.category),
+                      ),
                     )
                   : EventImagePlaceholder(category: event.category),
             ),

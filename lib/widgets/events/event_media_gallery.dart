@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/theme.dart';
 import '../common/event_image_placeholder.dart';
+import '../common/fullscreen_image_viewer.dart';
 import 'event_video_player.dart';
 
 /// Renders the additional photos and videos attached to an event.
@@ -73,9 +74,32 @@ class _EventMediaGalleryState extends State<EventMediaGallery> {
                   PageView.builder(
                     itemCount: photos.length,
                     onPageChanged: (index) => setState(() => _activePhoto = index),
-                    itemBuilder: (_, index) => _EventGalleryImage(
-                      url: photos[index],
-                      category: widget.category,
+                    itemBuilder: (context, index) => GestureDetector(
+                      onTap: () => FullscreenImageViewer.open(
+                        context,
+                        imageUrls: photos,
+                        initialIndex: index,
+                      ),
+                      child: _EventGalleryImage(
+                        url: photos[index],
+                        category: widget.category,
+                      ),
+                    ),
+                  ),
+                  // Hint that photos can be opened full-screen.
+                  Positioned(
+                    left: AppTheme.spacingSm,
+                    bottom: AppTheme.spacingSm,
+                    child: IgnorePointer(
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: Color(0xC9000000),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.fullscreen_rounded,
+                            color: Colors.white, size: 18),
+                      ),
                     ),
                   ),
                   Positioned(

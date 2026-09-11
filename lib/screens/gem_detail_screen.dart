@@ -7,6 +7,7 @@ import '../providers/auth_provider.dart';
 import '../services/gem_service.dart';
 import '../services/maps_service.dart';
 import '../theme/theme.dart';
+import '../widgets/common/fullscreen_image_viewer.dart';
 import '../widgets/gems/gem_cover.dart';
 
 /// Detail page for a single community hidden gem. Shows the place, its
@@ -149,7 +150,15 @@ class _GemDetailScreenState extends State<GemDetailScreen> {
             expandedHeight: 220,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              background: GemCover(gem: _gem, height: 220),
+              background: GestureDetector(
+                onTap: () {
+                  final urls =
+                      _gem.imageUrls.where((u) => u.isNotEmpty).toList();
+                  if (urls.isEmpty) return;
+                  FullscreenImageViewer.open(context, imageUrls: urls);
+                },
+                child: GemCover(gem: _gem, height: 220),
+              ),
             ),
           ),
           SliverToBoxAdapter(

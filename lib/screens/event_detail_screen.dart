@@ -19,6 +19,7 @@ import '../widgets/events/event_share_card.dart';
 import '../widgets/events/organizer_social_links.dart';
 import '../widgets/common/app_avatar.dart';
 import '../widgets/common/event_image_placeholder.dart';
+import '../widgets/common/fullscreen_image_viewer.dart';
 import '../widgets/common/guided_tour.dart';
 import '../widgets/common/jambase_attribution.dart';
 import '../widgets/common/section_title.dart';
@@ -121,9 +122,18 @@ class _DetailContent extends StatelessWidget {
                 ),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background: EventCoverImage.fromEvent(
-                event,
-                placeholderColor: appColors.shimmer,
+              background: GestureDetector(
+                onTap: () {
+                  final urls = event.allImageUrls
+                      .where((u) => u.isNotEmpty)
+                      .toList();
+                  if (urls.isEmpty) return;
+                  FullscreenImageViewer.open(context, imageUrls: urls);
+                },
+                child: EventCoverImage.fromEvent(
+                  event,
+                  placeholderColor: appColors.shimmer,
+                ),
               ),
             ),
           ),

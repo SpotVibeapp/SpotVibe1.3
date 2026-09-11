@@ -5,8 +5,12 @@ import '../../services/media_upload_service.dart';
 import '../../theme/theme.dart';
 
 /// Plays an uploaded mp4 in-app. YouTube / Vimeo / other hosts open externally.
+///
+/// The whole video surface is tappable to play/pause, a spinner shows while the
+/// clip loads, a scrubber lets people seek, and controls fade while playing.
 class EventVideoPlayer extends StatefulWidget {
   final String videoUrl;
+
   /// Gallery callers provide their own numbered heading.
   final bool showTitle;
 
@@ -29,19 +33,27 @@ class _EventVideoPlayerState extends State<EventVideoPlayer> {
   void initState() {
     super.initState();
     if (isDirectVideoUrl(widget.videoUrl)) {
-      _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
-        ..initialize().then((_) {
-          if (!mounted) return;
-          setState(() => _ready = true);
-        }).catchError((_) {
-          if (!mounted) return;
-          setState(() => _failed = true);
-        });
+      final controller =
+          VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+      _controller = controller;
+      controller.addListener(_onControllerUpdate);
+      controller.initialize().then((_) {
+        if (!mounted) return;
+        setState(() => _ready = true);
+      }).catchError((_) {
+        if (!mounted) return;
+        setState(() => _failed = true);
+      });
     }
+  }
+
+  void _onControllerUpdate() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    _controller?.removeListener(_onControllerUpdate);
     _controller?.dispose();
     super.dispose();
   }
@@ -51,6 +63,22 @@ class _EventVideoPlayerState extends State<EventVideoPlayer> {
     if (uri != null && await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
+  }
+
+  void _togglePlay() {
+    final controller = _controller;
+    if (controller == null) return;
+    setState(() {
+      if (controller.value.isPlaying) {
+        controller.pause();
+      } else {
+        // Loop back to the start if the clip finished.
+        if (controller.value.position >= controller.value.duration) {
+          controller.seekTo(Duration.zero);
+        }
+        controller.play();
+      }
+    });
   }
 
   @override
@@ -66,56 +94,77 @@ class _EventVideoPlayerState extends State<EventVideoPlayer> {
           Text('Event video', style: text.titleSmall),
           const SizedBox(height: AppTheme.spacingSm),
         ],
-        if (controller != null && _ready && !_failed)
+        // Direct uploads that are still initialising: show a spinner surface.
+        if (controller != null && !_ready && !_failed)
+          _surface(
+            colors,
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          )
+        else if (controller != null && _ready && !_failed)
           ClipRRect(
             borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
             child: AspectRatio(
               aspectRatio: controller.value.aspectRatio == 0
                   ? 16 / 9
                   : controller.value.aspectRatio,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  VideoPlayer(controller),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        controller.value.isPlaying
-                            ? controller.pause()
-                            : controller.play();
-                      });
-                    },
-                    child: AnimatedOpacity(
+              child: GestureDetector(
+                onTap: _togglePlay,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    VideoPlayer(controller),
+                    // Big play/pause affordance; fades out while playing.
+                    AnimatedOpacity(
                       opacity: controller.value.isPlaying ? 0 : 1,
                       duration: const Duration(milliseconds: 200),
                       child: Container(
                         width: 64,
                         height: 64,
                         decoration: BoxDecoration(
-                          color: colors.primary,
+                          color: colors.primary.withValues(alpha: 0.92),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          Icons.play_arrow_rounded,
+                          controller.value.position >=
+                                      controller.value.duration &&
+                                  controller.value.duration > Duration.zero
+                              ? Icons.replay_rounded
+                              : Icons.play_arrow_rounded,
                           color: colors.onPrimary,
                           size: AppTheme.iconLg,
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    // Scrubber pinned to the bottom.
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: VideoProgressIndicator(
+                        controller,
+                        allowScrubbing: true,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 8),
+                        colors: VideoProgressColors(
+                          playedColor: colors.primary,
+                          bufferedColor: Colors.white54,
+                          backgroundColor: Colors.white24,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           )
         else
+          // Externally hosted video (YouTube, Vimeo, …): open in the browser.
           GestureDetector(
             onTap: _openExternal,
-            child: Container(
-              height: 180,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                color: colors.primaryContainer,
-              ),
+            child: _surface(
+              colors,
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -133,6 +182,17 @@ class _EventVideoPlayerState extends State<EventVideoPlayer> {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _surface(ColorScheme colors, {required Widget child}) {
+    return Container(
+      height: 180,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        color: colors.primaryContainer,
+      ),
+      child: child,
     );
   }
 }
