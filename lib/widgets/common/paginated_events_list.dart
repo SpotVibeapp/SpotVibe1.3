@@ -57,6 +57,24 @@ class PaginatedEventsList extends StatefulWidget {
 
 class _PaginatedEventsListState extends State<PaginatedEventsList> {
   int _currentPage = 0;
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Return the feed to the top so a new page always starts at its first card
+  /// instead of leaving the reader stranded mid-list from the previous page.
+  void _scrollToTop() {
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOutCubic,
+    );
+  }
 
   List<Event> get _all {
     final excludedEventId = widget.excludedEventId;
@@ -82,8 +100,14 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
   void didUpdateWidget(PaginatedEventsList old) {
     super.didUpdateWidget(old);
     if (!_sameList(_all, _prevSnapshot)) {
-      // List changed — reset to first page without animation.
+      // List changed (new search / filter / refresh) — reset to first page and
+      // return the feed to the top after this frame lays out the new content.
       _currentPage = 0;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _scrollController.hasClients) {
+          _scrollController.jumpTo(0);
+        }
+      });
     }
     _prevSnapshot = List.of(_all);
   }
@@ -98,6 +122,7 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
 
   void _go(int page) {
     setState(() => _currentPage = page.clamp(0, _totalPages - 1));
+    _scrollToTop();
   }
 
   @override
@@ -115,6 +140,7 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
         // ── Scrollable discovery header, feed heading, and event cards ────────
         Expanded(
           child: ListView.builder(
+            controller: _scrollController,
             padding: const EdgeInsets.only(bottom: AppTheme.spacingXs),
             itemCount: headerCount + 1 + page.length + (showAttribution ? 1 : 0),
             itemBuilder: (ctx, i) {
@@ -127,7 +153,11 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
                 return _EventCountBanner(
                   currentPage: _currentPage,
                   pageSize: kEventsPerPage,
-                  total: _total,
+                  total: provider.events.length,
+                  // Events shown outside the paginated list (the discovery
+                  // hero) still count toward the real total, so add them back
+                  // in for an accurate "of N" figure and a continuous range.
+                  heroLead: provider.events.length - _total,
                   sectionTitle: widget.sectionTitle,
                 );
               }
@@ -172,13 +202,21 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
 class _EventCountBanner extends StatelessWidget {
   final int currentPage;
   final int pageSize;
+
+  /// True total across the whole feed, including any events rendered outside
+  /// the paginated list (e.g. the discovery hero).
   final int total;
+
+  /// How many leading events are shown above the list (the hero) and therefore
+  /// are NOT part of the paginated slice but still count toward [total].
+  final int heroLead;
   final String? sectionTitle;
 
   const _EventCountBanner({
     required this.currentPage,
     required this.pageSize,
     required this.total,
+    this.heroLead = 0,
     this.sectionTitle,
   });
 
@@ -188,11 +226,18 @@ class _EventCountBanner extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context)!;
 
-    final start = currentPage * pageSize + 1;
-    final end = ((currentPage + 1) * pageSize).clamp(0, total);
+    // The paginated list holds everything except the hero lead.
+    final listTotal = (total - heroLead).clamp(0, total);
 
-    // "Showing 1–15 of 47 events"  or  "Showing all 12 events" when ≤15
-    final label = total <= pageSize
+    // Numbering runs continuously across the hero and the list. The hero
+    // occupies the first [heroLead] positions (only visible on page 0).
+    final listStart = currentPage * pageSize;
+    final listEnd = ((currentPage + 1) * pageSize).clamp(0, listTotal);
+    final start = currentPage == 0 ? 1 : heroLead + listStart + 1;
+    final end = heroLead + listEnd;
+
+    // "Showing 1–15 of 47 events"  or  "Showing all 12 events" on a single page
+    final label = listTotal <= pageSize
         ? l10n.showingAll(total)
         : l10n.showingRange(start, end, total);
 
