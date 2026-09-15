@@ -6,7 +6,10 @@ const String kAccountDeletionUrl =
     'https://spotvibe-cfa08.web.app/delete_account.html';
 
 const String kLegalEntityName = 'Spotvibe LLC';
-const String kLegalContactEmail = 'blakejohnson@spotvibeapp.com';
+// Role-based contact addresses (see Workspace groups). Keep the personal
+// address (blakejohnson@) out of user-facing surfaces.
+const String kLegalContactEmail = 'privacy@spotvibeapp.com'; // legal / privacy / data requests
+const String kFeedbackEmail = 'feedback@spotvibeapp.com'; // in-app feedback / support
 const String kLegalEffectiveDate = 'September 5, 2026';
 
 class LegalSection {

@@ -405,14 +405,14 @@ class ProfileScreen extends StatelessWidget {
       '(Tell us what you loved, what broke, or what you wish it did.)',
     );
     final uri = Uri.parse(
-      'mailto:$kLegalContactEmail?subject=$subject&body=$body',
+      'mailto:$kFeedbackEmail?subject=$subject&body=$body',
     );
     try {
       final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!ok) throw Exception('no email app');
     } catch (_) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Email us at $kLegalContactEmail')),
+        SnackBar(content: Text('Email us at $kFeedbackEmail')),
       );
     }
   }

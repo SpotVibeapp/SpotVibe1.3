@@ -67,7 +67,7 @@ class EventCoverImage extends StatelessWidget {
   }
 
   static const _kImageHeaders = {
-    'User-Agent': 'SpotVibe/1.0 (https://spotvibe.app; blakejohnson@spotvibeapp.com)',
+    'User-Agent': 'SpotVibe/1.0 (https://spotvibe.app; tech@spotvibeapp.com)',
     'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
   };
 

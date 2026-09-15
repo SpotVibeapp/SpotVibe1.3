@@ -1,7 +1,7 @@
 # Google Play — "App content" fill-in guide (closed beta)
 
 **App:** SpotVibe · **Package:** (your applicationId) · **Version at time of writing:** `1.0.1+2`
-**Publisher:** Spotvibe LLC (Texas) · **Contact:** blakejohnson@spotvibeapp.com
+**Publisher:** Spotvibe LLC (Texas) · **Store listing contact:** support@spotvibeapp.com (feedback@ / privacy@ for those roles)
 **Privacy policy URL:** https://spotvibe-cfa08.web.app/privacy.html
 **Account deletion URL:** https://spotvibe-cfa08.web.app/delete_account.html
 
