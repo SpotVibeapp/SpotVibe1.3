@@ -1,5 +1,6 @@
 import 'package:app_links/app_links.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -65,6 +66,28 @@ void main() async {
   // logins. Debug/profile builds still fall back to in-memory mocks.
   final backend = await _createBackend();
 
+  // ── Crashlytics ────────────────────────────────────────────────────────────
+  // Route uncaught Flutter framework errors and async/platform errors to
+  // Firebase Crashlytics so we get real crash reports from testers and users.
+  // Only active in release/profile (debug crashes are noisy and local), and
+  // only when Firebase actually initialized (skipped for the mock backend).
+  if (backend != null && !kIsWeb) {
+    try {
+      final crashlytics = FirebaseCrashlytics.instance;
+      await crashlytics.setCrashlyticsCollectionEnabled(!kDebugMode);
+      FlutterError.onError = (FlutterErrorDetails details) {
+        FlutterError.presentError(details);
+        crashlytics.recordFlutterFatalError(details);
+      };
+      PlatformDispatcher.instance.onError = (error, stack) {
+        crashlytics.recordError(error, stack, fatal: true);
+        return true;
+      };
+    } catch (e) {
+      if (kDebugMode) debugPrint('[crashlytics] setup failed: $e');
+    }
+  }
+
   final revenueCatService = RevenueCatService();
   await revenueCatService.initialize();
   final notificationService = NotificationService();
@@ -119,7 +142,7 @@ void main() async {
   }
 
   if (backend == null) {
-    runApp(const _BackendUnavailableApp());
+    runApp(_BackendUnavailableApp(onRetry: main));
     return;
   }
 
@@ -220,37 +243,68 @@ Future<_AppBackend?> _createBackend() async {
   }
 }
 
-/// Shown when a release build cannot reach Firebase. Fails loud and clear
-/// instead of accepting fake logins.
+/// Shown when the app cannot reach its backend at startup. For real users this
+/// is almost always a temporary connection problem, so it shows friendly copy
+/// and a Retry button. In debug/profile builds it also surfaces the developer
+/// hint (misconfigured Firebase) to speed up local setup.
 class _BackendUnavailableApp extends StatelessWidget {
-  const _BackendUnavailableApp();
+  final Future<void> Function() onRetry;
+
+  const _BackendUnavailableApp({required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'SpotVibe',
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorSchemeSeed: const Color(0xFF6C5CE7),
+        useMaterial3: true,
+      ),
       home: Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.cloud_off_rounded, size: 56),
-                SizedBox(height: 16),
-                Text(
-                  'SpotVibe could not connect to its backend.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'This build is not configured with Firebase.\n'
-                  'Run flutterfire configure --project=spotvibe-cfa08 and rebuild.',
-                  textAlign: TextAlign.center,
-                ),
-              ],
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(28),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.wifi_off_rounded, size: 60),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Can't connect right now",
+                    textAlign: TextAlign.center,
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'SpotVibe needs an internet connection to load events. '
+                    'Please check your Wi-Fi or mobile data and try again.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 15, height: 1.35),
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton.icon(
+                    onPressed: onRetry,
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Try again'),
+                  ),
+                  if (!kReleaseMode) ...[
+                    const SizedBox(height: 28),
+                    Text(
+                      'Developer note: Firebase is not configured for this '
+                      'build. Run\nflutterfire configure --project=spotvibe-cfa08\n'
+                      'and rebuild.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         ),

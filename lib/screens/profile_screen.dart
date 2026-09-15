@@ -1,3 +1,5 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -254,6 +256,19 @@ class ProfileScreen extends StatelessWidget {
                     icon: Icons.shield_rounded,
                     label: l10n.adminDashboard,
                     onTap: () => context.push('/admin'),
+                  ),
+                // Crashlytics verification. Admin-only AND debug/profile-only,
+                // so it never appears for real users in a release build. Use it
+                // once after wiring Crashlytics to confirm reports arrive, then
+                // it can stay (it is invisible in production).
+                if (auth.isAdmin && !kReleaseMode)
+                  _SettingsTile(
+                    icon: Icons.bug_report_rounded,
+                    label: 'Test crash (Crashlytics)',
+                    onTap: () {
+                      FirebaseCrashlytics.instance.log('Manual test crash tile');
+                      throw StateError('SpotVibe test crash (manual)');
+                    },
                   ),
                 _SettingsTile(
                   icon: Icons.privacy_tip_outlined,

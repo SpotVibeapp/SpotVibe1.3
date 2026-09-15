@@ -154,6 +154,30 @@ Your API key was committed to a **public** repo, so treat it as compromised.
 
 ---
 
+## 2b. Firebase Crashlytics (now wired in code)
+
+Crashlytics is integrated (`firebase_crashlytics`), capturing uncaught Flutter
+framework errors and async/platform errors. Collection is OFF in debug and ON in
+release/profile, and it only runs when Firebase actually initialized.
+
+**To verify it works (do once):**
+1. Run a **profile** build on your device: `flutter run --profile`.
+2. Sign in as an **admin** account (see §11) → Profile → **"Test crash
+   (Crashlytics)"** tile (only visible to admins in non-release builds) → tap it.
+3. Reopen the app (Crashlytics uploads the report on next launch).
+4. Firebase Console → **Crashlytics** → confirm the crash appears (can take a
+   few minutes the first time).
+
+**Optional (Android native symbol upload):** the Flutter plugin already reports
+Dart crashes without extra Gradle config. If you later want native/NDK crash
+symbolication, add the `com.google.firebase.crashlytics` Gradle plugin. Not
+required for launch.
+
+> The manual test tile is admin+debug-only, so it never shows for real users in
+> a release build. You can leave it in place.
+
+---
+
 ## 3. Deploy the legal site (privacy / terms / delete account)
 
 ```bash
