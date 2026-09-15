@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../data/legal.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 import '../services/tour_service.dart';
@@ -120,6 +122,11 @@ class ProfileScreen extends StatelessWidget {
                   icon: Icons.explore_rounded,
                   label: l10n.takeTheTour,
                   onTap: () => _replayTour(context),
+                ),
+                _SettingsTile(
+                  icon: Icons.feedback_outlined,
+                  label: l10n.sendFeedback,
+                  onTap: () => _sendFeedback(context),
                 ),
                 _SettingsTile(
                   icon: Icons.privacy_tip_outlined,
@@ -271,6 +278,11 @@ class ProfileScreen extends StatelessWidget {
                     },
                   ),
                 _SettingsTile(
+                  icon: Icons.feedback_outlined,
+                  label: l10n.sendFeedback,
+                  onTap: () => _sendFeedback(context),
+                ),
+                _SettingsTile(
                   icon: Icons.privacy_tip_outlined,
                   label: l10n.privacyPolicy,
                   onTap: () => context.push('/privacy'),
@@ -379,6 +391,30 @@ class ProfileScreen extends StatelessWidget {
       context,
     ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.tourRestarted)));
     context.go('/');
+  }
+
+  /// Opens the user's email app with a pre-filled feedback message to support.
+  /// Version/device context is added to the body so reports are actionable.
+  Future<void> _sendFeedback(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    const appVersion = '1.0.2 (10)'; // keep in sync with pubspec version
+    final platform = defaultTargetPlatform.name;
+    final subject = Uri.encodeComponent('SpotVibe feedback');
+    final body = Uri.encodeComponent(
+      '\n\n—\nApp: SpotVibe $appVersion\nPlatform: $platform\n'
+      '(Tell us what you loved, what broke, or what you wish it did.)',
+    );
+    final uri = Uri.parse(
+      'mailto:$kLegalContactEmail?subject=$subject&body=$body',
+    );
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok) throw Exception('no email app');
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Email us at $kLegalContactEmail')),
+      );
+    }
   }
 
   /// Shows the account-deletion confirmation and performs the deletion.
