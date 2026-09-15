@@ -35,6 +35,8 @@ import 'repositories/rsvp_repository.dart';
 import 'repositories/user_event_repository.dart';
 import 'repositories/user_repository.dart';
 import 'router/app_router.dart';
+import 'services/ad_consent_service.dart';
+import 'services/ads_service.dart';
 import 'services/ai_moderation_service.dart';
 import 'services/gem_service.dart';
 import 'services/event_analytics_service.dart';
@@ -68,6 +70,12 @@ void main() async {
   final notificationService = NotificationService();
   await notificationService.initialize();
   final permissionService = PermissionService();
+
+  // ── Ads (banner ads for free users; ad-free is a Premium benefit) ──────────
+  // Request UMP consent, then initialize the Mobile Ads SDK. Both no-op on web
+  // and are wrapped so an ad failure can never block startup.
+  await AdConsentService.ensureConsent();
+  await AdsService.initialize();
 
   // ── Resolve the initial deep link path ────────────────────────────────────
   // Priority order (highest → lowest):

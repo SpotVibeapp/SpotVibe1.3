@@ -65,6 +65,9 @@ dependencies:
   image_picker: ^1.1.2
   video_player: ^2.9.5
 
+  # Ads (banner ads for free users; ad-free is a Premium benefit)
+  google_mobile_ads: ^5.3.1
+
   # Firebase
   firebase_core: ^4.13.0
   firebase_auth: ^6.5.7

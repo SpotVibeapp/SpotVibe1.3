@@ -12,6 +12,7 @@ import '../providers/event_provider.dart';
 import '../services/event_service.dart';
 import '../services/location_service.dart';
 import '../theme/theme.dart';
+import '../widgets/common/ad_banner.dart';
 import '../widgets/common/category_chips.dart';
 import '../widgets/common/empty_state_view.dart';
 import '../widgets/common/event_card_skeleton.dart';
@@ -354,6 +355,9 @@ class _EventsScreenState extends State<EventsScreen> {
                 firstCardKey: _tourKeyCard,
               ),
             ),
+            // Anchored banner ad for free users (collapses for Premium and on
+            // web). Sits between the feed and the bottom navigation bar.
+            const AdBanner(),
             GuidedTour(
               tourId: 'home',
               steps: [

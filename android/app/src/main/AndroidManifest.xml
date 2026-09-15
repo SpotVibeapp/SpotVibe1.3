@@ -14,6 +14,13 @@
                  route for it -> "We could not open that page", overriding the
                  correct /event/<id> navigation app_links already performed. -->
             <meta-data android:name="flutter_deeplinking_enabled" android:value="false"/>
+            <!-- Google AdMob application ID. Injected from build.gradle.kts via
+                 the manifestPlaceholders `admobAppId`, which defaults to
+                 Google's official TEST app id and can be overridden with the
+                 real id (see ADMOB_APP_ID / gradle property). -->
+            <meta-data
+                android:name="com.google.android.gms.ads.APPLICATION_ID"
+                android:value="${admobAppId}"/>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -112,16 +119,12 @@
         tools:node="remove"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         tools:node="remove"/>
-    <!-- The app does not use ads or an advertising ID. Plugins (e.g.
-         awesome_notifications / Play Services pulled transitively) inject the
-         AD_ID permission into the merged manifest; remove it so the app does
-         not declare advertising-ID use to Google Play. -->
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID"
-        tools:node="remove"/>
-    <!-- Privacy Sandbox AdServices ad-id permission, injected by transitive
-         Play Services libraries. The app has no ads, so remove it too. -->
-    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID"
-        tools:node="remove"/>
+    <!-- The app shows AdMob banner ads to free users (ad-free is a Premium
+         benefit), so the advertising-ID permissions are REQUIRED. Google Play
+         data-safety + Advertising ID declaration are set to "Yes" to match
+         (see PLAY_APP_CONTENT.md). google_mobile_ads declares AD_ID in its own
+         manifest; we declare it explicitly here for clarity. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
     <!-- PRIMIO_ADDED: permission_handler — location permission for nearby event discovery -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>

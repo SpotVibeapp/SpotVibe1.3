@@ -75,5 +75,11 @@
     <string>SpotVibe uses your location to show events happening near you while the app is open.</string>
     <key>NSUserNotificationsUsageDescription</key>
     <string>SpotVibe sends you alerts for new events and activity on events you follow.</string>
+    <!-- Google AdMob application id (iOS). Uses Google's TEST app id by default;
+         replace with the real iOS AdMob app id before shipping an iOS ads build. -->
+    <key>GADApplicationIdentifier</key>
+    <string>ca-app-pub-3940256099942544~1458002511</string>
+    <key>NSUserTrackingUsageDescription</key>
+    <string>This lets SpotVibe show you more relevant ads. You can decline and still use the app.</string>
   </dict>
 </plist>

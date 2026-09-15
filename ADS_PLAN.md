@@ -1,4 +1,24 @@
-# Banner ads for free users — plan (deferred to a post-first-beta build)
+# Banner ads for free users — IMPLEMENTED (see status note below)
+
+> **STATUS (2026-09-15): Section B code is DONE and committed.** Banner ads via
+> Google AdMob now ship for free users; ad-free is a Premium benefit. The build
+> uses Google's official TEST ad ids until you supply real ids (see "Going live"
+> at the bottom). Section C doc/policy updates are also applied
+> (`PLAY_APP_CONTENT.md`, `legal_site/privacy.html`).
+>
+> **Going live with real ids (no code change needed):**
+> 1. Create the AdMob app + banner unit (section A below) and get the two ids.
+> 2. Android App id → build with `-PadmobAppId=ca-app-pub-XXXX~YYYY` (or add
+>    `admobAppId=ca-app-pub-XXXX~YYYY` to `android/gradle.properties`).
+> 3. Banner unit id → `--dart-define=ADMOB_BANNER_ANDROID=ca-app-pub-XXXX/ZZZZ`
+>    (iOS: `ADMOB_BANNER_IOS`, and set `GADApplicationIdentifier` in Info.plist).
+> 4. Full command example:
+>    `flutter build appbundle --release --dart-define-from-file=secrets.json \`
+>    `  --dart-define=ADMOB_BANNER_ANDROID=ca-app-pub-XXXX/ZZZZ -PadmobAppId=ca-app-pub-XXXX~YYYY`
+
+---
+
+## Original plan (deferred to a post-first-beta build)
 
 **Decision (yours):** free users see banner ads; **ad-free is a Premium benefit**. Ads are
 **NOT** in the first closed-beta upload — that build stays "no ads". This doc is the plan for the
