@@ -56,7 +56,7 @@ import 'providers/follow_provider.dart';
 import 'providers/personalization_provider.dart';
 import 'theme/theme.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // ── Firebase / user backend ───────────────────────────────────────────────
