@@ -55,22 +55,52 @@ They look almost identical — the only difference is `~` vs `/`. Don't mix them
 
 ---
 
-## PART 2 — Put the IDs into your release build
+## PART 2 — Put the IDs where the build reads them
 
-You never hardcode these. You pass them on the command line when you build the
-release bundle. On your machine (PowerShell, one line — no line breaks):
+The two IDs live in **two different files** because the build reads them through
+two different channels. Set them once and you never type them again.
+
+Note: AdMob IDs are **not secrets** — they're embedded in every shipped APK — so
+it's fine that one of them lives in a file that's committed to git.
+
+### a) Banner ad unit ID (the `/` one) → `secrets.json`
+
+`secrets.json` is your untracked file at the repo root (same one holding your
+RevenueCat key). Add this line to it:
+
+```json
+"ADMOB_BANNER_ANDROID": "ca-app-pub-XXXX/ZZZZ"
+```
+
+So your `secrets.json` ends up looking like:
+
+```json
+{
+  "REVENUECAT_ANDROID_KEY": "goog_XXXXXXXXXXXX",
+  "ADMOB_BANNER_ANDROID": "ca-app-pub-XXXX/ZZZZ"
+}
+```
+
+### b) App ID (the `~` one) → `android/gradle.properties`
+
+Open `android/gradle.properties` and add this line (a placeholder comment is
+already there showing where):
 
 ```
-flutter build appbundle --release --dart-define-from-file=secrets.json -PadmobAppId=ca-app-pub-XXXX~YYYY --dart-define=ADMOB_BANNER_ANDROID=ca-app-pub-XXXX/ZZZZ
+admobAppId=ca-app-pub-XXXX~YYYY
 ```
 
-- Replace `ca-app-pub-XXXX~YYYY` with your **App ID** (the `~` one).
-- Replace `ca-app-pub-XXXX/ZZZZ` with your **Banner ad unit ID** (the `/` one).
-- `--dart-define-from-file=secrets.json` also carries your RevenueCat key, so
-  this one command builds subscriptions **and** ads together.
+### Then build — no ad flags needed
 
-That's the entire "wiring." If you build **without** those two flags, the app
-falls back to Google's test ads (safe, but earns nothing).
+Once both IDs are stored, your normal release command picks them up automatically:
+
+```
+flutter build appbundle --release --dart-define-from-file=secrets.json
+```
+
+That one command ships subscriptions **and** real ads together. If you ever build
+**without** setting these (e.g. a quick test build), the app safely falls back to
+Google's test ads (shows placeholder ads, earns nothing, never risks a strike).
 
 ---
 
@@ -105,7 +135,9 @@ Save both. Google may take a short time to re-review after you change these.
 
 - [ ] Created Android app in AdMob → copied **App ID** (`~`)
 - [ ] Created **Banner** ad unit → copied **Ad unit ID** (`/`)
-- [ ] Built release with `-PadmobAppId=...~...` and `--dart-define=ADMOB_BANNER_ANDROID=.../...`
+- [ ] Put **App ID** (`~`) in `android/gradle.properties` as `admobAppId=...`
+- [ ] Put **Banner ID** (`/`) in `secrets.json` as `ADMOB_BANNER_ANDROID`
+- [ ] Built release with `flutter build appbundle --release --dart-define-from-file=secrets.json`
 - [ ] Play Console → App content → **Ads = Yes**
 - [ ] Play Console → **Data safety** → Advertising ID = Yes (Advertising + Analytics)
 - [ ] Did NOT tap my own live ads
