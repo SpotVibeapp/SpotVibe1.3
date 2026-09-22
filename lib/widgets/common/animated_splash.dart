@@ -5,58 +5,30 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/theme.dart';
 
-/// Wraps the app and shows a branded animated splash on top for the first few
-/// seconds of a cold launch, then fades it away to reveal [child].
+/// Full-screen branded splash shown from the first Flutter frame.
 ///
-/// The splash fills the whole screen with the SpotVibe brand gradient (so there
-/// is no white space around a tiny logo like the bare native launch screen), a
-/// logo that pops in, the "SpotVibe" wordmark flying in from the distance to
-/// land under the logo, a tagline, and drifting blue/purple twinkling stars.
-class SplashGate extends StatefulWidget {
-  final Widget child;
-
-  const SplashGate({super.key, required this.child});
-
-  @override
-  State<SplashGate> createState() => _SplashGateState();
-}
-
-class _SplashGateState extends State<SplashGate> {
-  bool _showSplash = true;
-
-  void _onFinished() {
-    if (mounted) setState(() => _showSplash = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        widget.child,
-        if (_showSplash)
-          Positioned.fill(
-            child: _AnimatedSplashOverlay(onFinished: _onFinished),
-          ),
-      ],
-    );
-  }
-}
-
-class _AnimatedSplashOverlay extends StatefulWidget {
+/// Plays the entrance choreography, holds so the tagline can be read, waits
+/// until [isReady] (app boot finished), then fades out and calls [onFinished].
+class AnimatedSplashScreen extends StatefulWidget {
+  final bool isReady;
   final VoidCallback onFinished;
 
-  const _AnimatedSplashOverlay({required this.onFinished});
+  const AnimatedSplashScreen({
+    super.key,
+    required this.isReady,
+    required this.onFinished,
+  });
 
   @override
-  State<_AnimatedSplashOverlay> createState() => _AnimatedSplashOverlayState();
+  State<AnimatedSplashScreen> createState() => _AnimatedSplashScreenState();
 }
 
-class _AnimatedSplashOverlayState extends State<_AnimatedSplashOverlay>
+class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
     with TickerProviderStateMixin {
-  // Drives the entrance choreography (logo, wordmark, tagline).
+  // Entrance choreography (logo, wordmark, tagline).
   late final AnimationController _intro = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 2200),
+    duration: const Duration(milliseconds: 3400),
   );
 
   // Continuous loop for the twinkling / drifting stars.
@@ -68,16 +40,16 @@ class _AnimatedSplashOverlayState extends State<_AnimatedSplashOverlay>
   // Fades the whole splash out at the end.
   late final AnimationController _exit = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 520),
+    duration: const Duration(milliseconds: 700),
   );
 
   late final Animation<double> _logoScale = CurvedAnimation(
     parent: _intro,
-    curve: const Interval(0.0, 0.42, curve: Curves.easeOutBack),
+    curve: const Interval(0.0, 0.38, curve: Curves.easeOutBack),
   );
   late final Animation<double> _logoFade = CurvedAnimation(
     parent: _intro,
-    curve: const Interval(0.0, 0.30, curve: Curves.easeOut),
+    curve: const Interval(0.0, 0.26, curve: Curves.easeOut),
   );
 
   // The wordmark "comes from the distance": starts tiny and far, grows bigger
@@ -87,38 +59,63 @@ class _AnimatedSplashOverlayState extends State<_AnimatedSplashOverlay>
     end: 1.0,
   ).animate(CurvedAnimation(
     parent: _intro,
-    curve: const Interval(0.32, 0.74, curve: Curves.elasticOut),
+    curve: const Interval(0.22, 0.62, curve: Curves.elasticOut),
   ));
   late final Animation<double> _wordFade = CurvedAnimation(
     parent: _intro,
-    curve: const Interval(0.32, 0.52, curve: Curves.easeOut),
+    curve: const Interval(0.22, 0.42, curve: Curves.easeOut),
   );
   late final Animation<double> _wordRise = Tween<double>(
     begin: 46,
     end: 0,
   ).animate(CurvedAnimation(
     parent: _intro,
-    curve: const Interval(0.32, 0.70, curve: Curves.easeOutCubic),
+    curve: const Interval(0.22, 0.58, curve: Curves.easeOutCubic),
   ));
 
+  // Tagline fades in earlier so it has a long, readable hold.
   late final Animation<double> _taglineFade = CurvedAnimation(
     parent: _intro,
-    curve: const Interval(0.72, 0.95, curve: Curves.easeOut),
+    curve: const Interval(0.48, 0.68, curve: Curves.easeOut),
   );
 
   final List<_Star> _starField =
       _Star.generate(34, math.Random(0x5B07 /* SpotVibe seed */));
 
+  bool _holdDone = false;
+  bool _exiting = false;
+
   @override
   void initState() {
     super.initState();
     _intro.forward();
-    // Hold the finished splash briefly, then fade out and hand off to the app.
-    Future.delayed(const Duration(milliseconds: 2500), () async {
-      if (!mounted) return;
-      await _exit.forward();
-      widget.onFinished();
-    });
+    _runSequence();
+  }
+
+  @override
+  void didUpdateWidget(AnimatedSplashScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isReady && !oldWidget.isReady) {
+      _tryExit();
+    }
+  }
+
+  Future<void> _runSequence() async {
+    // Wait for the entrance animation to finish.
+    await Future<void>.delayed(const Duration(milliseconds: 3400));
+    if (!mounted) return;
+    // Hold the finished composition so the tagline can actually be read.
+    await Future<void>.delayed(const Duration(milliseconds: 2400));
+    if (!mounted) return;
+    _holdDone = true;
+    _tryExit();
+  }
+
+  Future<void> _tryExit() async {
+    if (!_holdDone || !widget.isReady || _exiting) return;
+    _exiting = true;
+    await _exit.forward();
+    if (mounted) widget.onFinished();
   }
 
   @override
@@ -131,7 +128,8 @@ class _AnimatedSplashOverlayState extends State<_AnimatedSplashOverlay>
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
+    final tagline = l10n?.splashTagline ?? "Your city's vibe, one tap away.";
 
     return AnimatedBuilder(
       animation: _exit,
@@ -142,7 +140,6 @@ class _AnimatedSplashOverlayState extends State<_AnimatedSplashOverlay>
         );
       },
       child: Material(
-        // Deep brand gradient background — no white space anywhere.
         child: DecoratedBox(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -159,7 +156,6 @@ class _AnimatedSplashOverlayState extends State<_AnimatedSplashOverlay>
           ),
           child: Stack(
             children: [
-              // Twinkling, drifting blue/purple stars behind the content.
               Positioned.fill(
                 child: AnimatedBuilder(
                   animation: _stars,
@@ -173,7 +169,6 @@ class _AnimatedSplashOverlayState extends State<_AnimatedSplashOverlay>
                   },
                 ),
               ),
-              // Logo + animated wordmark + tagline.
               Center(
                 child: AnimatedBuilder(
                   animation: _intro,
@@ -207,7 +202,7 @@ class _AnimatedSplashOverlayState extends State<_AnimatedSplashOverlay>
                               horizontal: AppTheme.spacingXl,
                             ),
                             child: Text(
-                              l10n.splashTagline,
+                              tagline,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 color: Colors.white,
@@ -343,17 +338,14 @@ class _StarFieldPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (final star in stars) {
-      // Twinkle: smooth 0..1..0 pulse offset by the star's phase.
       final t = (progress + star.phase) % 1.0;
       final twinkle = 0.35 + 0.65 * (0.5 - 0.5 * math.cos(t * 2 * math.pi));
-      // Gentle vertical drift that wraps around.
       final dy = ((star.y + progress * star.drift) % 1.0) * size.height;
       final dx = star.x * size.width;
       final base = star.isBlue ? _blue : _purple;
       final color = base.withValues(alpha: 0.85 * twinkle);
       final r = star.radius * (0.8 + 0.4 * twinkle);
 
-      // Soft glow.
       canvas.drawCircle(
         Offset(dx, dy),
         r * 2.6,
@@ -361,10 +353,8 @@ class _StarFieldPainter extends CustomPainter {
           ..color = base.withValues(alpha: 0.16 * twinkle)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
       );
-      // Bright core.
       canvas.drawCircle(Offset(dx, dy), r, Paint()..color = color);
 
-      // A little four-point sparkle on the brightest stars.
       if (star.radius > 2.4) {
         final sparkle = Paint()
           ..color = color.withValues(alpha: 0.7 * twinkle)

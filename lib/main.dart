@@ -57,114 +57,172 @@ import 'providers/personalization_provider.dart';
 import 'theme/theme.dart';
 import 'widgets/common/animated_splash.dart';
 
-Future<void> main() async {
+/// First Flutter frame is the branded splash. Backend init runs underneath
+/// it so the user never sits on the native launch screen (small icon / blank
+/// color) waiting for Firebase, ads, and deep links.
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  runApp(const _BootApp());
+}
 
-  // ── Firebase / user backend ───────────────────────────────────────────────
-  // Real auth when Firebase is configured for this platform. Release builds
-  // MUST be configured — see _createBackend(): a store build that cannot
-  // reach Firebase shows a clear error instead of silently accepting fake
-  // logins. Debug/profile builds still fall back to in-memory mocks.
-  final backend = await _createBackend();
+class _BootApp extends StatefulWidget {
+  const _BootApp();
 
-  // ── Crashlytics ────────────────────────────────────────────────────────────
-  // Route uncaught Flutter framework errors and async/platform errors to
-  // Firebase Crashlytics so we get real crash reports from testers and users.
-  // Only active in release/profile (debug crashes are noisy and local), and
-  // only when Firebase actually initialized (skipped for the mock backend).
-  if (backend != null && !kIsWeb) {
-    try {
-      final crashlytics = FirebaseCrashlytics.instance;
-      await crashlytics.setCrashlyticsCollectionEnabled(!kDebugMode);
-      FlutterError.onError = (FlutterErrorDetails details) {
-        FlutterError.presentError(details);
-        crashlytics.recordFlutterFatalError(details);
-      };
-      PlatformDispatcher.instance.onError = (error, stack) {
-        crashlytics.recordError(error, stack, fatal: true);
-        return true;
-      };
-    } catch (e) {
-      if (kDebugMode) debugPrint('[crashlytics] setup failed: $e');
-    }
+  @override
+  State<_BootApp> createState() => _BootAppState();
+}
+
+class _BootAppState extends State<_BootApp> {
+  Widget? _app;
+  bool _ready = false;
+  bool _splashDone = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _boot();
   }
 
-  final revenueCatService = RevenueCatService();
-  await revenueCatService.initialize();
-  final notificationService = NotificationService();
-  await notificationService.initialize();
-  final permissionService = PermissionService();
+  Future<void> _boot() async {
+    // ── Firebase / user backend ───────────────────────────────────────────
+    // Real auth when Firebase is configured for this platform. Release builds
+    // MUST be configured — see _createBackend(): a store build that cannot
+    // reach Firebase shows a clear error instead of silently accepting fake
+    // logins. Debug/profile builds still fall back to in-memory mocks.
+    final backend = await _createBackend();
 
-  // ── Ads (banner ads for free users; ad-free is a Premium benefit) ──────────
-  // Request UMP consent, then initialize the Mobile Ads SDK. Both no-op on web
-  // and are wrapped so an ad failure can never block startup.
-  await AdConsentService.ensureConsent();
-  await AdsService.initialize();
+    // ── Crashlytics ────────────────────────────────────────────────────────
+    // Route uncaught Flutter framework errors and async/platform errors to
+    // Firebase Crashlytics so we get real crash reports from testers and users.
+    // Only active in release/profile (debug crashes are noisy and local), and
+    // only when Firebase actually initialized (skipped for the mock backend).
+    if (backend != null && !kIsWeb) {
+      try {
+        final crashlytics = FirebaseCrashlytics.instance;
+        await crashlytics.setCrashlyticsCollectionEnabled(!kDebugMode);
+        FlutterError.onError = (FlutterErrorDetails details) {
+          FlutterError.presentError(details);
+          crashlytics.recordFlutterFatalError(details);
+        };
+        PlatformDispatcher.instance.onError = (error, stack) {
+          crashlytics.recordError(error, stack, fatal: true);
+          return true;
+        };
+      } catch (e) {
+        if (kDebugMode) debugPrint('[crashlytics] setup failed: $e');
+      }
+    }
 
-  // ── Resolve the initial deep link path ────────────────────────────────────
-  // Priority order (highest → lowest):
-  //   1. OS cold-start URI     — delivered by app_links (App Links / custom scheme)
-  //   2. Pending link          — saved from a previous session interrupted by /permissions
-  //   3. /permissions          — first-ever launch (permissions not yet asked)
-  //   4. /                     — all subsequent normal launches
-  String initialLocation = '/';
-  String? coldLinkUri;
+    final revenueCatService = RevenueCatService();
+    await revenueCatService.initialize();
+    final notificationService = NotificationService();
+    await notificationService.initialize();
+    final permissionService = PermissionService();
 
-  if (!kIsWeb) {
-    try {
-      final appLinks = AppLinks();
-      final coldUri = await appLinks.getInitialLink();
-      if (coldUri != null) {
-        if (kDebugMode) debugPrint('[deepLink] cold-start uri=$coldUri');
-        final path = DeepLinkService.pathFromUri(coldUri.toString());
-        if (kDebugMode) debugPrint('[deepLink] cold-start parsed path=$path');
-        if (path != null) {
-          initialLocation = path;
-          coldLinkUri = coldUri.toString();
+    // ── Ads (banner ads for free users; ad-free is a Premium benefit) ──────
+    // Request UMP consent, then initialize the Mobile Ads SDK. Both no-op on
+    // web and are wrapped so an ad failure can never block startup.
+    await AdConsentService.ensureConsent();
+    await AdsService.initialize();
+
+    // ── Resolve the initial deep link path ────────────────────────────────
+    // Priority order (highest → lowest):
+    //   1. OS cold-start URI — delivered by app_links
+    //   2. Pending link      — saved from a previous session
+    //   3. /onboarding       — first-ever launch
+    //   4. /                 — all subsequent normal launches
+    String initialLocation = '/';
+    String? coldLinkUri;
+
+    if (!kIsWeb) {
+      try {
+        final appLinks = AppLinks();
+        final coldUri = await appLinks.getInitialLink();
+        if (coldUri != null) {
+          if (kDebugMode) debugPrint('[deepLink] cold-start uri=$coldUri');
+          final path = DeepLinkService.pathFromUri(coldUri.toString());
+          if (kDebugMode) debugPrint('[deepLink] cold-start parsed path=$path');
+          if (path != null) {
+            initialLocation = path;
+            coldLinkUri = coldUri.toString();
+          }
+        }
+      } catch (e) {
+        if (kDebugMode) debugPrint('[deepLink] cold-start read failed: $e');
+      }
+    }
+
+    if (initialLocation == '/') {
+      final pending = await DeepLinkService.consumePendingLink();
+      if (pending != null) {
+        initialLocation = pending;
+      } else {
+        final hasAsked = await permissionService.hasAskedBefore();
+        if (!hasAsked) {
+          final onboardingRepo = OnboardingRepository();
+          final onboardingDone = await onboardingRepo.isOnboardingDone();
+          initialLocation = onboardingDone ? '/' : '/onboarding';
         }
       }
-    } catch (e) {
-      if (kDebugMode) debugPrint('[deepLink] cold-start read failed: $e');
     }
-  }
 
-  if (initialLocation == '/') {
-    final pending = await DeepLinkService.consumePendingLink();
-    if (pending != null) {
-      initialLocation = pending;
+    if (!mounted) return;
+
+    final Widget next;
+    if (backend == null) {
+      next = _BackendUnavailableApp(onRetry: main);
     } else {
-      final hasAsked = await permissionService.hasAskedBefore();
-      if (!hasAsked) {
-        final onboardingRepo = OnboardingRepository();
-        final onboardingDone = await onboardingRepo.isOnboardingDone();
-        initialLocation = onboardingDone ? '/' : '/onboarding';
-      }
+      next = SpotVibeApp(
+        userRepository: backend.users,
+        eventRepository: backend.events,
+        rsvpRepository: backend.rsvps,
+        userEventRepository: backend.userEvents,
+        gemRepository: backend.gems,
+        claimRepository: backend.claims,
+        foundingRepository: backend.founding,
+        moderationRepository: backend.moderation,
+        partnerPromoRepository: backend.partnerPromoCodes,
+        revenueCatService: revenueCatService,
+        notificationService: notificationService,
+        permissionService: permissionService,
+        initialLocation: initialLocation,
+        initialLinkUri: coldLinkUri,
+      );
     }
+
+    setState(() {
+      _app = next;
+      _ready = true;
+    });
   }
 
-  if (backend == null) {
-    runApp(_BackendUnavailableApp(onRetry: main));
-    return;
-  }
+  @override
+  Widget build(BuildContext context) {
+    if (_splashDone && _app != null) return _app!;
 
-  runApp(
-    SpotVibeApp(
-      userRepository: backend.users,
-      eventRepository: backend.events,
-      rsvpRepository: backend.rsvps,
-      userEventRepository: backend.userEvents,
-      gemRepository: backend.gems,
-      claimRepository: backend.claims,
-      foundingRepository: backend.founding,
-      moderationRepository: backend.moderation,
-      partnerPromoRepository: backend.partnerPromoCodes,
-      revenueCatService: revenueCatService,
-      notificationService: notificationService,
-      permissionService: permissionService,
-      initialLocation: initialLocation,
-      initialLinkUri: coldLinkUri,
-    ),
-  );
+    return MaterialApp(
+      title: 'SpotVibe',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorSchemeSeed: const Color(0xFF6C5CE7),
+        useMaterial3: true,
+      ),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localeResolutionCallback: (deviceLocale, _) {
+        if (deviceLocale != null && deviceLocale.languageCode == 'es') {
+          return const Locale('es');
+        }
+        return const Locale('en');
+      },
+      home: AnimatedSplashScreen(
+        isReady: _ready,
+        onFinished: () {
+          if (mounted) setState(() => _splashDone = true);
+        },
+      ),
+    );
+  }
 }
 
 class _AppBackend {
@@ -528,8 +586,6 @@ class _SpotVibeAppState extends State<SpotVibeApp>
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
             routerConfig: _router,
-            builder: (context, child) =>
-                SplashGate(child: child ?? const SizedBox.shrink()),
             locale: localeProvider.locale,
             supportedLocales: AppLocalizations.supportedLocales,
             localizationsDelegates: AppLocalizations.localizationsDelegates,

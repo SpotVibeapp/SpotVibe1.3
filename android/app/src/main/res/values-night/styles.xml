@@ -5,9 +5,12 @@
         <!-- Show a splash screen on the activity. Automatically removed when
              the Flutter engine draws its first frame -->
         <item name="android:windowBackground">@drawable/launch_background</item>
-        <!-- Android 12+ splash screen API: brand-colored background instead of
-             a white system window so there's no white flash before Flutter. -->
+        <!-- Android 12+ splash screen API: brand-colored background and a
+             transparent icon so the OS does not draw the small launcher
+             glyph. The Flutter animated splash replaces this on first frame. -->
         <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_empty</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/splash_background</item>
     </style>
     <!-- Theme applied to the Android Window as soon as the process has started.
          This theme determines the color of the Android Window while your
