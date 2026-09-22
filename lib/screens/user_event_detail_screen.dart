@@ -9,7 +9,7 @@ import '../l10n/app_localizations.dart';
 import '../models/user_event.dart';
 import '../providers/auth_provider.dart';
 import '../services/event_analytics_service.dart';
-import '../widgets/events/event_page_ad.dart';
+import '../widgets/events/detail_ad.dart';
 import '../theme/category_colors.dart';
 import '../theme/theme.dart';
 import '../widgets/events/add_to_calendar_button.dart';
@@ -347,7 +347,7 @@ class _UserEventDetailContent extends StatelessWidget {
                   CommentSection(accent: categoryAccent(event.category)),
                   if (!event.isCreatorPro && !auth.isAdmin) ...[
                     const SizedBox(height: AppTheme.spacingLg),
-                    const EventPageAd(),
+                    const DetailAd(),
                   ],
                   const SizedBox(height: AppTheme.spacingXl),
                 ],

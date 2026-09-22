@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 
@@ -12,8 +13,13 @@ import '../../services/ads_service.dart';
 /// * On web/desktop (no ad support) it renders nothing.
 /// * While the ad loads it reserves a fixed-height slot so the surrounding
 ///   layout doesn't jump when the banner appears.
+/// * When [showRemoveAdsUpsell] is true, a small "Remove ads with Premium" row
+///   sits under the banner and routes to the paywall — turning the ad slot into
+///   a conversion surface for the ad-free benefit.
 class AdBanner extends StatefulWidget {
-  const AdBanner({super.key});
+  final bool showRemoveAdsUpsell;
+
+  const AdBanner({super.key, this.showRemoveAdsUpsell = true});
 
   @override
   State<AdBanner> createState() => _AdBannerState();
@@ -86,25 +92,72 @@ class _AdBannerState extends State<AdBanner> {
     final colors = Theme.of(context).colorScheme;
     final ad = _ad;
 
+    final Widget banner;
     if (_loaded && ad != null) {
-      return Container(
+      banner = Container(
         color: colors.surface,
         alignment: Alignment.center,
         width: ad.size.width.toDouble(),
         height: ad.size.height.toDouble(),
         child: AdWidget(ad: ad),
       );
+    } else {
+      // Loading / not-yet-filled placeholder keeps layout stable.
+      banner = SizedBox(
+        height: _placeholderHeight,
+        child: Center(
+          child: Text(
+            'Ad',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: colors.onSurfaceVariant.withValues(alpha: 0.35),
+                ),
+          ),
+        ),
+      );
     }
 
-    // Loading / not-yet-filled placeholder keeps layout stable.
-    return SizedBox(
-      height: _placeholderHeight,
-      child: Center(
-        child: Text(
-          'Ad',
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: colors.onSurfaceVariant.withValues(alpha: 0.35),
+    if (!widget.showRemoveAdsUpsell) return banner;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        banner,
+        _RemoveAdsUpsell(colors: colors),
+      ],
+    );
+  }
+}
+
+/// A slim "Remove ads with Premium" row shown beneath a banner. Tapping it opens
+/// the paywall, so the ad itself sells the ad-free upgrade.
+class _RemoveAdsUpsell extends StatelessWidget {
+  final ColorScheme colors;
+
+  const _RemoveAdsUpsell({required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return InkWell(
+      onTap: () => context.push('/paywall'),
+      child: Container(
+        width: double.infinity,
+        color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.block_rounded, size: 14, color: colors.primary),
+            const SizedBox(width: 6),
+            Text(
+              'Remove ads with Premium',
+              style: text.labelSmall?.copyWith(
+                color: colors.primary,
+                fontWeight: FontWeight.w700,
               ),
+            ),
+            Icon(Icons.chevron_right_rounded, size: 16, color: colors.primary),
+          ],
         ),
       ),
     );

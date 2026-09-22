@@ -8,6 +8,7 @@ import '../providers/auth_provider.dart';
 import '../providers/gem_provider.dart';
 import '../services/location_service.dart';
 import '../theme/theme.dart';
+import '../widgets/common/ad_banner.dart';
 import '../widgets/common/empty_state_view.dart';
 import '../widgets/gems/gem_cover.dart';
 
@@ -230,6 +231,8 @@ class _GemsScreenState extends State<GemsScreen> {
             if (provider.availableCategories.isNotEmpty)
               _GemCategoryChips(provider: provider),
             Expanded(child: _body(context, provider, l10n)),
+            // Anchored banner for free users (collapses for Premium/web).
+            const AdBanner(),
           ],
         ),
       ),

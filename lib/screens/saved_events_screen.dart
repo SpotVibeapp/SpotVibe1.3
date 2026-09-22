@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/event_provider.dart';
 import '../theme/theme.dart';
+import '../widgets/common/ad_banner.dart';
 import '../widgets/common/empty_state_view.dart';
 import '../widgets/common/jambase_attribution.dart';
 import '../widgets/events/event_card.dart';
@@ -60,33 +61,43 @@ class SavedEventsScreen extends StatelessWidget {
                   actionLabel: 'Explore Events',
                   onAction: () => context.go('/'),
                 )
-              : ListView.builder(
-                  padding: const EdgeInsets.only(bottom: AppTheme.spacingXl),
-                  itemCount:
-                      saved.length + (JamBaseAttribution.needed(saved) ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == saved.length) {
-                      return JamBaseAttribution(events: saved);
-                    }
-                    final event = saved[index];
-                    final globalIndex = eventProvider.indexOfEvent(event.id);
-                    return EventCard(
-                      event: event,
-                      onTap: () =>
-                          context.push('/event/${event.id}', extra: event),
-                      onBookmark: () {
-                        if (globalIndex >= 0) {
-                          eventProvider.toggleBookmark(globalIndex);
-                        }
-                      },
-                      onInterested: () {
-                        if (globalIndex >= 0) {
-                          eventProvider.toggleInterested(globalIndex);
-                        }
-                      },
-                      distanceMiles: eventProvider.distanceFor(event),
-                    );
-                  },
+              : Column(
+                  children: [
+                    Expanded(
+                      child: ListView.builder(
+                        padding:
+                            const EdgeInsets.only(bottom: AppTheme.spacingXl),
+                        itemCount: saved.length +
+                            (JamBaseAttribution.needed(saved) ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index == saved.length) {
+                            return JamBaseAttribution(events: saved);
+                          }
+                          final event = saved[index];
+                          final globalIndex =
+                              eventProvider.indexOfEvent(event.id);
+                          return EventCard(
+                            event: event,
+                            onTap: () => context.push('/event/${event.id}',
+                                extra: event),
+                            onBookmark: () {
+                              if (globalIndex >= 0) {
+                                eventProvider.toggleBookmark(globalIndex);
+                              }
+                            },
+                            onInterested: () {
+                              if (globalIndex >= 0) {
+                                eventProvider.toggleInterested(globalIndex);
+                              }
+                            },
+                            distanceMiles: eventProvider.distanceFor(event),
+                          );
+                        },
+                      ),
+                    ),
+                    // Anchored banner for free users (collapses for Premium/web).
+                    const AdBanner(),
+                  ],
                 ),
     );
   }

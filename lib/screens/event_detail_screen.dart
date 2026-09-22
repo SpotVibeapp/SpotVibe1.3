@@ -13,7 +13,7 @@ import '../theme/category_colors.dart';
 import '../theme/theme.dart';
 import '../services/event_analytics_service.dart';
 import '../widgets/events/claim_venue_banner.dart';
-import '../widgets/events/event_page_ad.dart';
+import '../widgets/events/detail_ad.dart';
 import '../widgets/events/event_media_gallery.dart';
 import '../widgets/events/event_share_card.dart';
 import '../widgets/events/organizer_social_links.dart';
@@ -276,7 +276,10 @@ class _DetailContent extends StatelessWidget {
                   ],
                   if (!isAdmin && event.showsAds) ...[
                     const SizedBox(height: AppTheme.spacingLg),
-                    const EventPageAd(),
+                    // Real AdMob banner for free users (collapses to nothing for
+                    // Premium/web). The house promo is the fallback when ads are
+                    // unsupported so the space is never wasted.
+                    const DetailAd(),
                   ],
                   const SizedBox(height: AppTheme.spacingLg),
                   AttendeesSection(accent: catColor),
