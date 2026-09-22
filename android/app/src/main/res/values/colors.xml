@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Deep brand violet — matches the top of the Flutter splash gradient so
+         the native launch screen hands off seamlessly with no white flash. -->
+    <color name="splash_background">#2A1A5E</color>
+</resources>

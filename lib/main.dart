@@ -55,6 +55,7 @@ import 'services/ticketmaster_service.dart';
 import 'providers/follow_provider.dart';
 import 'providers/personalization_provider.dart';
 import 'theme/theme.dart';
+import 'widgets/common/animated_splash.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -527,6 +528,8 @@ class _SpotVibeAppState extends State<SpotVibeApp>
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
             routerConfig: _router,
+            builder: (context, child) =>
+                SplashGate(child: child ?? const SizedBox.shrink()),
             locale: localeProvider.locale,
             supportedLocales: AppLocalizations.supportedLocales,
             localizationsDelegates: AppLocalizations.localizationsDelegates,

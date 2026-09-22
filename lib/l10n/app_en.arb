@@ -1,6 +1,7 @@
 {
   "@@locale": "en",
   "appTitle": "SpotVibe",
+  "splashTagline": "Your city's vibe, one tap away.",
   "continueBtn": "Continue",
   "skipForNow": "Skip for now",
   "cancel": "Cancel",

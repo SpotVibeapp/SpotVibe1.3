@@ -12,6 +12,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appTitle => 'SpotVibe';
 
   @override
+  String get splashTagline => 'El ambiente de tu ciudad, a un toque.';
+
+  @override
   String get continueBtn => 'Continuar';
 
   @override

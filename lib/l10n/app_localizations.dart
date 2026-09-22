@@ -104,6 +104,12 @@ abstract class AppLocalizations {
   /// **'SpotVibe'**
   String get appTitle;
 
+  /// No description provided for @splashTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Your city\'s vibe, one tap away.'**
+  String get splashTagline;
+
   /// No description provided for @continueBtn.
   ///
   /// In en, this message translates to:
