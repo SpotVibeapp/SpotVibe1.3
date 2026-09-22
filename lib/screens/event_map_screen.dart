@@ -65,6 +65,9 @@ class _EventMapScreenState extends State<EventMapScreen> {
     }
     _mapController.move(LatLng(place.lat, place.lng), _areaZoom);
     final label = place.state.isNotEmpty ? '${place.city}, ${place.state}' : place.city;
+    // Load EVENTS for the searched area (the map has its own EventProvider),
+    // and Hidden Gems for the same spot so both layers reflect the new place.
+    context.read<EventProvider>().searchArea(query);
     unawaited(
       context.read<GemProvider>().loadForCoordinates(
             lat: place.lat,
@@ -258,7 +261,10 @@ class _EventMapScreenState extends State<EventMapScreen> {
           Positioned(
             left: AppTheme.spacingMd,
             right: AppTheme.spacingMd,
-            bottom: AppTheme.spacingMd,
+            // Clear the system navigation bar / gesture area so the field is
+            // never hidden behind the phone's home buttons.
+            bottom: AppTheme.spacingMd +
+                MediaQuery.of(context).viewPadding.bottom,
             child: Material(
               elevation: 4,
               borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
