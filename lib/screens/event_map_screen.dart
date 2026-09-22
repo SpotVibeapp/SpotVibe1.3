@@ -34,6 +34,10 @@ class _EventMapScreenState extends State<EventMapScreen> {
   bool _showGems = true;
   bool _gemsRequested = false;
 
+  /// Label of the area the map was explicitly moved to via search, e.g.
+  /// "El Paso, TX". Null when the map is on the user's GPS / default view.
+  String? _activeAreaLabel;
+
   @override
   void initState() {
     super.initState();
@@ -65,6 +69,7 @@ class _EventMapScreenState extends State<EventMapScreen> {
     }
     _mapController.move(LatLng(place.lat, place.lng), _areaZoom);
     final label = place.state.isNotEmpty ? '${place.city}, ${place.state}' : place.city;
+    setState(() => _activeAreaLabel = label);
     // Load EVENTS for the searched area (the map has its own EventProvider),
     // and Hidden Gems for the same spot so both layers reflect the new place.
     context.read<EventProvider>().searchArea(query);
@@ -166,6 +171,7 @@ class _EventMapScreenState extends State<EventMapScreen> {
             onPressed: () {
               _areaController.clear();
               FocusScope.of(context).unfocus();
+              setState(() => _activeAreaLabel = null);
               // Recenter on the user's GPS point when known, otherwise the
               // national default view.
               final lat = eventProvider.userLat;
@@ -256,6 +262,63 @@ class _EventMapScreenState extends State<EventMapScreen> {
               ],
             ),
           ),
+          // "Showing: {City, ST}" banner — only while an area search is active,
+          // so it's clear the map is not on the user's GPS location. Tapping
+          // the X returns to the user's location (same as the reset button).
+          if (_activeAreaLabel != null)
+            Positioned(
+              top: AppTheme.spacingMd + 44,
+              left: AppTheme.spacingMd,
+              child: Material(
+                elevation: 3,
+                borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                color: colors.primaryContainer,
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    left: AppTheme.spacingSm,
+                    right: AppTheme.spacingXs,
+                    top: 4,
+                    bottom: 4,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.place_rounded,
+                          size: AppTheme.iconSm, color: colors.onPrimaryContainer),
+                      const SizedBox(width: AppTheme.spacingXs),
+                      Text(
+                        'Showing: ${_activeAreaLabel!}',
+                        style: text.labelMedium?.copyWith(
+                          color: colors.onPrimaryContainer,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () {
+                          _areaController.clear();
+                          FocusScope.of(context).unfocus();
+                          setState(() => _activeAreaLabel = null);
+                          final lat = eventProvider.userLat;
+                          final lng = eventProvider.userLng;
+                          if (lat != null && lng != null) {
+                            _mapController.move(LatLng(lat, lng), _areaZoom);
+                          } else {
+                            _mapController.move(_defaultCenter, _defaultZoom);
+                          }
+                        },
+                        customBorder: const CircleBorder(),
+                        child: Padding(
+                          padding: const EdgeInsets.all(2),
+                          child: Icon(Icons.close_rounded,
+                              size: AppTheme.iconSm,
+                              color: colors.onPrimaryContainer),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           // Jump-to-area search (bottom). GPS stays the default center; this
           // lets the user peek at another zip/city/state on demand.
           Positioned(
