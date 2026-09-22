@@ -42,14 +42,17 @@ android {
 
         // AdMob application id baked into the manifest. Defaults to Google's
         // official TEST app id so debug builds and CI never risk a policy strike
-        // from live ads. Provide the real id at build time with either:
-        //   flutter build appbundle --dart-define=ADMOB_APP_ID=ca-app-pub-XXX~YYY
-        //     (Flutter forwards dart-defines to Gradle as `dart-define`… but the
-        //      simplest reliable channel is a gradle property, below)
-        //   or:  -PadmobAppId=ca-app-pub-XXXXXXXX~YYYYYYYY
-        //   or:  add `admobAppId=ca-app-pub-…~…` to android/gradle.properties
-        val admobAppId = (project.findProperty("admobAppId") as String?)
-            ?: "ca-app-pub-3940256099942544~3347511713" // Google TEST app id
+        // from live ads, AND so a blank/typo'd property can never crash the app
+        // at launch with "Missing application ID". Provide the real id via:
+        //   -PadmobAppId=ca-app-pub-XXXXXXXX~YYYYYYYY
+        //   or add `admobAppId=ca-app-pub-…~…` to android/gradle.properties
+        // The id must be the "~" App ID, NOT the "/" ad-unit id.
+        val admobAppIdProp = (project.findProperty("admobAppId") as String?)?.trim()
+        val admobAppId = if (admobAppIdProp.isNullOrBlank()) {
+            "ca-app-pub-3940256099942544~3347511713" // Google TEST app id
+        } else {
+            admobAppIdProp
+        }
         manifestPlaceholders["admobAppId"] = admobAppId
     }
 
