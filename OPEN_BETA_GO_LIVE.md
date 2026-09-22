@@ -3,7 +3,7 @@
 Promote the SAME build through the tracks: closed testing → open testing → (later)
 production. Do the verify steps once; the artifact you verify is the one you ship.
 
-Current: branch `arena/01a07f45-spotvibe1-3`, version **1.0.3+11** (versionCode 11).
+Current: branch `arena/01a07f45-spotvibe1-3`, version **1.0.4+12** (versionCode 12).
 
 ---
 
