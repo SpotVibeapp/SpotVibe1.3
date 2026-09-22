@@ -272,10 +272,7 @@ class ProfileScreen extends StatelessWidget {
                   _SettingsTile(
                     icon: Icons.bug_report_rounded,
                     label: 'Test crash (Crashlytics)',
-                    onTap: () {
-                      FirebaseCrashlytics.instance.log('Manual test crash tile');
-                      throw StateError('SpotVibe test crash (manual)');
-                    },
+                    onTap: () => _triggerTestCrash(context),
                   ),
                 _SettingsTile(
                   icon: Icons.feedback_outlined,
@@ -395,9 +392,54 @@ class ProfileScreen extends StatelessWidget {
 
   /// Opens the user's email app with a pre-filled feedback message to support.
   /// Version/device context is added to the body so reports are actionable.
+  /// Admin-only, non-release diagnostic. In DEBUG builds Crashlytics collection
+  /// is disabled and Flutter catches thrown errors, so a raw `throw` looks like
+  /// "nothing happened". This explains that and lets you force a real fatal
+  /// crash (only meaningful in a profile/release build with Crashlytics on).
+  Future<void> _triggerTestCrash(BuildContext context) async {
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Crashlytics test'),
+        content: Text(
+          kDebugMode
+              ? 'This is a DEBUG build: Crashlytics does not upload reports and '
+                  'Flutter catches the error, so the app will NOT actually '
+                  'close. A test record is logged to the console instead.\n\n'
+                  'To verify real crash reporting, run a PROFILE build '
+                  '(flutter run --profile) and tap this again — the app will '
+                  'close and the crash appears in the Firebase console within '
+                  'a few minutes.'
+              : 'This will immediately close the app on purpose and send a test '
+                  'crash to Firebase Crashlytics. Continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(kDebugMode ? 'Log test record' : 'Crash now'),
+          ),
+        ],
+      ),
+    );
+    if (proceed != true) return;
+
+    FirebaseCrashlytics.instance.log('Manual test crash tile');
+    await FirebaseCrashlytics.instance
+        .recordError(StateError('SpotVibe test crash (manual)'), StackTrace.current,
+            fatal: true);
+    // A hard crash so a profile/release build actually reports a fatal event.
+    // In debug this line is caught by the framework; the recordError above and
+    // the console log still confirm the wiring is reachable.
+    throw StateError('SpotVibe test crash (manual)');
+  }
+
   Future<void> _sendFeedback(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
-    const appVersion = '1.0.2 (10)'; // keep in sync with pubspec version
+    const appVersion = '1.0.3 (11)'; // keep in sync with pubspec version
     final platform = defaultTargetPlatform.name;
     final subject = Uri.encodeComponent('SpotVibe feedback');
     final body = Uri.encodeComponent(

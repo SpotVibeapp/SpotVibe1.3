@@ -134,7 +134,11 @@ class _EmptyStateViewState extends State<EmptyStateView>
       opacity: _fade,
       child: ScaleTransition(
         scale: _scale,
-        child: Center(
+        // Scrollable + centered so the state never overflows on short heights
+        // (landscape, small screens, or large system font sizes).
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: Center(
           child: Padding(
             padding: const EdgeInsets.all(AppTheme.spacingXl),
             child: Column(
@@ -209,6 +213,7 @@ class _EmptyStateViewState extends State<EmptyStateView>
                 ],
               ],
             ),
+          ),
           ),
         ),
       ),

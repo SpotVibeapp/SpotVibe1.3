@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
@@ -32,9 +35,8 @@ class _EventVideoPlayerState extends State<EventVideoPlayer> {
   @override
   void initState() {
     super.initState();
-    if (isDirectVideoUrl(widget.videoUrl)) {
-      final controller =
-          VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+    final controller = _buildController(widget.videoUrl);
+    if (controller != null) {
       _controller = controller;
       controller.addListener(_onControllerUpdate);
       controller.initialize().then((_) {
@@ -45,6 +47,20 @@ class _EventVideoPlayerState extends State<EventVideoPlayer> {
         setState(() => _failed = true);
       });
     }
+  }
+
+  /// Returns an in-app player controller for local device files (picked but not
+  /// yet uploaded) and directly-hosted mp4/mov URLs. Returns null for videos we
+  /// can only open externally (YouTube, Vimeo, etc.).
+  VideoPlayerController? _buildController(String url) {
+    if (!kIsWeb && _isLocalFilePath(url)) {
+      final path = url.startsWith('file://') ? Uri.parse(url).toFilePath() : url;
+      return VideoPlayerController.file(File(path));
+    }
+    if (isDirectVideoUrl(url)) {
+      return VideoPlayerController.networkUrl(Uri.parse(url));
+    }
+    return null;
   }
 
   void _onControllerUpdate() {
@@ -183,6 +199,14 @@ class _EventVideoPlayerState extends State<EventVideoPlayer> {
           ),
       ],
     );
+  }
+
+  /// True when [path] is a device file (not a network URL / bundled asset).
+  static bool _isLocalFilePath(String path) {
+    if (path.startsWith('file://')) return true;
+    if (path.startsWith('http://') || path.startsWith('https://')) return false;
+    if (path.startsWith('assets/')) return false;
+    return path.startsWith('/');
   }
 
   Widget _surface(ColorScheme colors, {required Widget child}) {

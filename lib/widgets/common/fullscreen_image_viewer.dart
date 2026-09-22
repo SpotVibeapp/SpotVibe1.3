@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -147,6 +150,17 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
   }
 }
 
+/// True when [path] points at a file on the device (not a network URL or a
+/// bundled asset). Covers `file://` URIs and absolute native paths returned by
+/// image_picker (e.g. `/data/user/0/...` on Android, `/var/...` on iOS).
+bool _isLocalFilePath(String path) {
+  if (kIsWeb) return false;
+  if (path.startsWith('file://')) return true;
+  if (path.startsWith('http://') || path.startsWith('https://')) return false;
+  if (path.startsWith('assets/')) return false;
+  return path.startsWith('/');
+}
+
 class _FullImage extends StatelessWidget {
   final String url;
   const _FullImage({required this.url});
@@ -161,6 +175,14 @@ class _FullImage extends StatelessWidget {
     if (url.startsWith('assets/')) {
       return Image.asset(
         url,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => error(),
+      );
+    }
+    // Local device files (picked but not yet uploaded) — render from disk.
+    if (_isLocalFilePath(url)) {
+      return Image.file(
+        File(url.startsWith('file://') ? Uri.parse(url).toFilePath() : url),
         fit: BoxFit.contain,
         errorBuilder: (_, __, ___) => error(),
       );

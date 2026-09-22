@@ -22,6 +22,7 @@ import '../services/media_upload_service.dart';
 import '../services/tour_service.dart';
 import '../services/user_event_service.dart';
 import '../theme/theme.dart';
+import '../widgets/common/fullscreen_image_viewer.dart';
 import '../widgets/events/ai_promo_image_dialog.dart';
 import '../widgets/events/event_creation_guide.dart';
 import '../widgets/events/event_media_editor.dart';
@@ -1115,6 +1116,14 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                           ),
                         )
                       : null),
+              onPreviewTap: () {
+                final source = _localCoverPath ??
+                    (_imageUrlController.text.isNotEmpty
+                        ? _imageUrlController.text
+                        : null);
+                if (source == null) return;
+                FullscreenImageViewer.open(context, imageUrls: [source]);
+              },
               onLibrary: () => _pickCover(camera: false),
               onCamera: () => _pickCover(camera: true),
               onClear: (_localCoverPath == null && _imageUrlController.text.isEmpty)
@@ -1662,6 +1671,7 @@ class _MediaPickRow extends StatelessWidget {
   final String subtitle;
   final IconData icon;
   final Widget? preview;
+  final VoidCallback? onPreviewTap;
   final VoidCallback onLibrary;
   final VoidCallback onCamera;
   final VoidCallback? onClear;
@@ -1671,6 +1681,7 @@ class _MediaPickRow extends StatelessWidget {
     required this.subtitle,
     required this.icon,
     this.preview,
+    this.onPreviewTap,
     required this.onLibrary,
     required this.onCamera,
     this.onClear,
@@ -1689,16 +1700,19 @@ class _MediaPickRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-            child: SizedBox(
-              width: 56,
-              height: 56,
-              child: preview ??
-                  Container(
-                    color: colors.primaryContainer,
-                    child: Icon(icon, color: colors.primary),
-                  ),
+          GestureDetector(
+            onTap: preview != null ? onPreviewTap : null,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+              child: SizedBox(
+                width: 56,
+                height: 56,
+                child: preview ??
+                    Container(
+                      color: colors.primaryContainer,
+                      child: Icon(icon, color: colors.primary),
+                    ),
+              ),
             ),
           ),
           const SizedBox(width: AppTheme.spacingMd),

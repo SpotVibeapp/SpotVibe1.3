@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../theme/theme.dart';
+import '../common/fullscreen_image_viewer.dart';
+import 'event_video_player.dart';
 
 /// Media waiting to be saved with an event. A local path is rendered from the
 /// device; a remote URL is an already-uploaded item from an existing event.
@@ -143,6 +145,14 @@ class _DraftMediaTile extends StatelessWidget {
 
   const _DraftMediaTile({required this.item, required this.kind});
 
+  void _open(BuildContext context) {
+    if (kind == EventMediaKind.photo) {
+      FullscreenImageViewer.open(context, imageUrls: [item.source]);
+    } else {
+      _showVideoPreview(context, item.source);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -155,18 +165,21 @@ class _DraftMediaTile extends StatelessWidget {
         fit: StackFit.expand,
         clipBehavior: Clip.none,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-            child: isPhoto
-                ? _DraftPhoto(source: item.source, isLocal: item.isLocal)
-                : Container(
-                    color: colors.primaryContainer,
-                    child: Icon(
-                      Icons.play_circle_fill_rounded,
-                      color: colors.primary,
-                      size: 34,
+          GestureDetector(
+            onTap: () => _open(context),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+              child: isPhoto
+                  ? _DraftPhoto(source: item.source, isLocal: item.isLocal)
+                  : Container(
+                      color: colors.primaryContainer,
+                      child: Icon(
+                        Icons.play_circle_fill_rounded,
+                        color: colors.primary,
+                        size: 34,
+                      ),
                     ),
-                  ),
+            ),
           ),
           Positioned(
             left: 0,
@@ -210,6 +223,35 @@ class _DraftMediaTile extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Opens a picked/attached video in a simple full-width dialog player so the
+/// creator can review it before publishing.
+void _showVideoPreview(BuildContext context, String source) {
+  showDialog<void>(
+    context: context,
+    barrierColor: Colors.black87,
+    builder: (dialogContext) => Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(AppTheme.spacingMd),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          EventVideoPlayer(
+            key: ValueKey(source),
+            videoUrl: source,
+            showTitle: false,
+          ),
+          const SizedBox(height: AppTheme.spacingSm),
+          FilledButton.tonalIcon(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            icon: const Icon(Icons.close_rounded),
+            label: const Text('Close'),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _DraftPhoto extends StatelessWidget {
