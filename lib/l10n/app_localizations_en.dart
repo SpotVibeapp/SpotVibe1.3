@@ -143,6 +143,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNextUp => 'NEXT UP';
 
   @override
+  String get homeWeeklyShowcase => 'Weekly Showcase';
+
+  @override
+  String get homeWeeklyShowcaseSubtitle => 'This week\'s must-see events';
+
+  @override
+  String get homeScrollForMore => 'Scroll for more events';
+
+  @override
   String get quickFilters => 'Quick filters';
 
   @override

@@ -144,6 +144,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get homeNextUp => 'PRÓXIMAMENTE';
 
   @override
+  String get homeWeeklyShowcase => 'Vitrina semanal';
+
+  @override
+  String get homeWeeklyShowcaseSubtitle => 'Los eventos imperdibles de la semana';
+
+  @override
+  String get homeScrollForMore => 'Desliza para ver más eventos';
+
+  @override
   String get quickFilters => 'Filtros rápidos';
 
   @override

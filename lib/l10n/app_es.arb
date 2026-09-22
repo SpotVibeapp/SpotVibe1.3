@@ -43,6 +43,9 @@
   "homeHappeningNearYou": "Eventos cerca de ti",
   "homeEditorialTagline": "TU GUÍA LOCAL",
   "homeNextUp": "PRÓXIMAMENTE",
+  "homeWeeklyShowcase": "Vitrina semanal",
+  "homeWeeklyShowcaseSubtitle": "Los eventos imperdibles de la semana",
+  "homeScrollForMore": "Desliza para ver más eventos",
   "quickFilters": "Filtros rápidos",
   "openEvent": "Abrir {title}",
   "@openEvent": {

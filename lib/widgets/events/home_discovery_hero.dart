@@ -69,14 +69,25 @@ class _DiscoveryHeroCarouselState extends State<DiscoveryHeroCarousel> {
     final events = widget.events;
     if (events.isEmpty) return const SizedBox.shrink();
 
+    final colors = Theme.of(context).colorScheme;
+
+    // A single featured event still gets the branded section header, then the
+    // hero, then the scroll hint — so the "Weekly Showcase" identity and the
+    // "there's more below" cue are consistent whether there are one or many.
     if (events.length == 1) {
-      return HomeDiscoveryHero(
-        event: events.first,
-        onTap: () => widget.onTap(events.first),
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const _ShowcaseHeader(),
+          HomeDiscoveryHero(
+            event: events.first,
+            onTap: () => widget.onTap(events.first),
+          ),
+          const _ScrollForMoreHint(),
+        ],
       );
     }
 
-    final colors = Theme.of(context).colorScheme;
     // Match the hero's own height math so the carousel viewport fits snugly.
     final textScale = MediaQuery.textScalerOf(context).scale(1);
     final heroHeight = 214 + ((textScale - 1).clamp(0.0, 1.0) * 72).toDouble();
@@ -87,6 +98,7 @@ class _DiscoveryHeroCarouselState extends State<DiscoveryHeroCarousel> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        const _ShowcaseHeader(),
         SizedBox(
           height: carouselHeight,
           child: PageView.builder(
@@ -124,7 +136,157 @@ class _DiscoveryHeroCarouselState extends State<DiscoveryHeroCarousel> {
             }),
           ),
         ),
+        const _ScrollForMoreHint(),
       ],
+    );
+  }
+}
+
+/// A bold, exciting section header that gives the showcase a distinct identity
+/// (instead of a plain "NEXT UP" label) and signals it is a curated highlight.
+class _ShowcaseHeader extends StatelessWidget {
+  const _ShowcaseHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppTheme.spacingMd,
+        AppTheme.spacingSm,
+        AppTheme.spacingMd,
+        0,
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  colors.primary,
+                  colors.tertiary,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(AppTheme.radiusSmall + 2),
+              boxShadow: [
+                BoxShadow(
+                  color: colors.primary.withValues(alpha: 0.32),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.auto_awesome_rounded,
+              color: Colors.white,
+              size: AppTheme.iconSm + 2,
+            ),
+          ),
+          const SizedBox(width: AppTheme.spacingSm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.homeWeeklyShowcase,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: text.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                Text(
+                  l10n.homeWeeklyShowcaseSubtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: text.labelSmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A gently animated "there's more below" cue. It bounces a down-chevron so it
+/// is obvious the showcase is only the top of a scrollable feed.
+class _ScrollForMoreHint extends StatefulWidget {
+  const _ScrollForMoreHint();
+
+  @override
+  State<_ScrollForMoreHint> createState() => _ScrollForMoreHintState();
+}
+
+class _ScrollForMoreHintState extends State<_ScrollForMoreHint>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1100),
+  )..repeat(reverse: true);
+
+  late final Animation<double> _bounce = Tween<double>(begin: 0, end: 6).animate(
+    CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
+
+    return Semantics(
+      label: l10n.homeScrollForMore,
+      child: Padding(
+        padding: const EdgeInsets.only(
+          top: AppTheme.spacingXs,
+          bottom: AppTheme.spacingSm,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              l10n.homeScrollForMore,
+              style: text.labelMedium?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+              ),
+            ),
+            const SizedBox(width: AppTheme.spacingXs),
+            AnimatedBuilder(
+              animation: _bounce,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(0, _bounce.value),
+                  child: child,
+                );
+              },
+              child: Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: colors.primary,
+                size: AppTheme.iconMd,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

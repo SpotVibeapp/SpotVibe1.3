@@ -43,6 +43,9 @@
   "homeHappeningNearYou": "Happening near you",
   "homeEditorialTagline": "THE LOCAL EDIT",
   "homeNextUp": "NEXT UP",
+  "homeWeeklyShowcase": "Weekly Showcase",
+  "homeWeeklyShowcaseSubtitle": "This week's must-see events",
+  "homeScrollForMore": "Scroll for more events",
   "quickFilters": "Quick filters",
   "openEvent": "Open {title}",
   "@openEvent": {

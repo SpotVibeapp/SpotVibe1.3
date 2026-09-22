@@ -356,6 +356,24 @@ abstract class AppLocalizations {
   /// **'NEXT UP'**
   String get homeNextUp;
 
+  /// No description provided for @homeWeeklyShowcase.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly Showcase'**
+  String get homeWeeklyShowcase;
+
+  /// No description provided for @homeWeeklyShowcaseSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This week\'s must-see events'**
+  String get homeWeeklyShowcaseSubtitle;
+
+  /// No description provided for @homeScrollForMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Scroll for more events'**
+  String get homeScrollForMore;
+
   /// No description provided for @quickFilters.
   ///
   /// In en, this message translates to:
