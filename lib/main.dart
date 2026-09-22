@@ -170,7 +170,7 @@ class _BootAppState extends State<_BootApp> {
 
     final Widget next;
     if (backend == null) {
-      next = _BackendUnavailableApp(onRetry: main);
+      next = _BackendUnavailableApp(onRetry: () async { main(); });
     } else {
       next = SpotVibeApp(
         userRepository: backend.users,
