@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
@@ -9,6 +11,7 @@ import '../models/event.dart';
 import '../models/gem.dart';
 import '../providers/event_provider.dart';
 import '../providers/gem_provider.dart';
+import '../services/event_service.dart';
 import '../services/maps_service.dart';
 import '../theme/theme.dart';
 
@@ -21,9 +24,11 @@ class EventMapScreen extends StatefulWidget {
 
 class _EventMapScreenState extends State<EventMapScreen> {
   final _mapController = MapController();
+  final _areaController = TextEditingController();
   // Default center: contiguous USA centroid
   static const _defaultCenter = LatLng(39.5, -98.35);
   static const _defaultZoom = 4.5;
+  static const _areaZoom = 11.0;
 
   bool _showEvents = true;
   bool _showGems = true;
@@ -38,7 +43,35 @@ class _EventMapScreenState extends State<EventMapScreen> {
   @override
   void dispose() {
     _mapController.dispose();
+    _areaController.dispose();
     super.dispose();
+  }
+
+  /// Jumps the map camera to a typed area (zip, city, or state). GPS remains the
+  /// default center; this is an explicit, on-demand move so the user can peek at
+  /// another area without changing their location. Also loads Hidden Gems for
+  /// that spot so both layers reflect the searched place.
+  void _jumpToArea() {
+    final query = _areaController.text.trim();
+    if (query.isEmpty) return;
+    FocusScope.of(context).unfocus();
+    final place = resolvePlaceCoordinates(query);
+    final messenger = ScaffoldMessenger.of(context);
+    if (place == null) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Could not find "$query". Try a city, state, or zip.')),
+      );
+      return;
+    }
+    _mapController.move(LatLng(place.lat, place.lng), _areaZoom);
+    final label = place.state.isNotEmpty ? '${place.city}, ${place.state}' : place.city;
+    unawaited(
+      context.read<GemProvider>().loadForCoordinates(
+            lat: place.lat,
+            lng: place.lng,
+            label: label,
+          ),
+    );
   }
 
   /// Load gems for the same area the event feed is showing: the user's GPS
@@ -127,7 +160,19 @@ class _EventMapScreenState extends State<EventMapScreen> {
         ),
         actions: [
           IconButton(
-            onPressed: () => _mapController.move(_defaultCenter, _defaultZoom),
+            onPressed: () {
+              _areaController.clear();
+              FocusScope.of(context).unfocus();
+              // Recenter on the user's GPS point when known, otherwise the
+              // national default view.
+              final lat = eventProvider.userLat;
+              final lng = eventProvider.userLng;
+              if (lat != null && lng != null) {
+                _mapController.move(LatLng(lat, lng), _areaZoom);
+              } else {
+                _mapController.move(_defaultCenter, _defaultZoom);
+              }
+            },
             icon: const Icon(Icons.my_location_rounded),
             tooltip: l10n.mapResetView,
           ),
@@ -206,6 +251,43 @@ class _EventMapScreenState extends State<EventMapScreen> {
                   onTap: () => setState(() => _showGems = !_showGems),
                 ),
               ],
+            ),
+          ),
+          // Jump-to-area search (bottom). GPS stays the default center; this
+          // lets the user peek at another zip/city/state on demand.
+          Positioned(
+            left: AppTheme.spacingMd,
+            right: AppTheme.spacingMd,
+            bottom: AppTheme.spacingMd,
+            child: Material(
+              elevation: 4,
+              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+              color: colors.surface,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingSm),
+                child: Row(
+                  children: [
+                    Icon(Icons.travel_explore_rounded,
+                        color: colors.onSurfaceVariant, size: AppTheme.iconMd),
+                    const SizedBox(width: AppTheme.spacingSm),
+                    Expanded(
+                      child: TextField(
+                        controller: _areaController,
+                        textInputAction: TextInputAction.search,
+                        onSubmitted: (_) => _jumpToArea(),
+                        decoration: InputDecoration(
+                          hintText: l10n.areaHint,
+                          border: InputBorder.none,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _jumpToArea,
+                      child: const Text('Go'),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
           if (eventProvider.isLoading || gemProvider.isLoading)
