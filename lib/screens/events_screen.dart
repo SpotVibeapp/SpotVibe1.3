@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../data/el_paso_events.dart';
 import '../l10n/app_localizations.dart';
+import '../models/event.dart';
 import '../providers/personalization_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/event_provider.dart';
@@ -704,36 +705,41 @@ class _EventsList extends StatelessWidget {
       );
     }
 
-    // The hero only belongs to the unfiltered discovery feed. Search and
-    // category results should get users directly to their requested results.
-    final showDiscoveryHero =
-        eventProvider.searchQuery.isEmpty &&
-        eventProvider.selectedCategory == 'All' &&
+    // The showcase belongs on the browse feed (home "All" and any category),
+    // but not on a text search or a filtered result — those should take users
+    // straight to what they asked for. It only appears when there is genuine
+    // Premium value to show (featured/live events); otherwise the feed starts
+    // with its normal cards instead of a filler card at the head of the page.
+    final showShowcase = eventProvider.searchQuery.isEmpty &&
         eventProvider.activeFilterCount == 0;
-    final heroEvent = showDiscoveryHero
-        ? selectDiscoveryHeroEvent(eventProvider.events)
-        : null;
+    final heroEvents = showShowcase
+        ? selectFeaturedHeroEvents(eventProvider.events)
+        : const <Event>[];
+    // Quick filters only make sense on the unfiltered "All" home feed.
+    final showQuickFilters = eventProvider.selectedCategory == 'All';
+    final heroIds = heroEvents.map((e) => e.id).toSet();
 
     return PaginatedEventsList(
       eventProvider: eventProvider,
       personalization: personalization,
       firstCardKey: firstCardKey,
       sectionTitle: l10n.homeHappeningNearYou,
-      // Do not repeat the hero card directly below itself. Keep the only
-      // event visible in both places so a one-event feed never looks empty.
-      excludedEventId: heroEvent != null && eventProvider.events.length > 1
-          ? heroEvent.id
-          : null,
+      // Do not repeat a showcased card directly below itself, unless removing
+      // it would empty the feed (a tiny one-event feed still shows its card).
+      excludedEventIds: eventProvider.events.length > heroIds.length
+          ? heroIds
+          : const <String>{},
       feedHeader: [
-        if (heroEvent != null)
-          HomeDiscoveryHero(
-            event: heroEvent,
-            onTap: () {
-              personalization.recordView(heroEvent);
-              context.push('/event/${heroEvent.id}', extra: heroEvent);
+        if (heroEvents.isNotEmpty)
+          DiscoveryHeroCarousel(
+            events: heroEvents,
+            onTap: (event) {
+              personalization.recordView(event);
+              context.push('/event/${event.id}', extra: event);
             },
           ),
-        HomeQuickFilters(
+        if (showQuickFilters)
+          HomeQuickFilters(
           isTodaySelected: eventProvider.filterDate == 'today',
           isWeekendSelected: eventProvider.filterDate == 'this_weekend',
           isFreeSelected:

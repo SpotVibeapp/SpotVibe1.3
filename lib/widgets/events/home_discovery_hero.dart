@@ -9,20 +9,126 @@ import '../../theme/category_colors.dart';
 import '../../theme/theme.dart';
 import '../common/event_image_placeholder.dart';
 
-/// Picks the one genuine listing that receives the prominent home placement.
+/// Picks the genuine listings that receive the prominent showcase placement.
 ///
-/// A listing explicitly featured for the current week always wins. When there
-/// is no paid/featured listing, the first event already ranked by the feed is
-/// used instead. This deliberately never creates a placeholder event or
-/// fabricates popularity data.
-Event? selectDiscoveryHeroEvent(List<Event> events, {DateTime? now}) {
+/// Only real Premium value is showcased: events explicitly **featured for the
+/// current week** (the paid "Featured placement" perk) and events **happening
+/// right now**. Featured listings come first, then live ones, de-duplicated and
+/// capped at [max]. When nothing qualifies the list is empty, so the feed simply
+/// starts with its normal cards instead of a filler "NEXT UP" card that made the
+/// top event look duplicated.
+///
+/// The input [events] is already filtered by the active category, so this works
+/// on both the "All" home feed and inside a specific category.
+List<Event> selectFeaturedHeroEvents(
+  List<Event> events, {
+  DateTime? now,
+  int max = 6,
+}) {
+  final featured = <Event>[];
+  final live = <Event>[];
   for (final event in events) {
     if (isFeaturedInCurrentWeek(event.featuredWeekKey, now: now)) {
-      return event;
+      featured.add(event);
+    } else if (event.isHappeningNow) {
+      live.add(event);
     }
   }
-  return events.isEmpty ? null : events.first;
+  final ordered = <Event>[...featured, ...live];
+  return ordered.length > max ? ordered.sublist(0, max) : ordered;
 }
+
+/// A swipeable showcase of the featured/live [events]. Renders a single hero
+/// when there is one, or a paged carousel with dots when there are several.
+class DiscoveryHeroCarousel extends StatefulWidget {
+  final List<Event> events;
+  final void Function(Event event) onTap;
+
+  const DiscoveryHeroCarousel({
+    super.key,
+    required this.events,
+    required this.onTap,
+  });
+
+  @override
+  State<DiscoveryHeroCarousel> createState() => _DiscoveryHeroCarouselState();
+}
+
+class _DiscoveryHeroCarouselState extends State<DiscoveryHeroCarousel> {
+  final _controller = PageController(viewportFraction: 0.94);
+  int _page = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final events = widget.events;
+    if (events.isEmpty) return const SizedBox.shrink();
+
+    if (events.length == 1) {
+      return HomeDiscoveryHero(
+        event: events.first,
+        onTap: () => widget.onTap(events.first),
+      );
+    }
+
+    final colors = Theme.of(context).colorScheme;
+    // Match the hero's own height math so the carousel viewport fits snugly.
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
+    final heroHeight = 214 + ((textScale - 1).clamp(0.0, 1.0) * 72).toDouble();
+    // Hero outer vertical padding is spacingSm (top) + spacingXs (bottom).
+    final carouselHeight =
+        heroHeight + AppTheme.spacingSm + AppTheme.spacingXs;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: carouselHeight,
+          child: PageView.builder(
+            controller: _controller,
+            itemCount: events.length,
+            onPageChanged: (i) => setState(() => _page = i),
+            itemBuilder: (context, index) {
+              final event = events[index];
+              return HomeDiscoveryHero(
+                event: event,
+                onTap: () => widget.onTap(event),
+              );
+            },
+          ),
+        ),
+        // Page dots.
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppTheme.spacingXs),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(events.length, (index) {
+              final active = index == _page;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                width: active ? 18 : 6,
+                height: 6,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  color: active
+                      ? colors.primary
+                      : colors.outlineVariant,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                ),
+              );
+            }),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 
 /// A compact, image-led entry point for the normal unfiltered home feed.
 ///

@@ -29,10 +29,10 @@ class PaginatedEventsList extends StatefulWidget {
   /// Optional title shown above the accurate feed-count label.
   final String? sectionTitle;
 
-  /// A real event already displayed in a prominent header can be omitted from
-  /// the card list below it, so people are not shown the exact same listing
+  /// Real events already displayed in a prominent header can be omitted from
+  /// the card list below it, so people are not shown the exact same listings
   /// twice in a row.
-  final String? excludedEventId;
+  final Set<String> excludedEventIds;
 
   /// Attached to the first event card so the guided tour can spotlight it.
   final GlobalKey? firstCardKey;
@@ -47,7 +47,7 @@ class PaginatedEventsList extends StatefulWidget {
     required this.onEventTap,
     this.feedHeader = const [],
     this.sectionTitle,
-    this.excludedEventId,
+    this.excludedEventIds = const <String>{},
     this.firstCardKey,
   });
 
@@ -77,10 +77,10 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
   }
 
   List<Event> get _all {
-    final excludedEventId = widget.excludedEventId;
-    if (excludedEventId == null) return widget.eventProvider.events;
+    final excluded = widget.excludedEventIds;
+    if (excluded.isEmpty) return widget.eventProvider.events;
     return widget.eventProvider.events
-        .where((event) => event.id != excludedEventId)
+        .where((event) => !excluded.contains(event.id))
         .toList(growable: false);
   }
 
@@ -130,7 +130,10 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
     final page = _pageEvents;
     final provider = widget.eventProvider;
 
-    final headerCount = widget.feedHeader.length;
+    // The discovery header (showcase carousel, quick filters) belongs to the
+    // first page only — repeating it atop pages 2, 3, … made the feed feel like
+    // it kept reloading. Later pages start straight at the count banner.
+    final headerCount = _currentPage == 0 ? widget.feedHeader.length : 0;
     // Licence condition: any page showing a JamBase row ends with a
     // "Powered by JamBase" link. Empty for pages without one.
     final showAttribution = JamBaseAttribution.needed(page);

@@ -33,23 +33,21 @@ Widget _testApp(Widget child) {
 }
 
 void main() {
-  group('selectDiscoveryHeroEvent', () {
+  group('selectFeaturedHeroEvents', () {
     final now = DateTime(2026, 9, 4, 12);
 
-    test('prioritizes a real event featured in the current week', () {
+    test('includes only events featured in the current week', () {
       final first = _event('first');
       final featured = _event(
         'featured',
         featuredWeekKey: isoWeekKey(now),
       );
 
-      expect(
-        selectDiscoveryHeroEvent([first, featured], now: now),
-        same(featured),
-      );
+      final result = selectFeaturedHeroEvents([first, featured], now: now);
+      expect(result, [same(featured)]);
     });
 
-    test('falls back to the feed-ranked event instead of inventing one', () {
+    test('does NOT fall back to a plain first event (no filler showcase)', () {
       final first = _event('first');
       final staleFeatured = _event(
         'stale',
@@ -57,13 +55,27 @@ void main() {
       );
 
       expect(
-        selectDiscoveryHeroEvent([first, staleFeatured], now: now),
-        same(first),
+        selectFeaturedHeroEvents([first, staleFeatured], now: now),
+        isEmpty,
       );
     });
 
-    test('returns no hero event when the feed is empty', () {
-      expect(selectDiscoveryHeroEvent(const <Event>[], now: now), isNull);
+    test('returns an empty list when the feed is empty', () {
+      expect(selectFeaturedHeroEvents(const <Event>[], now: now), isEmpty);
+    });
+
+    test('caps the carousel and keeps featured before live', () {
+      final featured = List.generate(
+        3,
+        (i) => _event('f$i', featuredWeekKey: isoWeekKey(now)),
+      );
+      final result = selectFeaturedHeroEvents(
+        [_event('plain'), ...featured],
+        now: now,
+        max: 2,
+      );
+      expect(result.length, 2);
+      expect(result.every((e) => e.id.startsWith('f')), isTrue);
     });
   });
 
