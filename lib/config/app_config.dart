@@ -12,7 +12,7 @@ class AppConfig {
   ///  - Firebase Authentication → Sign-in method → Google enabled
   ///  - Android: google-services.json with the web client ID + SHA-1/SHA-256
   ///  - iOS: GoogleService-Info.plist + reversed client ID URL scheme
-  static const bool enableGoogleSignIn = false;
+  static const bool enableGoogleSignIn = true;
 
   /// Enable only after Facebook Login is fully configured:
   ///  - Firebase Authentication → Sign-in method → Facebook enabled
