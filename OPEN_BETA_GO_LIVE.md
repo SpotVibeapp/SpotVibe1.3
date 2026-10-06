@@ -3,7 +3,7 @@
 Promote the SAME build through the tracks: closed testing → open testing → (later)
 production. Do the verify steps once; the artifact you verify is the one you ship.
 
-Current: branch `arena/01a07f45-spotvibe1-3`, version **1.0.4+12** (versionCode 12).
+Current: branch `arena/01a07f45-spotvibe1-3`, version **1.0.5+13** (versionCode 13).
 
 ---
 
@@ -42,7 +42,7 @@ flutter build appbundle --release --dart-define-from-file=secrets.json
 
 - [ ] **Do NOT pass `REVIEWER_PREMIUM_EMAIL`** (omit for open beta AND prod).
 - [ ] Uses the **rotated** Ticketmaster key in secrets.json.
-- [ ] versionCode is 11 (unused). Bump if Play says it's taken.
+- [ ] versionCode is 13 (unused). Bump if Play says it's taken.
 
 ## D. Google Play Console — declarations (ads are now on)
 
