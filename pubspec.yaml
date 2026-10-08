@@ -1,8 +1,8 @@
 name: spotvibe_app
-description: SpotVibe — local events discovery app
+description: "SpotVibe - local events discovery app"
 publish_to: 'none'
 
-version: 1.0.5+13
+version: 1.0.14+14
 
 environment:
   sdk: ^3.7.2
@@ -52,7 +52,7 @@ dependencies:
   # v9+ uses Google Play Billing Library 8, required for new Play submissions.
   purchases_flutter: ^9.10.2
 
-  # Social sign-in (buttons hidden until each provider is configured —
+  # Social sign-in (buttons hidden until each provider is configured -
   # see lib/config/app_config.dart)
   google_sign_in: ^6.2.2
   flutter_facebook_auth: ^7.1.1
