@@ -1,13 +1,10 @@
-import 'dart:convert';
-import 'dart:math';
-
-import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../models/user.dart';
 import '../repositories/user_repository.dart';
+import 'apple_reauth.dart';
 import 'apple_sign_in_profile.dart';
 
 /// Orchestrates sign-in flows on top of a [UserRepository] (Firebase in
@@ -70,8 +67,8 @@ class AuthService {
     // Apple requires a nonce: we send the SHA-256 of a random raw nonce to
     // Apple, then hand the raw nonce to Firebase so it can verify the
     // returned identity token (prevents token replay attacks).
-    final rawNonce = _generateNonce();
-    final nonceSha256 = sha256.convert(utf8.encode(rawNonce)).toString();
+    final rawNonce = generateAppleNonce();
+    final nonceSha256 = sha256OfNonce(rawNonce);
 
     final credential = await SignInWithApple.getAppleIDCredential(
       scopes: [
@@ -179,16 +176,5 @@ class AuthService {
       throw ArgumentError('Display name must be 100 characters or fewer.');
     }
     return _repository.updateDisplayName(trimmed);
-  }
-
-  /// Cryptographically secure random nonce for Apple Sign-In.
-  static String _generateNonce([int length = 32]) {
-    const charset =
-        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
-    final random = Random.secure();
-    return List.generate(
-      length,
-      (_) => charset[random.nextInt(charset.length)],
-    ).join();
   }
 }

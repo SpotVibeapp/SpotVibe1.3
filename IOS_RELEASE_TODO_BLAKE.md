@@ -23,10 +23,25 @@ Everything below needs your accounts, a Mac, or console access.
 ## 2. Sign in with Apple
 1. developer.apple.com → Identifiers → `app.spotvibe` → enable **Sign in with Apple**.
 2. Firebase Console → Authentication → Sign-in method → **Apple** → Enable.
-   (For iOS-only native sign-in no Services ID/key is required; add them only
-   if you later offer Apple sign-in on Android/web.)
+   Native iOS sign-in alone works without a Services ID/key, **but account
+   deletion revokes the user's Apple token (Guideline 5.1.1(v)), and Firebase
+   can only do that with the OAuth code flow configuration filled in:**
+   - developer.apple.com → Identifiers → **Services IDs** → create one (e.g.
+     `app.spotvibe.signin`), enable Sign in with Apple, and set the return URL
+     to the one shown on the Firebase Apple provider page
+     (`https://<project>.firebaseapp.com/__/auth/handler`).
+   - developer.apple.com → **Keys** → create a key with Sign in with Apple
+     enabled (primary App ID `app.spotvibe`) and download the `.p8` (one-time).
+   - Firebase Apple provider → OAuth code flow configuration: enter the
+     Services ID, Apple Team ID, Key ID, and paste the `.p8` private key. Save.
+   No Cloud Function is needed; Firebase Auth calls Apple's revoke endpoint.
+   Without this step deletion still works, but the token is not revoked
+   (the failure is only logged).
 3. Test on a real device: sign in, cancel (should silently return), and sign
    in again (Apple only sends name/email the first time).
+4. Test deletion: Profile → Delete Account → Apple sheet appears → confirm →
+   account is deleted, and Settings → Apple ID → Sign in with Apple no longer
+   lists SpotVibe. Cancelling the Apple sheet must leave the account intact.
 
 ## 3. Google Sign-In on iOS
 After step 1, run on the Mac:

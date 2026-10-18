@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../models/user.dart';
+import '../services/account_deletion_flow.dart';
+import '../services/apple_reauth.dart';
 import '../services/apple_sign_in_profile.dart';
 import 'user_repository.dart';
 
@@ -22,12 +24,25 @@ import 'user_repository.dart';
 /// Errors are converted to user-friendly [Exception]s via
 /// [messageForAuthException] so the UI can show them directly.
 class FirebaseUserRepository implements UserRepository {
-  FirebaseUserRepository({FirebaseAuth? auth, FirebaseFirestore? firestore})
-      : _auth = auth ?? FirebaseAuth.instance,
-        _db = firestore ?? FirebaseFirestore.instance;
+  FirebaseUserRepository({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+    Future<AppleDeletionAuthorization> Function()? requestAppleAuthorization,
+    bool? appleAuthorizationSupported,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _db = firestore ?? FirebaseFirestore.instance,
+        _requestAppleAuthorization =
+            requestAppleAuthorization ?? requestAppleAuthorizationForDeletion,
+        _appleAuthorizationSupported = appleAuthorizationSupported ??
+            (!kIsWeb &&
+                (defaultTargetPlatform == TargetPlatform.iOS ||
+                    defaultTargetPlatform == TargetPlatform.macOS));
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _db;
+  final Future<AppleDeletionAuthorization> Function()
+      _requestAppleAuthorization;
+  final bool _appleAuthorizationSupported;
 
   CollectionReference<Map<String, dynamic>> get _users =>
       _db.collection('users');
@@ -223,40 +238,59 @@ class FirebaseUserRepository implements UserRepository {
     final user = _auth.currentUser;
     if (user == null) throw Exception('No signed-in account to delete.');
 
-    // Re-authenticate email/password accounts before a destructive op.
+    Future<void> Function()? passwordReauth;
     if (password != null && password.isNotEmpty) {
-      final email = user.email;
-      if (email == null || email.isEmpty) {
-        throw Exception('This account has no email/password to verify.');
-      }
-      try {
-        await user.reauthenticateWithCredential(
-          EmailAuthProvider.credential(email: email, password: password),
-        );
-      } on FirebaseAuthException catch (e) {
-        throw Exception(messageForAuthException(e));
-      }
+      passwordReauth = () async {
+        final email = user.email;
+        if (email == null || email.isEmpty) {
+          throw Exception('This account has no email/password to verify.');
+        }
+        try {
+          await user.reauthenticateWithCredential(
+            EmailAuthProvider.credential(email: email, password: password),
+          );
+        } on FirebaseAuthException catch (e) {
+          throw Exception(messageForAuthException(e));
+        }
+      };
     }
 
-    // Purge Firestore data first (while still authenticated, so security
-    // rules allow the deletes).
-    try {
-      await _purgeUserData(user.uid);
-    } catch (e) {
-      debugPrint('Client-side purge incomplete ($e). '
-          'The deleteUser Cloud Function performs authoritative cleanup.');
-    }
-
-    try {
-      await user.delete();
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'requires-recent-login') {
-        throw Exception(
-          'For security, sign out and sign back in, then delete your account again.',
-        );
-      }
-      throw Exception(messageForAuthException(e));
-    }
+    final flow = AccountDeletionFlow(
+      providerIds: [for (final info in user.providerData) info.providerId],
+      appleAuthorizationSupported: _appleAuthorizationSupported,
+      reauthenticateWithPassword: passwordReauth,
+      requestAppleAuthorization: _requestAppleAuthorization,
+      reauthenticateWithApple: (apple) async {
+        try {
+          await user.reauthenticateWithCredential(
+            OAuthProvider('apple.com').credential(
+              idToken: apple.identityToken,
+              rawNonce: apple.rawNonce,
+            ),
+          );
+        } on FirebaseAuthException catch (e) {
+          throw Exception(
+            'Could not confirm your Apple account, so it was not deleted. '
+            '${messageForAuthException(e)}',
+          );
+        }
+      },
+      revokeAppleToken: _auth.revokeTokenWithAuthorizationCode,
+      purgeUserData: () => _purgeUserData(user.uid),
+      deleteAuthUser: () async {
+        try {
+          await user.delete();
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'requires-recent-login') {
+            throw Exception(
+              'For security, sign out and sign back in, then delete your account again.',
+            );
+          }
+          throw Exception(messageForAuthException(e));
+        }
+      },
+    );
+    await flow.run();
   }
 
   /// Best-effort client-side cleanup of all Firestore docs owned by [uid].
