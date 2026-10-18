@@ -150,7 +150,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get homeWeeklyShowcase => 'Vitrina semanal';
 
   @override
-  String get homeWeeklyShowcaseSubtitle => 'Los eventos imperdibles de la semana';
+  String get homeWeeklyShowcaseSubtitle =>
+      'Los eventos imperdibles de la semana';
 
   @override
   String get homeScrollForMore => 'Desliza para ver más eventos';
@@ -2121,7 +2122,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get gemsSubtitle =>
-      'Lugares locales pasados por alto que vale la pena descubrir';
+      'Lugares locales que vale la pena descubrir, compartidos por la comunidad';
 
   @override
   String get gemsSearchHint => 'Buscar una ciudad';
@@ -2224,7 +2225,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gemSubmitting => 'Compartiendo…';
 
   @override
-  String get gemSubmitSuccess => 'Tu joya está publicada. ¡Gracias por compartir!';
+  String get gemSubmitSuccess =>
+      'Tu joya está publicada. ¡Gracias por compartir!';
 
   @override
   String get gemSubmitRejected =>
@@ -2251,7 +2253,7 @@ class AppLocalizationsEs extends AppLocalizations {
       one: '1 me gusta',
       zero: 'Sin me gusta',
     );
-    return _temp0;
+    return '$_temp0';
   }
 
   @override
@@ -2263,7 +2265,7 @@ class AppLocalizationsEs extends AppLocalizations {
       one: '1 comentario',
       zero: 'Sin comentarios',
     );
-    return _temp0;
+    return '$_temp0';
   }
 
   @override

@@ -2096,7 +2096,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gemsTitle => 'Hidden Gems';
 
   @override
-  String get gemsSubtitle => 'Overlooked local places worth discovering';
+  String get gemsSubtitle =>
+      'Local places worth discovering, shared by the community';
 
   @override
   String get gemsSearchHint => 'Search a city';
@@ -2222,7 +2223,7 @@ class AppLocalizationsEn extends AppLocalizations {
       one: '1 like',
       zero: 'No likes',
     );
-    return _temp0;
+    return '$_temp0';
   }
 
   @override
@@ -2234,7 +2235,7 @@ class AppLocalizationsEn extends AppLocalizations {
       one: '1 comment',
       zero: 'No comments',
     );
-    return _temp0;
+    return '$_temp0';
   }
 
   @override
@@ -2251,7 +2252,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your comment couldn\'t be posted because it may violate our community guidelines.';
 
   @override
-  String get gemCommentError => 'Couldn\'t post your comment. Please try again.';
+  String get gemCommentError =>
+      'Couldn\'t post your comment. Please try again.';
 
   @override
   String gemAddedBy(String name) {

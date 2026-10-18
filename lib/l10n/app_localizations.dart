@@ -3832,7 +3832,7 @@ abstract class AppLocalizations {
   /// No description provided for @gemsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Overlooked local places worth discovering'**
+  /// **'Local places worth discovering, shared by the community'**
   String get gemsSubtitle;
 
   /// No description provided for @gemsSearchHint.
@@ -3862,19 +3862,19 @@ abstract class AppLocalizations {
   /// No description provided for @gemsEmptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'No gems found here yet'**
+  /// **'No gems here yet'**
   String get gemsEmptyTitle;
 
   /// No description provided for @gemsEmptySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Try a nearby city, or use your location to explore overlooked local spots around you.'**
+  /// **'Be the first to share a hidden gem in this area.'**
   String get gemsEmptySubtitle;
 
   /// No description provided for @gemsAttribution.
   ///
   /// In en, this message translates to:
-  /// **'Places from OpenStreetMap contributors'**
+  /// **'Shared by the SpotVibe community'**
   String get gemsAttribution;
 
   /// No description provided for @gemsGoodToKnow.
