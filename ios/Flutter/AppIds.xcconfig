@@ -1,0 +1,13 @@
+// Per-build iOS identifiers that are NOT secrets but differ per account.
+//
+// Defaults below are SAFE PLACEHOLDERS. Put real values in
+// ios/Flutter/AppIds.local.xcconfig (gitignored), e.g.:
+//   ADMOB_IOS_APP_ID = ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY
+// A Release build fails (Profile warns) while a placeholder is still in use;
+// see the "Check iOS App IDs" build phase and IOS_RELEASE_TODO_BLAKE.md.
+
+// TODO(Blake): real iOS AdMob app id (AdMob console -> Apps -> SpotVibe iOS).
+// Default = Google's official SAMPLE app id; fine for Debug only.
+ADMOB_IOS_APP_ID = ca-app-pub-3940256099942544~1458002511
+
+#include? "AppIds.local.xcconfig"
