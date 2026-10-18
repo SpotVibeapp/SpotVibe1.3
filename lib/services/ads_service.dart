@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import 'tracking_consent_service.dart';
+
 /// Central place for AdMob configuration and one-time SDK initialization.
 ///
 /// Ad unit ids come from `--dart-define` so the real ids are supplied at build
@@ -41,6 +43,13 @@ class AdsService {
     if (defaultTargetPlatform == TargetPlatform.iOS) return _banneriOS;
     return _bannerAndroid;
   }
+
+  /// The ad request to use for every ad. On iOS, when the user has not
+  /// authorized tracking (ATT), ads are requested as non-personalized (npa=1).
+  /// On Android this is identical to the previous `const AdRequest()`.
+  static AdRequest get adRequest => TrackingConsentService.trackingAuthorized
+      ? const AdRequest()
+      : const AdRequest(nonPersonalizedAds: true);
 
   static bool _initialized = false;
 
