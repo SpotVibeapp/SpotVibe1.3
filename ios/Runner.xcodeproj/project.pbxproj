@@ -190,7 +190,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Fails Release builds (warns in Profile) while placeholder app ids remain.\nSAMPLE_ADMOB=\"ca-app-pub-3940256099942544~1458002511\"\nlevel=\"\"\ncase \"$CONFIGURATION\" in Release) level=error ;; Profile) level=warning ;; esac\n[ -z \"$level\" ] && exit 0\nfail=0\nif [ \"$ADMOB_IOS_APP_ID\" = \"$SAMPLE_ADMOB\" ] || [ -z \"$ADMOB_IOS_APP_ID\" ]; then\n  echo \"$level: ADMOB_IOS_APP_ID is still Google's sample id. Set it in ios/Flutter/AppIds.local.xcconfig (see IOS_RELEASE_TODO_BLAKE.md).\"\n  fail=1\nfi\nif [ \"$level\" = error ] && [ $fail -ne 0 ]; then exit 1; fi\nexit 0\n";
+			shellScript = "# Fails Release builds (warns in Profile) while placeholder app ids remain.\nSAMPLE_ADMOB=\"ca-app-pub-3940256099942544~1458002511\"\nlevel=\"\"\ncase \"$CONFIGURATION\" in Release) level=error ;; Profile) level=warning ;; esac\n[ -z \"$level\" ] && exit 0\nfail=0\nif [ \"$ADMOB_IOS_APP_ID\" = \"$SAMPLE_ADMOB\" ] || [ -z \"$ADMOB_IOS_APP_ID\" ]; then\n  echo \"$level: ADMOB_IOS_APP_ID is still Google's sample id. Set it in ios/Flutter/AppIds.local.xcconfig (see IOS_RELEASE_TODO_BLAKE.md).\"\n  fail=1\nfi\ncase \"$GOOGLE_IOS_CLIENT_ID$GOOGLE_REVERSED_CLIENT_ID\" in *REPLACE-ME*)\n  echo \"$level: Google Sign-In ids are placeholders. Run tool/ios_sync_google_ids.sh after adding GoogleService-Info.plist.\"\n  fail=1 ;; esac\nif [ \"$level\" = error ] && [ $fail -ne 0 ]; then exit 1; fi\nexit 0\n";
 		};
 		3B06AD1E1E4923F5004D2608 /* Thin Binary */ = {
 			isa = PBXShellScriptBuildPhase;
