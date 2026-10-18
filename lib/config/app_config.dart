@@ -20,10 +20,14 @@ class AppConfig {
   ///    CFBundleURLSchemes in Info.plist
   static const bool enableFacebookSignIn = false;
 
-  /// Enable only after Sign in with Apple is configured:
-  ///  - iOS "Sign in with Apple" capability + entitlements file
-  ///  - Firebase Authentication → Sign-in method → Apple enabled
-  static const bool enableAppleSignIn = false;
+  /// Sign in with Apple. Required by App Store Review Guideline 4.8 because
+  /// Google Sign-In is offered. The button is only shown on iOS/macOS.
+  ///  - iOS "Sign in with Apple" capability: ios/Runner/Runner.entitlements
+  ///    (com.apple.developer.applesignin) — already wired in the project.
+  ///  - TODO(Blake): Firebase Authentication → Sign-in method → Apple must be
+  ///    enabled, and the App ID must have the capability in the Apple
+  ///    Developer portal. See IOS_RELEASE_TODO_BLAKE.md.
+  static const bool enableAppleSignIn = true;
 
   /// Direct URL for the Gen 2 callable AI endpoint.
   ///

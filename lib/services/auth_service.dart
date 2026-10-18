@@ -84,7 +84,7 @@ class AuthService {
     final fullName =
         ('$firstName $lastName'.trim().isNotEmpty)
             ? '$firstName $lastName'.trim()
-            : credential.userIdentifier ?? 'Apple User';
+            : 'Apple User'; // never show the opaque Apple user id as a name
     final email = credential.email ?? '${credential.userIdentifier}@privaterelay.appleid.com';
     return _repository.loginWithSocial(
       provider: 'apple',
