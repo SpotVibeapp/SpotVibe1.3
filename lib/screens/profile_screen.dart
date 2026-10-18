@@ -188,7 +188,9 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(height: AppTheme.spacingMd),
                 Text(user.displayName, style: text.headlineSmall),
                 const SizedBox(height: AppTheme.spacingXs),
-                Text(user.email, style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant)),
+                // Apple / Facebook accounts may have no email; hide the line.
+                if (user.email.isNotEmpty)
+                  Text(user.email, style: text.bodyMedium?.copyWith(color: colors.onSurfaceVariant)),
                 const SizedBox(height: AppTheme.spacingSm),
                 OutlinedButton.icon(
                   onPressed: () => _editProfile(context),

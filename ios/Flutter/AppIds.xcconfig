@@ -1,0 +1,20 @@
+// Per-build iOS identifiers that are NOT secrets but differ per account.
+//
+// Defaults below are SAFE PLACEHOLDERS. Put real values in
+// ios/Flutter/AppIds.local.xcconfig (gitignored), e.g.:
+//   ADMOB_IOS_APP_ID = ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY
+// A Release build fails (Profile warns) while a placeholder is still in use;
+// see the "Check iOS App IDs" build phase and IOS_RELEASE_TODO_BLAKE.md.
+
+// TODO(Blake): real iOS AdMob app id (AdMob console -> Apps -> SpotVibe iOS).
+// Default = Google's official SAMPLE app id; fine for Debug only.
+ADMOB_IOS_APP_ID = ca-app-pub-3940256099942544~1458002511
+
+// TODO(Blake): Google Sign-In for iOS. Both values come from
+// ios/Runner/GoogleService-Info.plist (keys CLIENT_ID and REVERSED_CLIENT_ID),
+// which `flutterfire configure` downloads. Run tool/ios_sync_google_ids.sh to
+// copy them into AppIds.local.xcconfig.
+GOOGLE_IOS_CLIENT_ID = REPLACE-ME.apps.googleusercontent.com
+GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.REPLACE-ME
+
+#include? "AppIds.local.xcconfig"
