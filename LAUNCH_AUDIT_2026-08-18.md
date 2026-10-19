@@ -81,7 +81,6 @@ Then:
 
 ```bash
 flutter build appbundle --release \
-  --dart-define=TICKETMASTER_API_KEY=YOUR_NEW_KEY \
   --dart-define=REVENUECAT_ANDROID_KEY=goog_xxx \
   --dart-define=REVENUECAT_APPLE_KEY=appl_xxx
 ```
@@ -151,7 +150,7 @@ There is no Flutter SDK in this sandbox. Analyze/test have to run on your machin
 
 ### 8. Ticketmaster — revoke the leaked key if it is still live
 
-`ACde2XLPYSODlESFOv3u5TYMAVF1N8F0` is in **public git history** (commits `a213c69`, `05aee11`, `1a8a30c`). Current code does not use it. You said you have a new key. If the old one is still active on the Ticketmaster account, revoke it.
+`ACde2X…` (full value redacted) is in **public git history** (commits `a213c69`, `05aee11`, `1a8a30c`). Current code does not use it. You said you have a new key. If the old one is still active on the Ticketmaster account, revoke it.
 
 ### 9. Deep-link association (after you have a keystore + Team ID)
 

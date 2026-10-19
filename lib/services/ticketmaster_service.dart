@@ -6,21 +6,18 @@ import '../data/event_dedupe.dart';
 import '../data/event_images.dart';
 import '../models/event.dart';
 import 'live_event_source.dart';
+import 'provider_proxy.dart';
 
 export '../data/event_images.dart';
 
 /// Live Ticketmaster Discovery API.
 ///
-/// The API key is supplied at build/run time and must never be committed:
-///   flutter run --dart-define=TICKETMASTER_API_KEY=your_key
+/// The app holds no Ticketmaster key: requests go through the
+/// `liveEventsProxy` Cloud Function (see provider_proxy.dart), which adds the
+/// key from Secret Manager and caches answers for every user.
 ///
-/// Get a free key: https://developer.ticketmaster.com/
-///
-/// Without a key the feed still shows the curated El Paso seed and stays
-/// empty for other cities instead of failing.
-const String kTicketmasterApiKey = String.fromEnvironment(
-  'TICKETMASTER_API_KEY',
-);
+/// When the proxy is unavailable the feed still shows first-party and
+/// curated listings and stays empty for other cities instead of failing.
 
 /// Recent start window used to find Ticketmaster events that may still be
 /// happening now. They remain in the feed only when Ticketmaster supplies an
@@ -96,18 +93,14 @@ String ticketmasterStartDateTime(DateTime time) {
 class TicketmasterService implements LiveEventSource {
   TicketmasterService({
     Dio? dio,
-    String? apiKey,
+    bool enabled = kLiveProvidersEnabled,
     DateTime Function()? clock,
-  })  : _dio = dio ??
-            Dio(BaseOptions(
-              connectTimeout: const Duration(seconds: 12),
-              receiveTimeout: const Duration(seconds: 12),
-            )),
-        _apiKey = apiKey ?? kTicketmasterApiKey,
+  })  : _dio = dio ?? proxiedProviderDio(),
+        _enabled = enabled,
         _clock = clock ?? DateTime.now;
 
   final Dio _dio;
-  final String _apiKey;
+  final bool _enabled;
   final DateTime Function() _clock;
 
   static const _endpoint =
@@ -117,7 +110,7 @@ class TicketmasterService implements LiveEventSource {
   EventSource get source => EventSource.ticketmaster;
 
   @override
-  bool get isConfigured => _apiKey.isNotEmpty;
+  bool get isConfigured => _enabled;
 
   @override
   bool ownsId(String id) => id.startsWith('tm_');
@@ -137,8 +130,7 @@ class TicketmasterService implements LiveEventSource {
     int maxPages = kTicketmasterMaxPages,
   }) async {
     if (!isConfigured) {
-      debugPrint('Ticketmaster: no API key. '
-          'Run with --dart-define=TICKETMASTER_API_KEY=...');
+      debugPrint('Ticketmaster: live providers disabled for this build.');
       return const [];
     }
 
@@ -150,7 +142,6 @@ class TicketmasterService implements LiveEventSource {
       final now = _clock();
       final pageSize = _clampInt(size, 1, kTicketmasterPageSize);
       final params = <String, dynamic>{
-        'apikey': _apiKey,
         'countryCode': 'US',
         'size': pageSize,
         'sort': 'date,asc',
@@ -246,7 +237,6 @@ class TicketmasterService implements LiveEventSource {
     try {
       final response = await _dio.get(
         'https://app.ticketmaster.com/discovery/v2/events/$tmId.json',
-        queryParameters: {'apikey': _apiKey},
       );
       final data = response.data;
       if (data is! Map) return null;

@@ -541,7 +541,7 @@ void main() {
         () async {
       final service = EventService(
         repository: _FixedEventRepository(const []),
-        ticketmaster: TicketmasterService(apiKey: ''),
+        ticketmaster: TicketmasterService(enabled: false),
       );
 
       expect(service.liveSourceKinds, [EventSource.ticketmaster]);

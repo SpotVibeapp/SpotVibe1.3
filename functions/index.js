@@ -25,6 +25,9 @@
  *  - normalizeEventFeedFields Firestore trigger — keeps visibleUntilMs/geoCells
  *                           (the feed query keys) correct on every events/{id}
  *  - archivePastEvents   scheduled — moves ended events to events_archive
+ *  - liveEventsProxy     callable — Ticketmaster/SeatGeek/JamBase gateway; the
+ *                           provider keys live only in Secret Manager, answers
+ *                           are cached in Firestore and shared by all users
  */
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
@@ -38,7 +41,15 @@ const { planPublicPiiScrub } = require('./lib/userPrivacy');
 const { entitlementStatus, fetchSubscriber } = require('./lib/revenuecat');
 const { claimFoundingSlotIn, isoWeekKey } = require('./lib/featuring');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
+const zlib = require('zlib');
 const { planFeedFields } = require('./lib/feedFields');
+const {
+  ProxyRequestError,
+  buildUpstream,
+  cacheKey,
+  normalizeRequest,
+  usagePeriod,
+} = require('./lib/providerProxy');
 
 admin.initializeApp();
 
@@ -50,6 +61,15 @@ const openAiApiKey = defineSecret('OPENAI_API_KEY');
 // entitlements before granting paid perks. Set with:
 //   firebase functions:secrets:set REVENUECAT_SECRET_API_KEY
 const revenueCatSecretKey = defineSecret('REVENUECAT_SECRET_API_KEY');
+
+// Backfill listing providers. These used to be compiled into the app with
+// --dart-define; they now exist only in Secret Manager and are bound only to
+// liveEventsProxy. Set with `firebase functions:secrets:set <NAME>`.
+const providerSecrets = {
+  TICKETMASTER_API_KEY: defineSecret('TICKETMASTER_API_KEY'),
+  SEATGEEK_CLIENT_ID: defineSecret('SEATGEEK_CLIENT_ID'),
+  JAMBASE_API_KEY: defineSecret('JAMBASE_API_KEY'),
+};
 
 // Minimal starter blocklist — expand this (or swap in an ML provider) before a
 // broad launch. This is a last-line-of-defense behind the client-side filter.
@@ -1038,5 +1058,131 @@ exports.archivePastEvents = onSchedule(
       if (snap.size < ARCHIVE_BATCH) break;
     }
     console.log(`archivePastEvents: moved ${moved} event(s) older than ${new Date(cutoff).toISOString()}`);
+  }
+);
+
+// ── Listing provider gateway ────────────────────────────────────────────────
+
+const PROVIDER_CACHE_STALE_MS = 24 * 60 * 60 * 1000;
+const PROVIDER_FETCH_TIMEOUT_MS = 12000;
+
+async function reserveProviderCall(db, provider, config) {
+  const period = usagePeriod(config, Date.now());
+  if (period.limit == null) return true;
+  const ref = db.collection('provider_usage').doc(`${provider}_${period.id}`);
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const calls = (snap.exists && snap.get('calls')) || 0;
+    if (calls >= period.limit) return false;
+    tx.set(ref, { provider, period: period.id, calls: calls + 1 }, { merge: true });
+    return true;
+  });
+}
+
+function decodeCached(snap) {
+  const gz = snap.get('gz');
+  if (!gz) return null;
+  return zlib.gunzipSync(Buffer.from(gz)).toString('utf8');
+}
+
+/**
+ * The app's only path to Ticketmaster / SeatGeek / JamBase.
+ *
+ * Request:  { provider, path, query }  — the same path/query the app used to
+ *           send directly, minus the credential (rejected if present).
+ * Response: { status: 200, body: "<provider JSON text>", cached: bool }
+ * Errors:   HttpsError with details { status } mirroring the upstream HTTP
+ *           status, so the app's 401/403/429 handling still works.
+ *
+ * Signed-in and guest users are both served (guests browse the feed too);
+ * abuse is bounded by the strict allow-list, bucketing, the shared cache and
+ * the per-provider daily/monthly call ceilings in provider_usage/*.
+ */
+exports.liveEventsProxy = onCall(
+  {
+    secrets: Object.values(providerSecrets),
+    timeoutSeconds: 30,
+    memory: '512MiB',
+    invoker: 'private', // see claimFoundingSlot; run the --no-invoker-iam-check step after deploy
+  },
+  async (request) => {
+    let normalized;
+    try {
+      normalized = normalizeRequest(request.data);
+    } catch (e) {
+      if (e instanceof ProxyRequestError) throw new HttpsError('invalid-argument', e.message);
+      throw e;
+    }
+    const { provider, config } = normalized;
+    const db = admin.firestore();
+    const cacheRef = db.collection('provider_cache').doc(cacheKey(normalized));
+    const now = Date.now();
+
+    const cached = await cacheRef.get();
+    if (cached.exists && cached.get('expiresAtMs') > now) {
+      return { status: 200, body: decodeCached(cached), cached: true };
+    }
+    const staleBody = () =>
+      cached.exists && cached.get('fetchedAtMs') > now - PROVIDER_CACHE_STALE_MS
+        ? decodeCached(cached)
+        : null;
+
+    const key = providerSecrets[config.secret].value();
+    if (!key) {
+      throw new HttpsError('failed-precondition', `${provider} is not configured`, { status: 503 });
+    }
+    if (!(await reserveProviderCall(db, provider, config))) {
+      const stale = staleBody();
+      if (stale != null) return { status: 200, body: stale, cached: true };
+      throw new HttpsError('resource-exhausted', `${provider} budget reached`, { status: 429 });
+    }
+
+    const upstream = buildUpstream(normalized, key);
+    let response;
+    try {
+      response = await fetch(upstream.url, {
+        headers: upstream.headers,
+        signal: AbortSignal.timeout(PROVIDER_FETCH_TIMEOUT_MS),
+      });
+    } catch (e) {
+      // Never log the URL: it can carry the key.
+      console.warn(`liveEventsProxy: ${provider} fetch failed (${e && e.name})`);
+      const stale = staleBody();
+      if (stale != null) return { status: 200, body: stale, cached: true };
+      throw new HttpsError('unavailable', `${provider} unreachable`, { status: 503 });
+    }
+    if (!response.ok) {
+      console.warn(`liveEventsProxy: ${provider} HTTP ${response.status}`);
+      const stale = response.status >= 500 || response.status === 429 ? staleBody() : null;
+      if (stale != null) return { status: 200, body: stale, cached: true };
+      const code = response.status === 404 ? 'not-found'
+        : response.status === 429 ? 'resource-exhausted'
+          : response.status === 401 || response.status === 403 ? 'permission-denied'
+            : 'unavailable';
+      throw new HttpsError(code, `${provider} HTTP ${response.status}`, {
+        status: response.status,
+        retryAfter: response.headers.get('retry-after') || null,
+      });
+    }
+    const body = await response.text();
+    try {
+      JSON.parse(body);
+    } catch (_) {
+      throw new HttpsError('unavailable', `${provider} returned non-JSON`, { status: 502 });
+    }
+    const gz = zlib.gzipSync(Buffer.from(body, 'utf8'));
+    if (gz.length < 900 * 1024) {
+      await cacheRef.set({
+        provider,
+        path: normalized.path,
+        gz,
+        fetchedAtMs: now,
+        expiresAtMs: now + config.ttlMs,
+        // Firestore TTL policy field (see RELEASE_TODO_BLAKE.md) so old
+        // answers are deleted automatically.
+        expireAt: admin.firestore.Timestamp.fromMillis(now + 2 * PROVIDER_CACHE_STALE_MS),
+      });
+    }
+    return { status: 200, body, cached: false };
   }
 );

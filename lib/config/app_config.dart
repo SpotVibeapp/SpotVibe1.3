@@ -69,4 +69,11 @@ class AppConfig {
     'FEATURE_EVENT_FUNCTION_URL',
     defaultValue: 'https://featureevent-kfzltbt5ja-uc.a.run.app',
   );
+
+  /// `liveEventsProxy`: the only path to Ticketmaster / SeatGeek / JamBase.
+  /// The provider keys live in Secret Manager, never in the app.
+  static const String liveEventsProxyFunctionUrl = String.fromEnvironment(
+    'LIVE_EVENTS_PROXY_FUNCTION_URL',
+    defaultValue: 'https://liveeventsproxy-kfzltbt5ja-uc.a.run.app',
+  );
 }
