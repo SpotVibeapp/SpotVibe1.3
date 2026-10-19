@@ -1,5 +1,8 @@
 # iOS App Store release — steps only Blake can do
 
+> Backend deploy order, secrets, migrations and Android notes for the
+> release-blocker fixes: see **RELEASE_TODO_BLAKE.md** (do those first).
+
 Branch `ios-appstore-fixes` (version 1.0.15+15) contains the code-side fixes:
 Sign in with Apple enabled, ATT prompt before ads (non-personalized ads if
 declined), updated privacy manifest, SKAdNetwork ids, AdMob/Google Sign-In ids
