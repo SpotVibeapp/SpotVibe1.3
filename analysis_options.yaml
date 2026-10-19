@@ -1,0 +1,8 @@
+# Keeps `flutter analyze` focused on the app. No lint set is included on
+# purpose: the project has always been analyzed with the analyzer defaults.
+analyzer:
+  exclude:
+    # firebase-tools (installed for the Firestore rules tests) ships Dart
+    # template files that are not part of this app.
+    - "**/node_modules/**"
+    - build/**

@@ -6,6 +6,7 @@ import '../models/user.dart';
 import '../services/account_deletion_flow.dart';
 import '../services/apple_reauth.dart';
 import '../services/apple_sign_in_profile.dart';
+import 'user_profile_docs.dart';
 import 'user_repository.dart';
 
 /// Production [UserRepository] backed by Firebase Auth + Firestore.
@@ -15,8 +16,9 @@ import 'user_repository.dart';
 /// - Sessions persist across app restarts automatically (firebase_auth stores
 ///   the session on device).
 /// - Each user gets a public profile document at `users/{uid}` in Firestore
-///   (name, email, avatarUrl) so other features (attendee lists, comments)
-///   can render profiles.
+///   (name, avatarUrl) so other features (attendee lists, comments) can
+///   render profiles. The email lives in the owner-only
+///   `users/{uid}/private/profile` doc (see user_profile_docs.dart).
 /// - Blocks are stored at `blocks/{uid}/blocked/{targetUid}`.
 /// - Account deletion re-authenticates (when a password is supplied), purges
 ///   the user's Firestore data, then deletes the Firebase Auth user.
@@ -46,6 +48,11 @@ class FirebaseUserRepository implements UserRepository {
 
   CollectionReference<Map<String, dynamic>> get _users =>
       _db.collection('users');
+
+  DocumentReference<Map<String, dynamic>> _privateProfile(String uid) => _users
+      .doc(uid)
+      .collection(kUserPrivateCollection)
+      .doc(kUserPrivateProfileDoc);
 
   // ── Session ───────────────────────────────────────────────────────────────
 
@@ -297,6 +304,7 @@ class FirebaseUserRepository implements UserRepository {
     final batch = _db.batch();
 
     batch.delete(_users.doc(uid));
+    batch.delete(_privateProfile(uid));
     batch.delete(_db.collection('blocks').doc(uid));
 
     try {
@@ -389,8 +397,16 @@ class FirebaseUserRepository implements UserRepository {
     String? provider,
   }) async {
     Map<String, dynamic>? stored;
+    var publicLoaded = false;
     try {
       stored = (await _users.doc(user.uid).get()).data();
+      publicLoaded = true;
+    } catch (_) {}
+    Map<String, dynamic>? storedPrivate;
+    var privateLoaded = false;
+    try {
+      storedPrivate = (await _privateProfile(user.uid).get()).data();
+      privateLoaded = true;
     } catch (_) {}
 
     // Email may legitimately be missing (e.g. Apple after the first sign-in
@@ -398,7 +414,8 @@ class FirebaseUserRepository implements UserRepository {
     final email = resolveEmail(
       providerEmail: providerEmail,
       authEmail: user.email,
-      storedEmail: stored?['email'] as String?,
+      storedEmail:
+          storedEmailFor(publicData: stored, privateData: storedPrivate),
     );
     final displayName = resolveDisplayName(
       authDisplayName: user.displayName,
@@ -420,13 +437,22 @@ class FirebaseUserRepository implements UserRepository {
       avatar = storedAvatar;
     }
 
-    await _syncProfileDoc(
-      uid: user.uid,
-      name: displayName,
-      email: email,
-      avatarUrl: avatar,
-      provider: provider,
-    );
+    // Only sync when the public read succeeded; otherwise we cannot tell a
+    // missing doc from a failed read and might clobber stored data. If only
+    // the private read failed (e.g. rules not deployed yet), the public doc
+    // is still maintained but nothing is moved or written privately.
+    if (publicLoaded) {
+      await _syncProfileDoc(
+        uid: user.uid,
+        publicData: stored,
+        privateData: storedPrivate,
+        privateReadable: privateLoaded,
+        name: displayName,
+        email: email,
+        avatarUrl: avatar,
+        provider: provider,
+      );
+    }
 
     return AppUser(
       id: user.uid,
@@ -499,39 +525,61 @@ class FirebaseUserRepository implements UserRepository {
     }
   }
 
-  /// Creates `users/{uid}` on first sign-in; refreshes it afterwards.
-  /// Failures are swallowed — auth must still work if Firestore is down or
-  /// rules haven't been deployed yet.
+  /// Creates `users/{uid}` on first sign-in; refreshes it afterwards, and
+  /// keeps the email in the owner-only `users/{uid}/private/profile` doc.
+  /// Legacy emails found on the public doc are moved there (private write
+  /// first, then the public field is deleted). Failures are swallowed — auth
+  /// must still work if Firestore is down or rules haven't been deployed yet.
   Future<void> _syncProfileDoc({
     required String uid,
+    required Map<String, dynamic>? publicData,
+    required Map<String, dynamic>? privateData,
+    required bool privateReadable,
     required String name,
     required String email,
     required String avatarUrl,
     String? provider,
   }) async {
+    final plan = planProfileSync(
+      publicData: publicData,
+      privateData: privateData,
+      name: name,
+      email: email,
+      avatarUrl: avatarUrl,
+      provider: provider,
+    );
+    var privateSaved = privateReadable && plan.privateFields.isEmpty;
+    try {
+      if (privateReadable && plan.privateFields.isNotEmpty) {
+        await _privateProfile(uid).set({
+          ...plan.privateFields,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+        privateSaved = true;
+      }
+    } catch (e) {
+      debugPrint('Private profile sync skipped: $e');
+    }
     try {
       final ref = _users.doc(uid);
-      final snapshot = await ref.get();
-      if (!snapshot.exists) {
+      if (plan.createPublic) {
         await ref.set({
-          'name': name,
-          // Empty string (never an invented address) when the provider gave
-          // no email; firestore.rules require the key to exist on create.
-          'email': email,
-          'avatarUrl': avatarUrl,
-          if (provider != null) 'provider': provider,
+          ...plan.publicFields,
+          // Always '' — a real address never goes on the public doc. The
+          // empty key only keeps profile creation working against the
+          // pre-release rules (which required it) during the rollout; the
+          // new rules accept it only when blank.
+          'email': '',
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         });
       } else {
-        // Do not overwrite avatarUrl — the user may have uploaded a photo.
-        // Never blank out a stored email or name: Apple omits both after the
-        // first sign-in.
-        final storedName = snapshot.data()?['name'] as String?;
         await ref.update({
-          if (email.isNotEmpty) 'email': email,
-          if ((storedName?.trim() ?? '').isEmpty && name.trim().isNotEmpty)
-            'name': name,
+          ...plan.publicFields,
+          // Never drop a legacy email before its private copy is saved.
+          if (privateSaved)
+            for (final field in plan.removeFromPublic)
+              field: FieldValue.delete(),
           'updatedAt': FieldValue.serverTimestamp(),
         });
       }
@@ -541,7 +589,8 @@ class FirebaseUserRepository implements UserRepository {
   }
 
   /// Picks the email to show/store: the one the provider just returned, then
-  /// the Firebase Auth user's, then the one already on the profile document.
+  /// the Firebase Auth user's, then the one already stored (private profile,
+  /// or a not-yet-migrated public doc).
   /// Returns '' when none exists — an email is never invented. Apple
   /// private-relay addresses are real and are kept as-is.
   static String resolveEmail({

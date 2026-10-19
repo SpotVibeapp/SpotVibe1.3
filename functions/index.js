@@ -16,12 +16,18 @@
  *  - seedCuratedEvents   callable — seeds the El Paso curated feed (Admin SDK)
  *  - searchEventAssistant callable — converts natural-language requests into
  *                           safe filters; it never invents event listings
+ *  - scrubPublicUserPii  Firestore trigger — moves email/phone off the public
+ *                           users/{uid} doc into users/{uid}/private/profile
  */
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const { randomUUID } = require('crypto');
-const { onDocumentCreated } = require('firebase-functions/v2/firestore');
+const {
+  onDocumentCreated,
+  onDocumentWritten,
+} = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
+const { planPublicPiiScrub } = require('./lib/userPrivacy');
 
 admin.initializeApp();
 
@@ -103,6 +109,9 @@ async function collectUserDeletions(uid) {
 
   refs.push(db.collection('users').doc(uid));
   refs.push(db.collection('blocks').doc(uid));
+
+  // Owner-only contact details (users/{uid}/private/profile).
+  push(await db.collection('users').doc(uid).collection('private').get());
 
   push(await db.collection('users').doc(uid).collection('saved_events').get());
   push(await db.collection('blocks').doc(uid).collection('blocked').get());
@@ -751,3 +760,56 @@ exports.searchEventAssistant = onCall(
     }
   }
 );
+
+// ── User privacy: keep contact details off the public profile ───────────────
+
+/**
+ * Defence in depth for blocker "PII on users/{uid}". Whenever a public
+ * profile doc is written with an `email`/`phone`/`phoneNumber` key (legacy
+ * docs being touched, an old app version during the rollout window before
+ * the new rules are deployed), the value is copied into the owner-only
+ * `users/{uid}/private/profile` doc and removed from the public doc.
+ *
+ * The one-off backfill for docs that are never touched again is
+ * `functions/scripts/migrate_user_private_fields.js` (run manually).
+ */
+exports.scrubPublicUserPii = onDocumentWritten('users/{uid}', async (event) => {
+  const after = event.data && event.data.after;
+  if (!after || !after.exists) return;
+  const uid = event.params.uid;
+  const db = admin.firestore();
+  const privateRef = db
+    .collection('users')
+    .doc(uid)
+    .collection('private')
+    .doc('profile');
+
+  const quick = planPublicPiiScrub(after.data(), undefined);
+  if (quick.removeFromPublic.length === 0) return; // clean doc: no reads
+
+  await db.runTransaction(async (tx) => {
+    const [publicSnap, privateSnap] = await Promise.all([
+      tx.get(after.ref),
+      tx.get(privateRef),
+    ]);
+    if (!publicSnap.exists) return;
+    const plan = planPublicPiiScrub(publicSnap.data(), privateSnap.data());
+    if (plan.removeFromPublic.length === 0) return;
+    if (Object.keys(plan.privateFields).length > 0) {
+      tx.set(
+        privateRef,
+        {
+          ...plan.privateFields,
+          migratedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+    const removal = {};
+    for (const field of plan.removeFromPublic) {
+      removal[field] = admin.firestore.FieldValue.delete();
+    }
+    tx.update(publicSnap.ref, removal);
+  });
+});
+

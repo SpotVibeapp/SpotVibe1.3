@@ -4,7 +4,8 @@ rules_version = '2';
 // Deploy:  firebase deploy --only firestore:rules
 //
 // Data model:
-//   users/{uid}                      public profile
+//   users/{uid}                      public profile (name, avatar — no PII)
+//   users/{uid}/private/profile      owner-only: email / phone
 //   users/{uid}/saved_events/{id}    bookmarks / interested
 //   blocks/{uid}/blocked/{target}    per-user block list
 //   events/{eventId}                 curated + user-created feed
@@ -104,14 +105,60 @@ service cloud.firestore {
     }
 
     // ── User profiles ─────────────────────────────────────────────────────
+    // The public doc is readable by every signed-in user, so it must never
+    // hold contact details. Email/phone live in users/{uid}/private/profile.
+    // A private key may appear on the public doc only as '' (the client
+    // writes `email: ''` on create so that profile creation also works with
+    // the previous rules during rollout). Legacy values may be deleted, never
+    // set or changed.
+    function blankIfPresent(data, key) {
+      return !(key in data) || data[key] == '';
+    }
+    function publicDocHasNoPii(data) {
+      return blankIfPresent(data, 'email')
+          && blankIfPresent(data, 'phone')
+          && blankIfPresent(data, 'phoneNumber');
+    }
+    // On update: each private key is either removed, blank, or left exactly
+    // as it was (so a not-yet-migrated legacy doc can still update its name
+    // or avatar).
+    function keepsOrRemovesPrivateKey(key) {
+      return !(key in request.resource.data)
+          || request.resource.data[key] == ''
+          || (key in resource.data
+              && request.resource.data[key] == resource.data[key]);
+    }
+
     match /users/{uid} {
       allow read: if isSignedIn();
       allow create: if isOwner(uid)
-                    && request.resource.data.keys().hasAll(['name', 'email', 'avatarUrl'])
+                    && request.resource.data.keys().hasAll(['name', 'avatarUrl'])
                     && request.resource.data.name is string
-                    && request.resource.data.name.size() <= 100;
-      allow update: if isOwner(uid);
+                    && request.resource.data.name.size() <= 100
+                    && publicDocHasNoPii(request.resource.data);
+      allow update: if isOwner(uid)
+                    && keepsOrRemovesPrivateKey('email')
+                    && keepsOrRemovesPrivateKey('phone')
+                    && keepsOrRemovesPrivateKey('phoneNumber')
+                    && (!('name' in request.resource.data)
+                        || (request.resource.data.name is string
+                            && request.resource.data.name.size() <= 100));
       allow delete: if isOwner(uid);
+
+      // Owner-only contact details (and admins, for support/moderation).
+      match /private/{docId} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow create, update: if (isOwner(uid) || isAdmin())
+                              && docId == 'profile'
+                              && request.resource.data.keys().hasOnly([
+                                   'email', 'phone', 'phoneNumber',
+                                   'updatedAt', 'migratedAt'
+                                 ])
+                              && (!('email' in request.resource.data)
+                                  || (request.resource.data.email is string
+                                      && request.resource.data.email.size() <= 320));
+        allow delete: if isOwner(uid) || isAdmin();
+      }
 
       match /saved_events/{eventId} {
         allow read, write: if isOwner(uid);
