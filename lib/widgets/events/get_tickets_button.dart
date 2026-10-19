@@ -18,8 +18,11 @@ class GetTicketsButton extends StatelessWidget {
 
     final colors = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
-    final isTicketmaster = event.source == EventSource.ticketmaster;
-    final isJamBase = event.source == EventSource.jambase;
+    // A first-party listing may carry a ticket link merged from a duplicate
+    // aggregator row; brand the button after whoever actually sells it.
+    final linkSource = event.ticketSource ?? event.source;
+    final isTicketmaster = linkSource == EventSource.ticketmaster;
+    final isJamBase = linkSource == EventSource.jambase;
     // JamBase rows open the ticket link exactly as supplied (a licence
     // condition) — that is what [event.sourceUrl] holds. A show with no
     // ticket offer falls back to its jambase.com page, so say so.

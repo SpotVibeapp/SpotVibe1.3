@@ -113,6 +113,10 @@ Event eventFromMap(String id, Map<String, dynamic> data) {
     longitude: (data['longitude'] as num?)?.toDouble() ?? 0,
     source: eventSourceFromName(data['source'] as String?),
     sourceUrl: data['sourceUrl'] as String?,
+    ticketSource: (data['ticketSource'] as String?)?.isNotEmpty == true
+        ? eventSourceFromName(data['ticketSource'] as String?)
+        : null,
+    isTicketed: data['isTicketed'] as bool? ?? false,
     isPremiumListing: data['isPremiumListing'] as bool? ?? false,
     isCreatorPro: data['isCreatorPro'] as bool? ?? false,
     featuredWeekKey: data['featuredWeekKey'] as String?,

@@ -116,6 +116,12 @@ class Event {
   final double longitude;
   final EventSource source;
   final String? sourceUrl;
+
+  /// Which provider [sourceUrl] belongs to when it differs from [source]:
+  /// a first-party listing that borrowed the ticket link of a duplicate
+  /// Ticketmaster/JamBase/SeatGeek row (see `dedupeEvents`). Null when the
+  /// link is the listing's own.
+  final EventSource? ticketSource;
   final bool isPremiumListing;
   final bool isCreatorPro;
   final String? featuredWeekKey;
@@ -125,6 +131,12 @@ class Event {
   /// external listings (Ticketmaster/SeatGeek/JamBase), which have no account
   /// to follow, block, or attribute a report to.
   final String creatorId;
+
+  /// First-party listings — posted by a SpotVibe organizer, or an aggregator
+  /// listing a venue/promoter has claimed — always outrank Ticketmaster,
+  /// JamBase and SeatGeek copies of the same show. Getting coordinators to
+  /// post directly is the product's mission; aggregators are backfill.
+  bool get isFirstParty => isUserCreated || creatorId.isNotEmpty;
 
   /// Public organizer profile links associated with this event.
   final EventSocialLinks socialLinks;
@@ -157,6 +169,7 @@ class Event {
     this.longitude = 0,
     this.source = EventSource.local,
     this.sourceUrl,
+    this.ticketSource,
     this.isPremiumListing = false,
     this.isCreatorPro = false,
     this.featuredWeekKey,
@@ -192,6 +205,7 @@ class Event {
     double? longitude,
     EventSource? source,
     String? sourceUrl,
+    EventSource? ticketSource,
     bool? isPremiumListing,
     bool? isCreatorPro,
     String? featuredWeekKey,
@@ -228,6 +242,7 @@ class Event {
         longitude: longitude ?? this.longitude,
         source: source ?? this.source,
         sourceUrl: sourceUrl ?? this.sourceUrl,
+        ticketSource: ticketSource ?? this.ticketSource,
         isPremiumListing: isPremiumListing ?? this.isPremiumListing,
         isCreatorPro: isCreatorPro ?? this.isCreatorPro,
         featuredWeekKey: featuredWeekKey ?? this.featuredWeekKey,
