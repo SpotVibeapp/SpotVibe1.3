@@ -22,6 +22,9 @@
  *                           after verifying the RevenueCat founding purchase
  *  - featureEvent        callable — grants the weekly Premium "featured" slot
  *                           (featuredWeekKey) after a RevenueCat entitlement check
+ *  - normalizeEventFeedFields Firestore trigger — keeps visibleUntilMs/geoCells
+ *                           (the feed query keys) correct on every events/{id}
+ *  - archivePastEvents   scheduled — moves ended events to events_archive
  */
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
@@ -34,6 +37,8 @@ const admin = require('firebase-admin');
 const { planPublicPiiScrub } = require('./lib/userPrivacy');
 const { entitlementStatus, fetchSubscriber } = require('./lib/revenuecat');
 const { claimFoundingSlotIn, isoWeekKey } = require('./lib/featuring');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
+const { planFeedFields } = require('./lib/feedFields');
 
 admin.initializeApp();
 
@@ -976,3 +981,62 @@ exports.featureEvent = onCall(
   }
 );
 
+
+// ── Feed query keys ─────────────────────────────────────────────────────────
+
+/**
+ * Keeps the feed query fields on events/{id} correct no matter who wrote the
+ * doc (current app, the live v14 build that does not know these fields,
+ * admin tools). The app queries
+ *   visibleUntilMs >= now  orderBy visibleUntilMs  (+ geoCells / kind / cityKey)
+ * so a doc without visibleUntilMs would be invisible; this trigger and
+ * scripts/backfill_event_feed_fields.js make sure none are missing.
+ */
+exports.normalizeEventFeedFields = onDocumentWritten('events/{eventId}', async (event) => {
+  const after = event.data && event.data.after;
+  if (!after || !after.exists) return;
+  const patch = planFeedFields(after.data());
+  if (!patch) return; // already correct; also stops the trigger re-firing
+  await after.ref.update(patch);
+});
+
+/**
+ * Daily: moves events that ended more than ARCHIVE_GRACE_MS ago out of the
+ * public feed collection into events_archive/{id} (admin-only by rules), so
+ * feed queries and indexes stay small. Subcollections (rsvps, comments) are
+ * left in place and remain reachable by path; user_events (the creator's own
+ * listing record and analytics) is untouched.
+ */
+const ARCHIVE_GRACE_MS = 24 * 60 * 60 * 1000;
+const ARCHIVE_BATCH = 200;
+const ARCHIVE_MAX_PER_RUN = 5000;
+
+exports.archivePastEvents = onSchedule(
+  { schedule: 'every day 04:00', timeZone: 'America/Denver', timeoutSeconds: 540 },
+  async () => {
+    const db = admin.firestore();
+    const cutoff = Date.now() - ARCHIVE_GRACE_MS;
+    let moved = 0;
+    while (moved < ARCHIVE_MAX_PER_RUN) {
+      const snap = await db
+        .collection('events')
+        .where('visibleUntilMs', '<', cutoff)
+        .orderBy('visibleUntilMs')
+        .limit(ARCHIVE_BATCH)
+        .get();
+      if (snap.empty) break;
+      const batch = db.batch();
+      for (const doc of snap.docs) {
+        batch.set(db.collection('events_archive').doc(doc.id), {
+          ...doc.data(),
+          archivedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        batch.delete(doc.ref);
+      }
+      await batch.commit();
+      moved += snap.size;
+      if (snap.size < ARCHIVE_BATCH) break;
+    }
+    console.log(`archivePastEvents: moved ${moved} event(s) older than ${new Date(cutoff).toISOString()}`);
+  }
+);

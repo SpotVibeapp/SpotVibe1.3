@@ -264,3 +264,52 @@ describe('meta/founding and featured_weeks are server-only', () => {
     await assertFails(setDoc(doc(db('alice'), 'featured_weeks/alice_2026-W44'), { eventId: 'e1' }));
   });
 });
+
+// ── Blocker 3: feed query keys ─────────────────────────────────────────────
+describe('feed keys (visibleUntilMs / geoCells)', () => {
+  test('create with visibleUntilMs equal to the end succeeds; any other value fails', async () => {
+    await assertSucceeds(
+      setDoc(doc(db('alice'), 'events/e1'), eventDoc('alice', { visibleUntilMs: END }))
+    );
+    await assertFails(
+      setDoc(doc(db('alice'), 'events/e2'), eventDoc('alice', { visibleUntilMs: END + 86400000 }))
+    );
+  });
+
+  test('clients cannot write geoCells', async () => {
+    await assertFails(
+      setDoc(doc(db('alice'), 'events/e1'), eventDoc('alice', { geoCells: ['9t', '9ts', '9tsk'] }))
+    );
+    await seedEvent('e2', eventDoc('alice', { visibleUntilMs: END, geoCells: [] }));
+    await assertFails(updateDoc(doc(db('alice'), 'events/e2'), { geoCells: ['9q'] }));
+  });
+
+  test('creator cannot pin a listing past its end', async () => {
+    await seedEvent('e1', eventDoc('alice', { visibleUntilMs: END }));
+    await assertFails(updateDoc(doc(db('alice'), 'events/e1'), { visibleUntilMs: END + 1 }));
+    await assertSucceeds(
+      updateDoc(doc(db('alice'), 'events/e1'), { endDateTimeMs: END + 3600000, visibleUntilMs: END + 3600000 })
+    );
+  });
+
+  test('a v14-style edit that does not send visibleUntilMs is still allowed', async () => {
+    await seedEvent('e1', eventDoc('alice', { visibleUntilMs: END }));
+    await assertSucceeds(
+      setDoc(
+        doc(db('alice'), 'events/e1'),
+        { title: 'Renamed', endDateTimeMs: END + 3600000, featuredWeekKey: null },
+        { merge: true }
+      )
+    );
+  });
+
+  test('events_archive and provider cache are server-only', async () => {
+    await makeAdmin('root');
+    await seed((d) => setDoc(doc(d, 'events_archive/old'), { title: 'Old' }));
+    await assertFails(getDoc(doc(db('alice'), 'events_archive/old')));
+    await assertSucceeds(getDoc(doc(db('root'), 'events_archive/old')));
+    await assertFails(setDoc(doc(db('root'), 'events_archive/x'), { title: 'x' }));
+    await assertFails(getDoc(doc(db('alice'), 'provider_cache/abc')));
+    await assertFails(setDoc(doc(db('alice'), 'provider_usage/tm'), { calls: 0 }));
+  });
+});

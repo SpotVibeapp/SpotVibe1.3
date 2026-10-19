@@ -28,10 +28,11 @@ class _FixedEventRepository implements EventRepository {
     required String city,
     required String state,
     required String zip,
+    FeedArea? area,
   }) async => events;
 
   @override
-  Future<List<Event>> getUpcomingEvents() async => events;
+  Future<List<Event>> getUpcomingEvents({FeedArea? area}) async => events;
 
   @override
   Future<Map<String, EventSave>> getSaves() async => {};
@@ -58,13 +59,14 @@ class _ControlledEventRepository implements EventRepository {
     required String city,
     required String state,
     required String zip,
+    FeedArea? area,
   }) {
     if (!cityRequested.isCompleted) cityRequested.complete();
     return cityResults.future;
   }
 
   @override
-  Future<List<Event>> getUpcomingEvents() {
+  Future<List<Event>> getUpcomingEvents({FeedArea? area}) {
     if (!allRequested.isCompleted) allRequested.complete();
     return allResults.future;
   }
