@@ -48,4 +48,25 @@ class AppConfig {
     'AI_EVENT_SEARCH_FUNCTION_URL',
     defaultValue: 'https://searcheventassistant-kfzltbt5ja-uc.a.run.app',
   );
+
+  // The callables below route the same way (Gen 2 Cloud Run URL, invoker IAM
+  // check disabled after deploy, Firebase Auth still verified by the
+  // function). The defaults follow the project's Cloud Run URL pattern
+  // `https://<function-name-lowercase>-kfzltbt5ja-uc.a.run.app`; confirm them
+  // after the first deploy with `gcloud run services list` and override with
+  // the matching --dart-define if they differ.
+
+  /// `claimFoundingSlot`: claims a founding-price slot after the server
+  /// verifies the RevenueCat founding purchase.
+  static const String claimFoundingSlotFunctionUrl = String.fromEnvironment(
+    'CLAIM_FOUNDING_SLOT_FUNCTION_URL',
+    defaultValue: 'https://claimfoundingslot-kfzltbt5ja-uc.a.run.app',
+  );
+
+  /// `featureEvent`: grants the weekly Premium featured slot after the server
+  /// verifies the RevenueCat entitlement.
+  static const String featureEventFunctionUrl = String.fromEnvironment(
+    'FEATURE_EVENT_FUNCTION_URL',
+    defaultValue: 'https://featureevent-kfzltbt5ja-uc.a.run.app',
+  );
 }

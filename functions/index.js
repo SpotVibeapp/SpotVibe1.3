@@ -18,6 +18,10 @@
  *                           safe filters; it never invents event listings
  *  - scrubPublicUserPii  Firestore trigger — moves email/phone off the public
  *                           users/{uid} doc into users/{uid}/private/profile
+ *  - claimFoundingSlot   callable — claims a founding-price slot (meta/founding)
+ *                           after verifying the RevenueCat founding purchase
+ *  - featureEvent        callable — grants the weekly Premium "featured" slot
+ *                           (featuredWeekKey) after a RevenueCat entitlement check
  */
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
@@ -28,12 +32,19 @@ const {
 } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
 const { planPublicPiiScrub } = require('./lib/userPrivacy');
+const { entitlementStatus, fetchSubscriber } = require('./lib/revenuecat');
+const { claimFoundingSlotIn, isoWeekKey } = require('./lib/featuring');
 
 admin.initializeApp();
 
 // Stored in Cloud Secret Manager and bound only to AI Cloud Functions. Never
 // put this key in Flutter, Firebase Hosting, or a checked-in .env file.
 const openAiApiKey = defineSecret('OPENAI_API_KEY');
+
+// RevenueCat *secret* REST key (sk_...), used only server-side to verify
+// entitlements before granting paid perks. Set with:
+//   firebase functions:secrets:set REVENUECAT_SECRET_API_KEY
+const revenueCatSecretKey = defineSecret('REVENUECAT_SECRET_API_KEY');
 
 // Minimal starter blocklist — expand this (or swap in an ML provider) before a
 // broad launch. This is a last-line-of-defense behind the client-side filter.
@@ -812,4 +823,156 @@ exports.scrubPublicUserPii = onDocumentWritten('users/{uid}', async (event) => {
     tx.update(publicSnap.ref, removal);
   });
 });
+
+// ── Paid perks: verified server-side, never client-writable ─────────────────
+
+/**
+ * Looks up the caller's RevenueCat entitlement. Fails closed: any RevenueCat
+ * or configuration error is reported as `unavailable` and grants nothing.
+ */
+async function verifiedEntitlement(uid) {
+  try {
+    const subscriber = await fetchSubscriber(uid, revenueCatSecretKey.value());
+    return entitlementStatus(subscriber);
+  } catch (error) {
+    console.error('RevenueCat entitlement check failed:', error.message);
+    throw new HttpsError(
+      'unavailable',
+      'Could not verify your subscription right now. Please try again.'
+    );
+  }
+}
+
+/**
+ * Claims one of the 25 founding-price slots for the caller.
+ *
+ * meta/founding is read-only to clients (firestore.rules). The slot is only
+ * granted when RevenueCat confirms an active `pro` entitlement from the
+ * founding product, and the roster is updated in a transaction so two
+ * concurrent purchases can never exceed the limit.
+ *
+ * Returns { claimedCount, userIsMember } like FoundingMemberSnapshot.
+ */
+exports.claimFoundingSlot = onCall(
+  {
+    secrets: [revenueCatSecretKey],
+    timeoutSeconds: 30,
+    // Same Domain Restricted Sharing constraint as the AI callables: the app
+    // calls the backing Cloud Run URL (AppConfig.claimFoundingSlotFunctionUrl)
+    // and the Cloud Run invoker check is disabled after deployment; the
+    // callable itself still requires Firebase Auth.
+    invoker: 'private',
+  },
+  async (request) => {
+    const uid = request.auth && request.auth.uid;
+    if (!uid) {
+      throw new HttpsError('unauthenticated', 'Sign in to claim a founding slot.');
+    }
+    const status = await verifiedEntitlement(uid);
+    const db = admin.firestore();
+    const ref = db.collection('meta').doc('founding');
+
+    if (!status.pro || !status.founding) {
+      const snap = await ref.get();
+      const data = snap.data() || {};
+      const ids = Array.isArray(data.memberIds) ? data.memberIds : [];
+      return {
+        claimedCount: typeof data.count === 'number' ? data.count : ids.length,
+        userIsMember: ids.includes(uid),
+        verified: false,
+      };
+    }
+
+    return db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const next = claimFoundingSlotIn(snap.data(), uid);
+      if (next.changed) {
+        tx.set(
+          ref,
+          {
+            memberIds: next.memberIds,
+            count: next.count,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+      return {
+        claimedCount: next.count,
+        userIsMember: next.userIsMember,
+        verified: true,
+      };
+    });
+  }
+);
+
+/**
+ * Grants a Premium creator's weekly "featured" placement to one of their own
+ * events. Clients can no longer set `featuredWeekKey` (firestore.rules), so
+ * this is the only path besides admins.
+ *
+ * Checks: signed in, owns the event (user_events/{id}.creatorId), active
+ * RevenueCat `pro` entitlement, and no other event featured this week
+ * (marker doc featured_weeks/{uid}_{week}, written in the same transaction).
+ *
+ * Returns { featured: bool, featuredWeekKey: string|null, reason?: string }.
+ */
+exports.featureEvent = onCall(
+  {
+    secrets: [revenueCatSecretKey],
+    timeoutSeconds: 30,
+    invoker: 'private', // see claimFoundingSlot
+  },
+  async (request) => {
+    const uid = request.auth && request.auth.uid;
+    if (!uid) {
+      throw new HttpsError('unauthenticated', 'Sign in to feature an event.');
+    }
+    const eventId = request.data && request.data.eventId;
+    if (typeof eventId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(eventId)) {
+      throw new HttpsError('invalid-argument', 'eventId is required.');
+    }
+
+    const db = admin.firestore();
+    const userEventRef = db.collection('user_events').doc(eventId);
+    const eventRef = db.collection('events').doc(eventId);
+    const owned = await userEventRef.get();
+    if (!owned.exists || owned.get('creatorId') !== uid) {
+      throw new HttpsError('permission-denied', 'You can only feature your own events.');
+    }
+
+    const status = await verifiedEntitlement(uid);
+    if (!status.pro) {
+      return { featured: false, featuredWeekKey: null, reason: 'not-premium' };
+    }
+
+    const week = isoWeekKey(new Date());
+    const markerRef = db.collection('featured_weeks').doc(`${uid}_${week}`);
+    return db.runTransaction(async (tx) => {
+      const [marker, eventSnap] = await Promise.all([tx.get(markerRef), tx.get(eventRef)]);
+      if (marker.exists) {
+        const already = marker.get('eventId') === eventId;
+        return {
+          featured: already,
+          featuredWeekKey: already ? week : null,
+          reason: already ? undefined : 'already-featured-this-week',
+        };
+      }
+      const patch = {
+        featuredWeekKey: week,
+        isPremiumListing: true,
+        featuredAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+      tx.set(markerRef, {
+        uid,
+        eventId,
+        week,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      tx.set(userEventRef, patch, { merge: true });
+      if (eventSnap.exists) tx.set(eventRef, patch, { merge: true });
+      return { featured: true, featuredWeekKey: week };
+    });
+  }
+);
 
