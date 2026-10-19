@@ -1681,6 +1681,13 @@ class EventService {
           city: resolved.city,
           state: resolved.state,
           zip: resolved.zip.isNotEmpty ? resolved.zip : explicitAreaQuery,
+          area: resolved.lat != null && resolved.lng != null
+              ? FeedArea(
+                  lat: resolved.lat!,
+                  lng: resolved.lng!,
+                  radiusMiles: resolved.radiusMiles,
+                )
+              : null,
         );
         // When we know coordinates for the location, search Ticketmaster by
         // latlong + radius so venues in neighbouring municipalities (Red Rocks
@@ -1718,13 +1725,21 @@ class EventService {
       }
       filtered = filtered.where((e) => e.isVisibleAt()).toList();
     } else {
-      final events = await _repository.getUpcomingEvents();
+      final hasGps = userLat != null && userLng != null;
+      // Same bounds the live providers get: the user's radius with GPS,
+      // else the El Paso metro default.
+      final events = await _repository.getUpcomingEvents(
+        area: FeedArea(
+          lat: userLat ?? kElPasoLat,
+          lng: userLng ?? kElPasoLng,
+          radiusMiles: hasGps ? searchRadius : kDefaultTicketmasterRadiusMiles,
+        ),
+      );
       filtered = events.where((e) => e.isVisibleAt()).toList();
       // Pull as far as the feed will actually show. With GPS the haversine
       // filter below trims to [searchRadius] (or nothing at all for "any
       // distance"); without GPS the slider is not applied and the El Paso
       // bias below clips to the default radius, so fetch exactly that.
-      final hasGps = userLat != null && userLng != null;
       filtered = await _withLiveListings(
         local: filtered,
         keyword: searchQuery,

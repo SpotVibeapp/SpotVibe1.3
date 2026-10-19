@@ -121,9 +121,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get google => 'Google';
 
   @override
-  String get facebook => 'Facebook';
-
-  @override
   String get apple => 'Apple';
 
   @override
@@ -1801,10 +1798,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authRequiresRecentLogin => 'Please sign in again to continue.';
-
-  @override
-  String get authFacebookMissingToken =>
-      'Facebook sign-in failed. Please try again.';
 
   @override
   String get authAppleMissingToken => 'Apple sign-in failed. Please try again.';

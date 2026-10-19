@@ -14,12 +14,6 @@ class AppConfig {
   ///  - iOS: GoogleService-Info.plist + reversed client ID URL scheme
   static const bool enableGoogleSignIn = true;
 
-  /// Enable only after Facebook Login is fully configured:
-  ///  - Firebase Authentication → Sign-in method → Facebook enabled
-  ///  - Facebook app id, Android key hashes, iOS FacebookAppID +
-  ///    CFBundleURLSchemes in Info.plist
-  static const bool enableFacebookSignIn = false;
-
   /// Sign in with Apple. Required by App Store Review Guideline 4.8 because
   /// Google Sign-In is offered. The button is only shown on iOS/macOS.
   ///  - iOS "Sign in with Apple" capability: ios/Runner/Runner.entitlements
@@ -53,5 +47,33 @@ class AppConfig {
   static const String aiEventSearchFunctionUrl = String.fromEnvironment(
     'AI_EVENT_SEARCH_FUNCTION_URL',
     defaultValue: 'https://searcheventassistant-kfzltbt5ja-uc.a.run.app',
+  );
+
+  // The callables below route the same way (Gen 2 Cloud Run URL, invoker IAM
+  // check disabled after deploy, Firebase Auth still verified by the
+  // function). The defaults follow the project's Cloud Run URL pattern
+  // `https://<function-name-lowercase>-kfzltbt5ja-uc.a.run.app`; confirm them
+  // after the first deploy with `gcloud run services list` and override with
+  // the matching --dart-define if they differ.
+
+  /// `claimFoundingSlot`: claims a founding-price slot after the server
+  /// verifies the RevenueCat founding purchase.
+  static const String claimFoundingSlotFunctionUrl = String.fromEnvironment(
+    'CLAIM_FOUNDING_SLOT_FUNCTION_URL',
+    defaultValue: 'https://claimfoundingslot-kfzltbt5ja-uc.a.run.app',
+  );
+
+  /// `featureEvent`: grants the weekly Premium featured slot after the server
+  /// verifies the RevenueCat entitlement.
+  static const String featureEventFunctionUrl = String.fromEnvironment(
+    'FEATURE_EVENT_FUNCTION_URL',
+    defaultValue: 'https://featureevent-kfzltbt5ja-uc.a.run.app',
+  );
+
+  /// `liveEventsProxy`: the only path to Ticketmaster / SeatGeek / JamBase.
+  /// The provider keys live in Secret Manager, never in the app.
+  static const String liveEventsProxyFunctionUrl = String.fromEnvironment(
+    'LIVE_EVENTS_PROXY_FUNCTION_URL',
+    defaultValue: 'https://liveeventsproxy-kfzltbt5ja-uc.a.run.app',
   );
 }

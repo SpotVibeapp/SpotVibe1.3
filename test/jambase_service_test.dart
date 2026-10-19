@@ -197,7 +197,6 @@ JamBaseService _serviceWith(
   final dio = Dio()..httpClientAdapter = adapter;
   return JamBaseService(
     dio: dio,
-    apiKey: 'jbd_test',
     clock: clock ?? () => _now,
     store: store,
     cacheTtl: cacheTtl,
@@ -207,7 +206,7 @@ JamBaseService _serviceWith(
 
 void main() {
   test('JamBaseService is a LiveEventSource that owns jb_ ids', () {
-    final service = JamBaseService(apiKey: 'jbd_x');
+    final service = JamBaseService();
     expect(service, isA<LiveEventSource>());
     expect(service.source, EventSource.jambase);
     expect(service.isConfigured, isTrue);
@@ -221,7 +220,7 @@ void main() {
       () async {
     final adapter = _FakeJamBaseAdapter({1: [_concert(1)]});
     final dio = Dio()..httpClientAdapter = adapter;
-    final service = JamBaseService(dio: dio, apiKey: '');
+    final service = JamBaseService(dio: dio, enabled: false);
 
     expect(service.isConfigured, isFalse);
     expect(await service.search(lat: 31.76, lng: -106.48), isEmpty);
@@ -471,9 +470,9 @@ void main() {
       final q = request.uri.queryParameters;
       expect(request.uri.host, 'api.data.jambase.com');
       expect(request.uri.path, '/v3/events');
-      expect(request.headers['Authorization'], 'Bearer jbd_test');
+      // The key (and JamBase's required User-Agent) are added server-side.
+      expect(request.headers.containsKey('Authorization'), isFalse);
       expect(request.headers['Accept'], 'application/json');
-      expect(request.headers['User-Agent'], startsWith('SpotVibe/'));
       expect(q.containsKey('apikey'), isFalse, reason: 'never in the URL');
       expect(q['geoLatitude'], '31.76');
       expect(q['geoLongitude'], '-106.48');
@@ -759,8 +758,8 @@ void main() {
       expect(second?.id, 'jb_16013248');
       expect(adapter.requests, hasLength(1), reason: 'second hit is cached');
       expect(adapter.uris.single.path, '/v3/events/id/jambase:16013248');
-      expect(adapter.requests.single.headers['Authorization'],
-          'Bearer jbd_test');
+      expect(adapter.requests.single.headers.containsKey('Authorization'),
+          isFalse);
     });
 
     test('refuses ids it does not own or that are not numeric', () async {

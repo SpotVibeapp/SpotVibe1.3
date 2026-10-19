@@ -36,7 +36,6 @@
   "privacyPolicy": "Privacy Policy",
   "sendFeedback": "Send feedback",
   "google": "Google",
-  "facebook": "Facebook",
   "apple": "Apple",
   "discoverTitle": "Discover events\nhappening near you",
   "discoverBody": "SpotVibe surfaces the best local events — concerts, food festivals, community meetups and more — personalised to what you love.",
@@ -865,7 +864,6 @@
   "claimRoleBookingAgent": "Booking agent",
   "claimRoleMarketing": "Marketing / PR",
   "claimRoleOther": "Other authorized rep",
-
   "authInvalidEmail": "That email address is invalid.",
   "authWrongCredentials": "Incorrect email or password.",
   "authEmailInUse": "That email is already in use.",
@@ -880,15 +878,12 @@
   "authNoAccountToDelete": "No signed-in account to delete.",
   "authNoEmailToVerify": "No email address to verify.",
   "authRequiresRecentLogin": "Please sign in again to continue.",
-  "authFacebookMissingToken": "Facebook sign-in failed. Please try again.",
   "authAppleMissingToken": "Apple sign-in failed. Please try again.",
   "authFailed": "Authentication failed. Please try again.",
-
   "claimProofOfficialEmail": "Official email (matches the venue's domain)",
   "claimProofVenueWebsite": "Venue website link",
   "claimProofContract": "Contract or booking confirmation",
   "claimProofPressContact": "Press contact",
-
   "eventCreationGuide": "Event creation guide",
   "eventCreationGuideTooltip": "How to create an event",
   "eventCreationGuideCardTitle": "Create with confidence",
@@ -918,7 +913,6 @@
   "eventCreationGuideReviewBody": "Check every detail before publishing. If you later change the title, date, time, venue, or price, reopen Poster Studio to create an updated share poster.",
   "eventCreationGuideExplorePremium": "Explore Premium",
   "eventCreationGuideStart": "Start creating",
-
   "notificationTestTitle": "Test notifications",
   "notificationTestBody": "Send a one-time test alert to confirm notifications work on this device.",
   "sendTestNotification": "Send test notification",
@@ -928,7 +922,6 @@
   "notificationPermissionNeeded": "Notifications are off for SpotVibe. Turn them on in Settings to test.",
   "notificationTestFailed": "We couldn't send a test notification. Please try again.",
   "openSettings": "Open Settings",
-
   "eventStarts": "Starts",
   "eventEnds": "Ends",
   "endTimeHint": "Set the real end time. Your event stays visible as happening now until then.",
@@ -936,7 +929,6 @@
   "endTimeRequired": "Choose an end time before publishing.",
   "selectEndTime": "Choose time",
   "happeningNow": "Happening now",
-
   "editProfile": "Edit profile",
   "profileNameLabel": "Company or organizer name",
   "profileNameHint": "e.g. SpotVibe",
@@ -945,7 +937,6 @@
   "profileNameRequired": "Enter a company or organizer name.",
   "profileNameTooLong": "Name must be 100 characters or fewer.",
   "profileUpdated": "Profile updated.",
-
   "askSpotVibe": "Ask SpotVibe",
   "askSpotVibeSubtitle": "Describe what you want to do and see real local events — with optional road-trip picks.",
   "askSpotVibeSignIn": "Sign in to get real event recommendations.",

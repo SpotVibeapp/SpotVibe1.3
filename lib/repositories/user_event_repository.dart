@@ -198,10 +198,26 @@ class UserEventRepository {
     _events.removeWhere((e) => e.id == id);
   }
 
-  Future<void> incrementInterested(String eventId) async {
+  /// Asks for this week's Premium "featured" slot for [eventId]. Returns the
+  /// granted week key, or null when not granted.
+  ///
+  /// This in-memory version (tests / offline demo) grants it when the
+  /// creator has no other event featured this week. The Firebase repository
+  /// asks the `featureEvent` Cloud Function instead, which verifies the
+  /// RevenueCat entitlement — clients can no longer set `featuredWeekKey`.
+  Future<String?> requestWeeklyFeature(String eventId, String creatorId) async {
+    final week = _seedWeekKey;
+    final mine = _events.where((e) => e.creatorId == creatorId);
+    if (mine.any((e) => e.featuredWeekKey == week && e.id != eventId)) {
+      return null;
+    }
     final index = _events.indexWhere((e) => e.id == eventId);
-    if (index == -1) return;
-    _events[index] = _events[index].copyWith(interestedCount: _events[index].interestedCount + 1);
+    if (index == -1) return null;
+    _events[index] = _events[index].copyWith(
+      featuredWeekKey: week,
+      isPremiumListing: true,
+    );
+    return week;
   }
 
   Future<void> incrementAnalytics(

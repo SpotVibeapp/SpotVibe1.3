@@ -6,18 +6,14 @@ import '../data/event_dedupe.dart';
 import '../data/event_images.dart';
 import '../models/event.dart';
 import 'live_event_source.dart';
+import 'provider_proxy.dart';
 
 /// Live SeatGeek Platform API (https://seatgeek.github.io/).
 ///
-/// The client id is supplied at build/run time and must never be committed:
-///   flutter run --dart-define=SEATGEEK_CLIENT_ID=your_client_id
-/// or via `--dart-define-from-file=secrets.json`.
-///
-/// Get a free client id: https://seatgeek.com/account/develop
-///
-/// Without a client id the source is simply skipped; the feed keeps
-/// working from Ticketmaster and curated rows exactly as before.
-const String kSeatGeekClientId = String.fromEnvironment('SEATGEEK_CLIENT_ID');
+/// The app holds no SeatGeek client id: requests go through the
+/// `liveEventsProxy` Cloud Function (see provider_proxy.dart), which adds it
+/// from Secret Manager. If the proxy fails the source contributes nothing and
+/// the feed keeps working from the other sources.
 
 /// Largest page SeatGeek serves per request.
 const int kSeatGeekPageSize = 100;
@@ -68,18 +64,14 @@ String seatGeekRangeParam(double miles) {
 class SeatGeekService implements LiveEventSource {
   SeatGeekService({
     Dio? dio,
-    String? clientId,
+    bool enabled = kLiveProvidersEnabled,
     DateTime Function()? clock,
-  })  : _dio = dio ??
-            Dio(BaseOptions(
-              connectTimeout: const Duration(seconds: 12),
-              receiveTimeout: const Duration(seconds: 12),
-            )),
-        _clientId = clientId ?? kSeatGeekClientId,
+  })  : _dio = dio ?? proxiedProviderDio(),
+        _enabled = enabled,
         _clock = clock ?? DateTime.now;
 
   final Dio _dio;
-  final String _clientId;
+  final bool _enabled;
   final DateTime Function() _clock;
 
   static const _endpoint = 'https://api.seatgeek.com/2/events';
@@ -88,7 +80,7 @@ class SeatGeekService implements LiveEventSource {
   EventSource get source => EventSource.seatgeek;
 
   @override
-  bool get isConfigured => _clientId.isNotEmpty;
+  bool get isConfigured => _enabled;
 
   @override
   bool ownsId(String id) => id.startsWith('sg_');
@@ -111,7 +103,6 @@ class SeatGeekService implements LiveEventSource {
     try {
       final now = _clock();
       final params = <String, dynamic>{
-        'client_id': _clientId,
         'per_page': kSeatGeekPageSize,
         'sort': 'datetime_utc.asc',
         // SeatGeek publishes no end times, so a show that has already
@@ -170,7 +161,6 @@ class SeatGeekService implements LiveEventSource {
       }
       return events;
     } catch (error) {
-      // Dio errors can include the full request URL, i.e. the client id.
       debugPrint('SeatGeek search failed (${error.runtimeType}).');
       return const [];
     }
@@ -190,10 +180,7 @@ class SeatGeekService implements LiveEventSource {
     final sgId = id.substring(3);
     if (sgId.isEmpty || int.tryParse(sgId) == null) return null;
     try {
-      final response = await _dio.get(
-        '$_endpoint/$sgId',
-        queryParameters: {'client_id': _clientId},
-      );
+      final response = await _dio.get('$_endpoint/$sgId');
       final data = response.data;
       if (data is! Map) return null;
       final event = eventFromSeatGeek(Map<String, dynamic>.from(data));

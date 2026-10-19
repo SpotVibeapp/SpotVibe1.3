@@ -58,7 +58,6 @@ TicketmasterService _serviceWith(_FakeDiscoveryAdapter adapter) {
   final dio = Dio()..httpClientAdapter = adapter;
   return TicketmasterService(
     dio: dio,
-    apiKey: 'test-key',
     clock: () => DateTime.utc(2026, 9, 7, 12),
   );
 }
@@ -316,14 +315,14 @@ void main() {
   });
 
   test('unconfigured client does not hit the network', () async {
-    final tm = TicketmasterService(apiKey: '');
+    final tm = TicketmasterService(enabled: false);
     expect(tm.isConfigured, isFalse);
     final events = await tm.search(city: 'El Paso', stateCode: 'TX');
     expect(events, isEmpty);
   });
 
   test('is a LiveEventSource that owns tm_ ids', () {
-    final tm = TicketmasterService(apiKey: 'k');
+    final tm = TicketmasterService();
     expect(tm, isA<LiveEventSource>());
     expect(tm.source, EventSource.ticketmaster);
     expect(tm.ownsId('tm_G5v1'), isTrue);

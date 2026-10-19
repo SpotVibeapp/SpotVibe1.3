@@ -3,6 +3,22 @@ import '../models/event.dart';
 import '../models/event_save.dart';
 import 'local_saves_store.dart';
 
+/// Where the feed should look: a centre and a radius in miles. A radius of
+/// 100 or more is the feed's "any distance" setting.
+class FeedArea {
+  const FeedArea({
+    required this.lat,
+    required this.lng,
+    required this.radiusMiles,
+  });
+
+  final double lat;
+  final double lng;
+  final double radiusMiles;
+
+  bool get isAnyDistance => !radiusMiles.isFinite || radiusMiles >= 100;
+}
+
 /// Data-source contract for the public event feed.
 ///
 /// - [FirebaseEventRepository] — Firestore + El Paso seed (production)
@@ -11,11 +27,15 @@ import 'local_saves_store.dart';
 /// Live Ticketmaster listings are merged in [EventService], not here.
 abstract class EventRepository {
   Future<Event?> getEventById(String id);
-  Future<List<Event>> getUpcomingEvents();
+
+  /// Current and future events, bounded server-side by time (`visibleUntilMs
+  /// >= now`) and, when [area] is given, by geohash cells around it.
+  Future<List<Event>> getUpcomingEvents({FeedArea? area});
   Future<List<Event>> getEventsForLocation({
     required String city,
     required String state,
     required String zip,
+    FeedArea? area,
   });
 
   /// The user's bookmark / interested flags, keyed by event id.
@@ -80,7 +100,7 @@ class MockEventRepository implements EventRepository {
   }
 
   @override
-  Future<List<Event>> getUpcomingEvents() async {
+  Future<List<Event>> getUpcomingEvents({FeedArea? area}) async {
     return _applySaves(_seed());
   }
 
@@ -89,6 +109,7 @@ class MockEventRepository implements EventRepository {
     required String city,
     required String state,
     required String zip,
+    FeedArea? area,
   }) async {
     final key = city.toLowerCase().trim();
     if (key == kElPasoCity.toLowerCase()) {

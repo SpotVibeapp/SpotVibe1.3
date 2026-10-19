@@ -122,9 +122,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get google => 'Google';
 
   @override
-  String get facebook => 'Facebook';
-
-  @override
   String get apple => 'Apple';
 
   @override
@@ -1818,10 +1815,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get authRequiresRecentLogin =>
       'Vuelve a iniciar sesión para continuar.';
-
-  @override
-  String get authFacebookMissingToken =>
-      'No se pudo iniciar sesión con Facebook. Inténtalo de nuevo.';
 
   @override
   String get authAppleMissingToken =>

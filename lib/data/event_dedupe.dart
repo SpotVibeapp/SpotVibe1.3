@@ -345,8 +345,23 @@ Event _withBestImage(Event winner, Event loser) {
   return winner.copyWith(imageUrl: loser.imageUrl);
 }
 
+bool _isAggregatorId(String id) =>
+    id.startsWith('tm_') || id.startsWith('jb_') || id.startsWith('sg_');
+
+/// An aggregator (Ticketmaster / JamBase / SeatGeek) row nobody has claimed.
+bool _isAggregatorListing(Event event) =>
+    !event.isFirstParty &&
+    (_isAggregatorId(event.id) ||
+        event.source == EventSource.ticketmaster ||
+        event.source == EventSource.jambase ||
+        event.source == EventSource.seatgeek);
+
 /// The surviving row, enriched with whatever the dropped duplicate knew
-/// that it did not: a real photo, or coordinates for distance sorting.
+/// that it did not: a real photo, coordinates for distance sorting, and —
+/// when a first-party listing absorbs an aggregator copy of the same show —
+/// the aggregator's ticket link plus any address details the organizer
+/// left blank. The organizer's own title, description, times, price and
+/// branding are never overwritten.
 Event _absorb(Event winner, Event loser) {
   var merged = _withBestImage(winner, loser);
   if (!_hasCoords(merged) && _hasCoords(loser)) {
@@ -355,11 +370,42 @@ Event _absorb(Event winner, Event loser) {
       longitude: loser.longitude,
     );
   }
+  if (merged.isFirstParty && _isAggregatorListing(loser)) {
+    final hasOwnLink = merged.sourceUrl?.trim().isNotEmpty == true;
+    final loserLink = loser.sourceUrl?.trim() ?? '';
+    if (!hasOwnLink && loserLink.isNotEmpty) {
+      merged = merged.copyWith(
+        sourceUrl: loserLink,
+        ticketSource: loser.ticketSource ?? loser.source,
+        // A first-party listing whose tickets are sold elsewhere is
+        // ticketed, even if the organizer entered no price.
+        isTicketed: merged.isTicketed || loser.isTicketed,
+      );
+    }
+    if (merged.address.trim().isEmpty && loser.address.trim().isNotEmpty) {
+      merged = merged.copyWith(address: loser.address);
+    }
+    if (merged.zipCode.trim().isEmpty && loser.zipCode.trim().isNotEmpty) {
+      merged = merged.copyWith(zipCode: loser.zipCode);
+    }
+    if (merged.description.trim().isEmpty &&
+        loser.description.trim().isNotEmpty) {
+      merged = merged.copyWith(description: loser.description);
+    }
+  }
   return merged;
 }
 
+/// Added to every first-party listing's quality. Larger than any score an
+/// aggregator row can reach, so an organizer-posted or claimed listing is
+/// always the one kept, however rich the Ticketmaster/JamBase/SeatGeek copy.
+const int kFirstPartyDedupeBonus = 100000;
+
 int _quality(Event event) {
   var score = 0;
+  // Organizer-posted and claimed listings always win (see
+  // [kFirstPartyDedupeBonus]); aggregators only break ties among themselves.
+  if (event.isFirstParty) score += kFirstPartyDedupeBonus;
   // Live provider rows beat curated placeholders (official photo, real
   // ticket URL). Keyed on the id prefix, not `source`: curated seed rows
   // borrow the Ticketmaster badge but must never outrank the real listing.
@@ -383,8 +429,11 @@ int _quality(Event event) {
   return score;
 }
 
-/// Drops exact id dupes and same-show listings. Prefers live ticketing
-/// rows (official photos + ticket URLs) over curated placeholders, and
+/// Drops exact id dupes and same-show listings. First-party listings
+/// (organizer-posted or claimed) always survive and inherit a duplicate
+/// aggregator row's ticket link and missing photo/address. Among the rest it
+/// prefers live ticketing rows (official photos + ticket URLs) over curated
+/// placeholders, and
 /// collapses the same show when two providers both list it — tolerant of
 /// venue spelling, tour-name tails, accents and the away-at-home sports
 /// form.
