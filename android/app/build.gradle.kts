@@ -1,3 +1,4 @@
+import java.util.Base64
 import java.util.Properties
 import java.io.FileInputStream
 
@@ -47,6 +48,8 @@ android {
         //   -PadmobAppId=ca-app-pub-XXXXXXXX~YYYYYYYY
         //   or add `admobAppId=ca-app-pub-…~…` to android/gradle.properties
         // The id must be the "~" App ID, NOT the "/" ad-unit id.
+        // Release builds FAIL while this is still the test id or a placeholder
+        // (see verifyReleaseAdMobIds below); debug builds keep the test id.
         val admobAppIdProp = (project.findProperty("admobAppId") as String?)?.trim()
         val admobAppId = if (admobAppIdProp.isNullOrBlank()) {
             "ca-app-pub-3940256099942544~3347511713" // Google TEST app id
@@ -100,9 +103,71 @@ val verifyReleaseSigning = tasks.register("verifyReleaseSigning") {
     }
 }
 
+// ── AdMob ids must be real in release builds ─────────────────────────────
+// Mirrors the iOS "Check iOS App IDs" build phase from PR #2 and
+// lib/services/admob_ids.dart. A release APK/AAB must never ship Google's
+// sample ids (publisher ca-app-pub-3940256099942544) or a template
+// placeholder, for either the manifest app id (-PadmobAppId / gradle.properties)
+// or the banner ad unit (--dart-define ADMOB_BANNER_ANDROID, which Flutter
+// forwards to Gradle base64-encoded in the `dart-defines` property).
+// Debug and profile builds are unaffected and keep the test ids.
+val googleTestAdMobPublisher = "ca-app-pub-3940256099942544"
+
+fun admobIdProblem(id: String?, appId: Boolean): String? {
+    val value = id?.trim().orEmpty()
+    if (value.isEmpty()) return "is not set"
+    if (value.startsWith(googleTestAdMobPublisher)) return "is Google's sample/test id"
+    val pattern = if (appId) Regex("^ca-app-pub-\\d{10,20}~\\d{6,20}$")
+    else Regex("^ca-app-pub-\\d{10,20}/\\d{6,20}$")
+    if (!pattern.matches(value)) return "is not a valid ${if (appId) "~ app id" else "/ ad unit id"} (placeholder?)"
+    return null
+}
+
+fun dartDefines(): Map<String, String> {
+    val raw = (project.findProperty("dart-defines") as String?).orEmpty()
+    if (raw.isBlank()) return emptyMap()
+    return raw.split(",").mapNotNull { encoded ->
+        val decoded = try {
+            String(Base64.getDecoder().decode(encoded), Charsets.UTF_8)
+        } catch (e: IllegalArgumentException) {
+            return@mapNotNull null
+        }
+        val eq = decoded.indexOf('=')
+        if (eq <= 0) null else decoded.substring(0, eq) to decoded.substring(eq + 1)
+    }.toMap()
+}
+
+val verifyReleaseAdMobIds = tasks.register("verifyReleaseAdMobIds") {
+    group = "verification"
+    description = "Fails release builds that still carry test or placeholder AdMob ids."
+
+    // Read at configuration time so the task stays configuration-cache friendly.
+    val appId = (project.findProperty("admobAppId") as String?)?.trim()
+    val bannerId = dartDefines()["ADMOB_BANNER_ANDROID"]
+
+    doLast {
+        val problems = listOfNotNull(
+            admobIdProblem(appId, appId = true)?.let {
+                "AdMob app id (-PadmobAppId or admobAppId in android/gradle.properties) $it."
+            },
+            admobIdProblem(bannerId, appId = false)?.let {
+                "ADMOB_BANNER_ANDROID (--dart-define / secrets.json) $it."
+            },
+        )
+        if (problems.isNotEmpty()) {
+            throw GradleException(
+                "Release build blocked: test or placeholder AdMob ids.\n  - " +
+                    problems.joinToString("\n  - ") +
+                    "\nSee ADMOB_SETUP_GUIDE.md / RELEASE_TODO_BLAKE.md. Debug builds keep the test ids."
+            )
+        }
+    }
+}
+
 tasks.configureEach {
     if (name == "preReleaseBuild" || name == "assembleRelease" || name == "bundleRelease") {
         dependsOn(verifyReleaseSigning)
+        dependsOn(verifyReleaseAdMobIds)
     }
 }
 
