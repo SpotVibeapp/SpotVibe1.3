@@ -46,7 +46,6 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> loginWithGoogle() => _socialLogin(_service.loginWithGoogle);
-  Future<bool> loginWithFacebook() => _socialLogin(_service.loginWithFacebook);
   Future<bool> loginWithApple() => _socialLogin(_service.loginWithApple);
 
   Future<bool> _socialLogin(Future<AppUser> Function() call) async {

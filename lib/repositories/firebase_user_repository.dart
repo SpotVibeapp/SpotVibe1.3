@@ -10,7 +10,7 @@ import 'user_repository.dart';
 
 /// Production [UserRepository] backed by Firebase Auth + Firestore.
 ///
-/// - Email/password and social (Google/Facebook/Apple) sign-in use
+/// - Email/password and social (Google/Apple) sign-in use
 ///   [FirebaseAuth.signInWithCredential].
 /// - Sessions persist across app restarts automatically (firebase_auth stores
 ///   the session on device).
@@ -127,11 +127,6 @@ class FirebaseUserRepository implements UserRepository {
           idToken: idToken,
           accessToken: accessToken,
         );
-      case 'facebook':
-        if (accessToken == null) {
-          throw Exception('Facebook sign-in failed: missing access token.');
-        }
-        credential = FacebookAuthProvider.credential(accessToken);
       case 'apple':
         if (idToken == null) {
           throw Exception('Apple sign-in failed: missing identity token.');

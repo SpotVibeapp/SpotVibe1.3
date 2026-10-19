@@ -37,8 +37,6 @@ String localizeAuthError(AppLocalizations l10n, Object? error) {
       return l10n.authNoEmailToVerify;
     case 'requires-recent-login':
       return l10n.authRequiresRecentLogin;
-    case 'facebook-missing-token':
-      return l10n.authFacebookMissingToken;
     case 'apple-missing-token':
       return l10n.authAppleMissingToken;
     default:

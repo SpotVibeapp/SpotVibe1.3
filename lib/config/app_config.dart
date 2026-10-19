@@ -14,12 +14,6 @@ class AppConfig {
   ///  - iOS: GoogleService-Info.plist + reversed client ID URL scheme
   static const bool enableGoogleSignIn = true;
 
-  /// Enable only after Facebook Login is fully configured:
-  ///  - Firebase Authentication → Sign-in method → Facebook enabled
-  ///  - Facebook app id, Android key hashes, iOS FacebookAppID +
-  ///    CFBundleURLSchemes in Info.plist
-  static const bool enableFacebookSignIn = false;
-
   /// Sign in with Apple. Required by App Store Review Guideline 4.8 because
   /// Google Sign-In is offered. The button is only shown on iOS/macOS.
   ///  - iOS "Sign in with Apple" capability: ios/Runner/Runner.entitlements

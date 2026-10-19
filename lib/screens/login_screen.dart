@@ -22,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscure = true;
-  String? _socialLoading; // 'google' | 'facebook' | 'apple' | null
+  String? _socialLoading; // 'google' | 'apple' | null
 
   @override
   void dispose() {
@@ -82,9 +82,6 @@ class _LoginScreenState extends State<LoginScreen> {
       switch (provider) {
         case 'Google':
           success = await auth.loginWithGoogle();
-          break;
-        case 'Facebook':
-          success = await auth.loginWithFacebook();
           break;
         case 'Apple':
           success = await auth.loginWithApple();
@@ -289,7 +286,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     // ── Social Login Row (hidden until each provider is
                     //    configured — see lib/config/app_config.dart) ────────
                     if (AppConfig.enableGoogleSignIn ||
-                        AppConfig.enableFacebookSignIn ||
                         AppConfig.enableAppleSignIn)
                       Row(
                         children: [
@@ -301,18 +297,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                 color: const Color(0xFF4285F4),
                                 isLoading: _socialLoading == 'google',
                                 onTap: () => _socialLogin('Google'),
-                              ),
-                            ),
-                            const SizedBox(width: AppTheme.spacingSm),
-                          ],
-                          if (AppConfig.enableFacebookSignIn && !kIsWeb) ...[
-                            Expanded(
-                              child: _SocialButton(
-                                label: l10n.facebook,
-                                icon: Icons.facebook_rounded,
-                                color: const Color(0xFF1877F2),
-                                isLoading: _socialLoading == 'facebook',
-                                onTap: () => _socialLogin('Facebook'),
                               ),
                             ),
                             const SizedBox(width: AppTheme.spacingSm),

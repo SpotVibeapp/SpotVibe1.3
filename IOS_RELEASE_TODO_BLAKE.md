@@ -106,5 +106,5 @@ Must match `ios/Runner/PrivacyInfo.xcprivacy`:
 
 ## 9. Before submitting
 - Build number must be higher than any uploaded (now 1.0.15+15).
-- Facebook login stays disabled (`enableFacebookSignIn = false`); don't enable
-  it without adding FacebookAppID/ClientToken and URL schemes to Info.plist.
+- Facebook login was removed entirely (package `flutter_facebook_auth` and all
+  code paths), so no Facebook SDK or Info.plist keys ship.
