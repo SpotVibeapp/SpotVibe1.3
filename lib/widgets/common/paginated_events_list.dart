@@ -40,6 +40,14 @@ class PaginatedEventsList extends StatefulWidget {
   /// Called when a card is tapped. Parent handles routing + view tracking.
   final void Function(Event event, int globalIndex) onEventTap;
 
+  /// When set, page navigation is rendered by the parent (a pinned
+  /// [FeedPaginationBar] outside the scroll view) and driven through this
+  /// controller. When null the list pins its own bar underneath itself.
+  final FeedPageController? pageController;
+
+  /// Whether to show the "Happening near you / Showing 1–15 of N" heading.
+  final bool showCountBanner;
+
   const PaginatedEventsList({
     super.key,
     required this.eventProvider,
@@ -49,6 +57,8 @@ class PaginatedEventsList extends StatefulWidget {
     this.sectionTitle,
     this.excludedEventIds = const <String>{},
     this.firstCardKey,
+    this.pageController,
+    this.showCountBanner = true,
   });
 
   @override
@@ -57,19 +67,49 @@ class PaginatedEventsList extends StatefulWidget {
 
 class _PaginatedEventsListState extends State<PaginatedEventsList> {
   int _currentPage = 0;
-  final ScrollController _scrollController = ScrollController();
+  final ScrollController _ownScrollController = ScrollController();
+
+  /// Inside the home screen's NestedScrollView the list must drive the
+  /// inherited (primary) controller so the search header scrolls away with
+  /// the cards. Standalone, it falls back to its own controller.
+  ScrollController get _scrollController =>
+      PrimaryScrollController.maybeOf(context) ?? _ownScrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.pageController?._attach(_go);
+  }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    final pages = widget.pageController;
+    if (pages != null) {
+      pages._detach(_go);
+      // No list → no page bar (loading, empty and error states).
+      WidgetsBinding.instance.addPostFrameCallback((_) => pages._publish(0, 0));
+    }
+    _ownScrollController.dispose();
     super.dispose();
+  }
+
+  /// Mirror the current page into the parent's pinned bar after this frame
+  /// (notifying during build would rebuild an ancestor mid-build).
+  void _publishPage() {
+    final pages = widget.pageController;
+    if (pages == null) return;
+    if (pages.page == _currentPage && pages.totalPages == _totalPages) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) pages._publish(_currentPage, _totalPages);
+    });
   }
 
   /// Return the feed to the top so a new page always starts at its first card
   /// instead of leaving the reader stranded mid-list from the previous page.
   void _scrollToTop() {
-    if (!_scrollController.hasClients) return;
-    _scrollController.animateTo(
+    final controller = _scrollController;
+    if (!controller.hasClients || controller.offset <= 0) return;
+    controller.animateTo(
       0,
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOutCubic,
@@ -99,13 +139,21 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
   @override
   void didUpdateWidget(PaginatedEventsList old) {
     super.didUpdateWidget(old);
+    if (old.pageController != widget.pageController) {
+      old.pageController?._detach(_go);
+      widget.pageController?._attach(_go);
+    }
     if (!_sameList(_all, _prevSnapshot)) {
       // List changed (new search / filter / refresh) — reset to first page and
       // return the feed to the top after this frame lays out the new content.
       _currentPage = 0;
+      // Only when the cards are actually scrolled: in a NestedScrollView a
+      // jump would also collapse the search header the user is typing in.
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _scrollController.hasClients) {
-          _scrollController.jumpTo(0);
+        if (!mounted) return;
+        final controller = _scrollController;
+        if (controller.hasClients && controller.offset > 0) {
+          controller.jumpTo(0);
         }
       });
     }
@@ -138,52 +186,56 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
     // "Powered by JamBase" link. Empty for pages without one.
     final showAttribution = JamBaseAttribution.needed(page);
 
+    _publishPage();
+    final bannerCount = widget.showCountBanner ? 1 : 0;
+    final cardsStart = headerCount + bannerCount;
+    final cardsEnd = cardsStart + page.length;
+
+    final list = ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.only(bottom: AppTheme.spacingXs),
+      itemCount: cardsEnd + (showAttribution ? 1 : 0),
+      itemBuilder: (ctx, i) {
+        if (i < headerCount) return widget.feedHeader[i];
+        if (i == cardsEnd) return JamBaseAttribution(events: page);
+
+        if (widget.showCountBanner && i == headerCount) {
+          return _EventCountBanner(
+            currentPage: _currentPage,
+            pageSize: kEventsPerPage,
+            total: provider.events.length,
+            // Events shown outside the paginated list (the discovery
+            // hero) still count toward the real total, so add them back
+            // in for an accurate "of N" figure and a continuous range.
+            heroLead: provider.events.length - _total,
+            sectionTitle: widget.sectionTitle,
+          );
+        }
+
+        final eventIndex = i - cardsStart;
+        final event = page[eventIndex];
+        // Cards may omit the event shown in the home hero, so use the
+        // provider's actual index rather than the visible-list offset.
+        final providerIndex = provider.indexOfEvent(event.id);
+        return EventCard(
+          key: _currentPage == 0 && eventIndex == 0
+              ? widget.firstCardKey
+              : null,
+          event: event,
+          onTap: () => widget.onEventTap(event, providerIndex),
+          onBookmark: () => provider.toggleBookmark(providerIndex),
+          onInterested: () => provider.toggleInterested(providerIndex),
+          distanceMiles: provider.distanceFor(event),
+        );
+      },
+    );
+
+    // The parent pins the bar outside its scroll view.
+    if (widget.pageController != null) return list;
+
     return Column(
       children: [
-        // ── Scrollable discovery header, feed heading, and event cards ────────
-        Expanded(
-          child: ListView.builder(
-            controller: _scrollController,
-            padding: const EdgeInsets.only(bottom: AppTheme.spacingXs),
-            itemCount: headerCount + 1 + page.length + (showAttribution ? 1 : 0),
-            itemBuilder: (ctx, i) {
-              if (i < headerCount) return widget.feedHeader[i];
-              if (i == headerCount + 1 + page.length) {
-                return JamBaseAttribution(events: page);
-              }
-
-              if (i == headerCount) {
-                return _EventCountBanner(
-                  currentPage: _currentPage,
-                  pageSize: kEventsPerPage,
-                  total: provider.events.length,
-                  // Events shown outside the paginated list (the discovery
-                  // hero) still count toward the real total, so add them back
-                  // in for an accurate "of N" figure and a continuous range.
-                  heroLead: provider.events.length - _total,
-                  sectionTitle: widget.sectionTitle,
-                );
-              }
-
-              final eventIndex = i - headerCount - 1;
-              final event = page[eventIndex];
-              // Cards may omit the event shown in the home hero, so use the
-              // provider's actual index rather than the visible-list offset.
-              final providerIndex = provider.indexOfEvent(event.id);
-              return EventCard(
-                key: _currentPage == 0 && eventIndex == 0
-                    ? widget.firstCardKey
-                    : null,
-                event: event,
-                onTap: () => widget.onEventTap(event, providerIndex),
-                onBookmark: () => provider.toggleBookmark(providerIndex),
-                onInterested: () => provider.toggleInterested(providerIndex),
-                distanceMiles: provider.distanceFor(event),
-              );
-            },
-          ),
-        ),
-        // ── Page navigation ───────────────────────────────────────────────────
+        Expanded(child: list),
         if (_totalPages > 1)
           _PaginationBar(
             currentPage: _currentPage,
@@ -194,6 +246,75 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
                 : null,
           ),
       ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Page controller + pinned bar
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Connects a [PaginatedEventsList] to a [FeedPaginationBar] pinned elsewhere
+/// on the screen (outside the scroll view, so it never scrolls away).
+class FeedPageController extends ChangeNotifier {
+  int _page = 0;
+  int _totalPages = 0;
+  bool _disposed = false;
+  void Function(int page)? _goTo;
+
+  /// Zero-based page shown by the attached list.
+  int get page => _page;
+
+  /// Page count of the attached list; 0 when no list is showing.
+  int get totalPages => _totalPages;
+
+  /// Ask the attached list to show [page].
+  void goTo(int page) => _goTo?.call(page);
+
+  void _attach(void Function(int) goTo) => _goTo = goTo;
+
+  void _detach(void Function(int) goTo) {
+    if (_goTo == goTo) _goTo = null;
+  }
+
+  void _publish(int page, int totalPages) {
+    if (_disposed || (page == _page && totalPages == _totalPages)) return;
+    _page = page;
+    _totalPages = totalPages;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _goTo = null;
+    super.dispose();
+  }
+}
+
+/// Slim (~44 dp) Previous / "Page X of Y" / Next bar. Hidden when there is
+/// only one page.
+class FeedPaginationBar extends StatelessWidget {
+  final FeedPageController controller;
+
+  const FeedPaginationBar({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        final page = controller.page;
+        final total = controller.totalPages;
+        if (total <= 1) return const SizedBox.shrink();
+        return _PaginationBar(
+          key: const Key('feed-pagination-bar'),
+          currentPage: page,
+          totalPages: total,
+          onPrev: page > 0 ? () => controller.goTo(page - 1) : null,
+          onNext: page < total - 1 ? () => controller.goTo(page + 1) : null,
+        );
+      },
     );
   }
 }
@@ -316,6 +437,7 @@ class _PaginationBar extends StatelessWidget {
   final VoidCallback? onNext;
 
   const _PaginationBar({
+    super.key,
     required this.currentPage,
     required this.totalPages,
     required this.onPrev,
@@ -329,10 +451,8 @@ class _PaginationBar extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppTheme.spacingMd,
-        vertical: AppTheme.spacingSm,
-      ),
+      constraints: const BoxConstraints(minHeight: 44),
+      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingSm),
       decoration: BoxDecoration(
         color: colors.surface,
         border: Border(
@@ -350,19 +470,23 @@ class _PaginationBar extends StatelessWidget {
             label: l10n.previous,
             onTap: onPrev,
           ),
-          // ── Page indicator + dot row ──────────────────────────────────────
+          // ── Page indicator + dot row (one line) ───────────────────────────
           Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  l10n.pageXOfY(currentPage + 1, totalPages),
-                  style: text.labelSmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
+                Flexible(
+                  child: Text(
+                    l10n.pageXOfY(currentPage + 1, totalPages),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: text.labelSmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(width: AppTheme.spacingSm),
                 _PageDots(
                   currentPage: currentPage,
                   totalPages: totalPages,
@@ -415,7 +539,10 @@ class _NavButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Padding(
+      child: Container(
+        // Full-height tap target even though the bar itself is slim.
+        constraints: const BoxConstraints(minHeight: 44),
+        alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(
           horizontal: AppTheme.spacingSm,
           vertical: AppTheme.spacingXs,

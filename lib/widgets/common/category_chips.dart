@@ -32,11 +32,15 @@ class CategoryChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    // One slim horizontally scrolling row. The height follows the system
+    // text size so large text is never clipped.
+    final height = MediaQuery.textScalerOf(context).scale(18) + 16;
     return SizedBox(
-      height: 42,
+      height: height,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppTheme.spacingMd, vertical: 2),
         itemCount: categories.length,
         separatorBuilder: (_, __) => const SizedBox(width: AppTheme.spacingSm),
         itemBuilder: (context, index) {
@@ -47,7 +51,8 @@ class CategoryChips extends StatelessWidget {
             onTap: () => onSelected(cat),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppTheme.spacingSm),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: isSelected ? catColor : colors.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(AppTheme.radiusXl),
@@ -55,8 +60,8 @@ class CategoryChips extends StatelessWidget {
                     ? [
                         BoxShadow(
                           color: catColor.withValues(alpha: 0.35),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
                         ),
                       ]
                     : null,
