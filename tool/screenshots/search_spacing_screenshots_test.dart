@@ -7,7 +7,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spotvibe_app/widgets/events/event_card.dart';
@@ -82,6 +82,18 @@ void main() {
       });
       await tester.pump(const Duration(milliseconds: 100));
       await _shoot(tester, key, screen, '');
+
+      // The inline search panel (only exists after the compact-header change).
+      final searchIcon = find.byTooltip('Search events, artists, venues...');
+      if (searchIcon.evaluate().isNotEmpty && find.byType(TextField).evaluate().isEmpty) {
+        await tester.tap(searchIcon);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+        await _shoot(tester, key, screen, '_search-open');
+        await tester.tap(find.byTooltip('Close'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+      }
 
       // Then scroll as far as the layout allows toward showing the first card
       // in full (before the fix that is impossible: the feed is too short).

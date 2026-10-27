@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import '../../data/event_time.dart';
 import '../../l10n/app_localizations.dart';
@@ -28,13 +30,15 @@ class EventCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final appColors = Theme.of(context).extension<AppColorsExtension>()!;
+    final shortScreen =
+        MediaQuery.sizeOf(context).height < kEventCardCompactScreenHeight;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(
+        margin: EdgeInsets.symmetric(
           horizontal: AppTheme.spacingMd,
-          vertical: AppTheme.spacingSm,
+          vertical: shortScreen ? AppTheme.spacingXs : AppTheme.spacingSm,
         ),
         decoration: BoxDecoration(
           color: colors.surface,
@@ -51,6 +55,7 @@ class EventCard extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final details = _EventDetails(
+              compact: shortScreen,
               event: event,
               onBookmark: onBookmark,
               onInterested: onInterested,
@@ -58,8 +63,8 @@ class EventCard extends StatelessWidget {
             );
             final screenHeight = MediaQuery.sizeOf(context).height;
 
-            // Short, wide windows (a foldable's cover screen in landscape is
-            // ~350 dp tall) cannot fit a photo stacked on top of the details,
+            // Short, wide windows (a foldable in landscape: cover ~350 dp tall,
+            // inner ~700 dp) cannot fit a photo stacked on top of the details,
             // so the photo moves beside them and the card is only as tall as
             // its text. Sized by content, so larger text still fits.
             if (constraints.maxWidth >= kEventCardSideBySideMinWidth &&
@@ -92,9 +97,13 @@ class EventCard extends StatelessWidget {
               );
             }
 
-            // Stacked layout: the photo shrinks on short screens so the whole
-            // card still fits in the visible part of the feed.
-            final imageHeight = (screenHeight * 0.25)
+            // Stacked layout: the photo shrinks on short screens, and gives
+            // back the room that larger system text takes, so the whole card
+            // still fits in the visible part of the feed.
+            final textGrowth =
+                (MediaQuery.textScalerOf(context).scale(1) - 1).clamp(0.0, 1.0);
+            final imageHeight = (math.min(screenHeight * 0.25, kEventCardImageHeight) -
+                    textGrowth * 160)
                 .clamp(kEventCardMinImageHeight, kEventCardImageHeight)
                 .toDouble();
             return Column(
@@ -124,7 +133,11 @@ const double kEventCardMinImageHeight = 120;
 /// A card at least this wide, on a screen shorter than
 /// [kEventCardSideBySideMaxScreenHeight], puts its photo beside the details.
 const double kEventCardSideBySideMinWidth = 480;
-const double kEventCardSideBySideMaxScreenHeight = 480;
+const double kEventCardSideBySideMaxScreenHeight = 720;
+
+/// Below this screen height (a foldable cover screen in landscape) cards use
+/// tighter padding so a whole card fits in the ~200 dp feed.
+const double kEventCardCompactScreenHeight = 480;
 
 class _EventImage extends StatelessWidget {
   final Event event;
@@ -255,8 +268,10 @@ class _EventDetails extends StatelessWidget {
   final VoidCallback onBookmark;
   final VoidCallback onInterested;
   final double? distanceMiles;
+  final bool compact;
 
   const _EventDetails({
+    this.compact = false,
     required this.event,
     required this.onBookmark,
     required this.onInterested,
@@ -271,7 +286,7 @@ class _EventDetails extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final catColor = categoryAccent(event.category);
     return Padding(
-      padding: const EdgeInsets.all(AppTheme.spacingMd),
+      padding: EdgeInsets.all(compact ? AppTheme.spacingSm + 4 : AppTheme.spacingMd),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -358,7 +373,7 @@ class _EventDetails extends StatelessWidget {
               ],
             ],
           ),
-          const SizedBox(height: AppTheme.spacingMd),
+          SizedBox(height: compact ? AppTheme.spacingSm : AppTheme.spacingMd),
           Row(
             children: [
               _ActionChip(

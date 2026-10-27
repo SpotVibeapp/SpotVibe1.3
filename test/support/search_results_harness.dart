@@ -188,6 +188,9 @@ Future<EventProvider> pumpSearchResults(
 
   // Type the query into the real search field and submit it, as Blake does.
   await tester.pump(const Duration(milliseconds: 400));
+  // Search is an icon in the top row; it expands the inline search panel.
+  await tester.tap(find.byTooltip('Search events, artists, venues...'));
+  await tester.pump(const Duration(milliseconds: 300));
   await tester.enterText(find.byType(TextField).first, query);
   await tester.testTextInput.receiveAction(TextInputAction.search);
   FocusManager.instance.primaryFocus?.unfocus();

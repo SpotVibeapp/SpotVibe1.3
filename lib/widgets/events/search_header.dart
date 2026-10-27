@@ -20,6 +20,16 @@ class SearchHeader extends StatefulWidget {
   final List<String> Function(String query)? onSuggestionsRequest;
   /// Opens Ask SpotVibe with the current natural-language search text.
   final ValueChanged<String>? onAskAi;
+  /// External keyword controller so the typed query survives the panel being
+  /// collapsed and can be cleared from elsewhere (the active-search chip).
+  final TextEditingController? keywordController;
+  /// Whether to show the profile avatar beside the fields. The home screen
+  /// shows it in its top bar instead.
+  final bool showProfile;
+  /// Focus the keyword field as soon as it appears.
+  final bool autofocusKeyword;
+  /// Called when the keyboard's search action is pressed in the keyword field.
+  final ValueChanged<String>? onKeywordSubmitted;
 
   const SearchHeader({
     super.key,
@@ -33,6 +43,10 @@ class SearchHeader extends StatefulWidget {
     this.isUsingMyLocation = false,
     this.onSuggestionsRequest,
     this.onAskAi,
+    this.keywordController,
+    this.showProfile = true,
+    this.autofocusKeyword = false,
+    this.onKeywordSubmitted,
   });
 
   @override
@@ -40,7 +54,8 @@ class SearchHeader extends StatefulWidget {
 }
 
 class _SearchHeaderState extends State<SearchHeader> {
-  final _keywordController = TextEditingController();
+  late final TextEditingController _keywordController;
+  late final bool _ownsKeywordController;
   final _keywordFocus = FocusNode();
   final _layerLink = LayerLink();
   // Use externally-provided controller or own internal one
@@ -54,6 +69,8 @@ class _SearchHeaderState extends State<SearchHeader> {
   @override
   void initState() {
     super.initState();
+    _ownsKeywordController = widget.keywordController == null;
+    _keywordController = widget.keywordController ?? TextEditingController();
     _ownsAreaController = widget.areaController == null;
     _areaController = widget.areaController ?? TextEditingController();
     _keywordController.addListener(_rebuild);
@@ -144,7 +161,7 @@ class _SearchHeaderState extends State<SearchHeader> {
     _keywordController.removeListener(_rebuild);
     _areaController.removeListener(_rebuild);
     _keywordFocus.removeListener(_onFocusChange);
-    _keywordController.dispose();
+    if (_ownsKeywordController) _keywordController.dispose();
     _keywordFocus.dispose();
     if (_ownsAreaController) _areaController.dispose();
     super.dispose();
@@ -178,6 +195,7 @@ class _SearchHeaderState extends State<SearchHeader> {
                   child: TextField(
                     controller: _keywordController,
                     focusNode: _keywordFocus,
+                    autofocus: widget.autofocusKeyword,
                     onChanged: (value) {
                       _scheduleKeywordSearch(value);
                       _updateSuggestions(value);
@@ -185,6 +203,7 @@ class _SearchHeaderState extends State<SearchHeader> {
                     onSubmitted: (value) {
                       _searchKeywordNow(value);
                       _hideOverlay();
+                      widget.onKeywordSubmitted?.call(value);
                     },
                     textInputAction: TextInputAction.search,
                     decoration: InputDecoration(
@@ -309,8 +328,9 @@ class _SearchHeaderState extends State<SearchHeader> {
               ],
             ),
           ),
-          const SizedBox(width: AppTheme.spacingSm),
+          if (widget.showProfile) const SizedBox(width: AppTheme.spacingSm),
           // ── Profile / Login Avatar ──────────────────────────────────────
+          if (widget.showProfile)
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: GestureDetector(
