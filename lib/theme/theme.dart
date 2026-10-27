@@ -76,6 +76,9 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
   }
 }
 
+/// Height of the app's bottom NavigationBar, excluding the safe-area inset.
+const double kSlimNavigationBarHeight = 60;
+
 class AppTheme {
   AppTheme._();
 
@@ -294,6 +297,38 @@ class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMedium)),
+      ),
+      // Slim Material 3 bottom bar for every screen that uses NavigationBar:
+      // 60 dp (down from the 80 dp default) with small labels and a compact
+      // indicator. Each destination still spans the full bar height and a
+      // third of its width, so tap targets stay well above 48 dp, and the bar
+      // keeps adding the gesture-bar safe-area inset below itself.
+      navigationBarTheme: NavigationBarThemeData(
+        height: kSlimNavigationBarHeight,
+        backgroundColor: colorScheme.surface,
+        indicatorColor: colorScheme.secondaryContainer,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        indicatorShape: const StadiumBorder(),
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            size: 22,
+            color: states.contains(WidgetState.selected)
+                ? colorScheme.onSecondaryContainer
+                : colorScheme.onSurfaceVariant,
+          ),
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => textTheme.labelSmall?.copyWith(
+            fontSize: 11,
+            height: 1.1,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w700
+                : FontWeight.w500,
+            color: states.contains(WidgetState.selected)
+                ? colorScheme.onSurface
+                : colorScheme.onSurfaceVariant,
+          ),
+        ),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: colorScheme.surface,

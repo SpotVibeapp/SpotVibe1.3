@@ -47,6 +47,30 @@ void _expectPageBarOnScreen(WidgetTester tester, FoldScreen screen) {
       findsOneWidget);
 }
 
+/// The bottom bar is slim (<= 60 dp above the gesture-bar inset) with 48 dp+
+/// tap targets; short landscape uses the side rail instead.
+void _expectSlimNavigation(WidgetTester tester, FoldScreen screen) {
+  final size = screen.logicalSize;
+  if (size.height < 480 && size.width > size.height) {
+    expect(find.byType(NavigationRail), findsOneWidget);
+    expect(find.byType(NavigationBar), findsNothing);
+    return;
+  }
+  final bar = find.byType(NavigationBar);
+  expect(bar, findsOneWidget);
+  final rect = tester.getRect(bar);
+  expect(rect.bottom, closeTo(size.height, 0.5),
+      reason: 'bar should sit at the bottom edge');
+  final barHeight = rect.height - screen.systemInsets.bottom;
+  expect(barHeight, lessThanOrEqualTo(60.5),
+      reason: 'bottom bar is $barHeight dp tall without the safe-area inset');
+  for (final element in find.byType(NavigationDestination).evaluate()) {
+    final target = tester.getSize(find.byWidget(element.widget));
+    expect(target.height, greaterThanOrEqualTo(48));
+    expect(target.width, greaterThanOrEqualTo(48));
+  }
+}
+
 void main() {
   // Blake: "You are unable to see a full event card on searches." These render
   // the real search screen at every Galaxy Z Fold 8 configuration.
@@ -62,6 +86,7 @@ void main() {
         // Any RenderFlex overflow or layout error is reported as an exception.
         expect(tester.takeException(), isNull);
         _expectPageBarOnScreen(tester, screen);
+        _expectSlimNavigation(tester, screen);
         final window = Offset.zero & screen.logicalSize;
 
         if (_fullCardOnArrival(screen)) {
