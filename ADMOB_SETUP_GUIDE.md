@@ -98,9 +98,16 @@ Once both IDs are stored, your normal release command picks them up automaticall
 flutter build appbundle --release --dart-define-from-file=secrets.json
 ```
 
-That one command ships subscriptions **and** real ads together. If you ever build
-**without** setting these (e.g. a quick test build), the app safely falls back to
-Google's test ads (shows placeholder ads, earns nothing, never risks a strike).
+That one command ships subscriptions **and** real ads together.
+
+**Release builds now refuse to build without real ids.** `flutter build
+appbundle/apk --release` fails in Gradle (`verifyReleaseAdMobIds`) when the
+`admobAppId` property or the `ADMOB_BANNER_ANDROID` dart-define is missing, is
+one of Google's sample ids (`ca-app-pub-3940256099942544…`), or is still a
+placeholder. The iOS Release build does the same check in Xcode. Debug and
+profile builds (`flutter run`) keep using Google's test ads, which earn nothing
+and never risk a strike. As a last line of defence, a release build that somehow
+carries a test banner id simply shows no banner.
 
 ---
 

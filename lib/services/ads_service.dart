@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import 'admob_ids.dart';
 import 'tracking_consent_service.dart';
 
 /// Central place for AdMob configuration and one-time SDK initialization.
@@ -43,6 +44,20 @@ class AdsService {
     if (defaultTargetPlatform == TargetPlatform.iOS) return _banneriOS;
     return _bannerAndroid;
   }
+
+  /// Whether a banner may be requested with [bannerUnitId].
+  ///
+  /// Debug/profile builds always may (they use Google's test ids). A release
+  /// build never requests an ad with a test or placeholder id. This is only a
+  /// last line of defence: the Android release build already fails in Gradle
+  /// (`verifyReleaseAdMobIds`) and the iOS one in Xcode when such ids remain.
+  static bool get bannerAllowed =>
+      bannerAllowedFor(bannerUnitId, releaseMode: kReleaseMode);
+
+  @visibleForTesting
+  static bool bannerAllowedFor(String unitId, {required bool releaseMode}) =>
+      !releaseMode ||
+      admobReleaseIdProblem(unitId, AdMobIdKind.adUnit) == null;
 
   /// The ad request to use for every ad. On iOS, when the user has not
   /// authorized tracking (ATT), ads are requested as non-personalized (npa=1).

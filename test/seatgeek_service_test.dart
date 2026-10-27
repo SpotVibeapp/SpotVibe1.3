@@ -77,14 +77,13 @@ SeatGeekService _serviceWith(_FakeSeatGeekAdapter adapter) {
   final dio = Dio()..httpClientAdapter = adapter;
   return SeatGeekService(
     dio: dio,
-    clientId: 'test-client',
     clock: () => DateTime.utc(2026, 9, 7, 12),
   );
 }
 
 void main() {
   test('SeatGeekService is a LiveEventSource that owns sg_ ids', () {
-    final service = SeatGeekService(clientId: 'x');
+    final service = SeatGeekService();
     expect(service, isA<LiveEventSource>());
     expect(service.source, EventSource.seatgeek);
     expect(service.isConfigured, isTrue);
@@ -97,7 +96,7 @@ void main() {
       () async {
     final adapter = _FakeSeatGeekAdapter({1: [_listing(1)]});
     final dio = Dio()..httpClientAdapter = adapter;
-    final service = SeatGeekService(dio: dio, clientId: '');
+    final service = SeatGeekService(dio: dio, enabled: false);
 
     expect(service.isConfigured, isFalse);
     expect(await service.search(lat: 31.76, lng: -106.48), isEmpty);
@@ -146,7 +145,7 @@ void main() {
       final q = adapter.requests.single.queryParameters;
       expect(adapter.requests.single.host, 'api.seatgeek.com');
       expect(adapter.requests.single.path, '/2/events');
-      expect(q['client_id'], 'test-client');
+      expect(q.containsKey('client_id'), isFalse, reason: 'added server-side');
       expect(q['lat'], '31.7619');
       expect(q['lon'], '-106.4850');
       expect(q['range'], '60mi');
@@ -384,8 +383,8 @@ void main() {
       expect(second?.id, 'sg_6000042');
       expect(adapter.requests, hasLength(1), reason: 'second hit is cached');
       expect(adapter.requests.single.path, '/2/events/6000042');
-      expect(adapter.requests.single.queryParameters['client_id'],
-          'test-client');
+      expect(adapter.requests.single.queryParameters.containsKey('client_id'),
+          isFalse);
     });
 
     test('refuses ids it does not own or that are not numeric', () async {

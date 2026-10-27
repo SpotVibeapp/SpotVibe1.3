@@ -1,19 +1,61 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../config/app_config.dart';
 import '../data/event_codec.dart';
 import '../models/user_event.dart';
 import '../models/event_social_link.dart';
 import 'user_event_repository.dart';
 
+/// Fields a client must never write on an event doc: the paid weekly
+/// feature (set by the `featureEvent` Cloud Function) and the public
+/// counters (only ever bumped atomically, see [incrementAnalytics] and
+/// FirebaseEventRepository's save transaction). firestore.rules enforces it.
+const List<String> kServerManagedEventFields = ['featuredWeekKey', 'featuredAt'];
+const List<String> kEventCounterFields = [
+  'analyticsSearchImpressions',
+  'analyticsViews',
+  'analyticsSaves',
+  'analyticsClicks',
+  'bookmarkedCount',
+  'interestedCount',
+];
+
+/// The creator-writable part of an event payload. New docs keep their zeroed
+/// counters (rules require them to start at 0); updates drop the counters so
+/// a stale local copy can never overwrite live numbers.
+@visibleForTesting
+Map<String, dynamic> clientEventPayload(
+  Map<String, dynamic> payload, {
+  required bool isCreate,
+}) {
+  final out = Map<String, dynamic>.of(payload);
+  for (final key in kServerManagedEventFields) {
+    out.remove(key);
+  }
+  if (!isCreate) {
+    for (final key in kEventCounterFields) {
+      out.remove(key);
+    }
+  }
+  return out;
+}
+
 /// Persists user-created events to `user_events/{id}` and mirrors a feed
 /// document into `events/{id}` so they show up next to curated listings.
 class FirebaseUserEventRepository extends UserEventRepository {
-  FirebaseUserEventRepository({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+  FirebaseUserEventRepository({
+    FirebaseFirestore? firestore,
+    FirebaseFunctions? functions,
+  })  : _db = firestore ?? FirebaseFirestore.instance,
+        _functionsOverride = functions;
 
   final FirebaseFirestore _db;
+  final FirebaseFunctions? _functionsOverride;
+  FirebaseFunctions get _functions =>
+      _functionsOverride ?? FirebaseFunctions.instance;
   final _uuid = const Uuid();
   bool _useFallback = false;
 
@@ -137,12 +179,12 @@ class FirebaseUserEventRepository extends UserEventRepository {
         brandLogoUrl: brandLogoUrl,
         featuredWeekKey: featuredWeekKey,
       );
-      final payload = {
+      final payload = clientEventPayload({
         ...userEventToMap(event),
         'dateTime': Timestamp.fromDate(event.dateTime),
         'endDateTime': Timestamp.fromDate(endDateTime),
         'createdAt': FieldValue.serverTimestamp(),
-      };
+      }, isCreate: true);
       final batch = _db.batch();
       batch.set(_userEvents.doc(event.id), payload);
       batch.set(_events.doc(event.id), payload);
@@ -185,13 +227,13 @@ class FirebaseUserEventRepository extends UserEventRepository {
   @override
   Future<UserCreatedEvent> updateEvent(UserCreatedEvent updated) {
     return _guard(() async {
-      final payload = {
+      final payload = clientEventPayload({
         ...userEventToMap(updated),
         'dateTime': Timestamp.fromDate(updated.dateTime),
         if (updated.endDateTime != null)
           'endDateTime': Timestamp.fromDate(updated.endDateTime!),
         'updatedAt': FieldValue.serverTimestamp(),
-      };
+      }, isCreate: false);
       final batch = _db.batch();
       batch.set(_userEvents.doc(updated.id), payload, SetOptions(merge: true));
       batch.set(_events.doc(updated.id), payload, SetOptions(merge: true));
@@ -245,17 +287,26 @@ class FirebaseUserEventRepository extends UserEventRepository {
   }
 
   @override
-  Future<void> incrementInterested(String eventId) {
-    return _guard(() async {
-      await _userEvents.doc(eventId).update({
-        'interestedCount': FieldValue.increment(1),
-      });
-      await _events.doc(eventId).set({
-        'interestedCount': FieldValue.increment(1),
-      }, SetOptions(merge: true));
-    }, () => super.incrementInterested(eventId));
+  Future<String?> requestWeeklyFeature(String eventId, String creatorId) async {
+    if (_useFallback) return super.requestWeeklyFeature(eventId, creatorId);
+    try {
+      final callable =
+          _functions.httpsCallableFromUrl(AppConfig.featureEventFunctionUrl);
+      final result =
+          await callable.call<Map<String, dynamic>>({'eventId': eventId});
+      final data = Map<String, dynamic>.from(result.data);
+      if (data['featured'] != true) return null;
+      final week = data['featuredWeekKey'];
+      return week is String && week.isNotEmpty ? week : null;
+    } catch (e) {
+      debugPrint('Weekly feature request failed ($e).');
+      return null;
+    }
   }
 
+  /// Bumps Premium analytics counters. Each counter is its own atomic
+  /// `FieldValue.increment(1)` write on each mirror: firestore.rules only
+  /// accept exactly +1 on exactly one analytics field per write.
   @override
   Future<void> incrementAnalytics(
     String eventId, {
@@ -274,19 +325,40 @@ class FirebaseUserEventRepository extends UserEventRepository {
       );
       return;
     }
-    try {
-      final patch = <String, dynamic>{};
-      if (impressions != 0) {
-        patch['analyticsSearchImpressions'] = FieldValue.increment(impressions);
+    final fields = analyticsIncrementFields(
+      impressions: impressions,
+      views: views,
+      saves: saves,
+      clicks: clicks,
+    );
+    for (final field in fields) {
+      for (final ref in [_userEvents.doc(eventId), _events.doc(eventId)]) {
+        try {
+          // update(), not set(merge): never create a doc for a listing that
+          // has no mirror (e.g. aggregator rows have no user_events doc).
+          await ref.update({field: FieldValue.increment(1)});
+        } catch (e) {
+          debugPrint('Analytics increment skipped for ${ref.path} ($e)');
+        }
       }
-      if (views != 0) patch['analyticsViews'] = FieldValue.increment(views);
-      if (saves != 0) patch['analyticsSaves'] = FieldValue.increment(saves);
-      if (clicks != 0) patch['analyticsClicks'] = FieldValue.increment(clicks);
-      if (patch.isEmpty) return;
-      await _userEvents.doc(eventId).set(patch, SetOptions(merge: true));
-      await _events.doc(eventId).set(patch, SetOptions(merge: true));
-    } catch (e) {
-      debugPrint('Analytics increment skipped ($e)');
     }
   }
+}
+
+/// One entry per +1 to apply. Counts above 1 are clamped to a single bump:
+/// rules accept exactly +1 per write and the app never records more than
+/// one event per call.
+@visibleForTesting
+List<String> analyticsIncrementFields({
+  int impressions = 0,
+  int views = 0,
+  int saves = 0,
+  int clicks = 0,
+}) {
+  return [
+    if (impressions > 0) 'analyticsSearchImpressions',
+    if (views > 0) 'analyticsViews',
+    if (saves > 0) 'analyticsSaves',
+    if (clicks > 0) 'analyticsClicks',
+  ];
 }

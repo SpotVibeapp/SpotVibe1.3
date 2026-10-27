@@ -4,7 +4,8 @@ rules_version = '2';
 // Deploy:  firebase deploy --only firestore:rules
 //
 // Data model:
-//   users/{uid}                      public profile
+//   users/{uid}                      public profile (name, avatar — no PII)
+//   users/{uid}/private/profile      owner-only: email / phone
 //   users/{uid}/saved_events/{id}    bookmarks / interested
 //   blocks/{uid}/blocked/{target}    per-user block list
 //   events/{eventId}                 curated + user-created feed
@@ -14,13 +15,17 @@ rules_version = '2';
 //   event_claims/{id}
 //   user_reports/{id}
 //   partner_promo_codes/{id}         admin-only store-code inventory
-//   meta/event_seed, meta/founding   admin / client-managed counters
+//   meta/event_seed, meta/founding   read-only; written by Cloud Functions
+//   featured_weeks/{uid_week}        Cloud Functions only (weekly feature)
 //
 // Notes:
 //  - The public feed is readable by everyone (including guests) for discovery.
 //  - Writes to the public feed require an authenticated creator.
-//  - Counters (bookmarks/interested/analytics) are the only fields other users
-//    may increment on someone else's event doc.
+//  - Counters are the only fields other users may change on someone else's
+//    event doc: analytics counters by exactly +1 (one per write), and
+//    bookmark/interested counts by ±1 tied to the caller's own saved_events
+//    flag flipping in the same transaction.
+//  - featuredWeekKey (paid perk) is set only by the featureEvent function.
 //  - Curated El Paso seed data is written by the `seedCuratedEvents` Cloud
 //    Function (Admin SDK), not by clients.
 
@@ -96,6 +101,100 @@ service cloud.firestore {
                   || isValidSocialLinkValue(data.socialLinks.youtube)));
     }
 
+    // ── Server-managed event fields ─────────────────────────────────────────
+    // `featuredWeekKey` is a paid Premium perk: only the `featureEvent` Cloud
+    // Function (after a RevenueCat check) or an admin may set it. Ingestion /
+    // archive bookkeeping fields are written by Cloud Functions only.
+    // featuredWeekKey is checked separately (it may be sent as null: the
+    // live v14 build always includes the key, null for non-featured events).
+    function serverManagedEventKeys() {
+      return ['featuredAt', 'ingestedAt', 'ingestSource', 'archivedAt',
+              'geoCells'];
+    }
+    function doesNotSetFeaturedWeek() {
+      return !changedKeys().hasAny(['featuredWeekKey'])
+          || request.resource.data.get('featuredWeekKey', null) == null;
+    }
+    // Feed sort key: when present it must equal the end time (or the start
+    // for legacy docs without an end), so nobody can pin a listing in the
+    // feed past its real end. The normalizeEventFeedFields function
+    // recomputes it (and geoCells) after every write, so a writer that does
+    // not send it (the live v14 build) still ends up correct.
+    function hasValidFeedKey(data) {
+      return !('visibleUntilMs' in data)
+          || data.visibleUntilMs == data.get('endDateTimeMs', null)
+          || (data.get('endDateTimeMs', null) == null
+              && data.visibleUntilMs == data.get('dateTimeMs', null));
+    }
+    function analyticsKeys() {
+      return ['analyticsSearchImpressions', 'analyticsViews',
+              'analyticsSaves', 'analyticsClicks'];
+    }
+    function saveCounterKeys() {
+      return ['bookmarkedCount', 'interestedCount'];
+    }
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+    // New docs: no paid perk, counters start at zero (or are absent).
+    function startsWithoutPerksOrCounts(data) {
+      return (!('featuredWeekKey' in data) || data.featuredWeekKey == null)
+          && (!('analyticsSearchImpressions' in data) || data.analyticsSearchImpressions == 0)
+          && (!('analyticsViews' in data) || data.analyticsViews == 0)
+          && (!('analyticsSaves' in data) || data.analyticsSaves == 0)
+          && (!('analyticsClicks' in data) || data.analyticsClicks == 0)
+          && (!('bookmarkedCount' in data) || data.bookmarkedCount == 0)
+          && (!('interestedCount' in data) || data.interestedCount == 0);
+    }
+    function bumpedByOne(field) {
+      return request.resource.data[field] is int
+          && request.resource.data[field] == resource.data.get(field, 0) + 1;
+    }
+    // Exactly one analytics counter changes, by exactly +1.
+    function isSingleAnalyticsBump() {
+      return changedKeys().size() == 1
+          && ((changedKeys().hasOnly(['analyticsSearchImpressions']) && bumpedByOne('analyticsSearchImpressions'))
+              || (changedKeys().hasOnly(['analyticsViews']) && bumpedByOne('analyticsViews'))
+              || (changedKeys().hasOnly(['analyticsSaves']) && bumpedByOne('analyticsSaves'))
+              || (changedKeys().hasOnly(['analyticsClicks']) && bumpedByOne('analyticsClicks')));
+    }
+    // bookmarkedCount / interestedCount move by ±1 only together with the
+    // caller's own saved_events/{eventId} flag flipping in the same
+    // transaction (this is exactly what the app — including the live v14
+    // build — writes).
+    function savedFlag(eventId, flag, afterWrite) {
+      let path = /databases/$(database)/documents/users/$(request.auth.uid)/saved_events/$(eventId);
+      return afterWrite
+          ? (existsAfter(path) && getAfter(path).data.get(flag, false) == true)
+          : (exists(path) && get(path).data.get(flag, false) == true);
+    }
+    function saveCounterMatchesFlag(eventId, field, flag) {
+      let before = savedFlag(eventId, flag, false) ? 1 : 0;
+      let after = savedFlag(eventId, flag, true) ? 1 : 0;
+      return after != before
+          && request.resource.data[field] is int
+          && request.resource.data[field] == resource.data.get(field, 0) + (after - before);
+    }
+    function isSaveCounterUpdate(eventId) {
+      return changedKeys().size() > 0
+          && changedKeys().hasOnly(saveCounterKeys())
+          && (!changedKeys().hasAny(['bookmarkedCount'])
+              || saveCounterMatchesFlag(eventId, 'bookmarkedCount', 'bookmarked'))
+          && (!changedKeys().hasAny(['interestedCount'])
+              || saveCounterMatchesFlag(eventId, 'interestedCount', 'interested'));
+    }
+    // The creator may edit their listing, but not paid/server fields or the
+    // public counters.
+    function isCreatorContentEdit() {
+      return isSignedIn()
+          && resource.data.creatorId == request.auth.uid
+          && !changedKeys().hasAny(serverManagedEventKeys())
+          && doesNotSetFeaturedWeek()
+          && !changedKeys().hasAny(analyticsKeys())
+          && !changedKeys().hasAny(saveCounterKeys())
+          && request.resource.data.creatorId == resource.data.creatorId;
+    }
+
     // ── Admin roster (read by the admin themself; write only via console /
     //    Admin SDK / Cloud Functions) ──────────────────────────────────────
     match /admins/{uid} {
@@ -104,14 +203,60 @@ service cloud.firestore {
     }
 
     // ── User profiles ─────────────────────────────────────────────────────
+    // The public doc is readable by every signed-in user, so it must never
+    // hold contact details. Email/phone live in users/{uid}/private/profile.
+    // A private key may appear on the public doc only as '' (the client
+    // writes `email: ''` on create so that profile creation also works with
+    // the previous rules during rollout). Legacy values may be deleted, never
+    // set or changed.
+    function blankIfPresent(data, key) {
+      return !(key in data) || data[key] == '';
+    }
+    function publicDocHasNoPii(data) {
+      return blankIfPresent(data, 'email')
+          && blankIfPresent(data, 'phone')
+          && blankIfPresent(data, 'phoneNumber');
+    }
+    // On update: each private key is either removed, blank, or left exactly
+    // as it was (so a not-yet-migrated legacy doc can still update its name
+    // or avatar).
+    function keepsOrRemovesPrivateKey(key) {
+      return !(key in request.resource.data)
+          || request.resource.data[key] == ''
+          || (key in resource.data
+              && request.resource.data[key] == resource.data[key]);
+    }
+
     match /users/{uid} {
       allow read: if isSignedIn();
       allow create: if isOwner(uid)
-                    && request.resource.data.keys().hasAll(['name', 'email', 'avatarUrl'])
+                    && request.resource.data.keys().hasAll(['name', 'avatarUrl'])
                     && request.resource.data.name is string
-                    && request.resource.data.name.size() <= 100;
-      allow update: if isOwner(uid);
+                    && request.resource.data.name.size() <= 100
+                    && publicDocHasNoPii(request.resource.data);
+      allow update: if isOwner(uid)
+                    && keepsOrRemovesPrivateKey('email')
+                    && keepsOrRemovesPrivateKey('phone')
+                    && keepsOrRemovesPrivateKey('phoneNumber')
+                    && (!('name' in request.resource.data)
+                        || (request.resource.data.name is string
+                            && request.resource.data.name.size() <= 100));
       allow delete: if isOwner(uid);
+
+      // Owner-only contact details (and admins, for support/moderation).
+      match /private/{docId} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow create, update: if (isOwner(uid) || isAdmin())
+                              && docId == 'profile'
+                              && request.resource.data.keys().hasOnly([
+                                   'email', 'phone', 'phoneNumber',
+                                   'updatedAt', 'migratedAt'
+                                 ])
+                              && (!('email' in request.resource.data)
+                                  || (request.resource.data.email is string
+                                      && request.resource.data.email.size() <= 320));
+        allow delete: if isOwner(uid) || isAdmin();
+      }
 
       match /saved_events/{eventId} {
         allow read, write: if isOwner(uid);
@@ -150,23 +295,19 @@ service cloud.firestore {
                     && request.resource.data.title.size() <= 120
                     && hasValidEventMedia(request.resource.data)
                     && hasValidSocialLinks(request.resource.data)
-                    && hasValidEventTiming(request.resource.data);
+                    && hasValidEventTiming(request.resource.data)
+                    && startsWithoutPerksOrCounts(request.resource.data)
+                    && !request.resource.data.keys().hasAny(serverManagedEventKeys())
+                    && hasValidFeedKey(request.resource.data);
       allow update: if hasValidEventMedia(request.resource.data)
                     && hasValidSocialLinks(request.resource.data)
                     && keepsValidEventTiming(request.resource.data, resource.data)
                     && (isAdmin()
-                    || (isSignedIn() && (
-                      resource.data.creatorId == request.auth.uid
-                      || request.resource.data.diff(resource.data).affectedKeys()
-                          .hasOnly([
-                            'bookmarkedCount',
-                            'interestedCount',
-                            'analyticsSearchImpressions',
-                            'analyticsViews',
-                            'analyticsSaves',
-                            'analyticsClicks'
-                          ])
-                    )));
+                        || (isCreatorContentEdit()
+                            && (!changedKeys().hasAny(['visibleUntilMs'])
+                                || hasValidFeedKey(request.resource.data)))
+                        || (isSignedIn() && isSingleAnalyticsBump())
+                        || (isSignedIn() && isSaveCounterUpdate(eventId)));
       allow delete: if isAdmin()
                     || (isSignedIn()
                         && resource.data.creatorId == request.auth.uid);
@@ -239,39 +380,33 @@ service cloud.firestore {
                     || (isSignedIn()
                         && request.resource.data.creatorId == request.auth.uid
                         && request.resource.data.title is string
-                        && request.resource.data.title.size() <= 120));
+                        && request.resource.data.title.size() <= 120
+                        && startsWithoutPerksOrCounts(request.resource.data)
+                        && !request.resource.data.keys().hasAny(serverManagedEventKeys())));
       allow update: if hasValidEventMedia(request.resource.data)
                     && hasValidSocialLinks(request.resource.data)
                     && keepsValidEventTiming(request.resource.data, resource.data)
                     && (isAdmin()
-                    || (isSignedIn() && (
-                      resource.data.creatorId == request.auth.uid
-                      || request.resource.data.diff(resource.data).affectedKeys()
-                          .hasOnly([
-                            'analyticsSearchImpressions',
-                            'analyticsViews',
-                            'analyticsSaves',
-                            'analyticsClicks',
-                            'interestedCount'
-                          ])
-                    )));
+                        || isCreatorContentEdit()
+                        || (isSignedIn() && isSingleAnalyticsBump()));
       allow delete: if isAdmin()
                     || (isSignedIn()
                         && resource.data.creatorId == request.auth.uid);
     }
 
-    // ── Founding member roster (counter only — no other meta writes) ──────
-    match /meta/founding {
-      allow read: if true;
-      allow create: if isSignedIn()
-                    && request.resource.data.memberIds is list
-                    && request.resource.data.count is int;
-      allow update: if isSignedIn()
-                    && request.resource.data.diff(resource.data).affectedKeys()
-                        .hasOnly(['memberIds', 'count']);
-      allow delete: if false;
+    // ── Archived (ended) events: written by archivePastEvents only ────────
+    match /events_archive/{eventId} {
+      allow read: if isAdmin();
+      allow write: if false;
     }
 
+    // provider_cache/* and provider_usage/* (liveEventsProxy) and
+    // featured_weeks/* (featureEvent) are server-only: no client rule, so
+    // the deny-all at the bottom applies.
+
+    // ── meta/* (incl. meta/founding) ──────────────────────────────────────
+    // Read-only to clients. The founding roster is written only by the
+    // `claimFoundingSlot` Cloud Function after a RevenueCat check.
     match /meta/{docId} {
       allow read: if true;
       allow write: if false; // Admin SDK / Cloud Functions only

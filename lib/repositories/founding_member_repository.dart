@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 
+import '../config/app_config.dart';
 import '../data/pricing.dart';
 
 class FoundingMemberSnapshot {
@@ -47,14 +49,23 @@ class MockFoundingMemberRepository implements FoundingMemberRepository {
   }
 }
 
+/// Reads the founding roster from `meta/founding` (public, read-only) and
+/// claims slots through the `claimFoundingSlot` Cloud Function, which
+/// verifies the RevenueCat founding purchase and updates the roster in a
+/// transaction. Clients can no longer write `meta/founding`.
 class FirebaseFoundingMemberRepository implements FoundingMemberRepository {
   FirebaseFoundingMemberRepository({
     FirebaseFirestore? firestore,
+    FirebaseFunctions? functions,
     FoundingMemberRepository? fallback,
   })  : _db = firestore ?? FirebaseFirestore.instance,
+        _functionsOverride = functions,
         _fallback = fallback ?? MockFoundingMemberRepository();
 
   final FirebaseFirestore _db;
+  final FirebaseFunctions? _functionsOverride;
+  FirebaseFunctions get _functions =>
+      _functionsOverride ?? FirebaseFunctions.instance;
   final FoundingMemberRepository _fallback;
   bool _useFallback = false;
 
@@ -92,28 +103,29 @@ class FirebaseFoundingMemberRepository implements FoundingMemberRepository {
   }
 
   @override
-  Future<FoundingMemberSnapshot> claimSlot(String userId) {
-    return _guard(() async {
-      return _db.runTransaction((tx) async {
-        final snap = await tx.get(_doc);
-        final data = snap.data() ?? <String, dynamic>{};
-        final ids = List<String>.from(data['memberIds'] as List? ?? const []);
-        if (!ids.contains(userId) && foundingSlotsRemain(ids.length)) {
-          ids.add(userId);
-        }
-        tx.set(
-          _doc,
-          {
-            'memberIds': ids,
-            'count': ids.length,
-          },
-          SetOptions(merge: true),
-        );
-        return FoundingMemberSnapshot(
-          claimedCount: ids.length,
-          userIsMember: ids.contains(userId),
-        );
-      });
-    }, () => _fallback.claimSlot(userId));
+  Future<FoundingMemberSnapshot> claimSlot(String userId) async {
+    if (_useFallback) return _fallback.claimSlot(userId);
+    try {
+      final callable = _functions
+          .httpsCallableFromUrl(AppConfig.claimFoundingSlotFunctionUrl);
+      final result = await callable.call<Map<String, dynamic>>({});
+      return foundingSnapshotFromCallable(
+        Map<String, dynamic>.from(result.data),
+      );
+    } catch (e) {
+      // Never grant a slot locally when the server could not confirm it;
+      // report the roster as it stands.
+      debugPrint('Founding slot claim failed ($e).');
+      return load(userId: userId);
+    }
   }
+}
+
+/// Parses the `claimFoundingSlot` callable result.
+@visibleForTesting
+FoundingMemberSnapshot foundingSnapshotFromCallable(Map<String, dynamic> data) {
+  return FoundingMemberSnapshot(
+    claimedCount: (data['claimedCount'] as num?)?.toInt() ?? 0,
+    userIsMember: data['userIsMember'] == true,
+  );
 }

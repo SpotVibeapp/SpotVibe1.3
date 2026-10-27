@@ -40,7 +40,9 @@ class _AdBannerState extends State<AdBanner> {
   }
 
   Future<void> _loadAd() async {
-    if (_requested || !AdsService.isSupported) return;
+    if (_requested || !AdsService.isSupported || !AdsService.bannerAllowed) {
+      return;
+    }
     _requested = true;
 
     // Adaptive banner sized to the current screen width for best fill/UX.

@@ -9,6 +9,7 @@ import '../data/event_dedupe.dart';
 import '../data/event_images.dart';
 import '../models/event.dart';
 import 'live_event_source.dart';
+import 'provider_proxy.dart';
 
 /// JamBase Concert Data API v3 (https://data.jambase.com/api/docs).
 ///
@@ -17,15 +18,13 @@ import 'live_event_source.dart';
 /// SpotVibe's local-first mission. Music only: it never returns sports,
 /// theatre or family listings.
 ///
-/// The key is supplied at build/run time and must never be committed:
-///   flutter run --dart-define=JAMBASE_API_KEY=jbd_...
-/// or via `--dart-define-from-file=secrets.json`.
+/// The app holds no JamBase key: requests go through the `liveEventsProxy`
+/// Cloud Function (see provider_proxy.dart), which adds the key from Secret
+/// Manager, caches answers for all users and enforces a server-wide monthly
+/// ceiling. Keys are managed at https://data.jambase.com/account.
 ///
-/// Get a key: https://data.jambase.com/pricing (Developer plan; keys are
-/// managed at https://data.jambase.com/account).
-///
-/// Without a key the source is skipped and the feed keeps working from the
-/// other providers and the curated rows exactly as before.
+/// If the proxy fails the source is skipped and the feed keeps working from
+/// the other providers and the curated rows exactly as before.
 ///
 /// Two licence conditions shape this file (https://data.jambase.com/api/
 /// docs/attribution): every screen showing a JamBase row carries a
@@ -40,8 +39,6 @@ import 'live_event_source.dart';
 /// launches), keys are coarse (rounded coordinates, radius buckets, no
 /// keyword — `EventService` filters keywords locally), and each device
 /// stops calling at [kJamBaseMonthlyCallBudget] requests a month.
-const String kJamBaseApiKey = String.fromEnvironment('JAMBASE_API_KEY');
-
 /// Where "Powered by JamBase" attribution links must point.
 const String kJamBaseAttributionUrl = 'https://www.jambase.com/';
 
@@ -79,10 +76,6 @@ const int kJamBaseMonthlyCallBudget = 150;
 
 /// Back-off after a 429 before trying again.
 const Duration kJamBaseRateLimitPause = Duration(minutes: 5);
-
-/// JamBase requires a `User-Agent` naming the app on every request.
-const String _jamBaseUserAgent =
-    'SpotVibe/1.0 (+https://spotvibe-cfa08.web.app)';
 
 /// Whether a SpotVibe category can contain JamBase rows at all. Everything
 /// except Music returns nothing: JamBase has no sports, theatre, markets or
@@ -168,24 +161,20 @@ class _Usage {
 class JamBaseService implements LiveEventSource {
   JamBaseService({
     Dio? dio,
-    String? apiKey,
+    bool enabled = kLiveProvidersEnabled,
     DateTime Function()? clock,
     JamBaseStore? store,
     Duration cacheTtl = kJamBaseCacheTtl,
     int monthlyBudget = kJamBaseMonthlyCallBudget,
-  })  : _dio = dio ??
-            Dio(BaseOptions(
-              connectTimeout: const Duration(seconds: 12),
-              receiveTimeout: const Duration(seconds: 12),
-            )),
-        _apiKey = apiKey ?? kJamBaseApiKey,
+  })  : _dio = dio ?? proxiedProviderDio(),
+        _enabled = enabled,
         _clock = clock ?? DateTime.now,
         _store = store ?? MemoryJamBaseStore(),
         _cacheTtl = cacheTtl,
         _monthlyBudget = monthlyBudget;
 
   final Dio _dio;
-  final String _apiKey;
+  final bool _enabled;
   final DateTime Function() _clock;
   final JamBaseStore _store;
   final Duration _cacheTtl;
@@ -199,7 +188,7 @@ class JamBaseService implements LiveEventSource {
   EventSource get source => EventSource.jambase;
 
   @override
-  bool get isConfigured => _apiKey.isNotEmpty;
+  bool get isConfigured => _enabled;
 
   @override
   bool ownsId(String id) => id.startsWith('jb_');
@@ -218,12 +207,9 @@ class JamBaseService implements LiveEventSource {
   DateTime? _pausedUntil;
   String? _disabledReason;
 
+  // The bearer key and User-Agent are added server-side by liveEventsProxy.
   Options get _options => Options(headers: {
-        // v3 authenticates with a bearer header only; a querystring key is
-        // rejected, so the key never appears in a URL or a log line.
-        'Authorization': 'Bearer $_apiKey',
         'Accept': 'application/json',
-        'User-Agent': _jamBaseUserAgent,
       });
 
   /// Requests sent this calendar month from this device.
@@ -384,7 +370,7 @@ class JamBaseService implements LiveEventSource {
         _disabledReason = 'HTTP $status';
         debugPrint(
           'JamBase disabled for this session: HTTP $status '
-          '(check JAMBASE_API_KEY and the plan at data.jambase.com).',
+          '(check the JAMBASE_API_KEY secret and the plan at data.jambase.com).',
         );
       } else if (status == 429) {
         // Hourly/burst limit (monthly overage is billed, not refused).

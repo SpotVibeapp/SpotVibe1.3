@@ -76,9 +76,10 @@ Your API key was committed to a **public** repo, so treat it as compromised.
 
 1. Go to https://developer.ticketmaster.com → your profile → regenerate/revoke the old key (`ACde2X…`).
 2. Create a new key and keep it secret.
-3. Run/build with it via dart-define (the code now has **no fallback key**):
+3. Store it in Secret Manager (the app no longer takes provider keys at all;
+   the `liveEventsProxy` Cloud Function adds them — see RELEASE_TODO_BLAKE.md):
    ```bash
-   flutter run --dart-define=TICKETMASTER_API_KEY=your_new_key
+   firebase functions:secrets:set TICKETMASTER_API_KEY --project spotvibe-cfa08
    ```
 4. Optional but recommended: purge the old key from git history:
    ```bash

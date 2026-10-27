@@ -76,20 +76,9 @@ class UserEventService {
       throw ArgumentError('Events can include up to $kMaxEventVideos videos.');
     }
 
-    var listing = isPremiumListing && isCreatorPro;
-    String? featuredWeekKey;
-    if (isCreatorPro) {
-      final week = isoWeekKey(DateTime.now());
-      final mine = await _repository.getEventsForUser(creatorId);
-      final alreadyFeatured =
-          mine.any((e) => e.featuredWeekKey == week);
-      if (!alreadyFeatured) {
-        listing = true;
-        featuredWeekKey = week;
-      }
-    }
+    final listing = isPremiumListing && isCreatorPro;
 
-    return _repository.createEvent(
+    final created = await _repository.createEvent(
       id: id,
       creatorId: creatorId,
       title: title.trim(),
@@ -119,8 +108,20 @@ class UserEventService {
       socialLinks: socialLinks,
       brandColor: brandColor?.trim().isNotEmpty == true ? brandColor!.trim() : null,
       brandLogoUrl: brandLogoUrl?.trim().isNotEmpty == true ? brandLogoUrl!.trim() : null,
-      featuredWeekKey: featuredWeekKey,
     );
+
+    // The weekly featured slot is a paid perk granted server-side (the
+    // `featureEvent` Cloud Function checks the RevenueCat entitlement and the
+    // once-per-week limit). Clients cannot write `featuredWeekKey`.
+    if (!isCreatorPro) return created;
+    String? week;
+    try {
+      week = await _repository.requestWeeklyFeature(created.id, creatorId);
+    } catch (_) {
+      week = null; // Publishing never fails because featuring did.
+    }
+    if (week == null) return created;
+    return created.copyWith(featuredWeekKey: week, isPremiumListing: true);
   }
 
   Future<UserCreatedEvent> updateEvent(UserCreatedEvent event) async {

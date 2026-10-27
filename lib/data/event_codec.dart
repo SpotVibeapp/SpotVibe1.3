@@ -45,6 +45,10 @@ Map<String, dynamic> eventToMap(Event event, {String kind = 'curated'}) {
     'description': event.description,
     'dateTimeMs': event.dateTime.millisecondsSinceEpoch,
     'endDateTimeMs': event.endDateTime?.millisecondsSinceEpoch,
+    // Feed query key: the end, or the start for events without an end
+    // (isEventVisibleInFeed). Rules require exactly this value; the
+    // normalizeEventFeedFields function also maintains it server-side.
+    'visibleUntilMs': (event.endDateTime ?? event.dateTime).millisecondsSinceEpoch,
     'location': event.location,
     'address': event.address,
     'city': event.city,
@@ -113,6 +117,10 @@ Event eventFromMap(String id, Map<String, dynamic> data) {
     longitude: (data['longitude'] as num?)?.toDouble() ?? 0,
     source: eventSourceFromName(data['source'] as String?),
     sourceUrl: data['sourceUrl'] as String?,
+    ticketSource: (data['ticketSource'] as String?)?.isNotEmpty == true
+        ? eventSourceFromName(data['ticketSource'] as String?)
+        : null,
+    isTicketed: data['isTicketed'] as bool? ?? false,
     isPremiumListing: data['isPremiumListing'] as bool? ?? false,
     isCreatorPro: data['isCreatorPro'] as bool? ?? false,
     featuredWeekKey: data['featuredWeekKey'] as String?,

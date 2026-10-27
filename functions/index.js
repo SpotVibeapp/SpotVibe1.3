@@ -16,18 +16,60 @@
  *  - seedCuratedEvents   callable — seeds the El Paso curated feed (Admin SDK)
  *  - searchEventAssistant callable — converts natural-language requests into
  *                           safe filters; it never invents event listings
+ *  - scrubPublicUserPii  Firestore trigger — moves email/phone off the public
+ *                           users/{uid} doc into users/{uid}/private/profile
+ *  - claimFoundingSlot   callable — claims a founding-price slot (meta/founding)
+ *                           after verifying the RevenueCat founding purchase
+ *  - featureEvent        callable — grants the weekly Premium "featured" slot
+ *                           (featuredWeekKey) after a RevenueCat entitlement check
+ *  - normalizeEventFeedFields Firestore trigger — keeps visibleUntilMs/geoCells
+ *                           (the feed query keys) correct on every events/{id}
+ *  - archivePastEvents   scheduled — moves ended events to events_archive
+ *  - liveEventsProxy     callable — Ticketmaster/SeatGeek/JamBase gateway; the
+ *                           provider keys live only in Secret Manager, answers
+ *                           are cached in Firestore and shared by all users
  */
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const { randomUUID } = require('crypto');
-const { onDocumentCreated } = require('firebase-functions/v2/firestore');
+const {
+  onDocumentCreated,
+  onDocumentWritten,
+} = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
+const { planPublicPiiScrub } = require('./lib/userPrivacy');
+const { entitlementStatus, fetchSubscriber } = require('./lib/revenuecat');
+const { claimFoundingSlotIn, isoWeekKey } = require('./lib/featuring');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
+const zlib = require('zlib');
+const { planFeedFields } = require('./lib/feedFields');
+const {
+  ProxyRequestError,
+  buildUpstream,
+  cacheKey,
+  normalizeRequest,
+  usagePeriod,
+} = require('./lib/providerProxy');
 
 admin.initializeApp();
 
 // Stored in Cloud Secret Manager and bound only to AI Cloud Functions. Never
 // put this key in Flutter, Firebase Hosting, or a checked-in .env file.
 const openAiApiKey = defineSecret('OPENAI_API_KEY');
+
+// RevenueCat *secret* REST key (sk_...), used only server-side to verify
+// entitlements before granting paid perks. Set with:
+//   firebase functions:secrets:set REVENUECAT_SECRET_API_KEY
+const revenueCatSecretKey = defineSecret('REVENUECAT_SECRET_API_KEY');
+
+// Backfill listing providers. These used to be compiled into the app with
+// --dart-define; they now exist only in Secret Manager and are bound only to
+// liveEventsProxy. Set with `firebase functions:secrets:set <NAME>`.
+const providerSecrets = {
+  TICKETMASTER_API_KEY: defineSecret('TICKETMASTER_API_KEY'),
+  SEATGEEK_CLIENT_ID: defineSecret('SEATGEEK_CLIENT_ID'),
+  JAMBASE_API_KEY: defineSecret('JAMBASE_API_KEY'),
+};
 
 // Minimal starter blocklist — expand this (or swap in an ML provider) before a
 // broad launch. This is a last-line-of-defense behind the client-side filter.
@@ -103,6 +145,9 @@ async function collectUserDeletions(uid) {
 
   refs.push(db.collection('users').doc(uid));
   refs.push(db.collection('blocks').doc(uid));
+
+  // Owner-only contact details (users/{uid}/private/profile).
+  push(await db.collection('users').doc(uid).collection('private').get());
 
   push(await db.collection('users').doc(uid).collection('saved_events').get());
   push(await db.collection('blocks').doc(uid).collection('blocked').get());
@@ -749,5 +794,395 @@ exports.searchEventAssistant = onCall(
         'Ask SpotVibe could not complete that search. Please try again.'
       );
     }
+  }
+);
+
+// ── User privacy: keep contact details off the public profile ───────────────
+
+/**
+ * Defence in depth for blocker "PII on users/{uid}". Whenever a public
+ * profile doc is written with an `email`/`phone`/`phoneNumber` key (legacy
+ * docs being touched, an old app version during the rollout window before
+ * the new rules are deployed), the value is copied into the owner-only
+ * `users/{uid}/private/profile` doc and removed from the public doc.
+ *
+ * The one-off backfill for docs that are never touched again is
+ * `functions/scripts/migrate_user_private_fields.js` (run manually).
+ */
+exports.scrubPublicUserPii = onDocumentWritten('users/{uid}', async (event) => {
+  const after = event.data && event.data.after;
+  if (!after || !after.exists) return;
+  const uid = event.params.uid;
+  const db = admin.firestore();
+  const privateRef = db
+    .collection('users')
+    .doc(uid)
+    .collection('private')
+    .doc('profile');
+
+  const quick = planPublicPiiScrub(after.data(), undefined);
+  if (quick.removeFromPublic.length === 0) return; // clean doc: no reads
+
+  await db.runTransaction(async (tx) => {
+    const [publicSnap, privateSnap] = await Promise.all([
+      tx.get(after.ref),
+      tx.get(privateRef),
+    ]);
+    if (!publicSnap.exists) return;
+    const plan = planPublicPiiScrub(publicSnap.data(), privateSnap.data());
+    if (plan.removeFromPublic.length === 0) return;
+    if (Object.keys(plan.privateFields).length > 0) {
+      tx.set(
+        privateRef,
+        {
+          ...plan.privateFields,
+          migratedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+    const removal = {};
+    for (const field of plan.removeFromPublic) {
+      removal[field] = admin.firestore.FieldValue.delete();
+    }
+    tx.update(publicSnap.ref, removal);
+  });
+});
+
+// ── Paid perks: verified server-side, never client-writable ─────────────────
+
+/**
+ * Looks up the caller's RevenueCat entitlement. Fails closed: any RevenueCat
+ * or configuration error is reported as `unavailable` and grants nothing.
+ */
+async function verifiedEntitlement(uid) {
+  try {
+    const subscriber = await fetchSubscriber(uid, revenueCatSecretKey.value());
+    return entitlementStatus(subscriber);
+  } catch (error) {
+    console.error('RevenueCat entitlement check failed:', error.message);
+    throw new HttpsError(
+      'unavailable',
+      'Could not verify your subscription right now. Please try again.'
+    );
+  }
+}
+
+/**
+ * Claims one of the 25 founding-price slots for the caller.
+ *
+ * meta/founding is read-only to clients (firestore.rules). The slot is only
+ * granted when RevenueCat confirms an active `pro` entitlement from the
+ * founding product, and the roster is updated in a transaction so two
+ * concurrent purchases can never exceed the limit.
+ *
+ * Returns { claimedCount, userIsMember } like FoundingMemberSnapshot.
+ */
+exports.claimFoundingSlot = onCall(
+  {
+    secrets: [revenueCatSecretKey],
+    timeoutSeconds: 30,
+    // Same Domain Restricted Sharing constraint as the AI callables: the app
+    // calls the backing Cloud Run URL (AppConfig.claimFoundingSlotFunctionUrl)
+    // and the Cloud Run invoker check is disabled after deployment; the
+    // callable itself still requires Firebase Auth.
+    invoker: 'private',
+  },
+  async (request) => {
+    const uid = request.auth && request.auth.uid;
+    if (!uid) {
+      throw new HttpsError('unauthenticated', 'Sign in to claim a founding slot.');
+    }
+    const status = await verifiedEntitlement(uid);
+    const db = admin.firestore();
+    const ref = db.collection('meta').doc('founding');
+
+    if (!status.pro || !status.founding) {
+      const snap = await ref.get();
+      const data = snap.data() || {};
+      const ids = Array.isArray(data.memberIds) ? data.memberIds : [];
+      return {
+        claimedCount: typeof data.count === 'number' ? data.count : ids.length,
+        userIsMember: ids.includes(uid),
+        verified: false,
+      };
+    }
+
+    return db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const next = claimFoundingSlotIn(snap.data(), uid);
+      if (next.changed) {
+        tx.set(
+          ref,
+          {
+            memberIds: next.memberIds,
+            count: next.count,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+      return {
+        claimedCount: next.count,
+        userIsMember: next.userIsMember,
+        verified: true,
+      };
+    });
+  }
+);
+
+/**
+ * Grants a Premium creator's weekly "featured" placement to one of their own
+ * events. Clients can no longer set `featuredWeekKey` (firestore.rules), so
+ * this is the only path besides admins.
+ *
+ * Checks: signed in, owns the event (user_events/{id}.creatorId), active
+ * RevenueCat `pro` entitlement, and no other event featured this week
+ * (marker doc featured_weeks/{uid}_{week}, written in the same transaction).
+ *
+ * Returns { featured: bool, featuredWeekKey: string|null, reason?: string }.
+ */
+exports.featureEvent = onCall(
+  {
+    secrets: [revenueCatSecretKey],
+    timeoutSeconds: 30,
+    invoker: 'private', // see claimFoundingSlot
+  },
+  async (request) => {
+    const uid = request.auth && request.auth.uid;
+    if (!uid) {
+      throw new HttpsError('unauthenticated', 'Sign in to feature an event.');
+    }
+    const eventId = request.data && request.data.eventId;
+    if (typeof eventId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(eventId)) {
+      throw new HttpsError('invalid-argument', 'eventId is required.');
+    }
+
+    const db = admin.firestore();
+    const userEventRef = db.collection('user_events').doc(eventId);
+    const eventRef = db.collection('events').doc(eventId);
+    const owned = await userEventRef.get();
+    if (!owned.exists || owned.get('creatorId') !== uid) {
+      throw new HttpsError('permission-denied', 'You can only feature your own events.');
+    }
+
+    const status = await verifiedEntitlement(uid);
+    if (!status.pro) {
+      return { featured: false, featuredWeekKey: null, reason: 'not-premium' };
+    }
+
+    const week = isoWeekKey(new Date());
+    const markerRef = db.collection('featured_weeks').doc(`${uid}_${week}`);
+    return db.runTransaction(async (tx) => {
+      const [marker, eventSnap] = await Promise.all([tx.get(markerRef), tx.get(eventRef)]);
+      if (marker.exists) {
+        const already = marker.get('eventId') === eventId;
+        return {
+          featured: already,
+          featuredWeekKey: already ? week : null,
+          reason: already ? undefined : 'already-featured-this-week',
+        };
+      }
+      const patch = {
+        featuredWeekKey: week,
+        isPremiumListing: true,
+        featuredAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+      tx.set(markerRef, {
+        uid,
+        eventId,
+        week,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      tx.set(userEventRef, patch, { merge: true });
+      if (eventSnap.exists) tx.set(eventRef, patch, { merge: true });
+      return { featured: true, featuredWeekKey: week };
+    });
+  }
+);
+
+
+// ── Feed query keys ─────────────────────────────────────────────────────────
+
+/**
+ * Keeps the feed query fields on events/{id} correct no matter who wrote the
+ * doc (current app, the live v14 build that does not know these fields,
+ * admin tools). The app queries
+ *   visibleUntilMs >= now  orderBy visibleUntilMs  (+ geoCells / kind / cityKey)
+ * so a doc without visibleUntilMs would be invisible; this trigger and
+ * scripts/backfill_event_feed_fields.js make sure none are missing.
+ */
+exports.normalizeEventFeedFields = onDocumentWritten('events/{eventId}', async (event) => {
+  const after = event.data && event.data.after;
+  if (!after || !after.exists) return;
+  const patch = planFeedFields(after.data());
+  if (!patch) return; // already correct; also stops the trigger re-firing
+  await after.ref.update(patch);
+});
+
+/**
+ * Daily: moves events that ended more than ARCHIVE_GRACE_MS ago out of the
+ * public feed collection into events_archive/{id} (admin-only by rules), so
+ * feed queries and indexes stay small. Subcollections (rsvps, comments) are
+ * left in place and remain reachable by path; user_events (the creator's own
+ * listing record and analytics) is untouched.
+ */
+const ARCHIVE_GRACE_MS = 24 * 60 * 60 * 1000;
+const ARCHIVE_BATCH = 200;
+const ARCHIVE_MAX_PER_RUN = 5000;
+
+exports.archivePastEvents = onSchedule(
+  { schedule: 'every day 04:00', timeZone: 'America/Denver', timeoutSeconds: 540 },
+  async () => {
+    const db = admin.firestore();
+    const cutoff = Date.now() - ARCHIVE_GRACE_MS;
+    let moved = 0;
+    while (moved < ARCHIVE_MAX_PER_RUN) {
+      const snap = await db
+        .collection('events')
+        .where('visibleUntilMs', '<', cutoff)
+        .orderBy('visibleUntilMs')
+        .limit(ARCHIVE_BATCH)
+        .get();
+      if (snap.empty) break;
+      const batch = db.batch();
+      for (const doc of snap.docs) {
+        batch.set(db.collection('events_archive').doc(doc.id), {
+          ...doc.data(),
+          archivedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        batch.delete(doc.ref);
+      }
+      await batch.commit();
+      moved += snap.size;
+      if (snap.size < ARCHIVE_BATCH) break;
+    }
+    console.log(`archivePastEvents: moved ${moved} event(s) older than ${new Date(cutoff).toISOString()}`);
+  }
+);
+
+// ── Listing provider gateway ────────────────────────────────────────────────
+
+const PROVIDER_CACHE_STALE_MS = 24 * 60 * 60 * 1000;
+const PROVIDER_FETCH_TIMEOUT_MS = 12000;
+
+async function reserveProviderCall(db, provider, config) {
+  const period = usagePeriod(config, Date.now());
+  if (period.limit == null) return true;
+  const ref = db.collection('provider_usage').doc(`${provider}_${period.id}`);
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const calls = (snap.exists && snap.get('calls')) || 0;
+    if (calls >= period.limit) return false;
+    tx.set(ref, { provider, period: period.id, calls: calls + 1 }, { merge: true });
+    return true;
+  });
+}
+
+function decodeCached(snap) {
+  const gz = snap.get('gz');
+  if (!gz) return null;
+  return zlib.gunzipSync(Buffer.from(gz)).toString('utf8');
+}
+
+/**
+ * The app's only path to Ticketmaster / SeatGeek / JamBase.
+ *
+ * Request:  { provider, path, query }  — the same path/query the app used to
+ *           send directly, minus the credential (rejected if present).
+ * Response: { status: 200, body: "<provider JSON text>", cached: bool }
+ * Errors:   HttpsError with details { status } mirroring the upstream HTTP
+ *           status, so the app's 401/403/429 handling still works.
+ *
+ * Signed-in and guest users are both served (guests browse the feed too);
+ * abuse is bounded by the strict allow-list, bucketing, the shared cache and
+ * the per-provider daily/monthly call ceilings in provider_usage/*.
+ */
+exports.liveEventsProxy = onCall(
+  {
+    secrets: Object.values(providerSecrets),
+    timeoutSeconds: 30,
+    memory: '512MiB',
+    invoker: 'private', // see claimFoundingSlot; run the --no-invoker-iam-check step after deploy
+  },
+  async (request) => {
+    let normalized;
+    try {
+      normalized = normalizeRequest(request.data);
+    } catch (e) {
+      if (e instanceof ProxyRequestError) throw new HttpsError('invalid-argument', e.message);
+      throw e;
+    }
+    const { provider, config } = normalized;
+    const db = admin.firestore();
+    const cacheRef = db.collection('provider_cache').doc(cacheKey(normalized));
+    const now = Date.now();
+
+    const cached = await cacheRef.get();
+    if (cached.exists && cached.get('expiresAtMs') > now) {
+      return { status: 200, body: decodeCached(cached), cached: true };
+    }
+    const staleBody = () =>
+      cached.exists && cached.get('fetchedAtMs') > now - PROVIDER_CACHE_STALE_MS
+        ? decodeCached(cached)
+        : null;
+
+    const key = providerSecrets[config.secret].value();
+    if (!key) {
+      throw new HttpsError('failed-precondition', `${provider} is not configured`, { status: 503 });
+    }
+    if (!(await reserveProviderCall(db, provider, config))) {
+      const stale = staleBody();
+      if (stale != null) return { status: 200, body: stale, cached: true };
+      throw new HttpsError('resource-exhausted', `${provider} budget reached`, { status: 429 });
+    }
+
+    const upstream = buildUpstream(normalized, key);
+    let response;
+    try {
+      response = await fetch(upstream.url, {
+        headers: upstream.headers,
+        signal: AbortSignal.timeout(PROVIDER_FETCH_TIMEOUT_MS),
+      });
+    } catch (e) {
+      // Never log the URL: it can carry the key.
+      console.warn(`liveEventsProxy: ${provider} fetch failed (${e && e.name})`);
+      const stale = staleBody();
+      if (stale != null) return { status: 200, body: stale, cached: true };
+      throw new HttpsError('unavailable', `${provider} unreachable`, { status: 503 });
+    }
+    if (!response.ok) {
+      console.warn(`liveEventsProxy: ${provider} HTTP ${response.status}`);
+      const stale = response.status >= 500 || response.status === 429 ? staleBody() : null;
+      if (stale != null) return { status: 200, body: stale, cached: true };
+      const code = response.status === 404 ? 'not-found'
+        : response.status === 429 ? 'resource-exhausted'
+          : response.status === 401 || response.status === 403 ? 'permission-denied'
+            : 'unavailable';
+      throw new HttpsError(code, `${provider} HTTP ${response.status}`, {
+        status: response.status,
+        retryAfter: response.headers.get('retry-after') || null,
+      });
+    }
+    const body = await response.text();
+    try {
+      JSON.parse(body);
+    } catch (_) {
+      throw new HttpsError('unavailable', `${provider} returned non-JSON`, { status: 502 });
+    }
+    const gz = zlib.gzipSync(Buffer.from(body, 'utf8'));
+    if (gz.length < 900 * 1024) {
+      await cacheRef.set({
+        provider,
+        path: normalized.path,
+        gz,
+        fetchedAtMs: now,
+        expiresAtMs: now + config.ttlMs,
+        // Firestore TTL policy field (see RELEASE_TODO_BLAKE.md) so old
+        // answers are deleted automatically.
+        expireAt: admin.firestore.Timestamp.fromMillis(now + 2 * PROVIDER_CACHE_STALE_MS),
+      });
+    }
+    return { status: 200, body, cached: false };
   }
 );

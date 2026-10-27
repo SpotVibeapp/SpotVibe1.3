@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../models/user.dart';
 import '../repositories/user_repository.dart';
@@ -33,30 +32,6 @@ class AuthService {
       avatarUrl: account.photoUrl,
       idToken: authentication.idToken,
       accessToken: authentication.accessToken,
-    );
-  }
-
-  // ── Facebook ──────────────────────────────────────────────────────────────
-  Future<AppUser> loginWithFacebook() async {
-    if (kIsWeb) throw Exception('Facebook login is not supported on web');
-    final result = await FacebookAuth.instance.login(
-      permissions: ['email', 'public_profile'],
-    );
-    if (result.status != LoginStatus.success) {
-      throw Exception('Facebook sign-in cancelled or failed');
-    }
-    final data = await FacebookAuth.instance.getUserData(
-      fields: 'name,email,picture.width(200)',
-    );
-    final name = (data['name'] as String?) ?? 'Facebook User';
-    final email = (data['email'] as String?) ?? '';
-    final avatarUrl = (data['picture']?['data']?['url'] as String?) ?? '';
-    return _repository.loginWithSocial(
-      provider: 'facebook',
-      name: name,
-      email: email,
-      avatarUrl: avatarUrl,
-      accessToken: result.accessToken?.tokenString,
     );
   }
 

@@ -314,12 +314,6 @@ abstract class AppLocalizations {
   /// **'Google'**
   String get google;
 
-  /// No description provided for @facebook.
-  ///
-  /// In en, this message translates to:
-  /// **'Facebook'**
-  String get facebook;
-
   /// No description provided for @apple.
   ///
   /// In en, this message translates to:
@@ -3318,12 +3312,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please sign in again to continue.'**
   String get authRequiresRecentLogin;
-
-  /// No description provided for @authFacebookMissingToken.
-  ///
-  /// In en, this message translates to:
-  /// **'Facebook sign-in failed. Please try again.'**
-  String get authFacebookMissingToken;
 
   /// No description provided for @authAppleMissingToken.
   ///

@@ -36,7 +36,6 @@
   "privacyPolicy": "Política de privacidad",
   "sendFeedback": "Enviar comentarios",
   "google": "Google",
-  "facebook": "Facebook",
   "apple": "Apple",
   "discoverTitle": "Descubre eventos\ncerca de ti",
   "discoverBody": "SpotVibe te muestra los mejores eventos locales: conciertos, festivales gastronómicos, reuniones comunitarias y más, personalizados según lo que te gusta.",
@@ -865,7 +864,6 @@
   "claimRoleBookingAgent": "Agente de reservas",
   "claimRoleMarketing": "Marketing / RRPP",
   "claimRoleOther": "Otro representante autorizado",
-
   "authInvalidEmail": "Esa dirección de correo no es válida.",
   "authWrongCredentials": "Correo o contraseña incorrectos.",
   "authEmailInUse": "Ese correo ya está en uso.",
@@ -880,15 +878,12 @@
   "authNoAccountToDelete": "No hay una cuenta con sesión iniciada para eliminar.",
   "authNoEmailToVerify": "No hay un correo para verificar.",
   "authRequiresRecentLogin": "Vuelve a iniciar sesión para continuar.",
-  "authFacebookMissingToken": "No se pudo iniciar sesión con Facebook. Inténtalo de nuevo.",
   "authAppleMissingToken": "No se pudo iniciar sesión con Apple. Inténtalo de nuevo.",
   "authFailed": "Error de autenticación. Inténtalo de nuevo.",
-
   "claimProofOfficialEmail": "Correo oficial (coincide con el dominio del lugar)",
   "claimProofVenueWebsite": "Enlace al sitio web del lugar",
   "claimProofContract": "Contrato o confirmación de reserva",
   "claimProofPressContact": "Contacto de prensa",
-
   "eventCreationGuide": "Guía para crear eventos",
   "eventCreationGuideTooltip": "Cómo crear un evento",
   "eventCreationGuideCardTitle": "Crea con confianza",
@@ -918,7 +913,6 @@
   "eventCreationGuideReviewBody": "Revisa cada detalle antes de publicar. Si después cambias el título, fecha, hora, venue o precio, vuelve a abrir Poster Studio para crear un póster actualizado.",
   "eventCreationGuideExplorePremium": "Explorar Premium",
   "eventCreationGuideStart": "Empezar a crear",
-
   "notificationTestTitle": "Probar notificaciones",
   "notificationTestBody": "Envía una alerta de prueba para confirmar que las notificaciones funcionan en este dispositivo.",
   "sendTestNotification": "Enviar notificación de prueba",
@@ -928,7 +922,6 @@
   "notificationPermissionNeeded": "Las notificaciones de SpotVibe están desactivadas. Actívalas en Configuración para probarlas.",
   "notificationTestFailed": "No pudimos enviar una notificación de prueba. Inténtalo de nuevo.",
   "openSettings": "Abrir configuración",
-
   "eventStarts": "Empieza",
   "eventEnds": "Termina",
   "endTimeHint": "Indica la hora real de finalización. Tu evento seguirá visible como En curso hasta entonces.",
@@ -936,7 +929,6 @@
   "endTimeRequired": "Elige una hora de finalización antes de publicar.",
   "selectEndTime": "Elegir hora",
   "happeningNow": "En curso ahora",
-
   "editProfile": "Editar perfil",
   "profileNameLabel": "Nombre de empresa u organizador",
   "profileNameHint": "p. ej., SpotVibe",
@@ -945,7 +937,6 @@
   "profileNameRequired": "Ingresa un nombre de empresa u organizador.",
   "profileNameTooLong": "El nombre debe tener 100 caracteres o menos.",
   "profileUpdated": "Perfil actualizado.",
-
   "askSpotVibe": "Pregúntale a SpotVibe",
   "askSpotVibeSubtitle": "Describe lo que quieres hacer y encuentra eventos locales reales, con opciones de viaje por carretera.",
   "askSpotVibeSignIn": "Inicia sesión para recibir recomendaciones de eventos reales.",

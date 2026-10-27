@@ -40,7 +40,7 @@ const LegalDocument kPrivacyPolicy = LegalDocument(
     ),
     LegalSection(
       'Information you give us',
-      'Account: name, email, password (stored by Firebase Authentication, not in plain text), and a profile photo if you upload one or sign in with Google, Apple, or Facebook.\n\n'
+      'Account: name, email, password (stored by Firebase Authentication, not in plain text), and a profile photo if you upload one or sign in with Google or Apple.\n\n'
           'Events you create: title, description, start and end time, up to five photos including a cover, up to three short videos (up to 30 seconds each), location, ticket price, and optional contact, branding, and public organizer social-profile links. Social links you choose to add are visible on that event page. We do not collect social-media passwords, connect to your social account, or post on your behalf. If you choose to generate an AI promo background, we send the event title, description, category, venue context, selected visual style, and optional art-direction text to OpenAI to generate that image. Poster Studio formats a share poster from the event details you entered; it does not ask OpenAI to invent poster text.\n\n'
           'Ask SpotVibe: if you choose the signed-in AI event-search assistant, we send your short search request to OpenAI only to turn it into search filters. We do not send your account email or precise device location to OpenAI for this feature. The app then retrieves displayed event listings separately from SpotVibe and Ticketmaster; the AI assistant does not create event listings. Do not include sensitive personal information in an AI request.\n\n'
           'RSVPs and comments: whether you are going, and any text you post.\n\n'
@@ -57,7 +57,7 @@ const LegalDocument kPrivacyPolicy = LegalDocument(
     LegalSection(
       'Information from others',
       'Ticketmaster Discovery API: we request public event listings (title, venue, time, official photos, ticket links). We do not receive your Ticketmaster account.\n\n'
-          'Sign-in providers: Google, Apple, or Facebook send us the name, email, and avatar you allow.\n\n'
+          'Sign-in providers: Google or Apple send us the name, email, and avatar you allow.\n\n'
           'Other users: if someone tags you in a comment or you appear on a public RSVP list.',
     ),
     LegalSection(

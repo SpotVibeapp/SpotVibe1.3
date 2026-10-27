@@ -1,0 +1,13 @@
+{
+  "name": "spotvibe-firestore-rules-tests",
+  "private": true,
+  "description": "Security-rules tests for firestore.rules, run against the Firestore emulator (needs Java 21+).",
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore --project demo-spotvibe \"node --test --test-concurrency=1 rules.test.mjs\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.0",
+    "firebase": "^12.0.0",
+    "firebase-tools": "^15.0.0"
+  }
+}

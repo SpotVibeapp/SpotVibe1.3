@@ -13,6 +13,10 @@ Event _event({
   String? sourceUrl,
   double latitude = 0,
   double longitude = 0,
+  String creatorId = '',
+  bool isUserCreated = false,
+  double? cost,
+  String address = '1 Main',
 }) {
   return Event(
     id: id,
@@ -20,7 +24,7 @@ Event _event({
     description: description,
     dateTime: dateTime,
     location: location,
-    address: '1 Main',
+    address: address,
     city: 'El Paso',
     state: 'TX',
     zipCode: '79901',
@@ -32,6 +36,9 @@ Event _event({
     sourceUrl: sourceUrl,
     latitude: latitude,
     longitude: longitude,
+    creatorId: creatorId,
+    isUserCreated: isUserCreated,
+    cost: cost,
   );
 }
 
@@ -654,6 +661,145 @@ void main() {
         expect(out.single.id, 'tm_1');
         expect(out.single.imageUrl, contains('abraham_chavez'));
       }
+    });
+  });
+
+  group('first-party listings always win', () {
+    Event organizer({
+      String imageUrl = '',
+      String? sourceUrl,
+      String address = '500 W Paisano Dr',
+    }) =>
+        _event(
+          id: 'user_evt_1',
+          title: 'Khruangbin',
+          location: 'Abraham Chavez Theatre',
+          dateTime: night,
+          description: 'Doors at 7. Posted by the promoter.',
+          creatorId: 'promoter-uid',
+          isUserCreated: true,
+          cost: 35,
+          imageUrl: imageUrl,
+          sourceUrl: sourceUrl,
+          address: address,
+        );
+
+    final tm = _event(
+      id: 'tm_1',
+      title: 'Khruangbin',
+      location: 'Abraham Chavez Theatre',
+      dateTime: night,
+      imageUrl: 'https://s1.ticketm.net/dam/a/khruangbin.jpg',
+      source: EventSource.ticketmaster,
+      sourceUrl: 'https://ticketmaster.com/event/1',
+      description: 'Official Ticketmaster listing with seating charts and more.',
+      latitude: 31.7574,
+      longitude: -106.4907,
+      cost: 49.5,
+    ).copyWith(isTicketed: true);
+    final jb = _event(
+      id: 'jb_1',
+      title: 'Khruangbin',
+      location: 'Abraham Chavez Theater',
+      dateTime: night,
+      source: EventSource.jambase,
+      sourceUrl: 'https://venue.example/tickets/khruangbin',
+    );
+    final sg = _event(
+      id: 'sg_1',
+      title: 'Khruangbin',
+      location: 'Abraham Chavez Theatre',
+      dateTime: night,
+      source: EventSource.seatgeek,
+      sourceUrl: 'https://seatgeek.com/e/1',
+    );
+
+    test('an organizer listing beats a richer Ticketmaster copy', () {
+      for (final input in [
+        [organizer(), tm],
+        [tm, organizer()],
+      ]) {
+        final out = dedupeEvents(input).single;
+        expect(out.id, 'user_evt_1');
+        expect(out.isFirstParty, isTrue);
+      }
+    });
+
+    test('the aggregator ticket link, photo and coordinates are merged in', () {
+      final out = dedupeEvents([organizer(), tm]).single;
+      expect(out.sourceUrl, 'https://ticketmaster.com/event/1');
+      expect(out.ticketSource, EventSource.ticketmaster);
+      expect(out.isTicketed, isTrue);
+      expect(out.imageUrl, 'https://s1.ticketm.net/dam/a/khruangbin.jpg');
+      expect(out.latitude, closeTo(31.7574, 1e-9));
+      // The organizer's own details are never overwritten.
+      expect(out.title, 'Khruangbin');
+      expect(out.description, 'Doors at 7. Posted by the promoter.');
+      expect(out.cost, 35);
+      expect(out.source, EventSource.local);
+      expect(out.address, '500 W Paisano Dr');
+    });
+
+    test("the organizer's own photo and ticket link are kept", () {
+      final out = dedupeEvents([
+        organizer(
+          imageUrl: 'https://firebasestorage.googleapis.com/o/poster.jpg',
+          sourceUrl: 'https://promoter.example/buy',
+        ),
+        tm,
+      ]).single;
+      expect(out.id, 'user_evt_1');
+      expect(out.sourceUrl, 'https://promoter.example/buy');
+      expect(out.ticketSource, isNull);
+      expect(out.imageUrl, contains('poster.jpg'));
+    });
+
+    test('a blank organizer address is filled from the aggregator', () {
+      final tmWithAddress = tm.copyWith(address: '1 Civic Center Plaza');
+      final out =
+          dedupeEvents([organizer(address: ''), tmWithAddress]).single;
+      expect(out.address, '1 Civic Center Plaza');
+    });
+
+    test('the first party wins against all three providers in any order', () {
+      final rows = [jb, sg, organizer(), tm];
+      for (final input in [rows, rows.reversed.toList()]) {
+        final out = dedupeEvents(input);
+        expect(out, hasLength(1));
+        expect(out.single.id, 'user_evt_1');
+        // Ticketmaster is still the preferred link among the aggregators:
+        // its row absorbed the others before the organizer kept the show,
+        // or the organizer absorbed it directly; either way a real link.
+        expect(out.single.sourceUrl, isNotNull);
+      }
+    });
+
+    test('a claimed aggregator listing is first-party and keeps its id', () {
+      final claimed = tm.copyWith(creatorId: 'venue-uid', isUserCreated: true);
+      final out = dedupeEvents([sg, claimed]).single;
+      expect(out.id, 'tm_1');
+      expect(out.isFirstParty, isTrue);
+      expect(out.sourceUrl, 'https://ticketmaster.com/event/1');
+      expect(out.ticketSource, isNull);
+    });
+
+    test('curated placeholders are not first-party', () {
+      final curated = _event(
+        id: 'evt_ep_9',
+        title: 'Khruangbin',
+        location: 'Abraham Chavez Theatre',
+        dateTime: night,
+      );
+      expect(curated.isFirstParty, isFalse);
+      expect(dedupeEvents([curated, tm]).single.id, 'tm_1');
+    });
+
+    test('different shows are never merged into a first-party listing', () {
+      final other = tm.copyWith(title: 'Men I Trust');
+      final out = dedupeEvents([organizer(), other]);
+      expect(out, hasLength(2));
+      final mine = out.firstWhere((e) => e.id == 'user_evt_1');
+      expect(mine.sourceUrl, isNull);
     });
   });
 }

@@ -184,30 +184,27 @@ parallel; one failing or missing provider means fewer rows, never an empty
 feed or a crash. Adding a provider is one new file implementing
 `LiveEventSource` plus one line in the `main.dart` provider list.
 
-Keys are passed at build/run time and must never be committed:
+**The app contains no provider keys.** Every provider request goes through
+the `liveEventsProxy` Cloud Function (`functions/index.js`,
+`lib/services/provider_proxy.dart`), which adds the credential from Cloud
+Secret Manager, caches answers in Firestore for all users and enforces
+per-provider call ceilings. Set the secrets once per project:
 
-| Provider     | Get a key                                  | dart-define            |
+| Provider     | Get a key                                  | Secret Manager name    |
 | ------------ | ------------------------------------------ | ---------------------- |
 | Ticketmaster | https://developer.ticketmaster.com/        | `TICKETMASTER_API_KEY` |
 | SeatGeek     | https://seatgeek.com/account/develop       | `SEATGEEK_CLIENT_ID`   |
 | JamBase      | https://data.jambase.com/pricing           | `JAMBASE_API_KEY`      |
 
 ```bash
-flutter run \
-  --dart-define=TICKETMASTER_API_KEY=your_key_here \
-  --dart-define=SEATGEEK_CLIENT_ID=your_client_id_here \
-  --dart-define=JAMBASE_API_KEY=jbd_your_key_here
+firebase functions:secrets:set TICKETMASTER_API_KEY --project spotvibe-cfa08
+firebase functions:secrets:set SEATGEEK_CLIENT_ID   --project spotvibe-cfa08
+firebase functions:secrets:set JAMBASE_API_KEY      --project spotvibe-cfa08
 ```
 
-or keep them in an untracked `secrets.json` (already in `.gitignore`):
-
-```json
-{
-  "TICKETMASTER_API_KEY": "your_key_here",
-  "SEATGEEK_CLIENT_ID": "your_client_id_here",
-  "JAMBASE_API_KEY": "jbd_your_key_here"
-}
-```
+Build with `--dart-define=LIVE_PROVIDERS=false` to switch the backfill off
+(first-party listings only). Other build-time values (RevenueCat public SDK
+keys, AdMob ids) can still live in an untracked `secrets.json`:
 
 ```bash
 flutter run --dart-define-from-file=secrets.json
@@ -272,7 +269,6 @@ then pass its direct service URL at run/build time:
 
 ```bash
 flutter run \
-  --dart-define=TICKETMASTER_API_KEY=your_key_here \
   --dart-define=AI_EVENT_SEARCH_FUNCTION_URL=https://...a.run.app
 ```
 

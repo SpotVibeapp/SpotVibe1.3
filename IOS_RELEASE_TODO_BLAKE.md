@@ -1,5 +1,8 @@
 # iOS App Store release — steps only Blake can do
 
+> Backend deploy order, secrets, migrations and Android notes for the
+> release-blocker fixes: see **RELEASE_TODO_BLAKE.md** (do those first).
+
 Branch `ios-appstore-fixes` (version 1.0.15+15) contains the code-side fixes:
 Sign in with Apple enabled, ATT prompt before ads (non-personalized ads if
 declined), updated privacy manifest, SKAdNetwork ids, AdMob/Google Sign-In ids
@@ -106,5 +109,5 @@ Must match `ios/Runner/PrivacyInfo.xcprivacy`:
 
 ## 9. Before submitting
 - Build number must be higher than any uploaded (now 1.0.15+15).
-- Facebook login stays disabled (`enableFacebookSignIn = false`); don't enable
-  it without adding FacebookAppID/ClientToken and URL schemes to Info.plist.
+- Facebook login was removed entirely (package `flutter_facebook_auth` and all
+  code paths), so no Facebook SDK or Info.plist keys ship.
