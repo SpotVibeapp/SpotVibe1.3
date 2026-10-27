@@ -3,6 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../models/user.dart';
+import '../services/account_deletion_flow.dart';
+import '../services/apple_reauth.dart';
+import '../services/apple_sign_in_profile.dart';
 import 'user_repository.dart';
 
 /// Production [UserRepository] backed by Firebase Auth + Firestore.
@@ -21,12 +24,25 @@ import 'user_repository.dart';
 /// Errors are converted to user-friendly [Exception]s via
 /// [messageForAuthException] so the UI can show them directly.
 class FirebaseUserRepository implements UserRepository {
-  FirebaseUserRepository({FirebaseAuth? auth, FirebaseFirestore? firestore})
-      : _auth = auth ?? FirebaseAuth.instance,
-        _db = firestore ?? FirebaseFirestore.instance;
+  FirebaseUserRepository({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+    Future<AppleDeletionAuthorization> Function()? requestAppleAuthorization,
+    bool? appleAuthorizationSupported,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _db = firestore ?? FirebaseFirestore.instance,
+        _requestAppleAuthorization =
+            requestAppleAuthorization ?? requestAppleAuthorizationForDeletion,
+        _appleAuthorizationSupported = appleAuthorizationSupported ??
+            (!kIsWeb &&
+                (defaultTargetPlatform == TargetPlatform.iOS ||
+                    defaultTargetPlatform == TargetPlatform.macOS));
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _db;
+  final Future<AppleDeletionAuthorization> Function()
+      _requestAppleAuthorization;
+  final bool _appleAuthorizationSupported;
 
   CollectionReference<Map<String, dynamic>> get _users =>
       _db.collection('users');
@@ -96,12 +112,13 @@ class FirebaseUserRepository implements UserRepository {
   @override
   Future<AppUser> loginWithSocial({
     required String provider,
-    required String name,
-    required String email,
+    String? name,
+    String? email,
     String? avatarUrl,
     String? idToken,
     String? accessToken,
     String? rawNonce,
+    String? providerUserId,
   }) async {
     final AuthCredential credential;
     switch (provider) {
@@ -129,10 +146,23 @@ class FirebaseUserRepository implements UserRepository {
 
     try {
       final result = await _auth.signInWithCredential(credential);
+      final user = result.user!;
+      final providedName = name?.trim() ?? '';
+      // Apple only sends the name on the first sign-in and Firebase does not
+      // copy it onto the auth user, so save it now. Never overwrite an
+      // existing name with a blank one.
+      if (providedName.isNotEmpty && (user.displayName?.trim() ?? '').isEmpty) {
+        try {
+          await user.updateDisplayName(providedName);
+        } catch (e) {
+          debugPrint('Auth display name update skipped: $e');
+        }
+      }
       return await _appUserFor(
-        result.user!,
-        fallbackName: name,
+        user,
+        fallbackName: providedName.isEmpty ? null : providedName,
         fallbackAvatar: avatarUrl,
+        providerEmail: email,
         provider: provider,
       );
     } on FirebaseAuthException catch (e) {
@@ -208,40 +238,59 @@ class FirebaseUserRepository implements UserRepository {
     final user = _auth.currentUser;
     if (user == null) throw Exception('No signed-in account to delete.');
 
-    // Re-authenticate email/password accounts before a destructive op.
+    Future<void> Function()? passwordReauth;
     if (password != null && password.isNotEmpty) {
-      final email = user.email;
-      if (email == null || email.isEmpty) {
-        throw Exception('This account has no email/password to verify.');
-      }
-      try {
-        await user.reauthenticateWithCredential(
-          EmailAuthProvider.credential(email: email, password: password),
-        );
-      } on FirebaseAuthException catch (e) {
-        throw Exception(messageForAuthException(e));
-      }
+      passwordReauth = () async {
+        final email = user.email;
+        if (email == null || email.isEmpty) {
+          throw Exception('This account has no email/password to verify.');
+        }
+        try {
+          await user.reauthenticateWithCredential(
+            EmailAuthProvider.credential(email: email, password: password),
+          );
+        } on FirebaseAuthException catch (e) {
+          throw Exception(messageForAuthException(e));
+        }
+      };
     }
 
-    // Purge Firestore data first (while still authenticated, so security
-    // rules allow the deletes).
-    try {
-      await _purgeUserData(user.uid);
-    } catch (e) {
-      debugPrint('Client-side purge incomplete ($e). '
-          'The deleteUser Cloud Function performs authoritative cleanup.');
-    }
-
-    try {
-      await user.delete();
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'requires-recent-login') {
-        throw Exception(
-          'For security, sign out and sign back in, then delete your account again.',
-        );
-      }
-      throw Exception(messageForAuthException(e));
-    }
+    final flow = AccountDeletionFlow(
+      providerIds: [for (final info in user.providerData) info.providerId],
+      appleAuthorizationSupported: _appleAuthorizationSupported,
+      reauthenticateWithPassword: passwordReauth,
+      requestAppleAuthorization: _requestAppleAuthorization,
+      reauthenticateWithApple: (apple) async {
+        try {
+          await user.reauthenticateWithCredential(
+            OAuthProvider('apple.com').credential(
+              idToken: apple.identityToken,
+              rawNonce: apple.rawNonce,
+            ),
+          );
+        } on FirebaseAuthException catch (e) {
+          throw Exception(
+            'Could not confirm your Apple account, so it was not deleted. '
+            '${messageForAuthException(e)}',
+          );
+        }
+      },
+      revokeAppleToken: _auth.revokeTokenWithAuthorizationCode,
+      purgeUserData: () => _purgeUserData(user.uid),
+      deleteAuthUser: () async {
+        try {
+          await user.delete();
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'requires-recent-login') {
+            throw Exception(
+              'For security, sign out and sign back in, then delete your account again.',
+            );
+          }
+          throw Exception(messageForAuthException(e));
+        }
+      },
+    );
+    await flow.run();
   }
 
   /// Best-effort client-side cleanup of all Firestore docs owned by [uid].
@@ -341,28 +390,40 @@ class FirebaseUserRepository implements UserRepository {
     User user, {
     String? fallbackName,
     String? fallbackAvatar,
+    String? providerEmail,
     String? provider,
   }) async {
-    final displayName = (user.displayName?.isNotEmpty ?? false)
-        ? user.displayName!
-        : (fallbackName ?? user.email?.split('@').first ?? 'User');
+    Map<String, dynamic>? stored;
+    try {
+      stored = (await _users.doc(user.uid).get()).data();
+    } catch (_) {}
+
+    // Email may legitimately be missing (e.g. Apple after the first sign-in
+    // when Firebase has none either). Never invent one; use '' instead.
+    final email = resolveEmail(
+      providerEmail: providerEmail,
+      authEmail: user.email,
+      storedEmail: stored?['email'] as String?,
+    );
+    final displayName = resolveDisplayName(
+      authDisplayName: user.displayName,
+      storedName: stored?['name'] as String?,
+      fallbackName: fallbackName,
+      email: email,
+    );
     var avatar = (user.photoURL?.isNotEmpty ?? false)
         ? user.photoURL!
         : (fallbackAvatar?.isNotEmpty == true
             ? fallbackAvatar!
             : _generatedAvatar(displayName));
-    final email = user.email ?? '';
 
     // Prefer a photo the user already uploaded — never clobber it on login.
-    try {
-      final existing = await _users.doc(user.uid).get();
-      final stored = existing.data()?['avatarUrl'] as String?;
-      if (stored != null &&
-          stored.isNotEmpty &&
-          !stored.contains('ui-avatars.com')) {
-        avatar = stored;
-      }
-    } catch (_) {}
+    final storedAvatar = stored?['avatarUrl'] as String?;
+    if (storedAvatar != null &&
+        storedAvatar.isNotEmpty &&
+        !storedAvatar.contains('ui-avatars.com')) {
+      avatar = storedAvatar;
+    }
 
     await _syncProfileDoc(
       uid: user.uid,
@@ -459,6 +520,8 @@ class FirebaseUserRepository implements UserRepository {
       if (!snapshot.exists) {
         await ref.set({
           'name': name,
+          // Empty string (never an invented address) when the provider gave
+          // no email; firestore.rules require the key to exist on create.
           'email': email,
           'avatarUrl': avatarUrl,
           if (provider != null) 'provider': provider,
@@ -467,14 +530,56 @@ class FirebaseUserRepository implements UserRepository {
         });
       } else {
         // Do not overwrite avatarUrl — the user may have uploaded a photo.
+        // Never blank out a stored email or name: Apple omits both after the
+        // first sign-in.
+        final storedName = snapshot.data()?['name'] as String?;
         await ref.update({
-          'email': email,
+          if (email.isNotEmpty) 'email': email,
+          if ((storedName?.trim() ?? '').isEmpty && name.trim().isNotEmpty)
+            'name': name,
           'updatedAt': FieldValue.serverTimestamp(),
         });
       }
     } catch (_) {
       // Non-fatal: profile sync is best-effort.
     }
+  }
+
+  /// Picks the email to show/store: the one the provider just returned, then
+  /// the Firebase Auth user's, then the one already on the profile document.
+  /// Returns '' when none exists — an email is never invented. Apple
+  /// private-relay addresses are real and are kept as-is.
+  static String resolveEmail({
+    String? providerEmail,
+    String? authEmail,
+    String? storedEmail,
+  }) {
+    for (final candidate in [providerEmail, authEmail, storedEmail]) {
+      final trimmed = candidate?.trim() ?? '';
+      if (trimmed.isNotEmpty) return trimmed;
+    }
+    return '';
+  }
+
+  /// Picks a display name without ever overwriting a known name with a blank
+  /// one. Falls back to the email's local part (except for Apple relay
+  /// addresses, whose local part is random) and finally to 'User'.
+  static String resolveDisplayName({
+    String? authDisplayName,
+    String? storedName,
+    String? fallbackName,
+    String? email,
+  }) {
+    for (final candidate in [authDisplayName, storedName, fallbackName]) {
+      final trimmed = candidate?.trim() ?? '';
+      if (trimmed.isNotEmpty) return trimmed;
+    }
+    final mail = email?.trim() ?? '';
+    if (mail.contains('@') && !AppleSignInProfile.isPrivateRelay(mail)) {
+      final local = mail.split('@').first;
+      if (local.isNotEmpty) return local;
+    }
+    return 'User';
   }
 
   static String _generatedAvatar(String name) =>

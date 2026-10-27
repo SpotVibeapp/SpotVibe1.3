@@ -38,6 +38,7 @@ import 'repositories/user_repository.dart';
 import 'router/app_router.dart';
 import 'services/ad_consent_service.dart';
 import 'services/ads_service.dart';
+import 'services/tracking_consent_service.dart';
 import 'services/ai_moderation_service.dart';
 import 'services/gem_service.dart';
 import 'services/event_analytics_service.dart';
@@ -120,9 +121,12 @@ class _BootAppState extends State<_BootApp> {
     final permissionService = PermissionService();
 
     // ── Ads (banner ads for free users; ad-free is a Premium benefit) ──────
-    // Request UMP consent, then initialize the Mobile Ads SDK. Both no-op on
-    // web and are wrapped so an ad failure can never block startup.
+    // Request UMP consent, then (iOS only) the App Tracking Transparency
+    // prompt, then initialize the Mobile Ads SDK. If tracking isn't
+    // authorized, AdsService.adRequest serves non-personalized ads. All steps
+    // no-op on web and are wrapped so an ad failure can never block startup.
     await AdConsentService.ensureConsent();
+    await TrackingConsentService.requestIfNeeded();
     await AdsService.initialize();
 
     // ── Resolve the initial deep link path ────────────────────────────────

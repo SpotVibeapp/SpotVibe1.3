@@ -21,10 +21,15 @@ abstract class UserRepository {
   /// [provider] is one of: `google`, `facebook`, `apple`.
   /// Mock implementations ignore the tokens; Firebase builds a real
   /// [AuthCredential] from them.
+  ///
+  /// [name] and [email] are whatever the provider actually returned and may
+  /// be null/empty (Apple only sends them on the first sign-in, and Facebook
+  /// users may not share an email). Implementations must never invent an
+  /// email; accounts are keyed by the auth UID / [providerUserId], not email.
   Future<AppUser> loginWithSocial({
     required String provider,
-    required String name,
-    required String email,
+    String? name,
+    String? email,
     String? avatarUrl,
     String? idToken,
     String? accessToken,
@@ -32,6 +37,9 @@ abstract class UserRepository {
     /// Only used by Apple Sign-In (the raw nonce whose SHA-256 was sent to
     /// Apple).
     String? rawNonce,
+
+    /// The provider's stable user id when known (Apple's `userIdentifier`).
+    String? providerUserId,
   });
 
   /// Email + password sign-in. Throws on invalid credentials.

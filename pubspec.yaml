@@ -2,7 +2,7 @@ name: spotvibe_app
 description: "SpotVibe - local events discovery app"
 publish_to: 'none'
 
-version: 1.0.14+14
+version: 1.0.15+15
 
 environment:
   sdk: ^3.7.2
@@ -75,6 +75,7 @@ dependencies:
   cloud_firestore: ^6.8.0
   firebase_storage: ^13.0.0
   cloud_functions: ^6.0.5
+  app_tracking_transparency: ^2.0.7
 
 dev_dependencies:
   flutter_test:
