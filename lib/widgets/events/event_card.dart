@@ -48,28 +48,100 @@ class EventCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _EventImage(event: event, appColors: appColors),
-            _EventDetails(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final details = _EventDetails(
               event: event,
               onBookmark: onBookmark,
               onInterested: onInterested,
               distanceMiles: distanceMiles,
-            ),
-          ],
+            );
+            final screenHeight = MediaQuery.sizeOf(context).height;
+
+            // Short, wide windows (a foldable's cover screen in landscape is
+            // ~350 dp tall) cannot fit a photo stacked on top of the details,
+            // so the photo moves beside them and the card is only as tall as
+            // its text. Sized by content, so larger text still fits.
+            if (constraints.maxWidth >= kEventCardSideBySideMinWidth &&
+                screenHeight < kEventCardSideBySideMaxScreenHeight) {
+              final imageWidth =
+                  (constraints.maxWidth * 0.36).clamp(180.0, 320.0);
+              return Stack(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(left: imageWidth),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 132),
+                      child: details,
+                    ),
+                  ),
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: imageWidth,
+                    child: _EventImage(
+                      event: event,
+                      appColors: appColors,
+                      borderRadius: const BorderRadius.horizontal(
+                        left: Radius.circular(AppTheme.radiusLarge),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            // Stacked layout: the photo shrinks on short screens so the whole
+            // card still fits in the visible part of the feed.
+            final imageHeight = (screenHeight * 0.25)
+                .clamp(kEventCardMinImageHeight, kEventCardImageHeight)
+                .toDouble();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _EventImage(
+                  event: event,
+                  appColors: appColors,
+                  height: imageHeight,
+                ),
+                details,
+              ],
+            );
+          },
         ),
       ),
     );
   }
 }
 
+/// Full photo height of a stacked event card.
+const double kEventCardImageHeight = 180;
+
+/// Smallest photo height a stacked card shrinks to on short screens.
+const double kEventCardMinImageHeight = 120;
+
+/// A card at least this wide, on a screen shorter than
+/// [kEventCardSideBySideMaxScreenHeight], puts its photo beside the details.
+const double kEventCardSideBySideMinWidth = 480;
+const double kEventCardSideBySideMaxScreenHeight = 480;
+
 class _EventImage extends StatelessWidget {
   final Event event;
   final AppColorsExtension appColors;
 
-  const _EventImage({required this.event, required this.appColors});
+  /// Photo height; null fills the height the parent gives it.
+  final double? height;
+  final BorderRadius borderRadius;
+
+  const _EventImage({
+    required this.event,
+    required this.appColors,
+    this.height,
+    this.borderRadius = const BorderRadius.vertical(
+      top: Radius.circular(AppTheme.radiusLarge),
+    ),
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -78,16 +150,16 @@ class _EventImage extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final catColor = categoryAccent(event.category);
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(AppTheme.radiusLarge)),
+      borderRadius: borderRadius,
       child: SizedBox(
-        height: 180,
+        height: height,
         width: double.infinity,
         child: Stack(
           fit: StackFit.expand,
           children: [
             EventCoverImage.fromEvent(
               event,
-              height: 180,
+              height: height,
               placeholderColor: appColors.shimmer,
             ),
             // Category-tinted scrim fading up from the bottom of the photo.

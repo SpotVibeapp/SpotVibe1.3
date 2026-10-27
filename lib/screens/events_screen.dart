@@ -26,6 +26,10 @@ import '../widgets/events/filter_sheet.dart';
 import '../widgets/events/home_discovery_hero.dart';
 import '../widgets/events/search_header.dart';
 
+/// Below this window height (logical px) the home screen switches to its
+/// compact layout: side navigation rail in landscape and no ad upsell row.
+const double _kCompactHeight = 480;
+
 class EventsScreen extends StatefulWidget {
   const EventsScreen({super.key});
 
@@ -144,6 +148,17 @@ class _EventsScreenState extends State<EventsScreen> {
     );
   }
 
+  void _onDestinationSelected(int index) {
+    switch (index) {
+      case 1:
+        context.push('/gems');
+        break;
+      case 2:
+        context.push('/map');
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final eventProvider = context.watch<EventProvider>();
@@ -155,41 +170,20 @@ class _EventsScreenState extends State<EventsScreen> {
     final activeFilters = eventProvider.activeFilterCount;
     final hasAreaQuery = eventProvider.areaQuery.isNotEmpty;
 
-    return Scaffold(
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: 0,
-        onDestinationSelected: (index) {
-          switch (index) {
-            case 1:
-              context.push('/gems');
-              break;
-            case 2:
-              context.push('/map');
-              break;
-          }
-        },
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.explore_outlined),
-            selectedIcon: const Icon(Icons.explore_rounded),
-            label: l10n.navDiscover,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.diamond_outlined),
-            selectedIcon: const Icon(Icons.diamond_rounded),
-            label: l10n.navGems,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.map_outlined),
-            selectedIcon: const Icon(Icons.map_rounded),
-            label: l10n.navMap,
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    // Short landscape windows (the Galaxy Z Fold cover screen turned
+    // sideways is only ~350 dp tall) cannot afford an 80 dp bottom bar: move
+    // navigation to a side rail so the feed keeps its height.
+    final size = MediaQuery.sizeOf(context);
+    final compactHeight = size.height < _kCompactHeight;
+    final useRail = compactHeight && size.width > size.height;
+
+    // Everything above the cards scrolls away with the feed. When these
+    // controls were pinned they used ~400 dp, leaving the cards a window
+    // shorter than a single card (Blake: "unable to see a full event card").
+    final header = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
             const SizedBox(height: AppTheme.spacingMd),
             _HomeHeaderGlow(
               child: Padding(
@@ -319,11 +313,16 @@ class _EventsScreenState extends State<EventsScreen> {
               onAskAi: (query) => _openAiEventSearch(initialQuery: query),
             ),
             const SizedBox(height: AppTheme.spacingSm),
-            AskSpotVibeCard(
-              isSignedIn: authProvider.isLoggedIn && !authProvider.isGuest,
-              onTap: () => _openAiEventSearch(),
-            ),
-            const SizedBox(height: AppTheme.spacingSm),
+            // The large Ask SpotVibe promo stays on the browse feed. On search
+            // results it gives way to the cards; the sparkle button inside the
+            // search field still opens Ask SpotVibe with the typed query.
+            if (eventProvider.searchQuery.isEmpty) ...[
+              AskSpotVibeCard(
+                isSignedIn: authProvider.isLoggedIn && !authProvider.isGuest,
+                onTap: () => _openAiEventSearch(),
+              ),
+              const SizedBox(height: AppTheme.spacingSm),
+            ],
             CategoryChips(
               key: _tourKeyCategories,
               categories: eventProvider.categories,
@@ -342,52 +341,122 @@ class _EventsScreenState extends State<EventsScreen> {
               ),
             if (eventProvider.searchQuery.isNotEmpty && !eventProvider.isLoading)
               _SearchResultsHeader(eventProvider: eventProvider),
-            Expanded(
-              child: _EventsList(
-                eventProvider: eventProvider,
-                areaQuery: eventProvider.areaQuery,
-                personalization: personalization,
-                isRequestingLocation: _fetchingLocation,
-                onRequestLocation: _fetchingLocation
-                    ? null
-                    : () {
-                        _requestUserLocation();
-                      },
-                firstCardKey: _tourKeyCard,
-              ),
-            ),
-            // Anchored banner ad for free users (collapses for Premium and on
-            // web). Sits between the feed and the bottom navigation bar.
-            const AdBanner(),
-            GuidedTour(
-              tourId: 'home',
-              steps: [
-                TourStep(
-                  targetKey: _tourKeyHeader,
-                  title: l10n.tourHome1Title,
-                  description: l10n.tourHome1Body,
+      ],
+    );
+
+    final feed = NestedScrollView(
+      headerSliverBuilder: (context, _) => [
+        SliverToBoxAdapter(child: header),
+      ],
+      body: _EventsList(
+        eventProvider: eventProvider,
+        areaQuery: eventProvider.areaQuery,
+        personalization: personalization,
+        isRequestingLocation: _fetchingLocation,
+        onRequestLocation: _fetchingLocation
+            ? null
+            : () {
+                _requestUserLocation();
+              },
+        firstCardKey: _tourKeyCard,
+      ),
+    );
+
+    return Scaffold(
+      bottomNavigationBar: useRail
+          ? null
+          : NavigationBar(
+              selectedIndex: 0,
+              onDestinationSelected: _onDestinationSelected,
+              destinations: [
+                NavigationDestination(
+                  icon: const Icon(Icons.explore_outlined),
+                  selectedIcon: const Icon(Icons.explore_rounded),
+                  label: l10n.navDiscover,
                 ),
-                TourStep(
-                  targetKey: _tourKeySearch,
-                  title: l10n.tourHome2Title,
-                  description: l10n.tourHome2Body,
+                NavigationDestination(
+                  icon: const Icon(Icons.diamond_outlined),
+                  selectedIcon: const Icon(Icons.diamond_rounded),
+                  label: l10n.navGems,
                 ),
-                TourStep(
-                  targetKey: _tourKeyFilter,
-                  title: l10n.tourHome3Title,
-                  description: l10n.tourHome3Body,
-                ),
-                TourStep(
-                  targetKey: _tourKeyCategories,
-                  title: l10n.tourHome4Title,
-                  description: l10n.tourHome4Body,
-                ),
-                TourStep(
-                  targetKey: _tourKeyCard,
-                  title: l10n.tourHome5Title,
-                  description: l10n.tourHome5Body,
+                NavigationDestination(
+                  icon: const Icon(Icons.map_outlined),
+                  selectedIcon: const Icon(Icons.map_rounded),
+                  label: l10n.navMap,
                 ),
               ],
+            ),
+      body: SafeArea(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (useRail) ...[
+              NavigationRail(
+                selectedIndex: 0,
+                onDestinationSelected: _onDestinationSelected,
+                labelType: NavigationRailLabelType.all,
+                groupAlignment: 0,
+                destinations: [
+                  NavigationRailDestination(
+                    icon: const Icon(Icons.explore_outlined),
+                    selectedIcon: const Icon(Icons.explore_rounded),
+                    label: Text(l10n.navDiscover),
+                  ),
+                  NavigationRailDestination(
+                    icon: const Icon(Icons.diamond_outlined),
+                    selectedIcon: const Icon(Icons.diamond_rounded),
+                    label: Text(l10n.navGems),
+                  ),
+                  NavigationRailDestination(
+                    icon: const Icon(Icons.map_outlined),
+                    selectedIcon: const Icon(Icons.map_rounded),
+                    label: Text(l10n.navMap),
+                  ),
+                ],
+              ),
+              const VerticalDivider(width: 1),
+            ],
+            Expanded(
+              child: Column(
+                children: [
+                  Expanded(child: feed),
+                  // Anchored banner ad for free users (collapses for Premium
+                  // and on web). Sits between the feed and the navigation. On
+                  // very short screens the upsell row under it is dropped so
+                  // the ad slot does not eat a third of the height.
+                  AdBanner(showRemoveAdsUpsell: !compactHeight),
+                  GuidedTour(
+                    tourId: 'home',
+                    steps: [
+                      TourStep(
+                        targetKey: _tourKeyHeader,
+                        title: l10n.tourHome1Title,
+                        description: l10n.tourHome1Body,
+                      ),
+                      TourStep(
+                        targetKey: _tourKeySearch,
+                        title: l10n.tourHome2Title,
+                        description: l10n.tourHome2Body,
+                      ),
+                      TourStep(
+                        targetKey: _tourKeyFilter,
+                        title: l10n.tourHome3Title,
+                        description: l10n.tourHome3Body,
+                      ),
+                      TourStep(
+                        targetKey: _tourKeyCategories,
+                        title: l10n.tourHome4Title,
+                        description: l10n.tourHome4Body,
+                      ),
+                      TourStep(
+                        targetKey: _tourKeyCard,
+                        title: l10n.tourHome5Title,
+                        description: l10n.tourHome5Body,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),

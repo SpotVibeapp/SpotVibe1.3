@@ -57,19 +57,26 @@ class PaginatedEventsList extends StatefulWidget {
 
 class _PaginatedEventsListState extends State<PaginatedEventsList> {
   int _currentPage = 0;
-  final ScrollController _scrollController = ScrollController();
+  final ScrollController _ownScrollController = ScrollController();
+
+  /// Inside the home screen's NestedScrollView the list must drive the
+  /// inherited (primary) controller so the search header scrolls away with
+  /// the cards. Standalone, it falls back to its own controller.
+  ScrollController get _scrollController =>
+      PrimaryScrollController.maybeOf(context) ?? _ownScrollController;
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _ownScrollController.dispose();
     super.dispose();
   }
 
   /// Return the feed to the top so a new page always starts at its first card
   /// instead of leaving the reader stranded mid-list from the previous page.
   void _scrollToTop() {
-    if (!_scrollController.hasClients) return;
-    _scrollController.animateTo(
+    final controller = _scrollController;
+    if (!controller.hasClients || controller.offset <= 0) return;
+    controller.animateTo(
       0,
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOutCubic,
@@ -103,9 +110,13 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
       // List changed (new search / filter / refresh) — reset to first page and
       // return the feed to the top after this frame lays out the new content.
       _currentPage = 0;
+      // Only when the cards are actually scrolled: in a NestedScrollView a
+      // jump would also collapse the search header the user is typing in.
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _scrollController.hasClients) {
-          _scrollController.jumpTo(0);
+        if (!mounted) return;
+        final controller = _scrollController;
+        if (controller.hasClients && controller.offset > 0) {
+          controller.jumpTo(0);
         }
       });
     }
@@ -138,62 +149,66 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
     // "Powered by JamBase" link. Empty for pages without one.
     final showAttribution = JamBaseAttribution.needed(page);
 
-    return Column(
-      children: [
-        // ── Scrollable discovery header, feed heading, and event cards ────────
-        Expanded(
-          child: ListView.builder(
-            controller: _scrollController,
-            padding: const EdgeInsets.only(bottom: AppTheme.spacingXs),
-            itemCount: headerCount + 1 + page.length + (showAttribution ? 1 : 0),
-            itemBuilder: (ctx, i) {
-              if (i < headerCount) return widget.feedHeader[i];
-              if (i == headerCount + 1 + page.length) {
-                return JamBaseAttribution(events: page);
-              }
+    final showPagination = _totalPages > 1;
+    final cardsEnd = headerCount + 1 + page.length;
+    final attributionIndex = showAttribution ? cardsEnd : -1;
+    final paginationIndex =
+        showPagination ? cardsEnd + (showAttribution ? 1 : 0) : -1;
 
-              if (i == headerCount) {
-                return _EventCountBanner(
-                  currentPage: _currentPage,
-                  pageSize: kEventsPerPage,
-                  total: provider.events.length,
-                  // Events shown outside the paginated list (the discovery
-                  // hero) still count toward the real total, so add them back
-                  // in for an accurate "of N" figure and a continuous range.
-                  heroLead: provider.events.length - _total,
-                  sectionTitle: widget.sectionTitle,
-                );
-              }
-
-              final eventIndex = i - headerCount - 1;
-              final event = page[eventIndex];
-              // Cards may omit the event shown in the home hero, so use the
-              // provider's actual index rather than the visible-list offset.
-              final providerIndex = provider.indexOfEvent(event.id);
-              return EventCard(
-                key: _currentPage == 0 && eventIndex == 0
-                    ? widget.firstCardKey
-                    : null,
-                event: event,
-                onTap: () => widget.onEventTap(event, providerIndex),
-                onBookmark: () => provider.toggleBookmark(providerIndex),
-                onInterested: () => provider.toggleInterested(providerIndex),
-                distanceMiles: provider.distanceFor(event),
-              );
-            },
-          ),
-        ),
-        // ── Page navigation ───────────────────────────────────────────────────
-        if (_totalPages > 1)
-          _PaginationBar(
+    // Discovery header, feed heading, event cards, and page navigation all
+    // scroll together. Page navigation used to be pinned under the list,
+    // which took another ~60 dp from the cards on every screen.
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.only(bottom: AppTheme.spacingXs),
+      itemCount: cardsEnd +
+          (showAttribution ? 1 : 0) +
+          (showPagination ? 1 : 0),
+      itemBuilder: (ctx, i) {
+        if (i < headerCount) return widget.feedHeader[i];
+        if (i == attributionIndex) {
+          return JamBaseAttribution(events: page);
+        }
+        if (i == paginationIndex) {
+          return _PaginationBar(
             currentPage: _currentPage,
             totalPages: _totalPages,
             onPrev: _currentPage > 0 ? () => _go(_currentPage - 1) : null,
             onNext: _currentPage < _totalPages - 1
                 ? () => _go(_currentPage + 1)
                 : null,
-          ),
-      ],
+          );
+        }
+
+        if (i == headerCount) {
+          return _EventCountBanner(
+            currentPage: _currentPage,
+            pageSize: kEventsPerPage,
+            total: provider.events.length,
+            // Events shown outside the paginated list (the discovery
+            // hero) still count toward the real total, so add them back
+            // in for an accurate "of N" figure and a continuous range.
+            heroLead: provider.events.length - _total,
+            sectionTitle: widget.sectionTitle,
+          );
+        }
+
+        final eventIndex = i - headerCount - 1;
+        final event = page[eventIndex];
+        // Cards may omit the event shown in the home hero, so use the
+        // provider's actual index rather than the visible-list offset.
+        final providerIndex = provider.indexOfEvent(event.id);
+        return EventCard(
+          key: _currentPage == 0 && eventIndex == 0
+              ? widget.firstCardKey
+              : null,
+          event: event,
+          onTap: () => widget.onEventTap(event, providerIndex),
+          onBookmark: () => provider.toggleBookmark(providerIndex),
+          onInterested: () => provider.toggleInterested(providerIndex),
+          distanceMiles: provider.distanceFor(event),
+        );
+      },
     );
   }
 }

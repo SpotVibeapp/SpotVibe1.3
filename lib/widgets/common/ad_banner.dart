@@ -151,11 +151,17 @@ class _RemoveAdsUpsell extends StatelessWidget {
           children: [
             Icon(Icons.block_rounded, size: 14, color: colors.primary),
             const SizedBox(width: 6),
-            Text(
-              'Remove ads with Premium',
-              style: text.labelSmall?.copyWith(
-                color: colors.primary,
-                fontWeight: FontWeight.w700,
+            // Flexible so large system text on a narrow screen ellipsizes
+            // instead of overflowing.
+            Flexible(
+              child: Text(
+                'Remove ads with Premium',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: text.labelSmall?.copyWith(
+                  color: colors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             Icon(Icons.chevron_right_rounded, size: 16, color: colors.primary),
