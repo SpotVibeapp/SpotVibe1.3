@@ -400,6 +400,8 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // event_submissions/* and submission_rate/* (submitWebEvent, DRAFT) are
+    // server-only too: covered by the deny-all below.
     // provider_cache/* and provider_usage/* (liveEventsProxy) and
     // featured_weeks/* (featureEvent) are server-only: no client rule, so
     // the deny-all at the bottom applies.

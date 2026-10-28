@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Post your event on SpotVibe (no app needed)</title>
+<meta name="robots" content="noindex">
+<style>
+body{font-family:system-ui,sans-serif;max-width:640px;margin:2rem auto;padding:0 1rem;color:#1b1b1f}
+label{display:block;margin-top:1rem;font-weight:600}input,select,textarea{width:100%;padding:.6rem;font:inherit;box-sizing:border-box}
+.hp{position:absolute;left:-9999px}button{margin-top:1.5rem;padding:.8rem 1.4rem;font:inherit;background:#6c3bff;color:#fff;border:0;border-radius:8px}
+.row{display:flex;gap:1rem}.row>div{flex:1}#msg{margin-top:1rem}
+</style>
+</head>
+<body>
+<h1 data-en="Post your event" data-es="Publica tu evento">Post your event</h1>
+<p><a href="#" id="lang">Español</a></p>
+<p data-en="Free. No app needed. We review every event before it goes live, usually within a day." data-es="Gratis. Sin app. Revisamos cada evento antes de publicarlo, normalmente en un día.">Free. No app needed. We review every event before it goes live, usually within a day.</p>
+<form id="f" novalidate>
+<label data-en="Event name *" data-es="Nombre del evento *">Event name *</label><input name="title" maxlength="120" required>
+<div class="row"><div><label data-en="Starts *" data-es="Empieza *">Starts *</label><input name="start" type="datetime-local" required></div>
+<div><label data-en="Ends" data-es="Termina">Ends</label><input name="end" type="datetime-local"></div></div>
+<label data-en="Venue *" data-es="Lugar *">Venue *</label><input name="location" maxlength="120" required>
+<label data-en="Address" data-es="Dirección">Address</label><input name="address" maxlength="200">
+<div class="row"><div><label data-en="City" data-es="Ciudad">City</label><input name="city" value="El Paso" maxlength="60"></div>
+<div><label>ZIP</label><input name="zipCode" maxlength="10"></div></div>
+<label data-en="Category" data-es="Categoría">Category</label>
+<select name="category"><option>Community</option><option>Music</option><option>Food &amp; Drink</option><option>Arts</option><option>Sports</option><option>Family</option><option>Health</option><option>Fun &amp; Games</option><option>Tech</option><option>Other</option></select>
+<label data-en="Price (USD, blank = free)" data-es="Precio (USD, vacío = gratis)">Price (USD, blank = free)</label><input name="cost" type="number" min="0" step="0.01">
+<label data-en="Description" data-es="Descripción">Description</label><textarea name="description" rows="5" maxlength="2000"></textarea>
+<label data-en="Event or ticket link" data-es="Enlace del evento o boletos">Event or ticket link</label><input name="eventUrl" type="url" maxlength="300">
+<label data-en="Organizer / business name *" data-es="Organizador / negocio *">Organizer / business name *</label><input name="organizerName" maxlength="80" required>
+<label data-en="Your name" data-es="Tu nombre">Your name</label><input name="contactName" maxlength="80">
+<label data-en="Your email * (not shown publicly; used to let you claim the listing)" data-es="Tu correo * (no se muestra; sirve para reclamar el evento)">Your email *</label><input name="contactEmail" type="email" maxlength="120" required>
+<div class="hp" aria-hidden="true"><label>Leave empty</label><input name="website2" tabindex="-1" autocomplete="off"></div>
+<label><input type="checkbox" name="consent" style="width:auto"> <span data-en="I organize this event or am authorized to post it, and I agree to the Terms." data-es="Organizo este evento o tengo permiso para publicarlo, y acepto los Términos.">I organize this event or am authorized to post it, and I agree to the <a href="/terms.html">Terms</a>.</span></label>
+<button type="submit" data-en="Submit for review" data-es="Enviar a revisión">Submit for review</button>
+<div id="msg" role="status"></div>
+</form>
+<script type="module">
+// DRAFT: fill in the web app config (Firebase console > Project settings > Add web app)
+// and the reCAPTCHA Enterprise site key before deploying. No secrets belong here.
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js';
+const app = initializeApp({ apiKey: 'TODO_WEB_API_KEY', authDomain: 'spotvibe-cfa08.firebaseapp.com', projectId: 'spotvibe-cfa08', appId: 'TODO_WEB_APP_ID' });
+initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider('TODO_RECAPTCHA_SITE_KEY'), isTokenAutoRefreshEnabled: true });
+const submit = httpsCallable(getFunctions(app), 'submitWebEvent');
+let lang = navigator.language.startsWith('es') ? 'es' : 'en';
+const applyLang = () => { document.querySelectorAll('[data-en]').forEach(e => { if (!e.querySelector('a')) e.textContent = e.dataset[lang]; }); document.getElementById('lang').textContent = lang === 'en' ? 'Español' : 'English'; document.documentElement.lang = lang; };
+document.getElementById('lang').onclick = (e) => { e.preventDefault(); lang = lang === 'en' ? 'es' : 'en'; applyLang(); };
+applyLang();
+const f = document.getElementById('f'), msg = document.getElementById('msg');
+f.onsubmit = async (e) => {
+  e.preventDefault();
+  const d = Object.fromEntries(new FormData(f));
+  const payload = { ...d, consent: f.consent.checked, startMs: d.start ? new Date(d.start).getTime() : NaN, endMs: d.end ? new Date(d.end).getTime() : null };
+  delete payload.start; delete payload.end;
+  f.querySelector('button').disabled = true;
+  try { await submit(payload); f.reset(); msg.textContent = lang === 'en' ? 'Thanks! We will email you when it is live.' : '¡Gracias! Te avisaremos por correo cuando esté publicado.'; }
+  catch (err) { msg.textContent = err.message; }
+  finally { f.querySelector('button').disabled = false; }
+};
+</script>
+</body>
+</html>
