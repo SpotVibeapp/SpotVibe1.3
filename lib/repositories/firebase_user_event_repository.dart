@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../config/app_config.dart';
 import '../data/event_codec.dart';
+import '../data/rules_compat.dart';
 import '../models/user_event.dart';
 import '../models/event_social_link.dart';
 import 'user_event_repository.dart';
@@ -43,6 +44,26 @@ Map<String, dynamic> clientEventPayload(
   return out;
 }
 
+/// Event creates/updates, strictest first.
+///
+/// The first body omits `featuredWeekKey` (this build never grants the paid
+/// perk from the client). The second, used only after a permission denial,
+/// sends `featuredWeekKey: null` — the shape the live v14 build always wrote
+/// for a non-featured event, which the current rules also allow.
+@visibleForTesting
+List<Map<String, dynamic>> eventWriteAttempts(
+  Map<String, dynamic> payload, {
+  required bool isCreate,
+  bool rulesCompat = true,
+}) {
+  final strict = clientEventPayload(payload, isCreate: isCreate);
+  if (!rulesCompat) return [strict];
+  return [
+    strict,
+    {...strict, 'featuredWeekKey': null},
+  ];
+}
+
 /// Persists user-created events to `user_events/{id}` and mirrors a feed
 /// document into `events/{id}` so they show up next to curated listings.
 class FirebaseUserEventRepository extends UserEventRepository {
@@ -64,6 +85,29 @@ class FirebaseUserEventRepository extends UserEventRepository {
 
   CollectionReference<Map<String, dynamic>> get _events =>
       _db.collection('events');
+
+  /// Writes the creator mirror and the public feed doc together. A
+  /// permission denial retries the v14-compatible shape; see
+  /// [eventWriteAttempts]. The batch is not split, so a denied first
+  /// attempt leaves nothing behind.
+  Future<void> _commitMirrors(
+    String id,
+    Map<String, dynamic> raw, {
+    required bool isCreate,
+  }) {
+    final attempts = eventWriteAttempts(
+      raw,
+      isCreate: isCreate,
+      rulesCompat: AppConfig.rulesCompatRetries,
+    );
+    return writeFirstAllowed(attempts, (body) async {
+      final batch = _db.batch();
+      final options = isCreate ? null : SetOptions(merge: true);
+      batch.set(_userEvents.doc(id), body, options);
+      batch.set(_events.doc(id), body, options);
+      await batch.commit();
+    });
+  }
 
   Future<T> _guard<T>(Future<T> Function() action, Future<T> Function() orElse) async {
     if (_useFallback) return orElse();
@@ -179,16 +223,13 @@ class FirebaseUserEventRepository extends UserEventRepository {
         brandLogoUrl: brandLogoUrl,
         featuredWeekKey: featuredWeekKey,
       );
-      final payload = clientEventPayload({
+      final payload = {
         ...userEventToMap(event),
         'dateTime': Timestamp.fromDate(event.dateTime),
         'endDateTime': Timestamp.fromDate(endDateTime),
         'createdAt': FieldValue.serverTimestamp(),
-      }, isCreate: true);
-      final batch = _db.batch();
-      batch.set(_userEvents.doc(event.id), payload);
-      batch.set(_events.doc(event.id), payload);
-      await batch.commit();
+      };
+      await _commitMirrors(event.id, payload, isCreate: true);
       return event;
     }, () => super.createEvent(
           id: id,
@@ -227,17 +268,14 @@ class FirebaseUserEventRepository extends UserEventRepository {
   @override
   Future<UserCreatedEvent> updateEvent(UserCreatedEvent updated) {
     return _guard(() async {
-      final payload = clientEventPayload({
+      final payload = {
         ...userEventToMap(updated),
         'dateTime': Timestamp.fromDate(updated.dateTime),
         if (updated.endDateTime != null)
           'endDateTime': Timestamp.fromDate(updated.endDateTime!),
         'updatedAt': FieldValue.serverTimestamp(),
-      }, isCreate: false);
-      final batch = _db.batch();
-      batch.set(_userEvents.doc(updated.id), payload, SetOptions(merge: true));
-      batch.set(_events.doc(updated.id), payload, SetOptions(merge: true));
-      await batch.commit();
+      };
+      await _commitMirrors(updated.id, payload, isCreate: false);
       return updated;
     }, () => super.updateEvent(updated));
   }

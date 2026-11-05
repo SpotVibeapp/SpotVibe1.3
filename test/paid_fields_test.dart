@@ -75,6 +75,17 @@ void main() {
       final out = clientEventPayload(full, isCreate: true);
       expect(out['analyticsViews'], 9);
     });
+
+    test('rules-compat retry sends a null featured week only as a second write', () {
+      final attempts = eventWriteAttempts(full, isCreate: true);
+      expect(attempts.first.containsKey('featuredWeekKey'), isFalse);
+      expect(attempts[1]['featuredWeekKey'], isNull);
+      expect(attempts[1].containsKey('featuredAt'), isFalse);
+
+      final strictOnly = eventWriteAttempts(full, isCreate: false, rulesCompat: false);
+      expect(strictOnly, hasLength(1));
+      expect(strictOnly.single.containsKey('featuredWeekKey'), isFalse);
+    });
   });
 
   test('analytics are one +1 write per counter', () {

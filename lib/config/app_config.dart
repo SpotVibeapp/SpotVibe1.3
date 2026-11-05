@@ -76,4 +76,16 @@ class AppConfig {
     'LIVE_EVENTS_PROXY_FUNCTION_URL',
     defaultValue: 'https://liveeventsproxy-kfzltbt5ja-uc.a.run.app',
   );
+
+  /// When true, profile and event writes that the deployed rules reject
+  /// retry once with the legacy v14 field shape. The strict shape is always
+  /// tried first, so this does not put an email or a featured week on a
+  /// document while the rules in this repo are what is deployed.
+  ///
+  /// This flag does not change those rules and cannot repair the already
+  /// shipped v14 binary. See RULES_DEPLOY_GUARD.md before any rules deploy.
+  static const bool rulesCompatRetries = bool.fromEnvironment(
+    'RULES_COMPAT_RETRIES',
+    defaultValue: true,
+  );
 }

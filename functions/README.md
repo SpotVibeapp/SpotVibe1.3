@@ -87,6 +87,7 @@ is enforced; Google Cloud rejects that binding.
 | `bannedUserCleanup` | Firestore trigger (`bans/{uid}`) | Runs the moment an admin bans a user and deletes all their events, comments, RSVPs, claims, reports, saved events, profile, and blocks. |
 | `moderateComment` | Firestore trigger | Flags/hides comments matching a banned-word list. |
 | `moderateUserEvent` | Firestore trigger | Flags/hides user events matching a banned-word list. |
+| `parallelModerateComment`, `parallelModerateUserEvent`, `parallelModerateGem`, `parallelModerateGemComment` | Firestore triggers | Second pass beside the banned-word triggers. Writes operator flags only. See `PARALLEL_MODERATION.md`. |
 | `promoteAdmin` | callable | Adds a user to the `admins/{uid}` roster. Only an **existing** admin may call it (the first admin is created in the Firebase console). |
 | `seedCuratedEvents` | callable (stub) | Seeds curated events server-side. The client already bundles the curated list, so this is optional for v1. |
 | `generatePromoImage` | callable | Generates a rate-limited, moderated AI event-promo background with the provider key kept in Cloud Secret Manager. |
@@ -106,4 +107,7 @@ is enforced; Google Cloud rejects that binding.
   them with `firebase deploy --only firestore:indexes`.
 - The `BANNED_WORDS` list is a starter. Swap in a real moderation provider
   (e.g. Perspective API, OpenAI moderation, or a stricter blocklist) before a
-  broad launch.
+  broad launch. The parallel triggers do not replace that list; they flag
+  spam and abuse patterns the word list misses. A failure in the parallel
+  pass is logged and swallowed.
+

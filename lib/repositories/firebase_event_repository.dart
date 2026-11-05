@@ -40,6 +40,16 @@ class FirebaseEventRepository implements EventRepository {
   bool _seedAttempted = false;
   bool _useFallback = false;
 
+  /// Offline fallback rows stay visible, but they are labeled samples so a
+  /// Firestore outage cannot look like a live city feed.
+  Future<List<Event>> _labeledSamples(Future<List<Event>> upcoming) async {
+    final events = await upcoming;
+    return [
+      for (final event in events)
+        event.isSample ? event : event.copyWith(isSample: true),
+    ];
+  }
+
   CollectionReference<Map<String, dynamic>> get _events =>
       _db.collection('events');
 
@@ -212,11 +222,12 @@ class FirebaseEventRepository implements EventRepository {
     return _guard(() async {
       await ensureSeeded();
       final events = await _feedOrLegacy(area: area);
-      if (events.isEmpty) {
-        return _fallback.getUpcomingEvents(area: area);
-      }
+      // A successful empty read stays empty. Sample rows are an explicit
+      // opt-in in the feed UI (see sample_feed.dart). They are not written
+      // here, and they are not presented as live listings.
+      if (events.isEmpty) return const [];
       return _overlaySaves(events);
-    }, () => _fallback.getUpcomingEvents(area: area));
+    }, () => _labeledSamples(_fallback.getUpcomingEvents(area: area)));
   }
 
   @override
@@ -225,7 +236,9 @@ class FirebaseEventRepository implements EventRepository {
       await ensureSeeded();
       final doc = await _events.doc(id).get();
       if (!doc.exists || doc.data() == null) {
-        return _fallback.getEventById(id);
+        final bundled = await _fallback.getEventById(id);
+        if (bundled == null || bundled.isSample) return bundled;
+        return bundled.copyWith(isSample: true);
       }
       final banned = await BanService.bannedIds(_db);
       final creatorId = doc.data()!['creatorId'] as String?;
@@ -234,7 +247,11 @@ class FirebaseEventRepository implements EventRepository {
       }
       final overlaid = await _overlaySaves([eventFromMap(doc.id, doc.data()!)]);
       return overlaid.first;
-    }, () => _fallback.getEventById(id));
+    }, () async {
+      final bundled = await _fallback.getEventById(id);
+      if (bundled == null || bundled.isSample) return bundled;
+      return bundled.copyWith(isSample: true);
+    });
   }
 
   @override
@@ -248,22 +265,15 @@ class FirebaseEventRepository implements EventRepository {
       await ensureSeeded();
       final key = city.toLowerCase().trim();
       final events = await _feedOrLegacy(area: area, cityKey: key);
-      if (events.isEmpty) {
-        return _fallback.getEventsForLocation(
-          city: city,
-          state: state,
-          zip: zip,
-          area: area,
-        );
-      }
+      if (events.isEmpty) return const [];
       return _overlaySaves(events);
     },
-        () => _fallback.getEventsForLocation(
+        () => _labeledSamples(_fallback.getEventsForLocation(
               city: city,
               state: state,
               zip: zip,
               area: area,
-            ));
+            )));
   }
 
   @override

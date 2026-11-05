@@ -40,6 +40,30 @@ const String _kPendingLinkKey = 'spotvibe_pending_deep_link';
 /// Deep-link helpers. Uses the platform's App Links / universal links /
 /// custom-scheme routing (`app_links`) — no third-party link SDK.
 class DeepLinkService {
+  /// Text for the user-initiated invite sheet. Nothing is sent until the
+  /// person confirms in the OS share sheet (or copies it on web).
+  static String inviteMessage() =>
+      "I'm using SpotVibe - Find Your Vibe to discover local events. "
+      "Come see what's happening: $kDeepLinkBase";
+
+  /// Opens the OS share sheet with [inviteMessage]. Never called on its own.
+  static Future<void> shareInvite(BuildContext context) async {
+    final message = inviteMessage();
+    if (kIsWeb) {
+      await Clipboard.setData(ClipboardData(text: message));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invite copied — paste it wherever you like'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+    await Share.share(message, subject: 'SpotVibe - Find Your Vibe');
+  }
+
   /// Returns the shareable deep link URL for a curated event.
   static String eventLink(String eventId) => '$kDeepLinkBase/event/$eventId';
 

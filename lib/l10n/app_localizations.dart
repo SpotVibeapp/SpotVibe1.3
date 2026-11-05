@@ -329,7 +329,7 @@ abstract class AppLocalizations {
   /// No description provided for @discoverBody.
   ///
   /// In en, this message translates to:
-  /// **'SpotVibe surfaces the best local events — concerts, food festivals, community meetups and more — personalised to what you love.'**
+  /// **'SpotVibe surfaces the best local events — concerts, food festivals, community meetups and more — personalised to what you love. You can start looking around even before your city fills in.'**
   String get discoverBody;
 
   /// No description provided for @nearYou.
@@ -469,6 +469,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your personalised event feed is ready.\nTap Explore to see what\'s happening near you.'**
   String get allSetBody;
+
+  /// No description provided for @coldStartOnboarding.
+  ///
+  /// In en, this message translates to:
+  /// **'A quiet feed is normal at first. Browse labeled sample events, post your own, or invite someone when you want — nothing is sent until you tap share.'**
+  String get coldStartOnboarding;
+
+  /// No description provided for @inviteFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite a friend'**
+  String get inviteFriends;
+
+  /// No description provided for @inviteFriendsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite a friend when you want. Sharing waits for you.'**
+  String get inviteFriendsHint;
 
   /// No description provided for @browseNearYou.
   ///
@@ -1012,7 +1030,7 @@ abstract class AppLocalizations {
   /// No description provided for @errorSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Check your connection and try again. Your saved events are still available.'**
+  /// **'Check your connection and try again. Your saved events are still available, and you can browse labeled sample events if live listings are missing.'**
   String get errorSubtitle;
 
   /// No description provided for @tryAgain.
@@ -1102,8 +1120,32 @@ abstract class AppLocalizations {
   /// No description provided for @noEventsFoundSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Try increasing your search radius or check back later — new events are added every day.'**
+  /// **'Nothing live is in range right now. Ticketmaster, SeatGeek, and JamBase listings show up when those sources respond. You can browse labeled sample events or invite someone to post.'**
   String get noEventsFoundSubtitle;
+
+  /// No description provided for @browseSampleEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse sample events'**
+  String get browseSampleEvents;
+
+  /// No description provided for @hideSampleEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide samples'**
+  String get hideSampleEvents;
+
+  /// No description provided for @sampleFeedBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Sample events — not live listings. Real Ticketmaster, SeatGeek, and JamBase rows replace these when those sources respond.'**
+  String get sampleFeedBanner;
+
+  /// No description provided for @sampleEventBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Sample'**
+  String get sampleEventBadge;
 
   /// No description provided for @shareEventTooltip.
   ///

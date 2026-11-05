@@ -808,6 +808,15 @@ class _ReadyPageState extends State<_ReadyPage>
                   height: 1.55,
                 ),
               ),
+              const SizedBox(height: AppTheme.spacingSm),
+              Text(
+                l10n.coldStartOnboarding,
+                textAlign: TextAlign.center,
+                style: text.bodyMedium?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  height: 1.5,
+                ),
+              ),
 
               const SizedBox(height: AppTheme.spacingXl),
 
@@ -829,6 +838,13 @@ class _ReadyPageState extends State<_ReadyPage>
               _CheckItem(
                 icon: Icons.group_rounded,
                 label: l10n.seeWhosGoing,
+                colors: colors,
+                text: text,
+              ),
+              const SizedBox(height: AppTheme.spacingSm),
+              _CheckItem(
+                icon: Icons.ios_share_rounded,
+                label: l10n.inviteFriendsHint,
                 colors: colors,
                 text: text,
               ),

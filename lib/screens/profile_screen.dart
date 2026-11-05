@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../data/legal.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
+import '../services/deep_link_service.dart';
 import '../services/tour_service.dart';
 import '../providers/follow_provider.dart';
 import '../providers/locale_provider.dart';
@@ -96,6 +97,11 @@ class ProfileScreen extends StatelessWidget {
                   icon: Icons.map_outlined,
                   label: l10n.map,
                   onTap: () => context.push('/map'),
+                ),
+                _SettingsTile(
+                  icon: Icons.ios_share_rounded,
+                  label: l10n.inviteFriends,
+                  onTap: () => DeepLinkService.shareInvite(context),
                 ),
                 _SettingsTile(
                   icon: Icons.notifications_none_rounded,
@@ -226,6 +232,11 @@ class ProfileScreen extends StatelessWidget {
                   icon: Icons.map_outlined,
                   label: l10n.map,
                   onTap: () => context.push('/map'),
+                ),
+                _SettingsTile(
+                  icon: Icons.ios_share_rounded,
+                  label: l10n.inviteFriends,
+                  onTap: () => DeepLinkService.shareInvite(context),
                 ),
                 _SettingsTile(
                   icon: Icons.notifications_none_rounded,

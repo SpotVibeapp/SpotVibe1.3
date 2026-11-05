@@ -2,6 +2,8 @@ import '../models/gem.dart';
 import '../models/moderation_result.dart';
 import '../repositories/gem_repository.dart';
 import 'ai_moderation_service.dart';
+import 'moderation_pipeline.dart';
+import 'parallel_moderation_service.dart';
 
 /// Result of a moderated write: either the created object, or a rejection the
 /// UI can show to the submitter.
@@ -14,17 +16,21 @@ class GemWriteResult<T> {
 }
 
 /// Business logic for community gems: validation, client-side moderation
-/// (matching the user-event flow), likes, and comments. A Cloud Function adds
-/// a second server-side moderation pass after write.
+/// (matching the user-event flow), likes, and comments. The banned-word
+/// Cloud Function and the parallel flagging function both run after write.
+/// The parallel pass never changes the primary accept/reject decision.
 class GemService {
   GemService({
     required GemRepository repository,
     AiModerationService? moderation,
+    ParallelModerationService? parallelModeration,
   })  : _repository = repository,
-        _moderation = moderation ?? AiModerationService();
+        _moderation = moderation ?? AiModerationService(),
+        _parallel = parallelModeration;
 
   final GemRepository _repository;
   final AiModerationService _moderation;
+  final ParallelModerationService? _parallel;
 
   static const int maxGemPhotos = 5;
 
@@ -71,12 +77,12 @@ class GemService {
       throw ArgumentError('Gems can include up to $maxGemPhotos photos.');
     }
 
-    final moderation = await _moderation.moderateFields([
-      name,
-      summary,
-      description,
-      address,
-    ]);
+    final moderation = await ModerationPipeline.moderateFields(
+      primary: _moderation,
+      parallel: _parallel,
+      authorId: creatorId,
+      fields: [name, summary, description, address],
+    );
     if (moderation.isRejected) {
       return GemWriteResult.rejected(moderation);
     }
@@ -135,12 +141,12 @@ class GemService {
       throw ArgumentError('Gems can include up to $maxGemPhotos photos.');
     }
 
-    final moderation = await _moderation.moderateFields([
-      name,
-      summary,
-      description,
-      address,
-    ]);
+    final moderation = await ModerationPipeline.moderateFields(
+      primary: _moderation,
+      parallel: _parallel,
+      authorId: requestingUserId,
+      fields: [name, summary, description, address],
+    );
     if (moderation.isRejected) {
       return GemWriteResult.rejected(moderation);
     }
@@ -212,7 +218,12 @@ class GemService {
       throw ArgumentError('Comments are limited to 2000 characters.');
     }
 
-    final moderation = await _moderation.moderateText(trimmed);
+    final moderation = await ModerationPipeline.moderateText(
+      primary: _moderation,
+      parallel: _parallel,
+      text: trimmed,
+      authorId: authorId,
+    );
     if (moderation.isRejected) {
       return GemWriteResult.rejected(moderation);
     }

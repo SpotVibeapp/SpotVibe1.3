@@ -31,6 +31,8 @@ class EmptyStateView extends StatefulWidget {
   final VoidCallback? onAction;
   final String? secondaryActionLabel;
   final VoidCallback? onSecondaryAction;
+  final String? tertiaryActionLabel;
+  final VoidCallback? onTertiaryAction;
 
   const EmptyStateView({
     super.key,
@@ -42,6 +44,8 @@ class EmptyStateView extends StatefulWidget {
     this.onAction,
     this.secondaryActionLabel,
     this.onSecondaryAction,
+    this.tertiaryActionLabel,
+    this.onTertiaryAction,
   });
 
   @override
@@ -211,6 +215,12 @@ class _EmptyStateViewState extends State<EmptyStateView>
                     child: Text(widget.secondaryActionLabel!),
                   ),
                 ],
+                if (widget.tertiaryActionLabel != null &&
+                    widget.onTertiaryAction != null)
+                  TextButton(
+                    onPressed: widget.onTertiaryAction,
+                    child: Text(widget.tertiaryActionLabel!),
+                  ),
               ],
             ),
           ),

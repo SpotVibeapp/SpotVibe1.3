@@ -145,6 +145,23 @@ class _DetailContent extends StatelessWidget {
                 children: [
                   _CategoryAndCost(event: event, appColors: appColors),
                   const SizedBox(height: AppTheme.spacingSm),
+                  if (event.isSample) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(AppTheme.spacingSm),
+                      decoration: BoxDecoration(
+                        color: colors.secondaryContainer,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                      ),
+                      child: Text(
+                        l10n.sampleFeedBanner,
+                        style: text.bodySmall?.copyWith(
+                          color: colors.onSecondaryContainer,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppTheme.spacingSm),
+                  ],
                   Text(event.title, style: text.headlineSmall),
                   if (event.isHappeningNow) ...[
                     const SizedBox(height: AppTheme.spacingXs),

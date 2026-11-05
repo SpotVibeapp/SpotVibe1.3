@@ -12,6 +12,8 @@
  *  - moderateUserEvent   Firestore trigger — hides user events containing banned words
  *  - moderateGem         Firestore trigger — hides gems containing banned words
  *  - moderateGemComment  Firestore trigger — hides gem comments containing banned words
+ *  - parallelModerate*   Firestore triggers — second pass; flags spam/abuse patterns
+ *                        without hiding content or blocking the primary pass
  *  - promoteAdmin        callable — adds a user to the `admins/{uid}` roster
  *  - seedCuratedEvents   callable — seeds the El Paso curated feed (Admin SDK)
  *  - searchEventAssistant callable — converts natural-language requests into
@@ -43,6 +45,7 @@ const { claimFoundingSlotIn, isoWeekKey } = require('./lib/featuring');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const zlib = require('zlib');
 const { planFeedFields } = require('./lib/feedFields');
+const { assessParallelModeration } = require('./lib/parallelModeration');
 const {
   ProxyRequestError,
   buildUpstream,
@@ -282,6 +285,119 @@ exports.moderateUserEvent = onDocumentCreated('events/{eventId}', async (event) 
     });
   }
 });
+
+/**
+ * Parallel moderation. Runs on the same creates as the banned-word triggers
+ * but never hides a document and never throws, so a bug here cannot block
+ * the primary filter or the write the client already finished.
+ *
+ * Operators read `moderation_flags` in the Firebase console (Admin SDK).
+ * Clients cannot write that collection. Recent text used for duplicate
+ * comparisons lives in `moderation_activity`, also Admin SDK only.
+ */
+async function runParallelModeration(spec) {
+  try {
+    if (!spec || !spec.authorId) return;
+    const db = admin.firestore();
+    const now = Date.now();
+    const recentSnap = await db
+      .collection('moderation_activity')
+      .orderBy('createdAtMs', 'desc')
+      .limit(40)
+      .get();
+    const recent = [];
+    recentSnap.forEach((doc) => {
+      recent.push({
+        authorId: doc.get('authorId') || '',
+        text: doc.get('text') || '',
+        createdAtMs: doc.get('createdAtMs') || 0,
+        authorCreatedAtMs: doc.get('authorCreatedAtMs') ?? null,
+      });
+    });
+    let authorCreatedAtMs = null;
+    try {
+      const user = await db.collection('users').doc(spec.authorId).get();
+      const created = user.get('createdAt');
+      if (created && typeof created.toMillis === 'function') {
+        authorCreatedAtMs = created.toMillis();
+      }
+    } catch (lookupError) {
+      console.warn(
+        `parallel moderation: author lookup skipped (${lookupError && lookupError.message})`
+      );
+    }
+    const assessment = assessParallelModeration({
+      text: spec.text,
+      authorId: spec.authorId,
+      createdAtMs: now,
+      authorCreatedAtMs,
+      recent,
+    });
+    await db.collection('moderation_activity').add({
+      authorId: spec.authorId,
+      text: String(spec.text || '').slice(0, 500),
+      createdAtMs: now,
+      authorCreatedAtMs,
+      targetPath: spec.targetPath,
+    });
+    if (!assessment.flagged) return;
+    await db.collection('moderation_flags').add({
+      source: 'parallel',
+      status: 'open',
+      targetPath: spec.targetPath,
+      authorId: spec.authorId,
+      signals: assessment.signals,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAtMs: now,
+    });
+  } catch (error) {
+    console.error(
+      'parallel moderation failed (primary path unaffected):',
+      error && error.message
+    );
+  }
+}
+
+function parallelOnCreate(path, read) {
+  return onDocumentCreated(path, async (event) => {
+    const snap = event.data;
+    if (!snap) return;
+    await runParallelModeration(read(snap));
+  });
+}
+
+exports.parallelModerateComment = parallelOnCreate(
+  'events/{eventId}/comments/{commentId}',
+  (snap) => ({
+    text: snap.get('text') || '',
+    authorId: snap.get('authorId') || '',
+    targetPath: snap.ref.path,
+  })
+);
+
+exports.parallelModerateGem = parallelOnCreate('gems/{gemId}', (snap) => ({
+  text: `${snap.get('name') || ''} ${snap.get('summary') || ''} ${snap.get('description') || ''}`,
+  authorId: snap.get('creatorId') || '',
+  targetPath: snap.ref.path,
+}));
+
+exports.parallelModerateGemComment = parallelOnCreate(
+  'gems/{gemId}/comments/{commentId}',
+  (snap) => ({
+    text: snap.get('text') || '',
+    authorId: snap.get('authorId') || '',
+    targetPath: snap.ref.path,
+  })
+);
+
+exports.parallelModerateUserEvent = parallelOnCreate(
+  'events/{eventId}',
+  (snap) => ({
+    text: `${snap.get('title') || ''} ${snap.get('description') || ''}`,
+    authorId: snap.get('creatorId') || '',
+    targetPath: snap.ref.path,
+  })
+);
 
 /**
  * Promotes a Firebase Auth user to administrator.

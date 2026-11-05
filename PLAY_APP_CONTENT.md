@@ -174,7 +174,11 @@ data* to them beyond an area/lat-lng for search, so treat carefully; see note).
 ## 9. Store listing text (short + full) — with the "hidden gems" positioning
 
 ### App name
-`SpotVibe` (≤ 30 chars) ✔
+`SpotVibe - Find Your Vibe` (26 chars, ≤ 30) ✔
+
+Plain `SpotVibe` is already taken on the App Store and Play by another
+company. Do not submit under that bare name. See `STORE_NAME.md`. The
+Android package stays `app.spotvibe`.
 
 ### Short description (≤ 80 chars)
 > Discover local events and hidden-gem spots happening near you in El Paso.
