@@ -10,6 +10,7 @@ import '../models/event.dart';
 import '../providers/personalization_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/event_provider.dart';
+import '../services/deep_link_service.dart';
 import '../services/event_service.dart';
 import '../services/location_service.dart';
 import '../theme/theme.dart';
@@ -838,6 +839,8 @@ class _EventsList extends StatelessWidget {
         onAction: eventProvider.loadEvents,
         secondaryActionLabel: l10n.viewSavedEvents,
         onSecondaryAction: () => context.push('/saved-events'),
+        tertiaryActionLabel: l10n.browseSampleEvents,
+        onTertiaryAction: eventProvider.showSampleFeed,
       );
     }
 
@@ -901,6 +904,8 @@ class _EventsList extends StatelessWidget {
           ),
           secondaryActionLabel: l10n.clearLocation,
           onSecondaryAction: () => eventProvider.searchArea(''),
+          tertiaryActionLabel: l10n.browseSampleEvents,
+          onTertiaryAction: eventProvider.showSampleFeed,
         );
       }
 
@@ -916,6 +921,8 @@ class _EventsList extends StatelessWidget {
               ?._requestUserLocation(),
           secondaryActionLabel: l10n.browseAllEvents,
           onSecondaryAction: () => eventProvider.selectCategory('All'),
+          tertiaryActionLabel: l10n.browseSampleEvents,
+          onTertiaryAction: eventProvider.showSampleFeed,
         );
       }
 
@@ -956,6 +963,10 @@ class _EventsList extends StatelessWidget {
           ),
           onClear: eventProvider.clearFilters,
         ),
+        secondaryActionLabel: l10n.browseSampleEvents,
+        onSecondaryAction: eventProvider.showSampleFeed,
+        tertiaryActionLabel: l10n.inviteFriends,
+        onTertiaryAction: () => DeepLinkService.shareInvite(context),
       );
     }
 
@@ -988,6 +999,11 @@ class _EventsList extends StatelessWidget {
           ? heroIds
           : const <String>{},
       feedHeader: [
+        if (eventProvider.showingSampleFeed)
+          _SampleFeedBanner(
+            onHide: eventProvider.hideSampleFeed,
+            onInvite: () => DeepLinkService.shareInvite(context),
+          ),
         if (heroEvents.isNotEmpty)
           DiscoveryHeroCarousel(
             events: heroEvents,
@@ -1099,6 +1115,52 @@ class _HomeHeaderGlowState extends State<_HomeHeaderGlow>
         ),
         widget.child,
       ],
+    );
+  }
+}
+
+class _SampleFeedBanner extends StatelessWidget {
+  final VoidCallback onHide;
+  final VoidCallback onInvite;
+
+  const _SampleFeedBanner({required this.onHide, required this.onInvite});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppTheme.spacingMd,
+        AppTheme.spacingSm,
+        AppTheme.spacingMd,
+        AppTheme.spacingXs,
+      ),
+      child: Material(
+        color: colors.secondaryContainer,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.spacingMd),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.sampleFeedBanner,
+                style: text.bodyMedium?.copyWith(color: colors.onSecondaryContainer),
+              ),
+              const SizedBox(height: AppTheme.spacingXs),
+              Wrap(
+                spacing: AppTheme.spacingSm,
+                children: [
+                  TextButton(onPressed: onHide, child: Text(l10n.hideSampleEvents)),
+                  TextButton(onPressed: onInvite, child: Text(l10n.inviteFriends)),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

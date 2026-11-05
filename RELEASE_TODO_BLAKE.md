@@ -126,6 +126,12 @@ The iOS build (Mac) needs the steps in `IOS_RELEASE_TODO_BLAKE.md`.
 
 ## 6. Deploy the rules (last)
 
+**Do not deploy these rules while the live v14 beta is still the build
+people are opening.** This repo's `firestore.rules` are unchanged by the
+market-risk branch on purpose. Read `RULES_DEPLOY_GUARD.md` first. The new
+app build tolerates both the current rules and the v14 write shape; the
+already-shipped v14 binary does not.
+
 Deploy once steps 2–4 are done, and ideally after testers are on the new
 build (see the v14 notes below):
 

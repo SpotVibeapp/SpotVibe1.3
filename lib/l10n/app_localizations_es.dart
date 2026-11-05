@@ -129,7 +129,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get discoverBody =>
-      'SpotVibe te muestra los mejores eventos locales: conciertos, festivales gastronómicos, reuniones comunitarias y más, personalizados según lo que te gusta.';
+      'SpotVibe te muestra los mejores eventos locales: conciertos, festivales gastronómicos, reuniones comunitarias y más, personalizados según lo que te gusta. Puedes empezar a mirar aunque tu ciudad todavía se esté llenando.';
 
   @override
   String get nearYou => 'Cerca de ti';
@@ -208,6 +208,17 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get allSetBody =>
       'Tu feed de eventos personalizado está listo.\nToca Explorar para ver qué está pasando cerca de ti.';
+
+  @override
+  String get coldStartOnboarding =>
+      'Un feed tranquilo es normal al principio. Mira eventos de muestra etiquetados, publica el tuyo o invita a alguien cuando quieras: no se envía nada hasta que toques compartir.';
+
+  @override
+  String get inviteFriends => 'Invitar a un amigo';
+
+  @override
+  String get inviteFriendsHint =>
+      'Invita a un amigo cuando quieras. Compartir espera a que tú lo hagas.';
 
   @override
   String get browseNearYou => 'Explora eventos cerca de ti';
@@ -527,7 +538,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get errorSubtitle =>
-      'Revisa tu conexión e inténtalo de nuevo. Tus eventos guardados siguen disponibles.';
+      'Revisa tu conexión e inténtalo de nuevo. Tus eventos guardados siguen disponibles, y puedes ver eventos de muestra etiquetados si faltan los listados en vivo.';
 
   @override
   String get tryAgain => 'Reintentar';
@@ -578,7 +589,20 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get noEventsFoundSubtitle =>
-      'Prueba aumentar el radio de búsqueda o vuelve más tarde: se agregan eventos nuevos todos los días.';
+      'Ahora mismo no hay nada en vivo en este rango. Los listados de Ticketmaster, SeatGeek y JamBase aparecen cuando esas fuentes responden. Puedes ver eventos de muestra etiquetados o invitar a alguien a publicar.';
+
+  @override
+  String get browseSampleEvents => 'Ver eventos de muestra';
+
+  @override
+  String get hideSampleEvents => 'Ocultar muestras';
+
+  @override
+  String get sampleFeedBanner =>
+      'Eventos de muestra, no listados en vivo. Las filas reales de Ticketmaster, SeatGeek y JamBase los reemplazan cuando esas fuentes responden.';
+
+  @override
+  String get sampleEventBadge => 'Muestra';
 
   @override
   String get shareEventTooltip => 'Compartir evento';

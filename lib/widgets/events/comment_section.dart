@@ -8,6 +8,8 @@ import '../../providers/auth_provider.dart';
 import '../../providers/follow_provider.dart';
 import '../../providers/rsvp_provider.dart';
 import '../../services/ai_moderation_service.dart';
+import '../../services/moderation_pipeline.dart';
+import '../../services/parallel_moderation_service.dart';
 import '../../theme/theme.dart';
 import '../common/app_avatar.dart';
 import '../common/section_title.dart';
@@ -297,7 +299,14 @@ class _CommentInputState extends State<_CommentInput> {
     });
 
     final modService = context.read<AiModerationService>();
-    final result = await modService.moderateText(t);
+    final parallel = context.read<ParallelModerationService>();
+    final authForModeration = context.read<AuthProvider>();
+    final result = await ModerationPipeline.moderateText(
+      primary: modService,
+      parallel: parallel,
+      text: t,
+      authorId: authForModeration.user?.id ?? '',
+    );
 
     if (!mounted) return;
 

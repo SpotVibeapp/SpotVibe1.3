@@ -292,6 +292,23 @@ class _EventDetails extends StatelessWidget {
         children: [
           Row(
             children: [
+              if (event.isSample) ...[
+                Container(
+                  margin: const EdgeInsets.only(right: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: colors.secondaryContainer,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                  ),
+                  child: Text(
+                    l10n.sampleEventBadge,
+                    style: text.labelSmall?.copyWith(
+                      color: colors.onSecondaryContainer,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
               Flexible(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

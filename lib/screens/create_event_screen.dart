@@ -18,6 +18,8 @@ import '../providers/subscription_provider.dart';
 import '../providers/user_events_provider.dart';
 import '../repositories/user_event_repository.dart';
 import '../services/ai_moderation_service.dart';
+import '../services/moderation_pipeline.dart';
+import '../services/parallel_moderation_service.dart';
 import '../services/media_upload_service.dart';
 import '../services/tour_service.dart';
 import '../services/user_event_service.dart';
@@ -712,10 +714,16 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     // ── AI content moderation ───────────────────────────────────────────────
     setState(() => _moderationError = null);
     final modService = context.read<AiModerationService>();
-    final modResult = await modService.moderateFields([
-      _titleController.text,
-      _descriptionController.text,
-    ]);
+    final parallel = context.read<ParallelModerationService>();
+    final modResult = await ModerationPipeline.moderateFields(
+      primary: modService,
+      parallel: parallel,
+      authorId: auth.user?.id ?? '',
+      fields: [
+        _titleController.text,
+        _descriptionController.text,
+      ],
+    );
     if (!mounted) return;
     if (modResult.isRejected) {
       setState(() => _moderationError = l10n.policyViolation(

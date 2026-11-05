@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../data/sample_feed.dart';
 import '../models/event.dart';
 import '../services/event_analytics_service.dart';
 import '../services/event_expiry_service.dart';
@@ -53,6 +54,17 @@ class EventProvider extends ChangeNotifier {
 
   String? _error;
   String? get error => _error;
+
+  /// `null` until the person chooses. `true` fills a quiet home feed with
+  /// labeled samples. `false` hides samples, including the offline fallback.
+  bool? _sampleOptIn;
+  bool _showingSampleFeed = false;
+
+  /// True when every card on screen is a labeled sample, not a live listing.
+  bool get showingSampleFeed => _showingSampleFeed;
+
+  bool get _homeFeedEligible =>
+      _searchQuery.isEmpty && activeFilterCount == 0 && !hasAreaSearch;
 
   String _selectedCategory = 'All';
   String get selectedCategory => _selectedCategory;
@@ -165,6 +177,14 @@ class EventProvider extends ChangeNotifier {
       if (!appliedDistanceSort) {
         loaded = promoteFeaturedEvents(loaded);
       }
+      final decision = applySampleFeed(
+        loaded: loaded,
+        optIn: _sampleOptIn,
+        homeFeed: _homeFeedEligible,
+        samples: buildSampleFeedEvents(DateTime.now()),
+      );
+      loaded = decision.events;
+      _showingSampleFeed = decision.showingSamples;
       _events = loaded;
 
       final analytics = _analytics;
@@ -178,7 +198,14 @@ class EventProvider extends ChangeNotifier {
       // alerts will be wired through a real delivery path later.
     } catch (e) {
       if (generation != _loadGeneration) return;
-      _error = 'Failed to load events';
+      if (_sampleOptIn == true && _homeFeedEligible) {
+        _events = buildSampleFeedEvents(DateTime.now());
+        _showingSampleFeed = true;
+        _error = null;
+      } else {
+        _error = 'Failed to load events';
+        _showingSampleFeed = false;
+      }
     }
     if (generation != _loadGeneration) return;
     _isLoading = false;
@@ -313,6 +340,30 @@ class EventProvider extends ChangeNotifier {
     loadEvents();
   }
 
+  /// Explicit opt-in. Clears a narrow search so the sample feed is the home
+  /// browse, not a fake result for a city that had no live rows.
+  void showSampleFeed() {
+    _sampleOptIn = true;
+    _searchQuery = '';
+    _areaQuery = '';
+    _areaSetByKeywordSearch = false;
+    _filterDate = 'all';
+    _filterDateFrom = null;
+    _filterDateTo = null;
+    _filterPrice = 'all';
+    _filterCostType = null;
+    _filterTime = 'all';
+    _filterLocation = '';
+    _selectedSources.clear();
+    _error = null;
+    loadEvents();
+  }
+
+  void hideSampleFeed() {
+    _sampleOptIn = false;
+    loadEvents();
+  }
+
   void clearFilters() {
     _filterDate = 'all';
     _filterDateFrom = null;
@@ -328,6 +379,7 @@ class EventProvider extends ChangeNotifier {
   }
 
   Future<void> toggleBookmark(int index) async {
+    if (_events[index].isSample) return;
     try {
       final updated = await _service.toggleBookmark(_events[index]);
       _events = List.from(_events)..[index] = updated;
@@ -340,6 +392,7 @@ class EventProvider extends ChangeNotifier {
   }
 
   Future<void> toggleInterested(int index) async {
+    if (_events[index].isSample) return;
     try {
       final updated = await _service.toggleInterested(_events[index]);
       _events = List.from(_events)..[index] = updated;

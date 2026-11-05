@@ -128,7 +128,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get discoverBody =>
-      'SpotVibe surfaces the best local events — concerts, food festivals, community meetups and more — personalised to what you love.';
+      'SpotVibe surfaces the best local events — concerts, food festivals, community meetups and more — personalised to what you love. You can start looking around even before your city fills in.';
 
   @override
   String get nearYou => 'Near you';
@@ -206,6 +206,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get allSetBody =>
       'Your personalised event feed is ready.\nTap Explore to see what\'s happening near you.';
+
+  @override
+  String get coldStartOnboarding =>
+      'A quiet feed is normal at first. Browse labeled sample events, post your own, or invite someone when you want — nothing is sent until you tap share.';
+
+  @override
+  String get inviteFriends => 'Invite a friend';
+
+  @override
+  String get inviteFriendsHint =>
+      'Invite a friend when you want. Sharing waits for you.';
 
   @override
   String get browseNearYou => 'Browse events near you';
@@ -518,7 +529,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorSubtitle =>
-      'Check your connection and try again. Your saved events are still available.';
+      'Check your connection and try again. Your saved events are still available, and you can browse labeled sample events if live listings are missing.';
 
   @override
   String get tryAgain => 'Try Again';
@@ -569,7 +580,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noEventsFoundSubtitle =>
-      'Try increasing your search radius or check back later — new events are added every day.';
+      'Nothing live is in range right now. Ticketmaster, SeatGeek, and JamBase listings show up when those sources respond. You can browse labeled sample events or invite someone to post.';
+
+  @override
+  String get browseSampleEvents => 'Browse sample events';
+
+  @override
+  String get hideSampleEvents => 'Hide samples';
+
+  @override
+  String get sampleFeedBanner =>
+      'Sample events — not live listings. Real Ticketmaster, SeatGeek, and JamBase rows replace these when those sources respond.';
+
+  @override
+  String get sampleEventBadge => 'Sample';
 
   @override
   String get shareEventTooltip => 'Share event';

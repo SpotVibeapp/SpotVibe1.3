@@ -45,6 +45,13 @@ void main() {
     });
   });
 
+  test('invite text names the store title and is only a message, not a send', () {
+    final message = DeepLinkService.inviteMessage();
+    expect(message, contains('SpotVibe - Find Your Vibe'));
+    expect(message, contains(kDeepLinkBase));
+    expect(message.toLowerCase(), isNot(contains('mailto:')));
+  });
+
   test('share links use the live Firebase Hosting domain by default', () {
     // The custom spotvibe.app domain is not connected yet — share links must
     // point at a host that actually serves a fallback page today.

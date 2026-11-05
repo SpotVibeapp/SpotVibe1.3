@@ -12,6 +12,14 @@ time because the product IDs and RevenueCat entitlement/offerings are shared).
 
 ---
 
+## Store listing name (do this before you create the app record)
+
+Plain **SpotVibe** is already taken on the App Store and Play by another
+company. The App Store name for this app is **SpotVibe - Find Your Vibe**.
+See `STORE_NAME.md`. The bundle id stays `app.spotvibe`.
+
+- [ ] App Store Connect name: `SpotVibe - Find Your Vibe` (not `SpotVibe`)
+
 ## 1. Apple Developer Account
 - [ ] **Apple Developer Program** membership — **$99/year** (developer.apple.com).
   - Individual = fast. Organization = needs a **D-U-N-S number**, takes longer.

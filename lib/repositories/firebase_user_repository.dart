@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+import '../config/app_config.dart';
+import '../data/rules_compat.dart';
 import '../models/user.dart';
 import '../services/account_deletion_flow.dart';
 import '../services/apple_reauth.dart';
@@ -563,15 +565,20 @@ class FirebaseUserRepository implements UserRepository {
     try {
       final ref = _users.doc(uid);
       if (plan.createPublic) {
-        await ref.set({
-          ...plan.publicFields,
-          // Always '' — a real address never goes on the public doc. The
-          // empty key only keeps profile creation working against the
-          // pre-release rules (which required it) during the rollout; the
-          // new rules accept it only when blank.
-          'email': '',
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
+        // Strict shape first (`email: ''` or no key). A real address is
+        // attempted only if those are permission-denied, which is the live
+        // v14 rules shape — never the rules checked in with this repo.
+        final attempts = profileCreateAttempts(
+          publicFields: plan.publicFields,
+          email: email,
+          allowLegacyPublicEmail: AppConfig.rulesCompatRetries,
+        );
+        await writeFirstAllowed(attempts, (body) {
+          return ref.set({
+            ...body,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
         });
       } else {
         await ref.update({

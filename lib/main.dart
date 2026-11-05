@@ -40,6 +40,7 @@ import 'services/ad_consent_service.dart';
 import 'services/ads_service.dart';
 import 'services/tracking_consent_service.dart';
 import 'services/ai_moderation_service.dart';
+import 'services/parallel_moderation_service.dart';
 import 'services/gem_service.dart';
 import 'services/event_analytics_service.dart';
 import 'services/event_expiry_service.dart';
@@ -482,6 +483,7 @@ class _SpotVibeAppState extends State<SpotVibeApp>
     return MultiProvider(
       providers: [
         Provider(create: (_) => AiModerationService()),
+        Provider(create: (_) => ParallelModerationService()),
         ChangeNotifierProvider(create: (_) => EventExpiryService()),
         Provider<EventRepository>(create: (_) => widget.eventRepository),
         Provider<GemRepository>(create: (_) => widget.gemRepository),
@@ -489,6 +491,7 @@ class _SpotVibeAppState extends State<SpotVibeApp>
           create: (ctx) => GemService(
             repository: ctx.read<GemRepository>(),
             moderation: ctx.read<AiModerationService>(),
+            parallelModeration: ctx.read<ParallelModerationService>(),
           ),
         ),
         Provider(create: (_) => TicketmasterService()),

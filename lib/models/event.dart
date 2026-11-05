@@ -132,6 +132,11 @@ class Event {
   /// to follow, block, or attribute a report to.
   final String creatorId;
 
+  /// Bundled placeholder listing. Shown only after the person opts in (or
+  /// when Firestore itself is unreachable) and must never be treated as a
+  /// live Ticketmaster, SeatGeek, JamBase, or community event.
+  final bool isSample;
+
   /// First-party listings — posted by a SpotVibe organizer, or an aggregator
   /// listing a venue/promoter has claimed — always outrank Ticketmaster,
   /// JamBase and SeatGeek copies of the same show. Getting coordinators to
@@ -175,6 +180,7 @@ class Event {
     this.featuredWeekKey,
     this.isUserCreated = false,
     this.creatorId = '',
+    this.isSample = false,
     this.socialLinks = const EventSocialLinks.empty(),
   });
 
@@ -211,6 +217,7 @@ class Event {
     String? featuredWeekKey,
     bool? isUserCreated,
     String? creatorId,
+    bool? isSample,
     EventSocialLinks? socialLinks,
   }) =>
       Event(
@@ -248,6 +255,7 @@ class Event {
         featuredWeekKey: featuredWeekKey ?? this.featuredWeekKey,
         isUserCreated: isUserCreated ?? this.isUserCreated,
         creatorId: creatorId ?? this.creatorId,
+        isSample: isSample ?? this.isSample,
         socialLinks: socialLinks ?? this.socialLinks,
       );
 
