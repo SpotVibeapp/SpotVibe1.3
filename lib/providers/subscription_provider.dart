@@ -1,11 +1,12 @@
 import 'package:flutter/foundation.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui' show Locale;
 
+import '../config/app_config.dart';
 import '../data/pricing.dart';
 import '../l10n/app_localizations.dart';
 import '../repositories/founding_member_repository.dart';
+import '../services/purchases_facade.dart';
 import '../services/revenue_cat_service.dart';
 
 enum PurchaseStatus { idle, loading, success, error, cancelled }
@@ -250,6 +251,10 @@ class SubscriptionProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    if (kIsWeb) {
+      return _purchaseOnWeb();
+    }
+
     final package = selectedPackage;
     if (package != null) {
       try {
@@ -292,6 +297,47 @@ class SubscriptionProvider extends ChangeNotifier {
       return true;
     }
 
+    _errorMessage = _l10n.purchaseFailed;
+    _status = PurchaseStatus.error;
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> _purchaseOnWeb() async {
+    final productId = offerFoundingPrice
+        ? kFoundingMonthlyProductId
+        : kPremiumMonthlyProductId;
+    if (AppConfig.enableWebBilling) {
+      try {
+        final ok = await _service.purchaseWebProduct(productId);
+        if (ok) {
+          _isSubscribed = true;
+          await _lockFoundingIfOffered();
+          _status = PurchaseStatus.success;
+          notifyListeners();
+          return true;
+        }
+      } catch (_) {}
+      _errorMessage = _l10n.purchaseFailed;
+      _status = PurchaseStatus.error;
+      notifyListeners();
+      return false;
+    }
+
+    if (kReleaseMode) {
+      _errorMessage = _l10n.webBillingNotConfigured;
+      _status = PurchaseStatus.error;
+      notifyListeners();
+      return false;
+    }
+
+    final started = await _startLocalTrial();
+    if (started) {
+      await _lockFoundingIfOffered();
+      _status = PurchaseStatus.success;
+      notifyListeners();
+      return true;
+    }
     _errorMessage = _l10n.purchaseFailed;
     _status = PurchaseStatus.error;
     notifyListeners();

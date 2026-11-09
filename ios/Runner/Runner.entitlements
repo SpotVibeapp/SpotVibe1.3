@@ -8,6 +8,8 @@
 	</array>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
+		<string>applinks:spotvibeapp.com</string>
+		<string>applinks:www.spotvibeapp.com</string>
 		<string>applinks:spotvibeapp.net</string>
 		<string>applinks:spotvibe-cfa08.web.app</string>
 	</array>

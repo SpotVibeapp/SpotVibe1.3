@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../config/app_config.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
+import '../theme/responsive.dart';
 import '../theme/theme.dart';
 import '../widgets/common/app_icon_mark.dart';
 
@@ -188,7 +189,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      body: CustomScrollView(
+      body: WideContent(
+        maxWidth: 520,
+        child: CustomScrollView(
         slivers: [
           // ── Gradient Header ──────────────────────────────────────────────
           SliverAppBar(
@@ -302,10 +305,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(width: AppTheme.spacingSm),
                           ],
                           if (AppConfig.enableAppleSignIn &&
-                              !kIsWeb &&
-                              (defaultTargetPlatform == TargetPlatform.iOS ||
-                                  defaultTargetPlatform ==
-                                      TargetPlatform.macOS)) ...[
+                              ((kIsWeb && AppConfig.enableAppleSignInWeb) ||
+                                  (!kIsWeb &&
+                                      (defaultTargetPlatform ==
+                                              TargetPlatform.iOS ||
+                                          defaultTargetPlatform ==
+                                              TargetPlatform.macOS)))) ...[
                             Expanded(
                               child: _SocialButton(
                                 label: l10n.apple,
@@ -512,6 +517,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

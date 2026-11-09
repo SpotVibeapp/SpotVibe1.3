@@ -1,0 +1,24 @@
+[
+  {
+    "origin": [
+      "https://spotvibeapp.com",
+      "https://www.spotvibeapp.com",
+      "http://localhost:8080",
+      "http://127.0.0.1:8080",
+      "http://localhost:5000",
+      "http://127.0.0.1:5000",
+      "http://localhost:7357",
+      "http://127.0.0.1:7357"
+    ],
+    "method": ["GET", "HEAD", "PUT", "POST", "DELETE", "OPTIONS"],
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "Content-Length",
+      "User-Agent",
+      "x-goog-resumable",
+      "x-goog-meta-transcoded"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]

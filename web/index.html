@@ -31,6 +31,20 @@
 
   <title>SpotVibe</title>
   <link rel="manifest" href="manifest.json">
+  <!--
+    The web app is served at https://spotvibeapp.com/app/.
+    Build with: flutter build web --release --base-href /app/
+    That replaces $FLUTTER_BASE_HREF below. The service worker is registered
+    from /app/flutter_service_worker.js, so its default scope is /app/.
+    RevenueCat Web Billing stays dormant until ENABLE_WEB_BILLING is set.
+  -->
+  <script src="revenuecat_billing.js" defer></script>
+  <script>
+    // Captured before Flutter starts. <base href="/app/"> makes Uri.base
+    // drop the rest of the path, and the router can rewrite the address
+    // bar as soon as it boots. go_router reads this instead.
+    window.spotvibeInitialPath = window.location.pathname;
+  </script>
   <style>
     body {
       background-color: #0A0E14;

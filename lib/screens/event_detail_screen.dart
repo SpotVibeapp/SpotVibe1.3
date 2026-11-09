@@ -10,6 +10,7 @@ import '../providers/event_provider.dart';
 import '../providers/moderation_provider.dart';
 import '../services/maps_service.dart';
 import '../theme/category_colors.dart';
+import '../theme/responsive.dart';
 import '../theme/theme.dart';
 import '../services/event_analytics_service.dart';
 import '../widgets/events/claim_venue_banner.dart';
@@ -97,7 +98,9 @@ class _DetailContent extends StatelessWidget {
     final catColor = categoryAccent(event.category);
 
     return Scaffold(
-      body: Stack(
+      body: WideContent(
+        maxWidth: 880,
+        child: Stack(
         children: [
           CustomScrollView(
         slivers: [
@@ -335,6 +338,7 @@ class _DetailContent extends StatelessWidget {
             ],
           ),
         ],
+        ),
       ),
     );
   }

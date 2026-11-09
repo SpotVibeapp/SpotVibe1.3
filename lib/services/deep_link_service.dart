@@ -5,29 +5,55 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Base URL used for all SpotVibe deep links.
-/// On Android this triggers the intent-filter; on iOS the associated domain.
+import '../config/app_config.dart';
+import '../web/configure_url.dart';
+
 /// Base URL used for all SpotVibe share links.
 ///
-/// Defaults to the live Firebase Hosting domain until the custom domain
-/// `spotvibeapp.net` is connected in Firebase Hosting + DNS (the app already
-/// accepts both hosts when OPENING links). Once the custom domain is live,
-/// build with `--dart-define=SPOTVIBE_LINK_BASE=https://spotvibeapp.net`
-/// (or flip this default).
+/// Event links are `https://spotvibeapp.com/app/event/<id>` so an installed
+/// app opens the event (Android App Links / iOS Universal Links) and the
+/// browser otherwise opens the web app, which is hosted at `/app/`.
+/// Override with `--dart-define=SPOTVIBE_LINK_BASE=https://example.com/app`.
 const String kDeepLinkBase = String.fromEnvironment(
   'SPOTVIBE_LINK_BASE',
-  defaultValue: 'https://spotvibe-cfa08.web.app',
+  defaultValue: 'https://spotvibeapp.com/app',
 );
 
-/// Hosts that map to in-app event routes: the custom domain (apex + www,
-/// once connected) and the Firebase Hosting domains (live fallback + any
-/// links already shared from earlier builds).
+/// Hosts that map to in-app event routes. Older links on the legal Firebase
+/// Hosting site and spotvibeapp.net still open the app.
 const Set<String> _kDeepLinkHosts = {
+  'spotvibeapp.com',
+  'www.spotvibeapp.com',
   'spotvibeapp.net',
   'www.spotvibeapp.net',
   'spotvibe-cfa08.web.app',
   'spotvibe-cfa08.firebaseapp.com',
 };
+
+/// The path go_router should open on web, taken from the browser URL.
+///
+/// `https://spotvibeapp.com/app/event/1` becomes `/event/1`. Phone builds
+/// never call this. Uses `window.location.pathname`, not [Uri.base], because
+/// the `<base href="/app/">` tag makes [Uri.base] ignore the rest of the path.
+String browserAppPath() {
+  var path = browserPathname();
+  if (path == AppConfig.webAppBasePath || path == '${AppConfig.webAppBasePath}/') {
+    return '/';
+  }
+  if (path.startsWith('${AppConfig.webAppBasePath}/')) {
+    path = path.substring(AppConfig.webAppBasePath.length);
+  }
+  if (path.isEmpty) return '/';
+  return path;
+}
+
+/// Strip the web-app mount path so `/app/event/1` and `/event/1` both become
+/// the go_router path `/event/1`.
+String _appRoutePath(String path) {
+  if (path == '/app' || path == '/app/') return '/';
+  if (path.startsWith('/app/')) return path.substring('/app'.length);
+  return path;
+}
 
 /// Custom URI schemes that map to in-app event routes.
 const Set<String> _kDeepLinkSchemes = {'spotvibe'};
@@ -72,14 +98,14 @@ class DeepLinkService {
       '$kDeepLinkBase/user-event/$eventId';
 
   /// Extracts the GoRouter path (e.g. `/event/42`) from either an https URL
-  /// (`https://spotvibe.app/event/42`) or a custom-scheme URL
+  /// (`https://spotvibeapp.com/app/event/42`) or a custom-scheme URL
   /// (`spotvibe://event/42`). Returns `null` for unrecognised URLs.
   static String? pathFromUri(String uriString) {
     final uri = Uri.tryParse(uriString);
     if (uri == null) return null;
     if ((uri.scheme == 'https' || uri.scheme == 'http') &&
         _kDeepLinkHosts.contains(uri.host)) {
-      final p = uri.path;
+      final p = _appRoutePath(uri.path);
       if (p.startsWith('/event/') || p.startsWith('/user-event/')) return p;
     }
     if (_kDeepLinkSchemes.contains(uri.scheme)) {

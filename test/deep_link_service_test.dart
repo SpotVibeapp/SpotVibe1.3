@@ -5,6 +5,16 @@ void main() {
   group('DeepLinkService.pathFromUri', () {
     test('parses SpotVibe https event links on all known hosts', () {
       expect(
+        DeepLinkService.pathFromUri(
+            'https://spotvibeapp.com/app/event/evt_1'),
+        '/event/evt_1',
+      );
+      expect(
+        DeepLinkService.pathFromUri(
+            'https://www.spotvibeapp.com/app/user-event/42'),
+        '/user-event/42',
+      );
+      expect(
         DeepLinkService.pathFromUri('https://spotvibeapp.net/event/evt_1'),
         '/event/evt_1',
       );
@@ -52,15 +62,13 @@ void main() {
     expect(message.toLowerCase(), isNot(contains('mailto:')));
   });
 
-  test('share links use the live Firebase Hosting domain by default', () {
-    // The custom spotvibe.app domain is not connected yet — share links must
-    // point at a host that actually serves a fallback page today.
-    expect(kDeepLinkBase, 'https://spotvibe-cfa08.web.app');
+  test('share links open the web app on spotvibeapp.com', () {
+    expect(kDeepLinkBase, 'https://spotvibeapp.com/app');
     expect(DeepLinkService.eventLink('abc'),
-        'https://spotvibe-cfa08.web.app/event/abc');
+        'https://spotvibeapp.com/app/event/abc');
     expect(
       DeepLinkService.userEventLink('xyz'),
-      'https://spotvibe-cfa08.web.app/user-event/xyz',
+      'https://spotvibeapp.com/app/user-event/xyz',
     );
   });
 }

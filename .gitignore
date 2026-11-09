@@ -23,6 +23,10 @@ migrate_working_dir/
 # is commented out by default.
 #.vscode/
 
+# Staged Flutter web build for spotvibeapp.com/app/. Regenerated, not committed.
+spotvibeapp_site/app/*
+!spotvibeapp_site/app/.gitkeep
+
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id

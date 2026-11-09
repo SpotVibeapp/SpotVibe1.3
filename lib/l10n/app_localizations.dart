@@ -967,6 +967,18 @@ abstract class AppLocalizations {
   /// **'Purchase failed. Please try again.'**
   String get purchaseFailed;
 
+  /// No description provided for @webBillingNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'SpotVibe Premium on the web is not turned on for this build. Subscribe in the iOS or Android app, or set up RevenueCat Web Billing.'**
+  String get webBillingNotConfigured;
+
+  /// No description provided for @downloadIcs.
+  ///
+  /// In en, this message translates to:
+  /// **'Download .ics file'**
+  String get downloadIcs;
+
   /// No description provided for @noActiveSubscription.
   ///
   /// In en, this message translates to:

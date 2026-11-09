@@ -225,6 +225,8 @@
     }
   },
   "purchaseFailed": "La compra falló. Inténtalo de nuevo.",
+  "webBillingNotConfigured": "SpotVibe Premium en la web no está activado en esta versión. Suscríbete en la app de iOS o Android, o configura RevenueCat Web Billing.",
+  "downloadIcs": "Descargar archivo .ics",
   "noActiveSubscription": "No se encontró una suscripción activa para restaurar.",
   "restoreFailed": "La restauración falló. Inténtalo de nuevo.",
   "filtersTooltip": "Filtros",

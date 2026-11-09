@@ -1,0 +1,1 @@
+This folder is filled by `flutter build web --base-href /app/` before a hosting deploy. Do not commit the build output.

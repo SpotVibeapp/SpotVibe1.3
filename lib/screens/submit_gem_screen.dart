@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +10,7 @@ import '../services/event_service.dart';
 import '../services/gem_service.dart';
 import '../services/location_service.dart';
 import '../services/media_upload_service.dart';
+import '../platform/local_media.dart';
 import '../theme/theme.dart';
 
 /// Lets a signed-in user submit — or edit — a community hidden gem: name,
@@ -454,8 +453,8 @@ class _SubmitGemScreenState extends State<SubmitGemScreen> {
                 _photoTile(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                    child: Image.file(
-                      File(_photoPaths[i]),
+                    child: localMediaImage(
+                      path: _photoPaths[i],
                       width: 96,
                       height: 96,
                       fit: BoxFit.cover,

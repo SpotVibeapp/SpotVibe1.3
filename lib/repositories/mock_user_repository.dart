@@ -62,6 +62,21 @@ class MockUserRepository implements UserRepository {
   }
 
   @override
+  Future<AppUser> adoptSignedInUser({
+    required String provider,
+    String? name,
+    String? email,
+    String? avatarUrl,
+  }) {
+    return loginWithSocial(
+      provider: provider,
+      name: name,
+      email: email,
+      avatarUrl: avatarUrl,
+    );
+  }
+
+  @override
   Future<AppUser> login(String email, String password) async {
     await Future.delayed(const Duration(milliseconds: 800));
     _currentUser = AppUser(

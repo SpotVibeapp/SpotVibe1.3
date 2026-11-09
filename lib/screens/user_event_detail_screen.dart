@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -18,6 +17,7 @@ import '../widgets/events/event_share_card.dart';
 import '../widgets/events/organizer_social_links.dart';
 import '../widgets/events/story_card.dart';
 import '../widgets/common/app_avatar.dart';
+import '../widgets/common/network_photo.dart';
 import '../widgets/common/event_image_placeholder.dart';
 import '../widgets/common/fullscreen_image_viewer.dart';
 import '../widgets/events/attendees_section.dart';
@@ -120,7 +120,7 @@ class _UserEventDetailContent extends StatelessWidget {
                         if (urls.isEmpty) return;
                         FullscreenImageViewer.open(context, imageUrls: urls);
                       },
-                      child: CachedNetworkImage(
+                      child: NetworkPhoto(
                         imageUrl: event.imageUrl,
                         fit: BoxFit.cover,
                         errorWidget: (_, __, ___) => EventImagePlaceholder(category: event.category),
@@ -265,7 +265,7 @@ class _UserEventDetailContent extends StatelessWidget {
                       if (event.isCreatorPro && (event.brandLogoUrl?.isNotEmpty ?? false))
                         ClipRRect(
                           borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-                          child: CachedNetworkImage(
+                          child: NetworkPhoto(
                             imageUrl: event.brandLogoUrl!,
                             width: AppTheme.avatarSm,
                             height: AppTheme.avatarSm,

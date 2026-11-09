@@ -1,9 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../theme/theme.dart';
 import '../common/event_image_placeholder.dart';
+import '../common/network_photo.dart';
 import '../common/fullscreen_image_viewer.dart';
 import 'event_video_player.dart';
 
@@ -207,7 +207,7 @@ class _EventGalleryImage extends StatelessWidget {
         errorBuilder: (_, __, ___) => EventImagePlaceholder(category: category),
       );
     }
-    return CachedNetworkImage(
+    return NetworkPhoto(
       imageUrl: url,
       fit: BoxFit.cover,
       errorWidget: (_, __, ___) => EventImagePlaceholder(category: category),

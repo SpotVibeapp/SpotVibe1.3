@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import '../config/app_config.dart';
 import '../models/user.dart';
 import '../repositories/user_repository.dart';
 import 'apple_reauth.dart';
@@ -21,6 +23,12 @@ class AuthService {
 
   // ── Google ────────────────────────────────────────────────────────────────
   Future<AppUser> loginWithGoogle() async {
+    if (kIsWeb) {
+      final google = GoogleAuthProvider()
+        ..addScope('email')
+        ..addScope('profile');
+      return _signInWithWebPopup(google, 'google');
+    }
     final googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
     final account = await googleSignIn.signIn();
     if (account == null) throw Exception('Google sign-in cancelled');
@@ -37,7 +45,19 @@ class AuthService {
 
   // ── Apple ─────────────────────────────────────────────────────────────────
   Future<AppUser> loginWithApple() async {
-    if (kIsWeb) throw Exception('Apple login is not supported on web');
+    if (kIsWeb) {
+      if (!AppConfig.enableAppleSignInWeb) {
+        throw Exception(
+          'Sign in with Apple on the web is not enabled yet. '
+          'Use email or Google, or turn on ENABLE_APPLE_SIGN_IN_WEB after '
+          'the Apple Services ID is configured.',
+        );
+      }
+      final apple = OAuthProvider('apple.com')
+        ..addScope('email')
+        ..addScope('name');
+      return _signInWithWebPopup(apple, 'apple');
+    }
 
     // Apple requires a nonce: we send the SHA-256 of a random raw nonce to
     // Apple, then hand the raw nonce to Firebase so it can verify the
@@ -71,6 +91,30 @@ class AuthService {
       idToken: credential.identityToken,
       rawNonce: rawNonce,
     );
+  }
+
+  /// Firebase Auth popup for Google and Apple on the web. The handler is
+  /// `https://spotvibe-cfa08.firebaseapp.com/__/auth/handler`, so the hosting
+  /// domain must be an authorized domain and (for Apple) a Services ID return
+  /// URL. See WEB_VERSION.md.
+  Future<AppUser> _signInWithWebPopup(AuthProvider oauth, String provider) async {
+    try {
+      final result = await FirebaseAuth.instance.signInWithPopup(oauth);
+      final user = result.user;
+      if (user == null) throw Exception('$provider sign-in was cancelled');
+      return await _repository.adoptSignedInUser(
+        provider: provider,
+        name: user.displayName,
+        email: user.email,
+        avatarUrl: user.photoURL,
+      );
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'popup-closed-by-user' ||
+          e.code == 'cancelled-popup-request') {
+        throw Exception('$provider sign-in cancelled');
+      }
+      throw Exception(e.message ?? '$provider sign-in failed');
+    }
   }
 
   Future<AppUser> login(String email, String password) async {

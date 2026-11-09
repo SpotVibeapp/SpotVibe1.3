@@ -1,8 +1,5 @@
-import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -15,8 +12,10 @@ import '../../models/user_event.dart';
 import '../../services/deep_link_service.dart';
 import '../../services/share_analytics_service.dart';
 import '../../theme/category_colors.dart';
+import '../../platform/share_bytes.dart';
 import '../../theme/theme.dart';
 import '../common/event_image_placeholder.dart';
+import '../common/network_photo.dart';
 
 /// Data needed to create an event card and native social share action.
 ///
@@ -209,14 +208,11 @@ class _ShareSheetState extends State<_ShareSheet> {
     }
 
     try {
-      final dir = Directory.systemTemp;
-      final file = File('${dir.path}/spotvibe_share_${_event.id}.png');
-      await file.writeAsBytes(bytes);
-
       // Include the public event link with the image. Apps that accept an
-      // image and text can publish both; others still receive the card.
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'image/png')],
+      // image and text can publish both; the browser shares or downloads it.
+      await sharePngBytes(
+        bytes,
+        filename: 'spotvibe_share_${_event.id}.png',
         subject: '${_event.title} — SpotVibe',
         text: _buildShareMessage(_buildShareLink()),
       );
@@ -369,12 +365,7 @@ class _ShareSheetState extends State<_ShareSheet> {
             padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
             child: Column(
               children: [
-                if (kIsWeb)
-                  // Web: image capture not available; show info tile
-                  _WebShareTile(colors: colors, text: text)
-                else
-                  // Share as image card
-                  ElevatedButton.icon(
+                ElevatedButton.icon(
                     onPressed: _isCapturingCard ? null : _shareCard,
                     icon: _isCapturingCard
                         ? const SizedBox(
@@ -454,7 +445,7 @@ class _ShareCardGraphic extends StatelessWidget {
         children: [
           // ── background image ─────────────────────────────────────────────
           if (event.imageUrl.isNotEmpty)
-            CachedNetworkImage(
+            NetworkPhoto(
               imageUrl: event.imageUrl,
               fit: BoxFit.cover,
               filterQuality: FilterQuality.low,
@@ -629,7 +620,7 @@ class _ShareCardGraphic extends StatelessWidget {
             child: RotatedBox(
               quarterTurns: 1,
               child: Text(
-                'spotvibe.app',
+                'spotvibeapp.com',
                 style: TextStyle(
                   color: Colors.white38,
                   fontSize: 9,
@@ -696,37 +687,6 @@ class _CopyLinkTile extends StatelessWidget {
                 size: AppTheme.iconSm, color: colors.primary),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _WebShareTile extends StatelessWidget {
-  final ColorScheme colors;
-  final TextTheme text;
-
-  const _WebShareTile({required this.colors, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppTheme.spacingMd),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.phone_iphone_rounded,
-              size: AppTheme.iconSm, color: colors.onSurfaceVariant),
-          const SizedBox(width: AppTheme.spacingSm),
-          Expanded(
-            child: Text(
-              'Open the SpotVibe mobile app to share the event card as an image.',
-              style: text.bodySmall,
-            ),
-          ),
-        ],
       ),
     );
   }

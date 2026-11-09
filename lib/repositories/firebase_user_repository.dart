@@ -119,6 +119,26 @@ class FirebaseUserRepository implements UserRepository {
   // ── Social sign-in ────────────────────────────────────────────────────────
 
   @override
+  Future<AppUser> adoptSignedInUser({
+    required String provider,
+    String? name,
+    String? email,
+    String? avatarUrl,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('Sign-in did not complete. Please try again.');
+    }
+    return _appUserFor(
+      user,
+      fallbackName: name,
+      fallbackAvatar: avatarUrl,
+      providerEmail: email,
+      provider: provider,
+    );
+  }
+
+  @override
   Future<AppUser> loginWithSocial({
     required String provider,
     String? name,

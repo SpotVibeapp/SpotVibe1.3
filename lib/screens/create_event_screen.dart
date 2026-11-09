@@ -1,6 +1,3 @@
-import 'dart:io';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -23,6 +20,7 @@ import '../services/parallel_moderation_service.dart';
 import '../services/media_upload_service.dart';
 import '../services/tour_service.dart';
 import '../services/user_event_service.dart';
+import '../platform/local_media.dart';
 import '../theme/theme.dart';
 import '../widgets/common/fullscreen_image_viewer.dart';
 import '../widgets/events/ai_promo_image_dialog.dart';
@@ -1105,8 +1103,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                           ? 'Using image URL'
                           : 'Upload a photo of this event or venue')),
               icon: Icons.add_photo_alternate_rounded,
-              preview: _localCoverPath != null && !kIsWeb
-                  ? Image.file(File(_localCoverPath!), fit: BoxFit.cover)
+              preview: _localCoverPath != null
+                  ? localMediaImage(path: _localCoverPath!, fit: BoxFit.cover)
                   : (_imageUrlController.text.isNotEmpty
                       ? Image.network(
                           _imageUrlController.text,

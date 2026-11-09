@@ -1,13 +1,18 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../data/pricing.dart';
+import 'purchases_facade.dart';
+import 'web_billing.dart';
 
 /// RevenueCat public SDK keys are supplied at build/run time and are never
 /// committed to the repo:
 ///   flutter run --dart-define=REVENUECAT_ANDROID_KEY=goog_xxx \
 ///               --dart-define=REVENUECAT_APPLE_KEY=appl_xxx
+///
+/// Web Billing (off unless ENABLE_WEB_BILLING=true) uses a separate public
+/// key from the same RevenueCat project:
+///   --dart-define=ENABLE_WEB_BILLING=true \
+///   --dart-define=REVENUECAT_WEB_API_KEY=rcb_xxx
 ///
 /// Get them from https://app.revenuecat.com → Project → API Keys.
 const String _kRevenueCatAndroidKey =
@@ -23,55 +28,55 @@ class RevenueCatService {
 
   /// Call once at app startup before any purchases are made.
   Future<void> initialize() async {
-    if (kIsWeb) return; // RevenueCat SDK is mobile-only
     if (_initialized) return;
+    if (kIsWeb) {
+      _initialized = await WebBillingController.instance.initialize();
+      return;
+    }
     final apiKey = defaultTargetPlatform == TargetPlatform.android
         ? _kRevenueCatAndroidKey
         : _kRevenueCatAppleKey;
     if (apiKey.isEmpty) return; // Debug/profile can use a local UI trial; release fails closed.
-    try {
-      await Purchases.setLogLevel(LogLevel.error);
-      final configuration = PurchasesConfiguration(apiKey);
-      await Purchases.configure(configuration);
-      _initialized = true;
-    } catch (_) {}
+    _initialized = await PurchasesBinding.configure(apiKey);
   }
 
   /// Log in a known user so their purchases are associated with their account.
   Future<void> logIn(String userId) async {
-    if (kIsWeb || !_initialized) return;
-    try {
-      await Purchases.logIn(userId);
-    } catch (_) {}
+    if (kIsWeb) {
+      await WebBillingController.instance.logIn(userId);
+      _initialized = WebBillingController.instance.isReady;
+      return;
+    }
+    if (!_initialized) return;
+    await PurchasesBinding.logIn(userId);
   }
 
   /// Log out — reverts to anonymous purchasing.
   Future<void> logOut() async {
-    if (kIsWeb || !_initialized) return;
-    try {
-      await Purchases.logOut();
-    } catch (_) {}
+    if (kIsWeb) {
+      await WebBillingController.instance.logOut();
+      _initialized = false;
+      return;
+    }
+    if (!_initialized) return;
+    await PurchasesBinding.logOut();
   }
 
   /// Returns true when the user has an active "pro" entitlement.
   Future<bool> checkProEntitlement() async {
-    if (kIsWeb || !_initialized) return false;
-    try {
-      final info = await Purchases.getCustomerInfo();
-      return info.entitlements.active.containsKey(kProEntitlementId);
-    } catch (_) {
-      return false;
-    }
+    if (kIsWeb) return WebBillingController.instance.hasPro();
+    if (!_initialized) return false;
+    final info = await PurchasesBinding.customerInfo();
+    if (info == null) return false;
+    return info.entitlements.active.containsKey(kProEntitlementId);
   }
 
   /// Returns the current RevenueCat offerings (packages available for purchase).
+  /// Web Billing does not surface store packages; the paywall uses the
+  /// product ids in [pricing.dart] and the JS SDK.
   Future<Offerings?> fetchOfferings() async {
     if (kIsWeb || !_initialized) return null;
-    try {
-      return await Purchases.getOfferings();
-    } catch (_) {
-      return null;
-    }
+    return PurchasesBinding.offerings();
   }
 
   /// Every package across every offering (default + founding).
@@ -106,42 +111,34 @@ class RevenueCatService {
   /// True when this Apple/Google account already owns the founding SKU.
   Future<bool> hasFoundingStorePurchase() async {
     if (kIsWeb || !_initialized) return false;
-    try {
-      final info = await Purchases.getCustomerInfo();
-      final ids = <String>{
-        ...info.activeSubscriptions,
-        ...info.allPurchasedProductIdentifiers,
-      };
-      return ids.any(isFoundingStoreProduct);
-    } catch (_) {
-      return false;
-    }
+    final info = await PurchasesBinding.customerInfo();
+    if (info == null) return false;
+    final ids = <String>{
+      ...info.activeSubscriptions,
+      ...info.allPurchasedProductIdentifiers,
+    };
+    return ids.any(isFoundingStoreProduct);
   }
 
   /// Purchase a package. Returns updated [CustomerInfo] on success, null on failure/cancellation.
   Future<CustomerInfo?> purchasePackage(Package package) async {
     if (kIsWeb || !_initialized) return null;
-    try {
-      final result = await Purchases.purchase(
-        PurchaseParams.package(package),
-      );
-      return result.customerInfo;
-    } on PurchasesErrorCode catch (e) {
-      if (e == PurchasesErrorCode.purchaseCancelledError) return null;
-      rethrow;
-    } catch (_) {
-      return null;
-    }
+    return PurchasesBinding.purchase(package);
+  }
+
+  /// Web Billing purchase for a RevenueCat product identifier. No-op on mobile
+  /// and when web billing is not configured.
+  Future<bool> purchaseWebProduct(String productId) async {
+    if (!kIsWeb) return false;
+    return WebBillingController.instance.purchase(productId);
   }
 
   /// Restore previous purchases. Returns true when the pro entitlement is restored.
   Future<bool> restorePurchases() async {
-    if (kIsWeb || !_initialized) return false;
-    try {
-      final info = await Purchases.restorePurchases();
-      return info.entitlements.active.containsKey(kProEntitlementId);
-    } catch (_) {
-      return false;
-    }
+    if (kIsWeb) return WebBillingController.instance.restore();
+    if (!_initialized) return false;
+    final info = await PurchasesBinding.restore();
+    if (info == null) return false;
+    return info.entitlements.active.containsKey(kProEntitlementId);
   }
 }

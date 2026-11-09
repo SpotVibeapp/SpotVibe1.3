@@ -7,6 +7,7 @@ import '../models/gem.dart';
 import '../providers/auth_provider.dart';
 import '../providers/gem_provider.dart';
 import '../services/location_service.dart';
+import '../theme/responsive.dart';
 import '../theme/theme.dart';
 import '../widgets/common/ad_banner.dart';
 import '../widgets/common/empty_state_view.dart';
@@ -253,6 +254,25 @@ class _GemsScreenState extends State<GemsScreen> {
         subtitle: l10n.gemsEmptySubtitle,
         actionLabel: l10n.gemsUseMyLocation,
         onAction: _useMyLocation,
+      );
+    }
+    final wide = isWideLayout(context);
+    if (wide) {
+      final columns = feedColumnCount(MediaQuery.sizeOf(context).width);
+      return RefreshIndicator(
+        onRefresh: provider.refresh,
+        child: GridView.builder(
+          padding: const EdgeInsets.fromLTRB(AppTheme.spacingMd,
+              AppTheme.spacingSm, AppTheme.spacingMd, AppTheme.spacingLg),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: AppTheme.spacingSm,
+            crossAxisSpacing: AppTheme.spacingSm,
+            childAspectRatio: 0.78,
+          ),
+          itemCount: gems.length,
+          itemBuilder: (context, index) => _GemCard(gem: gems[index]),
+        ),
       );
     }
     return RefreshIndicator(

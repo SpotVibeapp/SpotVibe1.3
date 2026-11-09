@@ -1,0 +1,3 @@
+void configureAppUrlStrategy() {}
+
+String browserPathname() => '/';
