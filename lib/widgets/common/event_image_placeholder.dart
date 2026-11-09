@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../data/el_paso_events.dart';
 import '../../data/event_images.dart';
 import '../../models/event.dart';
+import 'network_photo.dart';
 
 /// Cover photo for an event card / detail hero.
 ///
@@ -67,7 +67,7 @@ class EventCoverImage extends StatelessWidget {
   }
 
   static const _kImageHeaders = {
-    'User-Agent': 'SpotVibe/1.0 (https://spotvibe.app; tech@spotvibeapp.com)',
+    'User-Agent': 'SpotVibe/1.0 (https://spotvibeapp.com; tech@spotvibeapp.com)',
     'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
   };
 
@@ -84,7 +84,7 @@ class EventCoverImage extends StatelessWidget {
         errorBuilder: (_, __, ___) => _poster(),
       );
     }
-    return CachedNetworkImage(
+    return NetworkPhoto(
       imageUrl: imageUrl,
       httpHeaders: _kImageHeaders,
       fit: fit,
@@ -94,7 +94,6 @@ class EventCoverImage extends StatelessWidget {
       // Remote venue photos (e.g. Wikimedia FilePath redirects) can hang or
       // fail; the poster guarantees a card is never blank, and the real photo
       // fades in over it once it arrives.
-      fadeInDuration: const Duration(milliseconds: 250),
       placeholder: (_, __) => _poster(),
       errorWidget: (_, __, ___) => _poster(),
     );

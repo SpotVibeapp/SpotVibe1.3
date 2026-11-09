@@ -495,6 +495,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get purchaseFailed => 'La compra falló. Inténtalo de nuevo.';
 
   @override
+  String get webBillingNotConfigured =>
+      'SpotVibe Premium en la web no está activado en esta versión. Suscríbete en la app de iOS o Android, o configura RevenueCat Web Billing.';
+
+  @override
+  String get downloadIcs => 'Descargar archivo .ics';
+
+  @override
   String get noActiveSubscription =>
       'No se encontró una suscripción activa para restaurar.';
 

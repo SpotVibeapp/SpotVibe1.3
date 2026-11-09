@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../data/calendar_ics.dart';
 import '../../l10n/app_localizations.dart';
+import '../../platform/browser_download.dart';
+import '../../services/native_calendar.dart';
 import '../../theme/theme.dart';
 
 /// Adds a calendar event to Apple Calendar (iOS) or Google Calendar (Android).
@@ -29,29 +33,34 @@ class AddToCalendarButton extends StatelessWidget {
   DateTime get _endTime => endTime ?? startTime.add(const Duration(hours: 2));
 
   Future<void> _addToCalendar(BuildContext context) async {
-    if (kIsWeb) {
-      await _openGoogleCalendarUrl(context);
-      return;
-    }
-    final event = Event(
+    final added = await addNativeCalendarEvent(
       title: title,
       description: description,
       location: location,
-      startDate: startTime,
-      endDate: _endTime,
+      start: startTime,
+      end: _endTime,
     );
-    bool added = false;
-    try {
-      added = await Add2Calendar.addEvent2Cal(event);
-    } catch (_) {
-      added = false;
-    }
     if (!added) {
-      // No native calendar handler accepted the insert (or it was blocked) —
-      // fall back to the Google Calendar web form, which works with any
-      // browser installed.
+      // No native calendar handler accepted the insert (or this is the web
+      // app). Fall back to the Google Calendar web form.
       if (context.mounted) await _openGoogleCalendarUrl(context);
     }
+  }
+
+  Future<void> _downloadIcs() async {
+    final ics = buildEventIcs(
+      uid: '${title.hashCode}-${startTime.millisecondsSinceEpoch}',
+      title: title,
+      description: description,
+      location: location,
+      start: startTime,
+      end: _endTime,
+    );
+    await downloadBytes(
+      filename: 'spotvibe-event.ics',
+      bytes: Uint8List.fromList(utf8.encode(ics)),
+      mimeType: 'text/calendar',
+    );
   }
 
   Future<void> _openGoogleCalendarUrl(BuildContext context) async {
@@ -108,24 +117,45 @@ class AddToCalendarButton extends StatelessWidget {
             ? l10n.addToAppleCalendar
             : l10n.addToGoogleCalendar;
 
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: () => _addToCalendar(context),
-        icon: Icon(
-          kIsWeb || defaultTargetPlatform == TargetPlatform.android
-              ? Icons.event_rounded
-              : Icons.calendar_month_rounded,
-          size: AppTheme.iconSm,
-        ),
-        label: Text(calLabel),
-        style: OutlinedButton.styleFrom(
-          minimumSize: const Size(0, 44),
-          foregroundColor: colors.primary,
-          side: BorderSide(color: colors.primary.withValues(alpha: AppTheme.opacityHint)),
-          padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
-        ),
+    final button = OutlinedButton.icon(
+      onPressed: () => _addToCalendar(context),
+      icon: Icon(
+        kIsWeb || defaultTargetPlatform == TargetPlatform.android
+            ? Icons.event_rounded
+            : Icons.calendar_month_rounded,
+        size: AppTheme.iconSm,
       ),
+      label: Text(calLabel),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(0, 44),
+        foregroundColor: colors.primary,
+        side: BorderSide(color: colors.primary.withValues(alpha: AppTheme.opacityHint)),
+        padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
+      ),
+    );
+
+    if (!kIsWeb) {
+      return SizedBox(width: double.infinity, child: button);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        button,
+        const SizedBox(height: AppTheme.spacingSm),
+        OutlinedButton.icon(
+          onPressed: _downloadIcs,
+          icon: const Icon(Icons.download_rounded, size: AppTheme.iconSm),
+          label: Text(l10n.downloadIcs),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(0, 44),
+            foregroundColor: colors.primary,
+            side: BorderSide(
+              color: colors.primary.withValues(alpha: AppTheme.opacityHint),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

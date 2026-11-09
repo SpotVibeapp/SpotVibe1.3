@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../config/app_config.dart';
 import '../data/pricing.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
@@ -351,7 +353,7 @@ class _PurchaseButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    final button = Material(
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
@@ -387,6 +389,19 @@ class _PurchaseButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+    if (!kIsWeb || AppConfig.enableWebBilling) return button;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        button,
+        const SizedBox(height: AppTheme.spacingSm),
+        Text(
+          AppLocalizations.of(context)!.webBillingNotConfigured,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
     );
   }
 

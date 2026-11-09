@@ -440,10 +440,14 @@ class ProfileScreen extends StatelessWidget {
     );
     if (proceed != true) return;
 
-    FirebaseCrashlytics.instance.log('Manual test crash tile');
-    await FirebaseCrashlytics.instance
-        .recordError(StateError('SpotVibe test crash (manual)'), StackTrace.current,
-            fatal: true);
+    if (!kIsWeb) {
+      FirebaseCrashlytics.instance.log('Manual test crash tile');
+      await FirebaseCrashlytics.instance.recordError(
+        StateError('SpotVibe test crash (manual)'),
+        StackTrace.current,
+        fatal: true,
+      );
+    }
     // A hard crash so a profile/release build actually reports a fatal event.
     // In debug this line is caught by the framework; the recordError above and
     // the console log still confirm the wiring is reachable.

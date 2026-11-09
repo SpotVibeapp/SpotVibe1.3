@@ -32,6 +32,11 @@
  *                           are cached in Firestore and shared by all users
  */
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { onObjectFinalized } = require('firebase-functions/v2/storage');
+const {
+  isEventVideoPath,
+  transcodeStorageObject,
+} = require('./lib/videoTranscode');
 const { defineSecret } = require('firebase-functions/params');
 const { randomUUID } = require('crypto');
 const {
@@ -1300,5 +1305,38 @@ exports.liveEventsProxy = onCall(
       });
     }
     return { status: 200, body, cached: false };
+  }
+);
+
+/**
+ * Rewrites a newly uploaded event video to H.264 yuv420p MP4 when Chrome
+ * could not play the original (HEVC .mov from iPhones, or an unrecognized
+ * codec). The object name and firebaseStorageDownloadTokens are preserved,
+ * so the download URL already saved on the event keeps working. Files this
+ * function writes are tagged metadata.transcoded=h264 and are not processed
+ * again. Photos and already-compatible H.264 uploads are skipped.
+ *
+ * Not deployed by this change. Requires ffmpeg (ffmpeg-static) in the
+ * function bundle and a one-time `firebase deploy --only functions:transcodeEventVideo`.
+ */
+exports.transcodeEventVideo = onObjectFinalized(
+  {
+    memory: '2GiB',
+    timeoutSeconds: 300,
+    cpu: 1,
+  },
+  async (event) => {
+    const object = event.data;
+    if (!object || !object.name) return;
+    if ((object.metadata || {}).transcoded === 'h264') return;
+    if (!isEventVideoPath(object.name, object.contentType)) return;
+    try {
+      const result = await transcodeStorageObject(admin.storage().bucket(), object);
+      console.log('transcodeEventVideo', object.name, result);
+    } catch (err) {
+      // Leave the original object in place. iOS can still play HEVC, and a
+      // failed convert must not delete the upload.
+      console.error('transcodeEventVideo failed', object.name, err);
+    }
   }
 );

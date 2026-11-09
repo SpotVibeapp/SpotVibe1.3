@@ -13,6 +13,7 @@ import '../providers/event_provider.dart';
 import '../providers/gem_provider.dart';
 import '../services/event_service.dart';
 import '../services/maps_service.dart';
+import '../theme/responsive.dart';
 import '../theme/theme.dart';
 
 class EventMapScreen extends StatefulWidget {
@@ -187,7 +188,10 @@ class _EventMapScreenState extends State<EventMapScreen> {
           ),
         ],
       ),
-      body: Stack(
+      body: _wideMapBody(
+        context,
+        events,
+        Stack(
         children: [
           FlutterMap(
             mapController: _mapController,
@@ -370,7 +374,50 @@ class _EventMapScreenState extends State<EventMapScreen> {
               ),
             ),
         ],
+        ),
       ),
+    );
+  }
+
+  /// On a wide window the event list sits beside the map. Phones keep the
+  /// full-bleed map they already had.
+  Widget _wideMapBody(BuildContext context, List<Event> events, Widget map) {
+    if (!isWideLayout(context)) return map;
+    final colors = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        SizedBox(
+          width: 340,
+          child: Material(
+            color: colors.surface,
+            child: events.isEmpty
+                ? const Center(child: Text('No events on this map yet'))
+                : ListView.separated(
+                    itemCount: events.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final event = events[index];
+                      return ListTile(
+                        title: Text(
+                          event.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          event.location,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onTap: () =>
+                            context.push('/event/${event.id}', extra: event),
+                      );
+                    },
+                  ),
+          ),
+        ),
+        const VerticalDivider(width: 1),
+        Expanded(child: map),
+      ],
     );
   }
 

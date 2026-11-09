@@ -1,17 +1,18 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../l10n/category_labels.dart';
 import '../../theme/category_colors.dart';
+import '../../platform/local_media.dart';
+import '../../platform/picked_media_cache.dart';
+import '../../platform/share_bytes.dart';
 import '../../theme/theme.dart';
+import '../common/network_photo.dart';
 
 /// Visual templates available in Poster Studio. The app, not the image model,
 /// draws all structured event information onto the final image.
@@ -157,15 +158,6 @@ class _EventPosterStudioState extends State<EventPosterStudio> {
 
   Future<void> _sharePoster() async {
     if (_isExporting) return;
-    if (kIsWeb) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.posterSharingMobileOnly),
-        ),
-      );
-      return;
-    }
-
     setState(() => _isExporting = true);
     final bytes = await _capturePoster();
     if (!mounted) return;
@@ -176,12 +168,10 @@ class _EventPosterStudioState extends State<EventPosterStudio> {
     }
 
     try {
-      final path =
-          '${Directory.systemTemp.path}/spotvibe_poster_${DateTime.now().millisecondsSinceEpoch}.png';
-      final file = File(path);
-      await file.writeAsBytes(bytes, flush: true);
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'image/png')],
+      await sharePngBytes(
+        bytes,
+        filename:
+            'spotvibe_poster_${DateTime.now().millisecondsSinceEpoch}.png',
         subject: '${widget.details.title} — SpotVibe',
         text: '${widget.details.title} — made with SpotVibe',
       );
@@ -683,8 +673,8 @@ class _PosterBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localPath = details.localBackgroundPath;
-    if (!kIsWeb && localPath != null && localPath.isNotEmpty) {
-      return Image.file(File(localPath), fit: BoxFit.cover);
+    if (localPath != null && localPath.isNotEmpty && isLocalMediaPath(localPath)) {
+      return localMediaImage(path: localPath, fit: BoxFit.cover);
     }
 
     final url = details.backgroundImageUrl.trim();
@@ -692,7 +682,7 @@ class _PosterBackground extends StatelessWidget {
       return Image.asset(url, fit: BoxFit.cover);
     }
     if (url.isNotEmpty) {
-      return CachedNetworkImage(
+      return NetworkPhoto(
         imageUrl: url,
         fit: BoxFit.cover,
         errorWidget: (_, __, ___) => _gradientFallback(),

@@ -1,9 +1,8 @@
-import 'dart:io';
-
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../platform/local_media.dart';
+import '../../platform/picked_media_cache.dart';
 import '../../theme/theme.dart';
+import 'network_photo.dart';
 
 class AppAvatar extends StatelessWidget {
   final String imageUrl;
@@ -39,18 +38,14 @@ class AppAvatar extends StatelessWidget {
     Widget child;
     if (imageUrl.isEmpty) {
       child = fallback();
-    } else if (!kIsWeb &&
-        (imageUrl.startsWith('/') || imageUrl.startsWith('file:'))) {
-      final path = imageUrl.startsWith('file:')
-          ? Uri.parse(imageUrl).toFilePath()
-          : imageUrl;
-      child = Image.file(
-        File(path),
+    } else if (isLocalMediaPath(imageUrl)) {
+      child = localMediaImage(
+        path: imageUrl,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => fallback(),
+        error: fallback(),
       );
     } else {
-      child = CachedNetworkImage(
+      child = NetworkPhoto(
         imageUrl: imageUrl,
         fit: BoxFit.cover,
         placeholder: (_, __) => Container(

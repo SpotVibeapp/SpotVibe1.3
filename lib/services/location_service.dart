@@ -3,7 +3,11 @@ import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Thin wrapper around [Geolocator] that handles permission requests and
-/// returns a nullable (lat, lng) record. All calls are no-ops on web.
+/// returns a nullable (lat, lng) record.
+///
+/// On the web this is the browser Geolocation API. The first call that asks
+/// for permission shows the browser prompt. Opening a system settings page
+/// is not available in a browser, so [openAppSettings] stays a no-op there.
 class LocationService {
   /// Returns the device's current coordinates when possible.
   ///
@@ -15,8 +19,6 @@ class LocationService {
   Future<({double lat, double lng})?> getCurrentLocation({
     bool requestPermission = true,
   }) async {
-    if (kIsWeb) return null;
-
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) return null;

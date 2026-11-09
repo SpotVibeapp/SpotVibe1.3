@@ -225,6 +225,8 @@
     }
   },
   "purchaseFailed": "Purchase failed. Please try again.",
+  "webBillingNotConfigured": "SpotVibe Premium on the web is not turned on for this build. Subscribe in the iOS or Android app, or set up RevenueCat Web Billing.",
+  "downloadIcs": "Download .ics file",
   "noActiveSubscription": "No active subscription found to restore.",
   "restoreFailed": "Restore failed. Please try again.",
   "filtersTooltip": "Filters",

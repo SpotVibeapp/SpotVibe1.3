@@ -42,6 +42,15 @@ abstract class UserRepository {
     String? providerUserId,
   });
 
+  /// Finishes sign-in after a web OAuth popup that already signed Firebase
+  /// Auth in. Mobile social login does not call this.
+  Future<AppUser> adoptSignedInUser({
+    required String provider,
+    String? name,
+    String? email,
+    String? avatarUrl,
+  });
+
   /// Email + password sign-in. Throws on invalid credentials.
   Future<AppUser> login(String email, String password);
 

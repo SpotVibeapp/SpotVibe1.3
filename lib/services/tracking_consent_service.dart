@@ -1,5 +1,6 @@
-import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:flutter/foundation.dart';
+
+import 'tracking_mobile.dart';
 
 /// App Tracking Transparency (ATT) for iOS 14.5+.
 ///
@@ -23,19 +24,6 @@ class TrackingConsentService {
   /// Shows the ATT prompt if the status is still undetermined. Never throws.
   static Future<void> requestIfNeeded() async {
     if (!_isIOS) return;
-    try {
-      var status = await AppTrackingTransparency.trackingAuthorizationStatus;
-      if (status == TrackingStatus.notDetermined) {
-        // The prompt is ignored by iOS unless the app is active; give the
-        // first frame / UMP form dismissal a moment to settle.
-        await Future<void>.delayed(const Duration(milliseconds: 500));
-        status = await AppTrackingTransparency.requestTrackingAuthorization();
-      }
-      _trackingAuthorized = status == TrackingStatus.authorized;
-      if (kDebugMode) debugPrint('[ads] ATT status: $status');
-    } catch (e) {
-      _trackingAuthorized = false;
-      if (kDebugMode) debugPrint('[ads] ATT request failed: $e');
-    }
+    _trackingAuthorized = await requestIosTrackingAuthorization();
   }
 }

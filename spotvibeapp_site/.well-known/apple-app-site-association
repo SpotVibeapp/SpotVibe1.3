@@ -1,0 +1,22 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": [
+          "REPLACE_WITH_TEAM_ID.app.spotvibe"
+        ],
+        "components": [
+          {
+            "/": "/app/event/*",
+            "comment": "Curated event share links"
+          },
+          {
+            "/": "/app/user-event/*",
+            "comment": "Creator event share links"
+          }
+        ]
+      }
+    ]
+  }
+}

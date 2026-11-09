@@ -57,12 +57,16 @@ import 'services/ticketmaster_service.dart';
 import 'providers/follow_provider.dart';
 import 'providers/personalization_provider.dart';
 import 'theme/theme.dart';
+import 'web/configure_url.dart';
 import 'widgets/common/animated_splash.dart';
 
 /// First Flutter frame is the branded splash. Backend init runs underneath
 /// it so the user never sits on the native launch screen (small icon / blank
 /// color) waiting for Firebase, ads, and deep links.
 void main() {
+  // Path URLs under /app/ have to be installed before the binding snapshots
+  // the initial route. Otherwise every browser URL opens the home feed.
+  configureAppUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const _BootApp());
 }
@@ -136,7 +140,7 @@ class _BootAppState extends State<_BootApp> {
     //   2. Pending link      — saved from a previous session
     //   3. /onboarding       — first-ever launch
     //   4. /                 — all subsequent normal launches
-    String initialLocation = '/';
+    String initialLocation = kIsWeb ? browserAppPath() : '/';
     String? coldLinkUri;
 
     if (!kIsWeb) {
@@ -418,7 +422,7 @@ class SpotVibeApp extends StatefulWidget {
 class _SpotVibeAppState extends State<SpotVibeApp>
     with WidgetsBindingObserver {
   late final GoRouter _router;
-  final AppLinks _appLinks = AppLinks();
+  AppLinks? _appLinks;
   String? _lastResumeLinkUri;
 
   @override
@@ -429,10 +433,11 @@ class _SpotVibeAppState extends State<SpotVibeApp>
     if (!kIsWeb) {
       WidgetsBinding.instance.addObserver(this);
       // app_links: handles https App Links, universal links, and spotvibe://
-      // custom-scheme URIs while the app is running. Uses the same _appLinks
-      // instance as the resume check — two instances would double-handle the
-      // warm-tap delivery.
-      _appLinks.uriLinkStream.listen((uri) {
+      // custom-scheme URIs while the app is running. The browser uses
+      // go_router's path URL strategy instead, mounted at /app/.
+      final links = AppLinks();
+      _appLinks = links;
+      links.uriLinkStream.listen((uri) {
         if (kDebugMode) debugPrint('[deepLink] stream uri=$uri');
         _lastResumeLinkUri = uri.toString();
         final path = DeepLinkService.pathFromUri(uri.toString());
@@ -450,8 +455,10 @@ class _SpotVibeAppState extends State<SpotVibeApp>
   }
 
   Future<void> _checkLatestLink() async {
+    final links = _appLinks;
+    if (links == null) return;
     try {
-      final uri = await _appLinks.getLatestLink();
+      final uri = await links.getLatestLink();
       if (uri == null) {
         if (kDebugMode) debugPrint('[deepLink] resume-check: no link');
         return;

@@ -1,18 +1,17 @@
-import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/event_time.dart';
 import '../../theme/category_colors.dart';
+import '../../platform/share_bytes.dart';
 import '../../theme/theme.dart';
 import '../common/event_image_placeholder.dart';
+import '../common/network_photo.dart';
 
 /// Shows the Instagram Story share bottom sheet for an event.
 /// [imageUrl] and [category] are used for the background image/placeholder.
@@ -102,12 +101,9 @@ class _StorySheetState extends State<_StorySheet> {
     }
 
     try {
-      // Save to a temp file and share via native sheet
-      final dir = Directory.systemTemp;
-      final file = File('${dir.path}/spotvibe_story_${widget.eventId}.png');
-      await file.writeAsBytes(bytes);
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'image/png')],
+      await sharePngBytes(
+        bytes,
+        filename: 'spotvibe_story_${widget.eventId}.png',
         subject: '${widget.eventTitle} — SpotVibe',
       );
     } catch (_) {
@@ -204,32 +200,7 @@ class _StorySheetState extends State<_StorySheet> {
             padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
             child: Column(
               children: [
-                // Web guard: story card can only be saved on mobile
-                if (kIsWeb)
-                  Container(
-                    padding: const EdgeInsets.all(AppTheme.spacingMd),
-                    decoration: BoxDecoration(
-                      color: colors.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.phone_iphone_rounded,
-                            size: AppTheme.iconSm,
-                            color: colors.onSurfaceVariant),
-                        const SizedBox(width: AppTheme.spacingSm),
-                        Expanded(
-                          child: Text(
-                            'Open the SpotVibe mobile app to save and share story cards.',
-                            style: text.bodySmall,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                else ...[
-                  // Save image → native share sheet (pick Instagram from list)
-                  ElevatedButton.icon(
+                ElevatedButton.icon(
                     onPressed: _isCapturing ? null : _share,
                     icon: _isCapturing
                         ? const SizedBox(
@@ -246,18 +217,19 @@ class _StorySheetState extends State<_StorySheet> {
                       minimumSize: const Size(double.infinity, AppTheme.buttonHeight),
                     ),
                   ),
-                  const SizedBox(height: AppTheme.spacingSm),
-                  // Open Instagram directly so user can post from camera roll
-                  OutlinedButton.icon(
-                    onPressed: _openInstagram,
-                    icon: const Icon(Icons.open_in_new_rounded,
-                        size: AppTheme.iconSm),
-                    label: const Text('Open Instagram'),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, AppTheme.buttonHeight),
+                  if (!kIsWeb) ...[
+                    const SizedBox(height: AppTheme.spacingSm),
+                    OutlinedButton.icon(
+                      onPressed: _openInstagram,
+                      icon: const Icon(Icons.open_in_new_rounded,
+                          size: AppTheme.iconSm),
+                      label: const Text('Open Instagram'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize:
+                            const Size(double.infinity, AppTheme.buttonHeight),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
               ],
             ),
           ),
@@ -292,7 +264,7 @@ class _StoryCardContent extends StatelessWidget {
         children: [
           // ── background image ─────────────────────────────────────────
           if (imageUrl.isNotEmpty)
-            CachedNetworkImage(
+            NetworkPhoto(
               imageUrl: imageUrl,
               fit: BoxFit.cover,
               filterQuality: FilterQuality.low,
@@ -435,7 +407,7 @@ class _StoryCardContent extends StatelessWidget {
                 ],
                 const SizedBox(height: AppTheme.spacingSm),
                 const Text(
-                  'spotvibe.app',
+                  'spotvibeapp.com',
                   style: TextStyle(
                     color: Colors.white54,
                     fontSize: 9,

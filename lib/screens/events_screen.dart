@@ -13,6 +13,7 @@ import '../providers/event_provider.dart';
 import '../services/deep_link_service.dart';
 import '../services/event_service.dart';
 import '../services/location_service.dart';
+import '../theme/responsive.dart';
 import '../theme/theme.dart';
 import '../widgets/common/ad_banner.dart';
 import '../widgets/common/category_chips.dart';
@@ -215,12 +216,16 @@ class _EventsScreenState extends State<EventsScreen> {
   }
 
   void _onDestinationSelected(int index) {
+    final wide = MediaQuery.sizeOf(context).width >= kWideLayoutBreakpoint;
     switch (index) {
+      case 0:
+        if (wide) context.go('/');
+        break;
       case 1:
-        context.push('/gems');
+        wide ? context.go('/gems') : context.push('/gems');
         break;
       case 2:
-        context.push('/map');
+        wide ? context.go('/map') : context.push('/map');
         break;
     }
   }
@@ -241,7 +246,11 @@ class _EventsScreenState extends State<EventsScreen> {
     // navigation to a side rail so the feed keeps its height.
     final size = MediaQuery.sizeOf(context);
     final compactHeight = size.height < _kCompactHeight;
-    final useRail = compactHeight && size.width > size.height;
+    // Wide browsers get a side rail and a centered column. Short landscape
+    // phones (a folded cover screen) keep the rail they already had so the
+    // feed is not squeezed under an 80 dp bar.
+    final wide = size.width >= kWideLayoutBreakpoint;
+    final useRail = wide || (compactHeight && size.width > size.height);
 
     // Everything above the cards scrolls away with the feed. When these
     // controls were pinned they used ~400 dp, leaving the cards a window
@@ -515,7 +524,8 @@ class _EventsScreenState extends State<EventsScreen> {
               const VerticalDivider(width: 1),
             ],
             Expanded(
-              child: Column(
+              child: WideContent(
+                child: Column(
                 children: [
                   Expanded(child: feed),
                   // Page navigation stays pinned (and slim) so the page
@@ -557,6 +567,7 @@ class _EventsScreenState extends State<EventsScreen> {
                     ],
                   ),
                 ],
+                ),
               ),
             ),
           ],

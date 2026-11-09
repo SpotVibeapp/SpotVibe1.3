@@ -14,8 +14,35 @@ class AppConfig {
   ///  - iOS: GoogleService-Info.plist + reversed client ID URL scheme
   static const bool enableGoogleSignIn = true;
 
+  /// Sign in with Apple on the web (Firebase Auth popup). Off until the
+  /// Apple Services ID, return URL, and authorized domain are configured.
+  /// Build with `--dart-define=ENABLE_APPLE_SIGN_IN_WEB=true`.
+  static const bool enableAppleSignInWeb = bool.fromEnvironment(
+    'ENABLE_APPLE_SIGN_IN_WEB',
+    defaultValue: false,
+  );
+
+  /// RevenueCat Web Billing. Off until Blake creates the Web Billing app,
+  /// products, and public API key in the same RevenueCat project the phone
+  /// app uses. Nothing is charged while this is false.
+  ///   --dart-define=ENABLE_WEB_BILLING=true
+  ///   --dart-define=REVENUECAT_WEB_API_KEY=rcb_xxx
+  static const bool enableWebBilling = bool.fromEnvironment(
+    'ENABLE_WEB_BILLING',
+    defaultValue: false,
+  );
+
+  /// Public Web Billing API key (`rcb_...`). Empty in source control.
+  static const String revenueCatWebApiKey = String.fromEnvironment(
+    'REVENUECAT_WEB_API_KEY',
+  );
+
+  /// Path prefix where the Flutter web app is hosted on spotvibeapp.com.
+  static const String webAppBasePath = '/app';
+
   /// Sign in with Apple. Required by App Store Review Guideline 4.8 because
-  /// Google Sign-In is offered. The button is only shown on iOS/macOS.
+  /// Google Sign-In is offered. The button is only shown on iOS/macOS,
+  /// and on the web when [enableAppleSignInWeb] is true.
   ///  - iOS "Sign in with Apple" capability: ios/Runner/Runner.entitlements
   ///    (com.apple.developer.applesignin) — already wired in the project.
   ///  - TODO(Blake): Firebase Authentication → Sign-in method → Apple must be

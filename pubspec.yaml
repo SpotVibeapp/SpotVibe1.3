@@ -67,6 +67,10 @@ dependencies:
   # Ads (banner ads for free users; ad-free is a Premium benefit)
   google_mobile_ads: ^5.3.1
 
+  # Browser APIs for the web build (downloads, notifications). Phone
+  # builds do not import this library.
+  web: ^1.1.0
+
   # Firebase
   firebase_core: ^4.13.0
   firebase_auth: ^6.5.7

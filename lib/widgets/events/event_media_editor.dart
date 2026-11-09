@@ -1,11 +1,10 @@
-import 'dart:io';
-
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../platform/local_media.dart';
+import '../../platform/picked_media_cache.dart';
 import '../../theme/theme.dart';
 import '../common/fullscreen_image_viewer.dart';
+import '../common/network_photo.dart';
 import 'event_video_player.dart';
 
 /// Media waiting to be saved with an event. A local path is rendered from the
@@ -271,11 +270,11 @@ class _DraftPhoto extends StatelessWidget {
       ),
     );
 
-    if (isLocal && !kIsWeb) {
-      return Image.file(
-        File(source),
+    if (isLocal || isLocalMediaPath(source)) {
+      return localMediaImage(
+        path: source,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => fallback,
+        error: fallback,
       );
     }
     if (source.startsWith('assets/')) {
@@ -285,7 +284,7 @@ class _DraftPhoto extends StatelessWidget {
         errorBuilder: (_, __, ___) => fallback,
       );
     }
-    return CachedNetworkImage(
+    return NetworkPhoto(
       imageUrl: source,
       fit: BoxFit.cover,
       placeholder: (_, __) => fallback,

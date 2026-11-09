@@ -4,6 +4,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/personalization_provider.dart';
+import '../../theme/responsive.dart';
 import '../../theme/theme.dart';
 import '../events/event_card.dart';
 import 'jambase_attribution.dart';
@@ -189,7 +190,24 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
     _publishPage();
     final bannerCount = widget.showCountBanner ? 1 : 0;
     final cardsStart = headerCount + bannerCount;
-    final cardsEnd = cardsStart + page.length;
+    final columns = feedColumnCount(MediaQuery.sizeOf(context).width);
+    final rowCount = columns <= 1
+        ? page.length
+        : (page.length / columns).ceil();
+    final cardsEnd = cardsStart + (columns <= 1 ? page.length : rowCount);
+
+    Widget cardAt(int eventIndex) {
+      final event = page[eventIndex];
+      final providerIndex = provider.indexOfEvent(event.id);
+      return EventCard(
+        key: _currentPage == 0 && eventIndex == 0 ? widget.firstCardKey : null,
+        event: event,
+        onTap: () => widget.onEventTap(event, providerIndex),
+        onBookmark: () => provider.toggleBookmark(providerIndex),
+        onInterested: () => provider.toggleInterested(providerIndex),
+        distanceMiles: provider.distanceFor(event),
+      );
+    }
 
     final list = ListView.builder(
       controller: _scrollController,
@@ -212,20 +230,19 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
           );
         }
 
-        final eventIndex = i - cardsStart;
-        final event = page[eventIndex];
-        // Cards may omit the event shown in the home hero, so use the
-        // provider's actual index rather than the visible-list offset.
-        final providerIndex = provider.indexOfEvent(event.id);
-        return EventCard(
-          key: _currentPage == 0 && eventIndex == 0
-              ? widget.firstCardKey
-              : null,
-          event: event,
-          onTap: () => widget.onEventTap(event, providerIndex),
-          onBookmark: () => provider.toggleBookmark(providerIndex),
-          onInterested: () => provider.toggleInterested(providerIndex),
-          distanceMiles: provider.distanceFor(event),
+        final slot = i - cardsStart;
+        if (columns <= 1) return cardAt(slot);
+        final start = slot * columns;
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var col = 0; col < columns; col++)
+              Expanded(
+                child: start + col < page.length
+                    ? cardAt(start + col)
+                    : const SizedBox.shrink(),
+              ),
+          ],
         );
       },
     );

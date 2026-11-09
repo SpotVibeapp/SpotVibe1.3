@@ -1,8 +1,5 @@
-import 'package:awesome_notifications/awesome_notifications.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' show Color;
-
 import '../repositories/notification_preferences_repository.dart';
+import 'notification_backend.dart';
 
 /// Channel IDs — one per logical notification category.
 const _kChannelEvents = 'spotvibe_events';
@@ -18,53 +15,25 @@ int _nextNotifId() => _nextId++;
 /// This service never invents background activity: a feed refresh is not proof
 /// that a new event was published. True remote/background alerts require a
 /// future Firebase Cloud Messaging delivery path.
+///
+/// Android and iOS use awesome_notifications. The web build uses the browser
+/// Notification API (permission is requested from the profile/notification
+/// settings, and alerts stay silent until the visitor allows them).
 class NotificationService {
-  NotificationService({NotificationPreferencesRepository? preferences})
-      : _preferences = preferences ?? NotificationPreferencesRepository();
+  NotificationService({
+    NotificationPreferencesRepository? preferences,
+    NotificationBackend? backend,
+  })  : _preferences = preferences ?? NotificationPreferencesRepository(),
+        _backend = backend ?? createNotificationBackend();
 
   final NotificationPreferencesRepository _preferences;
+  final NotificationBackend _backend;
   bool _initialized = false;
 
   /// Call once from [main()] before [runApp].
   Future<void> initialize() async {
-    // awesome_notifications is mobile-only; no-op on web.
-    if (kIsWeb) return;
-
     try {
-      _initialized = await AwesomeNotifications().initialize(
-        null, // use default app icon
-        [
-          NotificationChannel(
-            channelKey: _kChannelEvents,
-            channelName: 'New Events',
-            channelDescription: 'Notifications about new events near you',
-            defaultColor: const Color(0xFF6C5CE7),
-            ledColor: const Color(0xFF6C5CE7),
-            importance: NotificationImportance.High,
-            channelShowBadge: true,
-          ),
-          NotificationChannel(
-            channelKey: _kChannelUpdates,
-            channelName: 'Event Updates',
-            channelDescription:
-                'Updates on events you bookmarked or are interested in',
-            defaultColor: const Color(0xFF6C5CE7),
-            ledColor: const Color(0xFF6C5CE7),
-            importance: NotificationImportance.Default,
-            channelShowBadge: true,
-          ),
-          NotificationChannel(
-            channelKey: _kChannelSocial,
-            channelName: 'Social',
-            channelDescription: 'Friend requests and activity from people you follow',
-            defaultColor: const Color(0xFF6C5CE7),
-            ledColor: const Color(0xFF6C5CE7),
-            importance: NotificationImportance.High,
-            channelShowBadge: true,
-          ),
-        ],
-        debug: false,
-      );
+      _initialized = await _backend.initialize();
     } catch (_) {
       // Notification setup must never prevent the app from launching.
       _initialized = false;
@@ -72,9 +41,9 @@ class NotificationService {
   }
 
   Future<bool> _canSend() async {
-    if (kIsWeb || !_initialized) return false;
+    if (!_initialized) return false;
     try {
-      return await AwesomeNotifications().isNotificationAllowed();
+      return await _backend.isAllowed();
     } catch (_) {
       return false;
     }
@@ -297,15 +266,11 @@ class NotificationService {
     required String body,
   }) async {
     try {
-      return await AwesomeNotifications().createNotification(
-        content: NotificationContent(
-          id: id,
-          channelKey: channelKey,
-          title: title,
-          body: body,
-          notificationLayout: NotificationLayout.Default,
-          autoDismissible: true,
-        ),
+      return await _backend.show(
+        id: id,
+        channelKey: channelKey,
+        title: title,
+        body: body,
       );
     } catch (_) {
       // Never crash the app due to a notification failure.

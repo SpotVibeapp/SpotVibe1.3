@@ -1,12 +1,13 @@
-import 'dart:io';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
+
 import 'package:video_player/video_player.dart';
 
 import '../data/media_urls.dart';
+import '../platform/local_media.dart';
+import '../platform/picked_media_cache.dart';
 
 /// Picks photos / short videos and uploads them to Firebase Storage.
 ///
@@ -14,6 +15,9 @@ import '../data/media_urls.dart';
 ///   Free: 1 cover photo and 1 video
 ///   Premium/admin: photos ≤ 6 MB, up to 5 including cover; videos ≤ 30
 ///   seconds / 50 MB, up to 3
+///
+/// Phone builds upload with `putFile`. The browser keeps the picked bytes in
+/// memory and uploads them with `putData` to the same Storage paths.
 class MediaUploadService {
   MediaUploadService({
     ImagePicker? picker,
@@ -42,7 +46,9 @@ class MediaUploadService {
       maxHeight: 1600,
       imageQuality: 85,
     );
-    return file?.path;
+    if (file == null) return null;
+    await _remember(file);
+    return file.path;
   }
 
   /// Lets a creator select several gallery photos at once. The caller supplies
@@ -54,41 +60,58 @@ class MediaUploadService {
       maxHeight: 1600,
       imageQuality: 85,
     );
-    return files.take(maxImages).map((file) => file.path).toList(growable: false);
+    final picked = files.take(maxImages).toList(growable: false);
+    final paths = <String>[];
+    for (final file in picked) {
+      await _remember(file);
+      paths.add(file.path);
+    }
+    return paths;
   }
 
-  /// Returns a local path, or throws if the clip is longer than 30 seconds.
+  /// Returns a local path, or throws if the clip is longer than 30 seconds
+  /// or larger than 50 MB.
   Future<String?> pickVideo({required bool fromCamera}) async {
     final file = await _picker.pickVideo(
       source: fromCamera ? ImageSource.camera : ImageSource.gallery,
       maxDuration: const Duration(seconds: maxVideoSeconds),
     );
     if (file == null) return null;
-    if (kIsWeb) return file.path;
-
+    await _remember(file);
+    final size = await localMediaByteLength(file.path);
+    if (size != null && size > maxVideoBytes) {
+      PickedMediaCache.remove(file.path);
+      throw Exception('That video is too large (max 50 MB).');
+    }
     final duration = await _probeDuration(file.path);
     if (duration != null && duration.inSeconds > maxVideoSeconds) {
+      PickedMediaCache.remove(file.path);
       throw Exception(
         'Videos must be $maxVideoSeconds seconds or shorter. '
         'Trim the clip and try again.',
       );
     }
-    final size = await File(file.path).length();
-    if (size > maxVideoBytes) {
-      throw Exception('That video is too large (max 50 MB).');
-    }
     return file.path;
   }
 
+  /// Browsers cannot read a filesystem path later, so the bytes are kept next
+  /// to the picker path. Phones keep using the real file.
+  Future<void> _remember(XFile file) async {
+    if (!kIsWeb) return;
+    PickedMediaCache.put(file.path, await file.readAsBytes());
+  }
+
   Future<Duration?> _probeDuration(String path) async {
+    VideoPlayerController? controller;
     try {
-      final controller = VideoPlayerController.file(File(path));
+      controller = localVideoController(path);
+      if (controller == null) return null;
       await controller.initialize();
-      final duration = controller.value.duration;
-      await controller.dispose();
-      return duration;
+      return controller.value.duration;
     } catch (_) {
       return null;
+    } finally {
+      await controller?.dispose();
     }
   }
 
@@ -189,22 +212,23 @@ class MediaUploadService {
     required String contentType,
     required int maxBytes,
   }) async {
-    if (kIsWeb) {
-      throw Exception('Uploads from the web preview are not supported yet. Use the iOS or Android app.');
+    if (!await localMediaExists(localPath)) {
+      throw Exception(
+        kIsWeb
+            ? 'That file is no longer available. Pick it again.'
+            : 'That file is no longer on this device.',
+      );
     }
-    final file = File(localPath);
-    if (!file.existsSync()) {
-      throw Exception('That file is no longer on this device.');
-    }
-    final size = await file.length();
-    if (size > maxBytes) {
+    final size = await localMediaByteLength(localPath);
+    if (size != null && size > maxBytes) {
       throw Exception('That file is too large.');
     }
     try {
       final ref = _storage.ref(refPath);
-      await ref.putFile(
-        file,
-        SettableMetadata(contentType: contentType),
+      await putLocalMedia(
+        ref: ref,
+        path: localPath,
+        metadata: SettableMetadata(contentType: contentType),
       );
       return await ref.getDownloadURL();
     } on FirebaseException catch (e) {
@@ -221,6 +245,7 @@ class MediaUploadService {
       throw Exception('Upload failed. Check your connection and try again.');
     } catch (e) {
       debugPrint('Storage upload failed: $e');
+      if (e is Exception && e.toString().contains('no longer')) rethrow;
       throw Exception(
         'Firebase Storage is not enabled yet. '
         'In the Firebase console open project spotvibe-cfa08 → Storage → Get started, '
@@ -232,7 +257,8 @@ class MediaUploadService {
 
 bool isDirectVideoUrl(String url) {
   final lower = url.toLowerCase();
-  return lower.contains('firebasestorage.googleapis.com') ||
+  return lower.startsWith('blob:') ||
+      lower.contains('firebasestorage.googleapis.com') ||
       lower.contains('firebasestorage.app') ||
       lower.endsWith('.mp4') ||
       lower.endsWith('.mov') ||

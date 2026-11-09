@@ -1,9 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/user_event.dart';
 import '../../theme/theme.dart';
 import '../common/event_image_placeholder.dart';
+import '../common/network_photo.dart';
 
 class UserEventCard extends StatelessWidget {
   final UserCreatedEvent event;
@@ -180,7 +180,7 @@ class _UserEventThumbnail extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            CachedNetworkImage(
+            NetworkPhoto(
               imageUrl: event.imageUrl,
               fit: BoxFit.cover,
               placeholder: (_, __) => Container(color: appColors.shimmer),
