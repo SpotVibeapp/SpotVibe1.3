@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/event_time.dart';
 import '../data/media_urls.dart';
 import '../data/pricing.dart';
+import 'attendance_mode.dart';
 import 'event_social_link.dart';
 
 enum EventSource {
@@ -145,6 +146,8 @@ class Event {
 
   /// Public organizer profile links associated with this event.
   final EventSocialLinks socialLinks;
+  final AttendanceMode attendanceMode;
+  final String? ticketUrl;
 
   const Event({
     required this.id,
@@ -182,6 +185,8 @@ class Event {
     this.creatorId = '',
     this.isSample = false,
     this.socialLinks = const EventSocialLinks.empty(),
+    this.attendanceMode = AttendanceMode.rsvpRequested,
+    this.ticketUrl,
   });
 
   Event copyWith({
@@ -219,6 +224,9 @@ class Event {
     String? creatorId,
     bool? isSample,
     EventSocialLinks? socialLinks,
+    AttendanceMode? attendanceMode,
+    String? ticketUrl,
+    bool clearTicketUrl = false,
   }) =>
       Event(
         id: id,
@@ -257,6 +265,8 @@ class Event {
         creatorId: creatorId ?? this.creatorId,
         isSample: isSample ?? this.isSample,
         socialLinks: socialLinks ?? this.socialLinks,
+        attendanceMode: attendanceMode ?? this.attendanceMode,
+        ticketUrl: clearTicketUrl ? null : (ticketUrl ?? this.ticketUrl),
       );
 
   /// Ticketed listings (e.g. Ticketmaster) are never "free" just because the
@@ -294,7 +304,4 @@ class Event {
   /// True when this event holds the current week's "featured" slot.
   bool get isFeaturedThisWeek => isFeaturedInCurrentWeek(featuredWeekKey);
 
-  /// True when the event page should show the in-feed promo — i.e. the
-  /// listing owner hasn't paid for Premium (which removes ads).
-  bool get showsAds => !isPremiumListing;
 }

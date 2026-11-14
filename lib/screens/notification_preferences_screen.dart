@@ -202,6 +202,12 @@ class _PrefsBody extends StatelessWidget {
           value: prefs.weeklyDigest,
           onChanged: prefs.toggleWeeklyDigest,
         ),
+        _PrefTile(
+          title: l10n.notifNewGems,
+          subtitle: l10n.notifNewGemsSubtitle,
+          value: prefs.newGemsNearby,
+          onChanged: prefs.toggleNewGemsNearby,
+        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(
             AppTheme.spacingMd,

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
+import '../../providers/subscription_provider.dart';
+import '../../services/feature_flags.dart';
 import '../../services/maps_service.dart';
 import '../../theme/theme.dart';
+import '../billing/soft_paywall_sheet.dart';
 
 /// Primary ticket CTA. Hidden when the event has no official ticket URL.
 class GetTicketsButton extends StatelessWidget {
@@ -39,6 +43,20 @@ class GetTicketsButton extends StatelessWidget {
       width: double.infinity,
       child: FilledButton.icon(
         onPressed: () async {
+          final flags = context.read<FeatureFlags>();
+          final premium = context.read<SubscriptionProvider>().isSubscribed;
+          if (shouldGateTicketLink(
+            masterFlagOn: flags.gateRsvpTicketsPremium,
+            ticketLinkOverride: flags.gateTicketLinkPremium,
+            isSubscribed: premium,
+          )) {
+            await showSoftPaywallSheet(
+              context,
+              title: l10n.rsvpTicketsPremiumTitle,
+              body: l10n.getTicketsPremiumBody,
+            );
+            return;
+          }
           final ok = await MapsService.openTickets(url);
           if (!context.mounted) return;
           if (!ok) {

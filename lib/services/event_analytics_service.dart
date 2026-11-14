@@ -41,4 +41,9 @@ class EventAnalyticsService {
     if (eventId.isEmpty) return;
     await _repository.incrementAnalytics(eventId, clicks: 1);
   }
+
+  Future<void> recordShare(String eventId) async {
+    if (eventId.isEmpty) return;
+    await _repository.incrementAnalytics(eventId, shares: 1);
+  }
 }

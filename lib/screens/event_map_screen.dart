@@ -15,6 +15,8 @@ import '../services/event_service.dart';
 import '../services/maps_service.dart';
 import '../theme/responsive.dart';
 import '../theme/theme.dart';
+import '../widgets/common/event_image_placeholder.dart';
+import '../widgets/events/repeated_event_date_badge.dart';
 
 class EventMapScreen extends StatefulWidget {
   const EventMapScreen({super.key});
@@ -152,7 +154,7 @@ class _EventMapScreenState extends State<EventMapScreen> {
     final gemProvider = context.watch<GemProvider>();
 
     final events = eventProvider.events;
-    final gems = gemProvider.gems;
+    final gems = gemProvider.mapPins;
 
     final eventMarkers =
         _showEvents ? _buildEventMarkers(events, colors) : <Marker>[];
@@ -229,7 +231,7 @@ class _EventMapScreenState extends State<EventMapScreen> {
                     // A marker is either an event or a gem — match by coords.
                     final event = _findByCoords(events, lat, lng);
                     if (event != null && _showEvents) {
-                      _showEventPreview(context, event);
+                      _showEventPreview(context, event, events);
                       return;
                     }
                     final gem = _findGemByCoords(gems, lat, lng);
@@ -439,7 +441,7 @@ class _EventMapScreenState extends State<EventMapScreen> {
     return null;
   }
 
-  void _showEventPreview(BuildContext context, Event event) {
+  void _showEventPreview(BuildContext context, Event event, List<Event> visible) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     showModalBottomSheet(
@@ -450,14 +452,17 @@ class _EventMapScreenState extends State<EventMapScreen> {
           top: Radius.circular(AppTheme.radiusLarge),
         ),
       ),
-      builder: (_) => _EventMapPreview(
-        event: event,
-        colors: colors,
-        text: text,
-        onTap: () {
-          Navigator.pop(context);
-          context.push('/event/${event.id}', extra: event);
-        },
+      builder: (_) => RepeatedImageryScope(
+        events: visible,
+        child: _EventMapPreview(
+          event: event,
+          colors: colors,
+          text: text,
+          onTap: () {
+            Navigator.pop(context);
+            context.push('/event/${event.id}', extra: event);
+          },
+        ),
       ),
     );
   }
@@ -683,6 +688,15 @@ class _EventMapPreview extends StatelessWidget {
               ),
             ),
           ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+            child: SizedBox(
+              height: 120,
+              width: double.infinity,
+              child: EventCoverImage.fromEvent(event),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingSm),
           Text(
             event.title,
             style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),

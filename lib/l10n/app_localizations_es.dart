@@ -396,7 +396,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get freePerk2 =>
-      'Página de evento básica: título, descripción, 1 foto de portada, 1 video corto, ubicación y hora';
+      'Página de evento básica: título, una descripción corta, 1 foto de portada, ubicación y hora';
 
   @override
   String get freePerk3 => 'Tu evento aparece en el feed público';
@@ -416,10 +416,11 @@ class AppLocalizationsEs extends AppLocalizations {
       'Arriba del feed de la categoría 1 vez por semana';
 
   @override
-  String get premiumPerk3Title => 'Panel de analíticas';
+  String get premiumPerk3Title => 'Panel completo de analíticas';
 
   @override
-  String get premiumPerk3Subtitle => 'Vistas, guardados y clics en vivo';
+  String get premiumPerk3Subtitle =>
+      'Clics y estadísticas más detalladas, además de los conteos públicos';
 
   @override
   String get premiumPerk4Title => 'Marca personalizada';
@@ -433,20 +434,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get premiumPerk5Subtitle =>
-      'Teléfono, sitio web y herramientas de contacto';
+      'Teléfono y sitio web en la página de tu evento';
 
   @override
-  String get premiumPerk6Title => 'Sin anuncios';
-
-  @override
-  String get premiumPerk6Subtitle => 'Páginas de evento limpias y sin anuncios';
-
-  @override
-  String get premiumPerk7Title => 'Reclama eventos existentes';
+  String get premiumPerk7Title => 'Reclamos de eventos adicionales';
 
   @override
   String get premiumPerk7Subtitle =>
-      'Verifica primero. Tu primer reclamo es gratis';
+      'Desbloquea más reclamos después del primero, que es gratis';
 
   @override
   String get premiumPerk8Title => 'Galería multimedia';
@@ -460,6 +455,76 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get startFreeTrial => 'Comienza tu prueba gratuita de 7 días';
+
+  @override
+  String subscribeForPrice(String price) {
+    return 'Suscribirme — $price';
+  }
+
+  @override
+  String billingNoTrial(String price) {
+    return '$price · facturación mensual · cancela cuando quieras';
+  }
+
+  @override
+  String billingFoundingOpenNoTrial(String price, int remaining, int limit) {
+    return '$price fijo para recintos fundadores · quedan $remaining de $limit · cancela cuando quieras';
+  }
+
+  @override
+  String get foundingPackageMissing =>
+      'El paquete de precio fundador no está en la tienda ahora, así que no te cobraremos la tarifa de \$9.99. Inténtalo más tarde, o suscríbete al precio estándar si aparece abajo.';
+
+  @override
+  String get rsvpTicketsPremiumTitle =>
+      'El RSVP y los boletos son parte de Premium';
+
+  @override
+  String get rsvpTicketsPremiumBody =>
+      'Aún puedes guardar y seguir este evento gratis. Confirmar tu RSVP es una función Premium. Mejora tu plan para que el organizador sepa que vas.';
+
+  @override
+  String get getTicketsPremiumBody =>
+      'Los botones de boletos abren al vendedor oficial (como Ticketmaster). Es un enlace externo, no una compra dentro de SpotVibe. Guardar y seguir el evento sigue siendo gratis. Hazte Premium para abrir enlaces de boletos.';
+
+  @override
+  String freePlanLimitMonthlyBody(int cap, int upcoming) {
+    return 'Los organizadores gratuitos pueden publicar $cap eventos por mes calendario, y solo $upcoming eventos próximos a la vez. Pásate a Premium para quitar ambos límites.';
+  }
+
+  @override
+  String get newGemNearbyTitle => 'Nuevo tesoro escondido cerca';
+
+  @override
+  String newGemNearbyBody(String name) {
+    return 'Recién se agregó $name cerca de ti. Los miembros Premium pueden verlo primero.';
+  }
+
+  @override
+  String get notifNewGems => 'Nuevos tesoros escondidos cerca';
+
+  @override
+  String get notifNewGemsSubtitle =>
+      'Un aviso cuando se aprueba un tesoro cerca de ti (Premium)';
+
+  @override
+  String get premiumPerkEarlyGemsTitle => 'Tesoros escondidos anticipados';
+
+  @override
+  String get premiumPerkEarlyGemsSubtitle =>
+      'Ve los tesoros recién agregados de inmediato, más un aviso cercano';
+
+  @override
+  String get premiumPerkUnlimitedPostsTitle => 'Eventos próximos ilimitados';
+
+  @override
+  String get premiumPerkUnlimitedPostsSubtitle =>
+      'Sin límite de 2 eventos próximos ni de publicaciones mensuales';
+
+  @override
+  String eventPublicStats(int views, int saves, int shares) {
+    return '$views vistas · $saves interesados · $shares compartidos';
+  }
 
   @override
   String perMonth(String price) {
@@ -897,7 +962,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get videoGalleryFreeHint =>
-      'Los eventos gratis incluyen 1 video corto. Premium desbloquea hasta 3 videos.';
+      'Los videos son una función Premium. Los eventos gratis solo incluyen la foto de portada.';
 
   @override
   String get noAdditionalPhotos => 'Agrega fotos desde tu biblioteca o cámara.';
@@ -964,7 +1029,28 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get mediaPremiumPerk =>
-      'Premium desbloquea hasta 5 fotos y 3 videos por evento.';
+      'Premium desbloquea hasta 5 fotos, 3 videos, una descripción más larga y enlaces sociales.';
+
+  @override
+  String descriptionFreeHelper(int max) {
+    return 'Las publicaciones gratis pueden usar unos $max caracteres. Premium desbloquea una descripción más larga.';
+  }
+
+  @override
+  String descriptionFreeTooLong(int max) {
+    return 'Las descripciones gratis están limitadas a $max caracteres. Pasa a Premium para un texto más largo.';
+  }
+
+  @override
+  String get socialLinksPremiumPerk =>
+      'Los enlaces sociales (Instagram, Facebook y más) son una función Premium para que la gente pueda seguir tu negocio.';
+
+  @override
+  String get socialLinksPremiumLocked =>
+      'Agrega Instagram, Facebook y otros enlaces de seguimiento con Premium.';
+
+  @override
+  String get basicListingBadge => 'Listado básico';
 
   @override
   String get unlockMediaGallery => 'Desbloquear galería completa';
@@ -1084,7 +1170,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get freePlanBody =>
-      'Hasta 2 eventos únicos próximos a la vez. Página básica con 1 foto de portada, 1 video corto, título, descripción, ubicación, hora y enlaces públicos del organizador en el feed público.';
+      'Hasta 2 eventos únicos próximos a la vez y 4 publicaciones por mes calendario. Página básica con 1 foto de portada, una descripción corta (unas 300 caracteres), título, ubicación y hora. Los invitados pueden confirmar asistencia y ver quién va. Edita cuando quieras, comparte una tarjeta simple y reclama tu primer evento existente gratis. Guardar y seguir eventos sigue siendo gratis.';
 
   @override
   String upgradeToPremium(String price) {
@@ -1882,7 +1968,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get eventCreationGuideMediaSummary =>
-      'Gratis: 1 foto de portada + 1 video corto. Premium: hasta 5 fotos en total (incluida la portada) + 3 videos cortos.';
+      'Gratis: 1 foto de portada y una descripción corta. Premium: hasta 5 fotos, 3 videos cortos, una descripción más larga, enlaces sociales y analíticas.';
 
   @override
   String get openEventCreationGuide => 'Abrir guía para creadores';
@@ -1931,7 +2017,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get eventCreationGuideFreeMedia =>
-      '1 foto de portada en total y 1 video corto por evento';
+      '1 foto de portada y una descripción corta (unas 300 caracteres)';
 
   @override
   String get eventCreationGuideFreePublish =>
@@ -2400,4 +2486,289 @@ class AppLocalizationsEs extends AppLocalizations {
   String mapGemsLayer(int count) {
     return '$count joyas';
   }
+
+  @override
+  String get gemShareForkTitle => '¿Qué te gustaría hacer?';
+
+  @override
+  String get gemShareForkSubtitle =>
+      'Comparte un lugar que te encanta gratis, o promociona tu negocio con un anuncio Premium de 30 días.';
+
+  @override
+  String get gemShareCommunityTitle => 'Compartir un lugar que me encanta';
+
+  @override
+  String get gemShareCommunityBody =>
+      'Para cualquiera que publique de forma casual: un excursionista que comparte un sendero, alguien que señala un lugar especial. Una ficha básica con el nombre, la categoría, el pin del mapa y una nota corta. Gratis, y no es para promociones.';
+
+  @override
+  String get gemShareBusinessTitle => 'Promocionar mi negocio';
+
+  @override
+  String get gemShareBusinessBody =>
+      'Para negocios que se promocionan: happy hour, ofertas, descuentos u otras promociones. Fotos, una descripción completa, contacto del negocio y una oferta estructurada. Incluido en Premium a \$12.99 al mes, vigente 30 días.';
+
+  @override
+  String get gemShareBusinessCta => 'Continuar con Premium';
+
+  @override
+  String get gemCommunityFormTitle => 'Compartir un lugar que me encanta';
+
+  @override
+  String get gemBusinessFormTitle => 'Promocionar mi negocio';
+
+  @override
+  String get gemPromoTitleLabel => 'Título de la oferta';
+
+  @override
+  String get gemPromoTitleHint =>
+      'p. ej. Happy hour, 20% de descuento en tacos';
+
+  @override
+  String get gemPromoDetailsLabel => 'Detalles de la oferta';
+
+  @override
+  String get gemPromoDetailsHint => 'Qué recibe la gente y cualquier límite';
+
+  @override
+  String get gemPromoStartsLabel => 'La oferta empieza';
+
+  @override
+  String get gemPromoEndsLabel => 'La oferta termina';
+
+  @override
+  String get gemContactPhoneLabel => 'Teléfono del negocio';
+
+  @override
+  String get gemContactWebsiteLabel => 'Sitio web del negocio';
+
+  @override
+  String gemRichExpiresOn(String date) {
+    return 'El anuncio promocional termina el $date';
+  }
+
+  @override
+  String get gemRichExpired =>
+      'Este anuncio promocional terminó. La ficha básica sigue siendo pública.';
+
+  @override
+  String get gemRenewRich => 'Renovar por 30 días';
+
+  @override
+  String get gemRenewingRich => 'Renovando…';
+
+  @override
+  String get gemRenewRichSuccess =>
+      'Tu anuncio promocional está vigente otros 30 días.';
+
+  @override
+  String get gemRenewRichNeedsPremium =>
+      'Renovar un anuncio promocional está incluido en Premium.';
+
+  @override
+  String get gemRichReminderTitle => 'Tu gema promocional está por terminar';
+
+  @override
+  String gemRichReminderBody(String name) {
+    return '$name volverá a una ficha básica en unos días. Renueva para mantener las fotos, tu oferta y el contacto del negocio.';
+  }
+
+  @override
+  String get gemPromoOnBasicHint =>
+      'Las ofertas promocionales y el contacto del negocio pertenecen a Promocionar mi negocio.';
+
+  @override
+  String get gemCategoryHikingTrails => 'Senderos para caminar';
+
+  @override
+  String get gemCategoryBikeTrails => 'Rutas para bicicleta';
+
+  @override
+  String get gemCategoryParks => 'Parques';
+
+  @override
+  String get gemCategoryViewpoints => 'Miradores';
+
+  @override
+  String get gemCategoryCommunityPools => 'Albercas comunitarias';
+
+  @override
+  String get gemCategoryNature => 'Naturaleza';
+
+  @override
+  String get gemCategoryMuseums => 'Museos';
+
+  @override
+  String get gemCategoryArt => 'Arte';
+
+  @override
+  String get gemCategoryHistoric => 'Histórico';
+
+  @override
+  String get gemCategoryLandmarks => 'Lugares emblemáticos';
+
+  @override
+  String get gemCategoryRestaurants => 'Restaurantes y comida';
+
+  @override
+  String get gemCategoryAttractions => 'Atracciones';
+
+  @override
+  String get gemCategoryOther => 'Otro';
+
+  @override
+  String get premiumPerkRichGems => 'Gemas ocultas de negocio por 30 días';
+
+  @override
+  String get premiumPerkRichGemsSubtitle =>
+      'Fotos, descripción completa, contacto y ofertas. Se renueva con tu suscripción de \$12.99 al mes.';
+
+  @override
+  String get freePlanPerkCommunityGems =>
+      'Comparte una gema oculta básica gratis: un sendero o un lugar especial, sin promociones';
+
+  @override
+  String get gemsKeywordHint => 'Busca nombres, lugares u ofertas';
+
+  @override
+  String gemsRadiusMiles(int miles) {
+    return '$miles mi';
+  }
+
+  @override
+  String get gemsSortNearest => 'Más cerca';
+
+  @override
+  String get gemsSortNewest => 'Más recientes';
+
+  @override
+  String get gemsSortMostLiked => 'Más gustados';
+
+  @override
+  String get gemsOpenNow => 'Abierto ahora';
+
+  @override
+  String get gemsDealsNearYou => 'Ofertas cerca de ti';
+
+  @override
+  String get gemsPromotedLabel => 'Promocionado';
+
+  @override
+  String get gemsBusinessTypeLabel => 'Tipo de negocio';
+
+  @override
+  String get gemsAllBusinessTypes => 'Todos los tipos';
+
+  @override
+  String get gemsLoadMore => 'Cargar más';
+
+  @override
+  String get gemsDiscoverSection => 'Gemas ocultas';
+
+  @override
+  String get gemBusinessTypeRestaurant => 'Restaurante';
+
+  @override
+  String get gemBusinessTypeBar => 'Bar';
+
+  @override
+  String get gemBusinessTypeCafe => 'Café';
+
+  @override
+  String get gemBusinessTypeHikingTrail => 'Sendero para caminar';
+
+  @override
+  String get gemBusinessTypeBikeTrail => 'Ruta para bicicleta';
+
+  @override
+  String get gemBusinessTypePool => 'Alberca';
+
+  @override
+  String get gemBusinessTypePark => 'Parque';
+
+  @override
+  String get gemBusinessTypeMuseum => 'Museo';
+
+  @override
+  String get gemBusinessTypeShop => 'Tienda';
+
+  @override
+  String get gemBusinessTypeOther => 'Otro';
+
+  @override
+  String eventMoreDates(int count) {
+    return '+$count fechas más';
+  }
+
+  @override
+  String eventRepeatedDateSemantics(String details) {
+    return 'Fecha de este listado: $details';
+  }
+
+  @override
+  String eventTextPlaceholderSemantics(String headline) {
+    return 'Sin foto del evento. $headline';
+  }
+
+  @override
+  String get attendanceModeSection => 'Cómo se unen las personas';
+
+  @override
+  String get attendanceModeDropIn => 'Pase libre';
+
+  @override
+  String get attendanceModeRsvp => 'Se pide confirmar asistencia';
+
+  @override
+  String get attendanceModeTickets => 'Boletos';
+
+  @override
+  String get attendanceModeDropInHelp =>
+      'Un botón sencillo de \"Voy\". Ideal para ventas de garage y tianguis.';
+
+  @override
+  String get attendanceModeRsvpHelp =>
+      'La gente confirma que va, y ves el recuento y la lista de nombres. Ideal para noches de juegos.';
+
+  @override
+  String get attendanceModeTicketsHelp =>
+      'Envía a la gente a tu enlace de boletos. Es una función Premium.';
+
+  @override
+  String get attendanceTicketUrl => 'Enlace de boletos';
+
+  @override
+  String get attendanceTicketUrlRequired =>
+      'Agrega un enlace de boletos para eventos con entrada.';
+
+  @override
+  String get imGoing => 'Voy';
+
+  @override
+  String get youAreGoing => 'Vas a ir';
+
+  @override
+  String goingCount(int count) {
+    return '$count van';
+  }
+
+  @override
+  String get attendanceTicketsPremiumTitle =>
+      'Los enlaces de boletos son una función Premium';
+
+  @override
+  String get attendanceTicketsPremiumBody =>
+      'Pasa a Premium para enviar a la gente a un enlace de boletos. El pase libre y confirmar asistencia siguen siendo gratis.';
+
+  @override
+  String get chatLinkPremiumPerk =>
+      'Anfitriones y asistentes pueden coordinar en el hilo del evento. Un enlace público de Discord, WhatsApp o Telegram es una función Premium.';
+
+  @override
+  String get chatLinkPremiumLocked =>
+      'Desbloquea un enlace público de chat con Premium';
+
+  @override
+  String get chatLinkGrandfathered =>
+      'Este enlace existente se mantiene en esta publicación. Los enlaces nuevos o modificados requieren Premium.';
 }

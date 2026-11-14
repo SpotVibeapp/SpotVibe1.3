@@ -36,8 +36,8 @@ firebase functions:secrets:set JAMBASE_API_KEY           --project spotvibe-cfa0
 ```
 
 The app no longer accepts provider keys. Delete them from your local
-`secrets.json` and from any CI variables (RevenueCat *public* SDK keys and
-AdMob ids stay as dart-defines).
+`secrets.json` and from any CI variables (RevenueCat *public* SDK keys stay as dart-defines).
+AdMob banner / app ids are no longer used — remove `ADMOB_*` from `secrets.json` if present.
 
 ## 2. Deploy the functions (first)
 
@@ -112,14 +112,11 @@ in the new feed query.
 `pubspec.yaml` is `1.0.15+15`. Play rejects anything ≤ 14 (v14 is live in
 beta). Bump to `+16` or higher if 15 is ever uploaded and rejected.
 
-Release builds now **fail** unless real AdMob ids are supplied (debug still
-uses Google's test ids):
+Ads have been removed, so release builds no longer require AdMob ids.
 
 ```bash
-# AdMob App ID: admobAppId=ca-app-pub-…~… in android/gradle.properties
-# (or export ORG_GRADLE_PROJECT_admobAppId=ca-app-pub-…~…). See ADMOB_SETUP_GUIDE.md.
 flutter build appbundle --release \
-  --dart-define-from-file=secrets.json      # REVENUECAT_*, ADMOB_BANNER_ANDROID, ...
+  --dart-define-from-file=secrets.json      # RevenueCat public SDK keys only
 ```
 
 The iOS build (Mac) needs the steps in `IOS_RELEASE_TODO_BLAKE.md`.
@@ -170,3 +167,20 @@ while v14 is still in use, the v14 sign-up break is the one to avoid. It can
 be softened by allowing a non-blank email on create (the `scrubPublicUserPii`
 trigger moves it within seconds). That is a one-line rules change; ask for it
 if you want it.
+
+
+## Ads were removed (November 14, 2026)
+
+Banner ads were the only ad format in the app. The AdMob SDK, UMP consent
+flow, ATT prompt, `app-ads.txt` work, and "ad-free pages" Premium perk are
+gone. You do **not** need to set up AdMob consent messages or `app-ads.txt`.
+
+When you ship 1.0.15, in Play Console → Policy → App content:
+
+- **Does your app contain ads?** → **No**
+- **Advertising ID** → **No** (the app no longer uses one)
+- Republish the updated `legal_site/privacy.html` to the live privacy URL
+  so it matches the in-app policy (no AdMob data sharing)
+- Remove any `ADMOB_*` keys from local `secrets.json` and CI
+
+See `PLAY_APP_CONTENT.md` for the full data-safety wording.

@@ -1,5 +1,7 @@
 # SpotVibe — Apple App Store Launch Checklist
 
+> **November 14, 2026:** Banner ads and the AdMob SDK were removed. Skip AdMob iOS id, SKAdNetwork, ATT-for-ads, and `app-ads.txt` checklist items.
+
 Everything needed to ship SpotVibe on the Apple App Store, including RevenueCat
 (subscriptions) and the AdMob/ATT bits. Android-first is the plan — finish and
 validate Google Play + RevenueCat first, then do iOS (it goes faster the second

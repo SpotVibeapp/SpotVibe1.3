@@ -133,6 +133,7 @@ const eventDoc = (creatorId, extra = {}) => ({
   analyticsViews: 0,
   analyticsSaves: 0,
   analyticsClicks: 0,
+  analyticsShares: 0,
   bookmarkedCount: 0,
   interestedCount: 0,
   ...extra,
@@ -313,3 +314,41 @@ describe('feed keys (visibleUntilMs / geoCells)', () => {
     await assertFails(setDoc(doc(db('alice'), 'provider_usage/tm'), { calls: 0 }));
   });
 });
+
+describe('staged Premium perk caps on client writes', () => {
+  test('create with extra photos or recurring is rejected', async () => {
+    await assertFails(setDoc(doc(db('alice'), 'events/e-photos'), eventDoc('alice', {
+      imageUrls: ['https://x.test/a.jpg', 'https://x.test/b.jpg'],
+    })));
+    await assertFails(setDoc(doc(db('alice'), 'events/e-recurring'), eventDoc('alice', {
+      recurringType: 'weekly',
+    })));
+    await assertFails(setDoc(doc(db('alice'), 'events/e-brand'), eventDoc('alice', {
+      brandColor: '#ff0',
+      contactPhone: '+1 555',
+    })));
+    await assertSucceeds(setDoc(doc(db('alice'), 'events/e-free'), eventDoc('alice', {
+      imageUrls: ['https://x.test/a.jpg'],
+      videoUrls: ['https://x.test/v.mp4'],
+    })));
+  });
+
+  test('creator cannot turn on perk fields or expand media', async () => {
+    await seedEvent('e1', eventDoc('alice', { imageUrls: ['https://x.test/a.jpg'] }));
+    await assertFails(updateDoc(doc(db('alice'), 'events/e1'), { recurringType: 'weekly' }));
+    await assertFails(updateDoc(doc(db('alice'), 'events/e1'), { contactWebsite: 'https://x.test' }));
+    await assertFails(updateDoc(doc(db('alice'), 'events/e1'), { isPremiumListing: true }));
+    await assertFails(updateDoc(doc(db('alice'), 'events/e1'), { isCreatorPro: true }));
+    await assertFails(updateDoc(doc(db('alice'), 'events/e1'), {
+      imageUrls: ['https://x.test/a.jpg', 'https://x.test/b.jpg'],
+    }));
+    await assertSucceeds(updateDoc(doc(db('alice'), 'events/e1'), { title: 'Still free' }));
+  });
+
+  test('analyticsShares can be bumped by exactly +1', async () => {
+    await seedEvent('e1', eventDoc('alice'));
+    await assertSucceeds(updateDoc(doc(db('bob'), 'events/e1'), { analyticsShares: increment(1) }));
+    await assertFails(updateDoc(doc(db('bob'), 'events/e1'), { analyticsShares: increment(2) }));
+  });
+});
+

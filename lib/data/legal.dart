@@ -10,7 +10,7 @@ const String kLegalEntityName = 'Spotvibe LLC';
 // address (blakejohnson@) out of user-facing surfaces.
 const String kLegalContactEmail = 'privacy@spotvibeapp.com'; // legal / privacy / data requests
 const String kFeedbackEmail = 'feedback@spotvibeapp.com'; // in-app feedback / support
-const String kLegalEffectiveDate = 'September 5, 2026';
+const String kLegalEffectiveDate = 'November 14, 2026';
 
 class LegalSection {
   final String heading;
@@ -73,6 +73,10 @@ const LegalDocument kPrivacyPolicy = LegalDocument(
           'The public: events you publish, public RSVPs, and comments are visible to other users.\n\n'
           'Legal: if required by law, to protect people, or in a sale of the business.\n\n'
           'We do not sell your personal information.',
+    ),
+    LegalSection(
+      'Advertising',
+      'SpotVibe does not show third-party ads and does not use an advertising identifier for advertising. We do not share personal information for cross-context behavioral advertising.',
     ),
     LegalSection(
       'Location',
@@ -144,7 +148,7 @@ const LegalDocument kTermsOfUse = LegalDocument(
     LegalSection(
       'Subscriptions and payments',
       'Free: browse the feed and post up to two upcoming one-time events at a time.\n\n'
-          'Title: SpotVibe Premium. Length: one month, auto-renewing. Price: \$12.99 USD per month after any introductory period, unless you purchase the founding plan described below. What you get: unlimited events, rich media galleries with up to five photos and three short videos per event, recurring events, featured placement once per week, live analytics, custom branding, a contact button, ad-free event pages, and the ability to claim additional listings after verification.\n\n'
+          'Title: SpotVibe Premium. Length: one month, auto-renewing. Price: \$12.99 USD per month after any introductory period, unless you purchase the founding plan described below. What you get: unlimited events, rich media galleries with up to five photos and three short videos per event, recurring events, featured placement once per week, live analytics, custom branding, a contact button, and the ability to claim additional listings after verification.\n\n'
           'Founding plan: the first 25 venues that purchase product spotvibe_premium_founding_monthly are billed \$9.99 USD per month for that store product. New founding purchases stop when those 25 slots are taken. If you already bought the founding product, Apple or Google — not this app — keep billing that product until you cancel.\n\n'
           'Payment will be charged to your Apple ID or Google Play account at confirmation of purchase. The subscription automatically renews unless auto-renew is turned off at least 24 hours before the end of the current period. Your account will be charged for renewal within 24 hours prior to the end of the current period. You can manage and turn off auto-renewal in your Account Settings after purchase. Any unused portion of a free trial is forfeited when you purchase a subscription, where the store allows.\n\n'
           'If a 7-day free trial is offered and you do not cancel before it ends, you will be charged the then-current price. Refunds, if any, are handled by Apple or Google under their rules. We do not receive or store your full payment card number. Store terms (Apple Media Services or Google Play) also apply to the purchase.',

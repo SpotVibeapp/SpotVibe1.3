@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../models/attendance_mode.dart';
 import '../models/user_event.dart';
 import '../models/event_social_link.dart';
 import '../services/user_event_service.dart';
@@ -67,6 +68,8 @@ class CreateEventProvider extends ChangeNotifier {
     EventSocialLinks socialLinks = const EventSocialLinks.empty(),
     String? brandColor,
     String? brandLogoUrl,
+    AttendanceMode attendanceMode = AttendanceMode.rsvpRequested,
+    String? ticketUrl,
   }) async {
     _status = CreateEventStatus.submitting;
     _errorMessage = null;
@@ -110,6 +113,9 @@ class CreateEventProvider extends ChangeNotifier {
           clearBrandColor: brandColor == null || brandColor.isEmpty,
           brandLogoUrl: brandLogoUrl,
           clearBrandLogoUrl: brandLogoUrl == null || brandLogoUrl.isEmpty,
+          attendanceMode: attendanceMode,
+          ticketUrl: ticketUrl,
+          clearTicketUrl: ticketUrl == null || ticketUrl.isEmpty,
         );
         result = await _service.updateEvent(updated);
       } else {
@@ -143,6 +149,8 @@ class CreateEventProvider extends ChangeNotifier {
           socialLinks: socialLinks,
           brandColor: brandColor,
           brandLogoUrl: brandLogoUrl,
+          attendanceMode: attendanceMode,
+          ticketUrl: ticketUrl,
         );
       }
 
