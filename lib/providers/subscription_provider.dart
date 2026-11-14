@@ -9,6 +9,16 @@ import '../repositories/founding_member_repository.dart';
 import '../services/purchases_facade.dart';
 import '../services/revenue_cat_service.dart';
 
+
+IntroOfferEligibility introEligibilityFromStatus(Object? status) {
+  final name = status?.toString().toLowerCase() ?? '';
+  if (name.contains('ineligible') || name.contains('nointro')) {
+    return IntroOfferEligibility.ineligible;
+  }
+  if (name.contains('eligible')) return IntroOfferEligibility.eligible;
+  return IntroOfferEligibility.unknown;
+}
+
 enum PurchaseStatus { idle, loading, success, error, cancelled }
 
 const _kLocalPremiumUntil = 'sv_local_premium_until_ms';
@@ -165,17 +175,44 @@ class SubscriptionProvider extends ChangeNotifier {
 
   double get displayPriceAmount => priceAmount(founding: offerFoundingPrice);
 
+  IntroOfferEligibility _introEligibility = IntroOfferEligibility.unknown;
+  IntroOfferEligibility get introEligibility => _introEligibility;
+
+  /// True when we promised the $9.99 founding SKU but RevenueCat did not
+  /// return that package. The paywall must not silently charge $12.99.
+  bool get foundingPackageMissing =>
+      !kIsWeb && offerFoundingPrice && foundingPackage == null;
+
+  PaywallCta get paywallCtaKind => paywallCta(
+        isSubscribed: isSubscribed,
+        eligibility: _introEligibility,
+      );
+
+  bool get promisesFreeTrial =>
+      paywallPromisesTrial(_introEligibility) && !foundingPackageMissing;
+
   String get subscribeCtaLabel {
-    if (_isSubscribed) return _l10n.youAreOnPremium;
-    return _l10n.startFreeTrial;
+    if (isSubscribed) return _l10n.youAreOnPremium;
+    if (promisesFreeTrial) return _l10n.startFreeTrial;
+    return _l10n.subscribeForPrice(displayPriceLabel);
   }
 
   String get billingFinePrint {
     final l = _l10n;
     final after = displayPriceLabel;
+    if (foundingPackageMissing) {
+      return l.foundingPackageMissing;
+    }
     if (offerFoundingPrice && !_isFoundingMember) {
-      return l.billingFoundingOpen(
-        l.trialLabel,
+      if (promisesFreeTrial) {
+        return l.billingFoundingOpen(
+          l.trialLabel,
+          after,
+          foundingSlotsRemaining,
+          kFoundingMemberLimit,
+        );
+      }
+      return l.billingFoundingOpenNoTrial(
         after,
         foundingSlotsRemaining,
         kFoundingMemberLimit,
@@ -184,7 +221,10 @@ class SubscriptionProvider extends ChangeNotifier {
     if (_isFoundingMember) {
       return l.billingFoundingLocked(after);
     }
-    return l.billingStandard(l.trialLabel, after);
+    if (promisesFreeTrial) {
+      return l.billingStandard(l.trialLabel, after);
+    }
+    return l.billingNoTrial(after);
   }
 
   Future<void> initialize() async {
@@ -192,6 +232,7 @@ class SubscriptionProvider extends ChangeNotifier {
     notifyListeners();
     await _loadEntitlement();
     await _loadOfferings();
+    await _loadIntroEligibility();
     await _loadFounding();
     // A local trial exists only to make debug/profile UI testing possible.
     // Store builds must receive Premium only from an active store entitlement.
@@ -207,6 +248,28 @@ class SubscriptionProvider extends ChangeNotifier {
   Future<void> _loadOfferings() async {
     _offerings = await _service.fetchOfferings();
     _allPackages = await _service.allPackages();
+  }
+
+  Future<void> _loadIntroEligibility() async {
+    _introEligibility = IntroOfferEligibility.unknown;
+    if (kIsWeb) return;
+    final ids = <String>{
+      if (selectedStoreProductId != null) selectedStoreProductId!,
+      kPremiumMonthlyProductId,
+      kFoundingMonthlyProductId,
+    }.toList();
+    try {
+      final result = await _service.checkIntroEligibility(ids);
+      final preferred = selectedStoreProductId ??
+          (offerFoundingPrice
+              ? kFoundingMonthlyProductId
+              : kPremiumMonthlyProductId);
+      final status = result[preferred]?.status ??
+          result[kPremiumMonthlyProductId]?.status;
+      _introEligibility = introEligibilityFromStatus(status);
+    } catch (_) {
+      _introEligibility = IntroOfferEligibility.unknown;
+    }
   }
 
   Future<void> _loadFounding() async {
@@ -250,6 +313,13 @@ class SubscriptionProvider extends ChangeNotifier {
     _status = PurchaseStatus.loading;
     _errorMessage = null;
     notifyListeners();
+
+    if (foundingPackageMissing) {
+      _errorMessage = _l10n.foundingPackageMissing;
+      _status = PurchaseStatus.error;
+      notifyListeners();
+      return false;
+    }
 
     if (kIsWeb) {
       return _purchaseOnWeb();

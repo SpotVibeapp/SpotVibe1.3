@@ -15,7 +15,7 @@ Event _event(String id, {String? featuredWeekKey}) {
     address: '1 Main Street',
     city: 'El Paso',
     state: 'TX',
-    imageUrl: 'assets/venues/plaza_theatre.jpg',
+    imageUrl: 'https://cdn.example.com/events/real-hero.jpg',
     category: 'Music',
     organizerName: 'Real Organizer',
     organizerAvatarUrl: '',
@@ -92,10 +92,12 @@ void main() {
       ),
     );
 
-    expect(find.text(event.title), findsOneWidget);
+    // The typographic cover also paints the title when there is no loaded
+    // photograph, so the name can appear more than once.
+    expect(find.text(event.title), findsWidgets);
     expect(find.text('MUSIC'), findsOneWidget);
     expect(find.text('Free'), findsOneWidget);
-    await tester.tap(find.text(event.title));
+    await tester.tap(find.text(event.title).last);
     expect(opened, isTrue);
   });
 

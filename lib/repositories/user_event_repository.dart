@@ -226,6 +226,7 @@ class UserEventRepository {
     int views = 0,
     int saves = 0,
     int clicks = 0,
+    int shares = 0,
   }) async {
     final index = _events.indexWhere((e) => e.id == eventId);
     if (index == -1) return;
@@ -235,6 +236,7 @@ class UserEventRepository {
       analyticsViews: event.analyticsViews + views,
       analyticsSaves: event.analyticsSaves + saves,
       analyticsClicks: event.analyticsClicks + clicks,
+      analyticsShares: event.analyticsShares + shares,
     );
   }
 }

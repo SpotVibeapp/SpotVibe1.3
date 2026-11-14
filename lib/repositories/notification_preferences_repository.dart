@@ -10,6 +10,7 @@ class NotificationPreferencesRepository {
   static const _kSocialComments = 'notif_pref_social_comments';
   static const _kSocialFriendRsvp = 'notif_pref_social_friend_rsvp';
   static const _kSocialFriendRequests = 'notif_pref_social_friend_requests';
+  static const _kNewGemsNearby = 'notif_pref_new_gems_nearby';
   static const _kCategoryPrefix = 'notif_pref_cat_';
 
   // ── Read ───────────────────────────────────────────────────────────────────
@@ -37,6 +38,11 @@ class NotificationPreferencesRepository {
   Future<bool> getSocialFriendRequests() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_kSocialFriendRequests) ?? true;
+  }
+
+  Future<bool> getNewGemsNearby() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_kNewGemsNearby) ?? true;
   }
 
   /// Returns whether alerts for [category] are enabled. Defaults to true.
@@ -79,6 +85,11 @@ class NotificationPreferencesRepository {
   Future<void> setSocialFriendRequests(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_kSocialFriendRequests, value);
+  }
+
+  Future<void> setNewGemsNearby(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kNewGemsNearby, value);
   }
 
   Future<void> setCategoryEnabled(String category, bool value) async {

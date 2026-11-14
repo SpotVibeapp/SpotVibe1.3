@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spotvibe_app/data/event_dedupe.dart';
+import 'package:spotvibe_app/data/event_images.dart';
 import 'package:spotvibe_app/models/event.dart';
 
 Event _event({
@@ -166,7 +167,7 @@ void main() {
     expect(out.single.title, 'El Paso Chihuahuas vs. Round Rock Express');
   });
 
-  test('Ticketmaster listing keeps a curated venue photo when TM art is stock', () {
+  test('Ticketmaster listing wins over a curated duplicate when TM art is stock', () {
     final local = _event(
       id: 'evt_ep_coliseum',
       title: 'Live at El Paso County Coliseum',
@@ -187,7 +188,7 @@ void main() {
     final out = dedupeEvents([local, tm]);
     expect(out, hasLength(1));
     expect(out.single.id, 'tm_abc123');
-    expect(out.single.imageUrl, contains('county_coliseum'));
+    expect(isGenericEventImage(out.single.imageUrl), isTrue);
   });
   test('same show on Ticketmaster and SeatGeek keeps the Ticketmaster row', () {
     final tm = _event(
@@ -243,8 +244,9 @@ void main() {
     final out = dedupeEvents([local, sg]);
     expect(out, hasLength(1));
     expect(out.single.id, 'sg_6162405');
-    // …but borrows the real venue photo the placeholder had.
-    expect(out.single.imageUrl, contains('abraham_chavez'));
+    // App stock venue fallbacks are not real event photos, so they are
+    // not borrowed onto the winning row.
+    expect(out.single.imageUrl, isNot(contains('abraham_chavez')));
   });
   group('cross-provider venue spelling', () {
     test('Theatre and Theater are the same word', () {
@@ -659,7 +661,7 @@ void main() {
         final out = dedupeEvents(input);
         expect(out, hasLength(1));
         expect(out.single.id, 'tm_1');
-        expect(out.single.imageUrl, contains('abraham_chavez'));
+        expect(out.single.imageUrl, isNot(contains('abraham_chavez')));
       }
     });
   });

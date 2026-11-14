@@ -10,10 +10,10 @@ code on branch `arena/01a07f45-spotvibe1-3` (tip `29f1378`) actually does. Every
 was checked against the manifest permissions, `pubspec.yaml`, and `legal_site/privacy.html`.
 
 > **Assumptions baked in (correct these in Console if they change):**
-> - **Ads:** the app **now ships Google AdMob** (`google_mobile_ads`) showing a banner ad to free
->   users; ad-free is a Premium benefit. The manifest **declares
->   `com.google.android.gms.permission.AD_ID`** and the AdMob App ID meta-data. → *App contains ads.*
->   (Ads use the UMP consent flow; personalized ads unless the user opts out.)
+> - **Ads:** as of November 14, 2026 the app **does not ship ads**. Banner ads, the
+>   AdMob SDK (`google_mobile_ads`), UMP consent, and the advertising-ID permission
+>   have been removed. → *App contains ads: No.* Update the Play form if it still
+>   says Yes from an earlier beta.
 > - **AI is ON in the beta build** (OpenAI-backed Ask SpotVibe search + AI promo image +
 >   Poster Studio). This is why "Data shared → OpenAI" appears below. If you turn AI off for a
 >   given build, remove those two shared rows.
@@ -29,14 +29,16 @@ was checked against the manifest permissions, `pubspec.yaml`, and `legal_site/pr
 ---
 
 ## 2. Ads
-- **Does your app contain ads?** → **Yes, my app contains ads**
-- Rationale: the app integrates **Google AdMob** (`google_mobile_ads`) and shows a banner ad to
-  free (non-Premium) users. The `com.google.android.gms.permission.AD_ID` permission is declared
-  and the AdMob App ID meta-data is in the manifest.
-- **Advertising ID declaration** (App content → Advertising ID): **Yes**, the app uses an
-  advertising ID → purposes **Advertising or marketing** (AdMob) **and Analytics**.
-- Ads run through the **UMP consent** flow (GDPR + US state privacy). Ads are **personalized**
-  unless the user opts out via the consent form.
+- **Does your app contain ads?** → **No, my app does not contain ads**
+- Rationale: banner ads and the Google AdMob SDK were removed on November 14, 2026.
+  The app no longer requests ads, does not include `google_mobile_ads`, and the
+  `com.google.android.gms.permission.AD_ID` permission is explicitly removed from
+  the merged manifest. Premium no longer lists "ad-free pages" as a perk.
+- **Advertising ID declaration** (App content → Advertising ID): **No**, the app
+  does not use an advertising ID.
+- If a previous beta declared "contains ads" / advertising ID, change those answers
+  when you ship 1.0.15. Also republish `legal_site/privacy.html` to the live
+  privacy URL so it matches the in-app policy (no AdMob sharing).
 
 ---
 
@@ -123,7 +125,6 @@ data* to them beyond an area/lat-lng for search, so treat carefully; see note).
 | **Diagnostics** | Yes | No | No | — | App functionality |
 | **Other user-generated content** (event text, comments, RSVPs, claim info) | Yes | No | No | Optional | App functionality |
 | **AI request text** (Ask SpotVibe search text; event title/description/category/venue for AI promo image) | Yes | **Yes → OpenAI** | Processing only | Optional (user must invoke AI) | App functionality (generate filters / promo image) |
-| **Advertising ID** (AdMob, free users only) | Yes | **Yes → Google AdMob** | No | Automatic (free users) | **Advertising or marketing**, Analytics |
 
 **Notes for the reviewer text fields:**
 - *Location:* "Optional. Approximate or precise location, only if the user grants permission, used
@@ -139,7 +140,7 @@ data* to them beyond an area/lat-lng for search, so treat carefully; see note).
 - No financial info / card numbers (Google Play + RevenueCat handle payment; you store only
   sub *status*).
 - No contacts, no SMS/call logs, no health, no browsing history.
-  (Advertising ID **is** collected — see the AdMob row above — for free users only.)
+  Advertising ID is **not** collected (AdMob was removed).
 - No audio recordings are collected/stored server-side — the mic permission exists for video
   capture (`image_picker`/`video_player`); if you never record audio-only, don't tick "Voice or
   sound recordings". (Verify: audio is captured only as part of a video clip → that's covered under

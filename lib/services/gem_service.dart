@@ -1,3 +1,6 @@
+import '../data/gem_listing.dart';
+import '../data/gem_visibility.dart';
+import '../models/event_social_link.dart';
 import '../models/gem.dart';
 import '../models/moderation_result.dart';
 import '../repositories/gem_repository.dart';
@@ -39,12 +42,84 @@ class GemService {
     double? lng,
     double radiusMiles = 60,
     int limit = 200,
-  }) =>
-      _repository.getGems(
-          lat: lat, lng: lng, radiusMiles: radiusMiles, limit: limit);
+    bool applyEarlyAccess = false,
+    bool isPremium = false,
+    String? viewerId,
+    int delayHours = 48,
+  }) async {
+    final list = await _repository.getGems(
+        lat: lat, lng: lng, radiusMiles: radiusMiles, limit: limit);
+    final visible = applyEarlyAccess
+        ? filterGemsForViewer(
+            list,
+            isPremium: isPremium,
+            viewerId: viewerId,
+            delayHours: delayHours,
+          )
+        : list;
+    return [
+      for (final gem in visible) _publicView(gem, viewerId: viewerId),
+    ];
+  }
 
-  Future<Gem?> getGemById(String id, {String? viewerId}) =>
-      _repository.getGemById(id, viewerId: viewerId);
+  Gem _publicView(Gem gem, {String? viewerId}) {
+    if (viewerId != null && viewerId.isNotEmpty && viewerId == gem.creatorId) {
+      return gem;
+    }
+    return gemForDisplay(gem);
+  }
+
+  Future<GemQueryPage> getGemsPage({
+    double? lat,
+    double? lng,
+    double radiusMiles = 60,
+    int limit = 40,
+    Object? startAfter,
+    bool applyEarlyAccess = false,
+    bool isPremium = false,
+    String? viewerId,
+    int delayHours = 48,
+  }) async {
+    final page = await _repository.queryGems(
+      lat: lat,
+      lng: lng,
+      radiusMiles: radiusMiles,
+      limit: limit,
+      startAfter: startAfter,
+    );
+    var list = page.gems;
+    if (applyEarlyAccess) {
+      list = filterGemsForViewer(
+        list,
+        isPremium: isPremium,
+        viewerId: viewerId,
+        delayHours: delayHours,
+      );
+    }
+    list = [for (final gem in list) _publicView(gem, viewerId: viewerId)];
+    return GemQueryPage(gems: list, cursor: page.cursor, hasMore: page.hasMore);
+  }
+
+  Future<Gem?> getGemById(
+    String id, {
+    String? viewerId,
+    bool applyEarlyAccess = false,
+    bool isPremium = false,
+    int delayHours = 48,
+  }) async {
+    final gem = await _repository.getGemById(id, viewerId: viewerId);
+    if (gem == null) return null;
+    if (applyEarlyAccess &&
+        !gemVisibleToViewer(
+          gem,
+          isPremium: isPremium,
+          viewerId: viewerId,
+          delayHours: delayHours,
+        )) {
+      return null;
+    }
+    return _publicView(gem, viewerId: viewerId);
+  }
 
   Future<List<Gem>> getGemsForUser(String creatorId) =>
       _repository.getGemsForUser(creatorId);
@@ -64,6 +139,18 @@ class GemService {
     String city = '',
     String state = '',
     List<String> imageUrls = const [],
+    GemListingKind listingKind = GemListingKind.community,
+    String? contactPhone,
+    String? contactWebsite,
+    EventSocialLinks socialLinks = const EventSocialLinks.empty(),
+    String? promoTitle,
+    String? promoDetails,
+    DateTime? promoStartsAt,
+    DateTime? promoEndsAt,
+    GemBusinessType? businessType,
+    String? offerTitle,
+    String? offerText,
+    String? id,
   }) async {
     if (creatorId.isEmpty || creatorId == 'guest') {
       throw StateError('Sign in to add a hidden gem.');
@@ -87,21 +174,33 @@ class GemService {
       return GemWriteResult.rejected(moderation);
     }
 
+    final isBusiness = listingKind == GemListingKind.business;
     final gem = Gem(
-      id: '',
+      id: id ?? '',
       creatorId: creatorId,
       creatorName: creatorName.trim().isEmpty ? 'SpotVibe member' : creatorName.trim(),
       name: name.trim(),
       category: category,
       summary: summary.trim(),
-      description: description.trim(),
+      description: isBusiness ? description.trim() : '',
       latitude: latitude,
       longitude: longitude,
       address: address.trim(),
       city: city.trim(),
       state: state.trim(),
-      imageUrls: imageUrls,
+      imageUrls: isBusiness ? imageUrls : const [],
       createdAt: DateTime.now(),
+      listingKind: listingKind,
+      contactPhone: isBusiness ? contactPhone : null,
+      contactWebsite: isBusiness ? contactWebsite : null,
+      socialLinks: isBusiness ? socialLinks : const EventSocialLinks.empty(),
+      promoTitle: isBusiness ? promoTitle : null,
+      promoDetails: isBusiness ? promoDetails : null,
+      promoStartsAt: isBusiness ? promoStartsAt : null,
+      promoEndsAt: isBusiness ? promoEndsAt : null,
+      businessType: isBusiness ? businessType : null,
+      offerTitle: isBusiness ? offerTitle : null,
+      offerText: isBusiness ? offerText : null,
     );
     final created = await _repository.createGem(gem);
     return GemWriteResult.ok(created);
@@ -124,6 +223,26 @@ class GemService {
     String city = '',
     String state = '',
     List<String> imageUrls = const [],
+    GemListingKind? listingKind,
+    String? contactPhone,
+    bool clearContactPhone = false,
+    String? contactWebsite,
+    bool clearContactWebsite = false,
+    EventSocialLinks? socialLinks,
+    String? promoTitle,
+    bool clearPromoTitle = false,
+    String? promoDetails,
+    bool clearPromoDetails = false,
+    DateTime? promoStartsAt,
+    bool clearPromoStartsAt = false,
+    DateTime? promoEndsAt,
+    bool clearPromoEndsAt = false,
+    GemBusinessType? businessType,
+    bool clearBusinessType = false,
+    String? offerTitle,
+    bool clearOfferTitle = false,
+    String? offerText,
+    bool clearOfferText = false,
   }) async {
     final existing = await _repository.getGemById(gemId);
     if (existing == null) {
@@ -151,20 +270,56 @@ class GemService {
       return GemWriteResult.rejected(moderation);
     }
 
+    final kind = listingKind ?? existing.listingKind;
+    final isBusiness = kind == GemListingKind.business;
     final updated = existing.copyWith(
       name: name.trim(),
       category: category,
       summary: summary.trim(),
-      description: description.trim(),
+      description: isBusiness ? description.trim() : existing.description,
       latitude: latitude,
       longitude: longitude,
       address: address.trim(),
       city: city.trim(),
       state: state.trim(),
-      imageUrls: imageUrls,
+      // Keep any photos a legacy community listing already had; new community
+      // posts don't add photos from this form.
+      imageUrls: isBusiness ? imageUrls : existing.imageUrls,
+      listingKind: kind,
+      contactPhone: isBusiness ? contactPhone : null,
+      clearContactPhone: !isBusiness || clearContactPhone,
+      contactWebsite: isBusiness ? contactWebsite : null,
+      clearContactWebsite: !isBusiness || clearContactWebsite,
+      socialLinks: isBusiness ? (socialLinks ?? existing.socialLinks) : const EventSocialLinks.empty(),
+      promoTitle: isBusiness ? promoTitle : null,
+      clearPromoTitle: !isBusiness || clearPromoTitle,
+      promoDetails: isBusiness ? promoDetails : null,
+      clearPromoDetails: !isBusiness || clearPromoDetails,
+      promoStartsAt: isBusiness ? promoStartsAt : null,
+      clearPromoStartsAt: !isBusiness || clearPromoStartsAt,
+      promoEndsAt: isBusiness ? promoEndsAt : null,
+      clearPromoEndsAt: !isBusiness || clearPromoEndsAt,
+      businessType: isBusiness ? businessType : null,
+      clearBusinessType: !isBusiness || clearBusinessType,
+      offerTitle: isBusiness ? offerTitle : null,
+      clearOfferTitle: !isBusiness || clearOfferTitle,
+      offerText: isBusiness ? offerText : null,
+      clearOfferText: !isBusiness || clearOfferText,
     );
     final saved = await _repository.updateGem(updated);
     return GemWriteResult.ok(saved);
+  }
+
+  Future<Gem> renewGemRich({
+    required String gemId,
+    required String requestingUserId,
+    bool isAdmin = false,
+  }) {
+    return _repository.renewGemRich(
+      gemId,
+      requestingUserId: requestingUserId,
+      isAdmin: isAdmin,
+    );
   }
 
   Future<void> deleteGem(

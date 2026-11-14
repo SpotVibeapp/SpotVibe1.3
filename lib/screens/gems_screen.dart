@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../data/gem_search.dart';
 import '../l10n/app_localizations.dart';
 import '../models/gem.dart';
 import '../providers/auth_provider.dart';
@@ -9,7 +10,6 @@ import '../providers/gem_provider.dart';
 import '../services/location_service.dart';
 import '../theme/responsive.dart';
 import '../theme/theme.dart';
-import '../widgets/common/ad_banner.dart';
 import '../widgets/common/empty_state_view.dart';
 import '../widgets/gems/gem_cover.dart';
 
@@ -26,6 +26,7 @@ class GemsScreen extends StatefulWidget {
 
 class _GemsScreenState extends State<GemsScreen> {
   final _searchController = TextEditingController();
+  final _keywordController = TextEditingController();
   final _locationService = LocationService();
   bool _bootstrapped = false;
   bool _locating = false;
@@ -39,6 +40,7 @@ class _GemsScreenState extends State<GemsScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _keywordController.dispose();
     super.dispose();
   }
 
@@ -209,6 +211,72 @@ class _GemsScreenState extends State<GemsScreen> {
                 ],
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.spacingMd, vertical: AppTheme.spacingXs),
+              child: TextField(
+                controller: _keywordController,
+                textInputAction: TextInputAction.search,
+                onChanged: provider.setKeywordQuery,
+                onSubmitted: provider.setKeywordQuery,
+                decoration: InputDecoration(
+                  hintText: l10n.gemsKeywordHint,
+                  prefixIcon: const Icon(Icons.local_offer_outlined),
+                  isDense: true,
+                  border: OutlineInputBorder(
+                    borderRadius:
+                        BorderRadius.circular(AppTheme.radiusMedium),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 40,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
+                children: [
+                  for (final miles in kGemRadiusMilesOptions)
+                    Padding(
+                      padding: const EdgeInsets.only(right: AppTheme.spacingSm),
+                      child: ChoiceChip(
+                        label: Text(l10n.gemsRadiusMiles(miles.round())),
+                        selected: provider.radiusMiles == miles,
+                        onSelected: (_) => provider.setRadiusMiles(miles),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.spacingMd, vertical: 2),
+              child: Wrap(
+                spacing: AppTheme.spacingSm,
+                children: [
+                  ChoiceChip(
+                    label: Text(l10n.gemsSortNearest),
+                    selected: provider.sortOrder == GemSortOrder.nearest,
+                    onSelected: (_) => provider.setSortOrder(GemSortOrder.nearest),
+                  ),
+                  ChoiceChip(
+                    label: Text(l10n.gemsSortNewest),
+                    selected: provider.sortOrder == GemSortOrder.newest,
+                    onSelected: (_) => provider.setSortOrder(GemSortOrder.newest),
+                  ),
+                  ChoiceChip(
+                    label: Text(l10n.gemsSortMostLiked),
+                    selected: provider.sortOrder == GemSortOrder.mostLiked,
+                    onSelected: (_) => provider.setSortOrder(GemSortOrder.mostLiked),
+                  ),
+                  FilterChip(
+                    label: Text(l10n.gemsOpenNow),
+                    selected: provider.openNowOnly,
+                    onSelected: provider.setOpenNowOnly,
+                  ),
+                ],
+              ),
+            ),
             if (provider.areaLabel.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(
@@ -229,11 +297,9 @@ class _GemsScreenState extends State<GemsScreen> {
                   ],
                 ),
               ),
-            if (provider.availableCategories.isNotEmpty)
-              _GemCategoryChips(provider: provider),
+            _GemCategoryChips(provider: provider),
+            _GemBusinessTypeChips(provider: provider),
             Expanded(child: _body(context, provider, l10n)),
-            // Anchored banner for free users (collapses for Premium/web).
-            const AdBanner(),
           ],
         ),
       ),
@@ -246,7 +312,8 @@ class _GemsScreenState extends State<GemsScreen> {
       return const Center(child: CircularProgressIndicator());
     }
     final gems = provider.gems;
-    if (gems.isEmpty) {
+    final deals = provider.deals;
+    if (gems.isEmpty && deals.isEmpty) {
       return EmptyStateView(
         variant: EmptyStateVariant.noEventsNearby,
         icon: Icons.travel_explore_rounded,
@@ -280,11 +347,22 @@ class _GemsScreenState extends State<GemsScreen> {
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(AppTheme.spacingMd, AppTheme.spacingSm,
             AppTheme.spacingMd, AppTheme.spacingLg),
-        itemCount: gems.length + 1,
+        itemCount: gems.length + 2,
         separatorBuilder: (_, __) => const SizedBox(height: AppTheme.spacingSm),
         itemBuilder: (context, index) {
-          if (index == gems.length) {
-            return Padding(
+          if (index == 0) {
+            return _DealsRow(deals: deals, l10n: l10n);
+          }
+          final gemIndex = index - 1;
+          if (gemIndex == gems.length) {
+            return Column(
+              children: [
+                if (provider.hasMore)
+                  TextButton(
+                    onPressed: provider.loadingMore ? null : provider.loadMore,
+                    child: Text(provider.loadingMore ? '…' : l10n.gemsLoadMore),
+                  ),
+                Padding(
               padding: const EdgeInsets.only(top: AppTheme.spacingSm),
               child: Text(
                 l10n.gemsAttribution,
@@ -295,9 +373,11 @@ class _GemsScreenState extends State<GemsScreen> {
                     ?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
+            ),
+              ],
             );
           }
-          return _GemCard(gem: gems[index]);
+          return _GemCard(gem: gems[gemIndex]);
         },
       ),
     );
@@ -359,7 +439,32 @@ class _GemCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            GemCover(gem: gem, height: 130),
+            Stack(
+              children: [
+                GemCover(gem: gem, height: 130),
+                if (gemIsPromoted(gem))
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: colors.primary,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        child: Text(
+                          AppLocalizations.of(context)!.gemsPromotedLabel,
+                          style: text.labelSmall?.copyWith(
+                            color: colors.onPrimary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
             Padding(
               padding: const EdgeInsets.all(AppTheme.spacingMd),
               child: Column(
@@ -402,6 +507,108 @@ class _GemCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _DealsRow extends StatelessWidget {
+  final List<Gem> deals;
+  final AppLocalizations l10n;
+  const _DealsRow({required this.deals, required this.l10n});
+
+  @override
+  Widget build(BuildContext context) {
+    if (deals.isEmpty) return const SizedBox.shrink();
+    final text = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.gemsDealsNearYou,
+          style: text.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 96,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: deals.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final gem = deals[index];
+              final offer = gem.offerTitle ?? gem.promoTitle ?? gem.name;
+              return SizedBox(
+                width: 200,
+                child: Card(
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: () => context.push('/gem', extra: gem),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            offer,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: text.labelLarge
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const Spacer(),
+                          Text(
+                            gem.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: text.labelSmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _GemBusinessTypeChips extends StatelessWidget {
+  final GemProvider provider;
+  const _GemBusinessTypeChips({required this.provider});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return SizedBox(
+      height: 40,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: AppTheme.spacingSm),
+            child: ChoiceChip(
+              label: Text(l10n.gemsAllBusinessTypes),
+              selected: provider.businessTypeFilter == null,
+              onSelected: (_) => provider.selectBusinessType(null),
+            ),
+          ),
+          for (final type in GemBusinessType.values)
+            Padding(
+              padding: const EdgeInsets.only(right: AppTheme.spacingSm),
+              child: ChoiceChip(
+                label: Text(type.label),
+                selected: provider.businessTypeFilter == type,
+                onSelected: (_) => provider.selectBusinessType(
+                    provider.businessTypeFilter == type ? null : type),
+              ),
+            ),
+        ],
       ),
     );
   }

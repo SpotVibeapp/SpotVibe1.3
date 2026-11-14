@@ -14,7 +14,7 @@ void main() {
     final admin = eventMediaAllowance(isPremium: false, isAdmin: true);
 
     expect(free.maxPhotos, 1);
-    expect(free.maxVideos, 1);
+    expect(free.maxVideos, 0);
     expect(free.hasFullGallery, isFalse);
     expect(premium.maxPhotos, 5);
     expect(premium.maxVideos, 3);

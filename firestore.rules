@@ -1,7 +1,14 @@
 rules_version = '2';
 
 // SpotVibe — Firestore security rules.
-// Deploy:  firebase deploy --only firestore:rules
+//
+// DO NOT DEPLOY these tightened rules until 1.0.15 (or later) is the
+// installed Play beta. Testers still on v14 would lose signup-adjacent
+// founding writes and would be unable to save Premium perk fields that
+// the old binary writes from the client. See STAGED_RULES_DEPLOY.md and
+// RULES_DEPLOY_GUARD.md.
+//
+// Deploy (only after that gate):  firebase deploy --only firestore:rules
 //
 // Data model:
 //   users/{uid}                      public profile (name, avatar — no PII)
@@ -44,20 +51,77 @@ service cloud.firestore {
       return isSignedIn()
              && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
+    // Written only by Cloud Functions after a RevenueCat check.
+    function isProUser() {
+      return isSignedIn()
+             && exists(/databases/$(database)/documents/users/$(request.auth.uid)/private/subscription)
+             && get(/databases/$(database)/documents/users/$(request.auth.uid)/private/subscription).data.get('pro', false) == true;
+    }
 
-    // The primary cover is included in imageUrls. Legacy documents without
-    // gallery fields remain valid, while new writes are capped at five photos
-    // and three short videos per event.
+    // Absolute gallery ceiling (Premium max). Client creates after the staged
+    // deploy must also pass isFreeShapedEvent; extra media is written only by
+    // the saveUserEvent Admin SDK path.
     function hasValidEventMedia(data) {
       return (!data.keys().hasAll(['imageUrls'])
                 || (data.imageUrls is list && data.imageUrls.size() <= 5))
           && (!data.keys().hasAll(['videoUrls'])
                 || (data.videoUrls is list && data.videoUrls.size() <= 3));
     }
-
-    // New event windows must carry both an explicit start and end. Existing
-    // legacy events remain readable and can still receive analytics updates;
-    // changing their timing requires adding a valid end time.
+    function hasFreeEventMedia(data) {
+      return (!data.keys().hasAll(['imageUrls'])
+                || (data.imageUrls is list && data.imageUrls.size() <= 1))
+          && (!data.keys().hasAll(['videoUrls'])
+                || (data.videoUrls is list && data.videoUrls.size() == 0))
+          && (!data.keys().hasAll(['videoUrl'])
+                || data.videoUrl == null
+                || data.videoUrl == '');
+    }
+    // Hard ceiling matches the configurable Remote Config range (80–400).
+    // saveUserEvent enforces the live cap (default 300).
+    function descriptionWithinFreeCeiling(data) {
+      return !data.keys().hasAll(['description'])
+          || (data.description is string && data.description.size() <= 400);
+    }
+    function descriptionNotExpandedPastFree() {
+      let after = request.resource.data.get('description', '');
+      if (!(after is string)) return false;
+      if (after.size() <= 400) return true;
+      let before = resource.data.get('description', '');
+      return before is string && after.size() <= before.size();
+    }
+    function emptyOrNone(value) {
+      return value == null || value == '' || value == 'none' || value == false;
+    }
+    // Client writes cannot introduce Premium perk fields. Existing perk
+    // values may remain if the field is unchanged, so a title edit on a
+    // leftover featured listing does not bounce.
+    function isFreeShapedEvent(data) {
+      return hasFreeEventMedia(data)
+          && descriptionWithinFreeCeiling(data)
+          && emptyOrNone(data.get('recurringType', 'none'))
+          && emptyOrNone(data.get('contactPhone', null))
+          && emptyOrNone(data.get('contactWebsite', null))
+          && emptyOrNone(data.get('contactSocial', null))
+          && emptyOrNone(data.get('brandColor', null))
+          && emptyOrNone(data.get('brandLogoUrl', null))
+          && data.get('isPremiumListing', false) == false
+          && data.get('isCreatorPro', false) == false
+          && data.get('featuredWeekKey', null) == null;
+    }
+    function mediaNotExpandedPastFree() {
+      let after = request.resource.data;
+      let before = resource.data;
+      let imagesOk = hasFreeEventMedia(after)
+          || (before.keys().hasAll(['imageUrls'])
+              && after.keys().hasAll(['imageUrls'])
+              && after.imageUrls == before.imageUrls);
+      let videosOk = hasFreeEventMedia(after)
+          || (before.keys().hasAll(['videoUrls'])
+              && after.keys().hasAll(['videoUrls'])
+              && after.videoUrls == before.videoUrls
+              && after.get('videoUrl', '') == before.get('videoUrl', ''));
+      return imagesOk && videosOk && descriptionNotExpandedPastFree();
+    }
     function hasValidEventTiming(data) {
       return data.keys().hasAll(['dateTimeMs', 'endDateTimeMs'])
           && data.dateTimeMs is int
@@ -102,18 +166,45 @@ service cloud.firestore {
     }
 
     // ── Server-managed event fields ─────────────────────────────────────────
-    // `featuredWeekKey` is a paid Premium perk: only the `featureEvent` Cloud
-    // Function (after a RevenueCat check) or an admin may set it. Ingestion /
-    // archive bookkeeping fields are written by Cloud Functions only.
-    // featuredWeekKey is checked separately (it may be sent as null: the
-    // live v14 build always includes the key, null for non-featured events).
+    // Featuring and Premium flags are set only by featureEvent / saveUserEvent
+    // (Admin SDK). After the staged deploy, clients cannot change these keys
+    // at all — including clearing them.
     function serverManagedEventKeys() {
       return ['featuredAt', 'ingestedAt', 'ingestSource', 'archivedAt',
               'geoCells'];
     }
+    function serverPerkKeys() {
+      return ['featuredWeekKey', 'featuredAt', 'isPremiumListing', 'isCreatorPro'];
+    }
+    function doesNotChangeServerPerks() {
+      return !changedKeys().hasAny(serverPerkKeys());
+    }
+
+    function doesNotRaisePerkFields() {
+      return doesNotChangeServerPerks()
+          && mediaNotExpandedPastFree()
+          && (!changedKeys().hasAny(['recurringType'])
+              || emptyOrNone(request.resource.data.get('recurringType', 'none')))
+          && (!changedKeys().hasAny(['contactPhone'])
+              || emptyOrNone(request.resource.data.get('contactPhone', null)))
+          && (!changedKeys().hasAny(['contactWebsite'])
+              || emptyOrNone(request.resource.data.get('contactWebsite', null)))
+          && (!changedKeys().hasAny(['contactSocial'])
+              || emptyOrNone(request.resource.data.get('contactSocial', null)))
+          && (!changedKeys().hasAny(['brandColor'])
+              || emptyOrNone(request.resource.data.get('brandColor', null)))
+          && (!changedKeys().hasAny(['brandLogoUrl'])
+              || emptyOrNone(request.resource.data.get('brandLogoUrl', null)));
+    }
+
+    // New event windows must carry both an explicit start and end. Existing
+    // legacy events remain readable and can still receive analytics updates;
+    // changing their timing requires adding a valid end time.
+    // Kept as an alias so older comments stay accurate; v14 used to send
+    // featuredWeekKey: null, which these staged rules no longer allow on
+    // a featured document.
     function doesNotSetFeaturedWeek() {
-      return !changedKeys().hasAny(['featuredWeekKey'])
-          || request.resource.data.get('featuredWeekKey', null) == null;
+      return doesNotChangeServerPerks();
     }
     // Feed sort key: when present it must equal the end time (or the start
     // for legacy docs without an end), so nobody can pin a listing in the
@@ -128,7 +219,7 @@ service cloud.firestore {
     }
     function analyticsKeys() {
       return ['analyticsSearchImpressions', 'analyticsViews',
-              'analyticsSaves', 'analyticsClicks'];
+              'analyticsSaves', 'analyticsClicks', 'analyticsShares'];
     }
     function saveCounterKeys() {
       return ['bookmarkedCount', 'interestedCount'];
@@ -143,8 +234,10 @@ service cloud.firestore {
           && (!('analyticsViews' in data) || data.analyticsViews == 0)
           && (!('analyticsSaves' in data) || data.analyticsSaves == 0)
           && (!('analyticsClicks' in data) || data.analyticsClicks == 0)
+          && (!('analyticsShares' in data) || data.analyticsShares == 0)
           && (!('bookmarkedCount' in data) || data.bookmarkedCount == 0)
-          && (!('interestedCount' in data) || data.interestedCount == 0);
+          && (!('interestedCount' in data) || data.interestedCount == 0)
+          && isFreeShapedEvent(data);
     }
     function bumpedByOne(field) {
       return request.resource.data[field] is int
@@ -156,7 +249,8 @@ service cloud.firestore {
           && ((changedKeys().hasOnly(['analyticsSearchImpressions']) && bumpedByOne('analyticsSearchImpressions'))
               || (changedKeys().hasOnly(['analyticsViews']) && bumpedByOne('analyticsViews'))
               || (changedKeys().hasOnly(['analyticsSaves']) && bumpedByOne('analyticsSaves'))
-              || (changedKeys().hasOnly(['analyticsClicks']) && bumpedByOne('analyticsClicks')));
+              || (changedKeys().hasOnly(['analyticsClicks']) && bumpedByOne('analyticsClicks'))
+              || (changedKeys().hasOnly(['analyticsShares']) && bumpedByOne('analyticsShares')));
     }
     // bookmarkedCount / interestedCount move by ±1 only together with the
     // caller's own saved_events/{eventId} flag flipping in the same
@@ -189,7 +283,7 @@ service cloud.firestore {
       return isSignedIn()
           && resource.data.creatorId == request.auth.uid
           && !changedKeys().hasAny(serverManagedEventKeys())
-          && doesNotSetFeaturedWeek()
+          && doesNotRaisePerkFields()
           && !changedKeys().hasAny(analyticsKeys())
           && !changedKeys().hasAny(saveCounterKeys())
           && request.resource.data.creatorId == resource.data.creatorId;
@@ -329,9 +423,51 @@ service cloud.firestore {
       }
     }
 
+    function isBusinessPromoGem(data) {
+      return data.listingKind == 'business' || data.listingTier == 'promoted';
+    }
+
+    function isBasicGemShape() {
+      let d = request.resource.data;
+      return (!('richUntilMs' in d) || d.richUntilMs == null)
+        && (!('promoUntilMs' in d) || d.promoUntilMs == null)
+        && (!('listingKind' in d) || d.listingKind == 'community')
+        && (!('listingTier' in d) || d.listingTier == 'basic')
+        && (!('promoTitle' in d) || d.promoTitle == null || d.promoTitle == '')
+        && (!('promoDetails' in d) || d.promoDetails == null || d.promoDetails == '')
+        && (!('offerTitle' in d) || d.offerTitle == null || d.offerTitle == '')
+        && (!('offerText' in d) || d.offerText == null || d.offerText == '')
+        && (!('offerUntilMs' in d) || d.offerUntilMs == null)
+        && (!('hasOffer' in d) || d.hasOffer == false)
+        && (!('contactPhone' in d) || d.contactPhone == null || d.contactPhone == '')
+        && (!('contactWebsite' in d) || d.contactWebsite == null || d.contactWebsite == '')
+        && (!('description' in d) || d.description == null || d.description == '')
+        && (!('imageUrls' in d) || !d.keys().hasAll(['imageUrls']) || d.imageUrls.size() == 0);
+    }
+
+    function gemPerkKeysUnchanged() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+        'richUntilMs', 'promoUntilMs', 'listingKind', 'listingTier',
+        'promoTitle', 'promoDetails', 'promoStartsAtMs', 'promoEndsAtMs',
+        'offerTitle', 'offerText', 'offerUntilMs', 'hasOffer',
+        'contactPhone', 'contactWebsite', 'contactSocial', 'socialLinks',
+        'description', 'imageUrls', 'archivedRich'
+      ]);
+    }
+
     // ── Community hidden gems (user-generated, free) ───────────────────────
     match /gems/{gemId} {
-      allow read: if true;
+      // After 1.0.15 is installed: free/guest viewers wait until
+      // visibleToFreeAtMs only for business promo gems. Casual "share a
+      // spot" posts are visible immediately. Legacy docs without the
+      // timestamp stay visible. Creators, Premium, and admins see new
+      // promo gems now. DO NOT DEPLOY until 1.0.15 is the installed beta.
+      allow read: if isAdmin()
+                    || (isSignedIn() && resource.data.creatorId == request.auth.uid)
+                    || isProUser()
+                    || !isBusinessPromoGem(resource.data)
+                    || !('visibleToFreeAtMs' in resource.data)
+                    || resource.data.visibleToFreeAtMs <= request.time.toMillis();
       allow create: if isSignedIn()
                     && request.resource.data.creatorId == request.auth.uid
                     && request.resource.data.name is string
@@ -340,15 +476,15 @@ service cloud.firestore {
                     && request.resource.data.summary is string
                     && request.resource.data.summary.size() <= 200
                     && request.resource.data.latitude is number
-                    && request.resource.data.longitude is number;
+                    && request.resource.data.longitude is number
+                    && isBasicGemShape();
       // Owner/admin may edit; anyone signed in may bump the like/comment
       // counters (server-side Cloud Function also adjusts these).
       allow update: if isAdmin()
-                    || (isSignedIn() && (
-                      resource.data.creatorId == request.auth.uid
-                      || request.resource.data.diff(resource.data).affectedKeys()
-                          .hasOnly(['likeCount', 'commentCount'])
-                    ));
+                    || (isSignedIn() && resource.data.creatorId == request.auth.uid
+                        && gemPerkKeysUnchanged())
+                    || (isSignedIn() && request.resource.data.diff(resource.data)
+                          .affectedKeys().hasOnly(['likeCount', 'commentCount']));
       allow delete: if isAdmin()
                     || (isSignedIn()
                         && resource.data.creatorId == request.auth.uid);
