@@ -1042,6 +1042,77 @@ class AppLocalizationsEn extends AppLocalizations {
   String get basicListingBadge => 'Basic listing';
 
   @override
+  String get eventThreadTitle => 'Event thread';
+
+  @override
+  String get eventThreadHelp =>
+      'A private thread for the host and people who RSVP\'d. Phone numbers, emails, and social handles are hidden.';
+
+  @override
+  String get eventThreadOpen => 'Open event thread';
+
+  @override
+  String get eventThreadRsvpRequired => 'RSVP to join the event thread.';
+
+  @override
+  String get eventThreadEmpty =>
+      'No messages yet. Say hello and share the plan.';
+
+  @override
+  String get eventThreadHint => 'Write a message';
+
+  @override
+  String get eventThreadSend => 'Send';
+
+  @override
+  String get eventThreadSendFailed => 'Couldn\'t send that message. Try again.';
+
+  @override
+  String get eventThreadRemove => 'Remove message';
+
+  @override
+  String get eventThreadReport => 'Report message';
+
+  @override
+  String get eventThreadBlock => 'Block user';
+
+  @override
+  String get eventThreadDirectMessage => 'Message privately';
+
+  @override
+  String get eventThreadDmPremiumTitle => 'Direct messages are a Premium perk';
+
+  @override
+  String get eventThreadDmPremiumBody =>
+      'Premium hosts can message attendees directly, outside the event thread. Recipients can opt out.';
+
+  @override
+  String get eventThreadDmSent => 'Private message sent.';
+
+  @override
+  String get eventThreadOptOutDms => 'Turn off private messages';
+
+  @override
+  String get eventThreadAllowDms => 'Allow private messages';
+
+  @override
+  String get eventThreadMember => 'Attendee';
+
+  @override
+  String eventThreadReadCount(int count) {
+    return 'Read by $count';
+  }
+
+  @override
+  String get eventThreadHostMessage => 'Message from the host';
+
+  @override
+  String get eventThreadOpenDm => 'Open private messages';
+
+  @override
+  String get eventThreadDmEmpty => 'No private messages yet.';
+
+  @override
   String get unlockMediaGallery => 'Unlock full gallery';
 
   @override

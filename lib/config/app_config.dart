@@ -135,4 +135,27 @@ class AppConfig {
     'RENEW_GEM_RICH_FUNCTION_URL',
     defaultValue: 'https://renewgemrich-kfzltbt5ja-uc.a.run.app',
   );
+
+  /// `sendEventThreadMessage` and the other event-messaging callables.
+  /// Confirm the Cloud Run URLs after the first deploy.
+  static const String sendEventThreadMessageFunctionUrl = String.fromEnvironment(
+    'SEND_EVENT_THREAD_MESSAGE_FUNCTION_URL',
+    defaultValue: 'https://sendeventthreadmessage-kfzltbt5ja-uc.a.run.app',
+  );
+  static const String removeEventThreadMessageFunctionUrl = String.fromEnvironment(
+    'REMOVE_EVENT_THREAD_MESSAGE_FUNCTION_URL',
+    defaultValue: 'https://removeeventthreadmessage-kfzltbt5ja-uc.a.run.app',
+  );
+  static const String setEventThreadMuteFunctionUrl = String.fromEnvironment(
+    'SET_EVENT_THREAD_MUTE_FUNCTION_URL',
+    defaultValue: 'https://seteventthreadmute-kfzltbt5ja-uc.a.run.app',
+  );
+  static const String markEventThreadReadFunctionUrl = String.fromEnvironment(
+    'MARK_EVENT_THREAD_READ_FUNCTION_URL',
+    defaultValue: 'https://markeventthreadread-kfzltbt5ja-uc.a.run.app',
+  );
+  static const String sendEventDirectMessageFunctionUrl = String.fromEnvironment(
+    'SEND_EVENT_DIRECT_MESSAGE_FUNCTION_URL',
+    defaultValue: 'https://sendeventdirectmessage-kfzltbt5ja-uc.a.run.app',
+  );
 }

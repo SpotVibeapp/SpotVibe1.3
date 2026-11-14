@@ -184,3 +184,16 @@ When you ship 1.0.15, in Play Console → Policy → App content:
 - Remove any `ADMOB_*` keys from local `secrets.json` and CI
 
 See `PLAY_APP_CONTENT.md` for the full data-safety wording.
+
+## Event messaging (Play Console)
+
+Users can now message each other in a private event thread (host + RSVP'd attendees). Premium hosts can also send direct messages to people who RSVP'd. Recipients can opt out. Phone numbers, emails, and social handles are masked, and messages go through the existing moderation pipeline.
+
+Do this in Play Console before a store release that includes messaging:
+
+1. **Content rating questionnaire:** users interact / user-to-user communication is now Yes (or the equivalent "Users can communicate" item). Retake or update the questionnaire if the current rating was collected before messaging existed.
+2. **Data safety form:** add user messages / user-generated content if that row is not already covered. Messages are collected, not sold, not used for ads, optional, for app functionality.
+3. **User-generated content policy:** confirm a public support / report contact is listed (privacy@spotvibeapp.com or the in-app report flow). In-app report and block already exist.
+4. **Functions deploy:** after `firebase login --reauth`, deploy the new messaging callables (`sendEventThreadMessage`, `removeEventThreadMessage`, `setEventThreadMute`, `markEventThreadRead`, `sendEventDirectMessage`) and the comment PII-mask triggers. Confirm the Cloud Run URLs if they differ from the defaults in `AppConfig`.
+5. **Do not deploy Firestore or Storage rules until 1.0.15 is the installed beta.** Thread rules are staged in this branch.
+

@@ -4,6 +4,7 @@ import '../models/event_social_link.dart';
 import '../models/gem.dart';
 import '../models/moderation_result.dart';
 import '../repositories/gem_repository.dart';
+import '../data/pii_mask.dart';
 import 'ai_moderation_service.dart';
 import 'moderation_pipeline.dart';
 import 'parallel_moderation_service.dart';
@@ -368,7 +369,7 @@ class GemService {
       authorId: authorId,
       authorName: authorName.trim().isEmpty ? 'SpotVibe member' : authorName.trim(),
       authorAvatarUrl: authorAvatarUrl,
-      text: trimmed,
+      text: maskContactInfo(trimmed),
       createdAt: DateTime.now(),
     );
     final created = await _repository.addComment(gemId, comment);

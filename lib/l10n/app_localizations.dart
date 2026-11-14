@@ -1885,6 +1885,138 @@ abstract class AppLocalizations {
   /// **'Basic listing'**
   String get basicListingBadge;
 
+  /// No description provided for @eventThreadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Event thread'**
+  String get eventThreadTitle;
+
+  /// No description provided for @eventThreadHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'A private thread for the host and people who RSVP\'d. Phone numbers, emails, and social handles are hidden.'**
+  String get eventThreadHelp;
+
+  /// No description provided for @eventThreadOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open event thread'**
+  String get eventThreadOpen;
+
+  /// No description provided for @eventThreadRsvpRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'RSVP to join the event thread.'**
+  String get eventThreadRsvpRequired;
+
+  /// No description provided for @eventThreadEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet. Say hello and share the plan.'**
+  String get eventThreadEmpty;
+
+  /// No description provided for @eventThreadHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a message'**
+  String get eventThreadHint;
+
+  /// No description provided for @eventThreadSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get eventThreadSend;
+
+  /// No description provided for @eventThreadSendFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t send that message. Try again.'**
+  String get eventThreadSendFailed;
+
+  /// No description provided for @eventThreadRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove message'**
+  String get eventThreadRemove;
+
+  /// No description provided for @eventThreadReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Report message'**
+  String get eventThreadReport;
+
+  /// No description provided for @eventThreadBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Block user'**
+  String get eventThreadBlock;
+
+  /// No description provided for @eventThreadDirectMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Message privately'**
+  String get eventThreadDirectMessage;
+
+  /// No description provided for @eventThreadDmPremiumTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct messages are a Premium perk'**
+  String get eventThreadDmPremiumTitle;
+
+  /// No description provided for @eventThreadDmPremiumBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium hosts can message attendees directly, outside the event thread. Recipients can opt out.'**
+  String get eventThreadDmPremiumBody;
+
+  /// No description provided for @eventThreadDmSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Private message sent.'**
+  String get eventThreadDmSent;
+
+  /// No description provided for @eventThreadOptOutDms.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off private messages'**
+  String get eventThreadOptOutDms;
+
+  /// No description provided for @eventThreadAllowDms.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow private messages'**
+  String get eventThreadAllowDms;
+
+  /// No description provided for @eventThreadMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendee'**
+  String get eventThreadMember;
+
+  /// No description provided for @eventThreadReadCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Read by {count}'**
+  String eventThreadReadCount(int count);
+
+  /// No description provided for @eventThreadHostMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Message from the host'**
+  String get eventThreadHostMessage;
+
+  /// No description provided for @eventThreadOpenDm.
+  ///
+  /// In en, this message translates to:
+  /// **'Open private messages'**
+  String get eventThreadOpenDm;
+
+  /// No description provided for @eventThreadDmEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No private messages yet.'**
+  String get eventThreadDmEmpty;
+
   /// No description provided for @unlockMediaGallery.
   ///
   /// In en, this message translates to:

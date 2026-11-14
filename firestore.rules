@@ -355,6 +355,28 @@ service cloud.firestore {
       match /saved_events/{eventId} {
         allow read, write: if isOwner(uid);
       }
+
+      // Personal last-read cursor for the in-app unread badge. Visible
+      // read receipts for other participants are written only by the
+      // markEventThreadRead callable when the reader is Premium.
+      match /thread_reads/{eventId} {
+        allow read, delete: if isOwner(uid) || isAdmin();
+        allow create, update: if isOwner(uid)
+            && request.resource.data.keys().hasOnly(['lastReadAtMs', 'lastReadMessageId', 'updatedAt']);
+      }
+    }
+
+
+    function isEventHost(eventId) {
+      return isSignedIn()
+          && exists(/databases/$(database)/documents/events/$(eventId))
+          && get(/databases/$(database)/documents/events/$(eventId)).data.creatorId
+               == request.auth.uid;
+    }
+    function isEventThreadParticipant(eventId) {
+      return isEventHost(eventId)
+          || (isSignedIn()
+              && exists(/databases/$(database)/documents/events/$(eventId)/rsvps/$(request.auth.uid)));
     }
 
     // ── Partner store-code inventory ───────────────────────────────────────
@@ -420,6 +442,26 @@ service cloud.firestore {
         allow update, delete: if isAdmin()
                               || (isSignedIn()
                                   && resource.data.authorId == request.auth.uid);
+      }
+
+      // Event thread (host + RSVP'd attendees). Client writes go through
+      // callables; these rules only allow participant reads. Staged: do not
+      // deploy until 1.0.15 is the installed beta.
+      match /thread_messages/{messageId} {
+        allow read: if isAdmin() || isEventThreadParticipant(eventId);
+        allow create, update, delete: if false;
+      }
+      match /thread_meta/{docId} {
+        allow read: if isAdmin() || isEventThreadParticipant(eventId);
+        allow create, update, delete: if false;
+      }
+      match /thread_receipts/{userId} {
+        allow read: if isAdmin() || isEventThreadParticipant(eventId);
+        allow create, update, delete: if false;
+      }
+      match /thread_mutes/{userId} {
+        allow read: if isAdmin() || isOwner(userId) || isEventHost(eventId);
+        allow create, update, delete: if false;
       }
     }
 
@@ -578,6 +620,24 @@ service cloud.firestore {
                     && request.resource.data.reason.size() <= 1000;
       allow read, delete: if isAdmin();
       allow update: if false;
+    }
+
+    // Host-to-attendee direct messages (Premium host only; writes via callable).
+    match /event_dms/{threadId} {
+      allow read: if isAdmin()
+                  || (isSignedIn()
+                      && (resource.data.hostId == request.auth.uid
+                          || resource.data.attendeeId == request.auth.uid));
+      allow create, update, delete: if false;
+      match /dm_messages/{messageId} {
+        allow read: if isAdmin()
+                    || (isSignedIn()
+                        && (get(/databases/$(database)/documents/event_dms/$(threadId)).data.hostId
+                              == request.auth.uid
+                            || get(/databases/$(database)/documents/event_dms/$(threadId)).data.attendeeId
+                              == request.auth.uid));
+        allow create, update, delete: if false;
+      }
     }
 
     // ── Deny everything else ──────────────────────────────────────────────

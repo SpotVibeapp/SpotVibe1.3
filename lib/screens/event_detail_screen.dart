@@ -28,6 +28,7 @@ import '../widgets/common/source_badge.dart';
 import '../widgets/common/user_action_sheet.dart';
 import '../widgets/events/attendees_section.dart';
 import '../widgets/events/comment_section.dart';
+import '../widgets/events/event_thread_section.dart';
 import '../widgets/events/practical_details_section.dart';
 import '../widgets/events/get_tickets_button.dart';
 import '../widgets/events/quick_actions_section.dart';
@@ -303,6 +304,8 @@ class _DetailContent extends StatelessWidget {
                   ],
                   const SizedBox(height: AppTheme.spacingLg),
                   AttendeesSection(accent: catColor),
+                  const SizedBox(height: AppTheme.spacingLg),
+                  EventThreadSection(eventId: event.id, creatorId: event.creatorId, accent: catColor),
                   const SizedBox(height: AppTheme.spacingLg),
                   SimilarEventsSection(currentEvent: event),
                   const SizedBox(height: AppTheme.spacingLg),

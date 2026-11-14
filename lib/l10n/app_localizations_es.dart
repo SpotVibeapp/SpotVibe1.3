@@ -1053,6 +1053,80 @@ class AppLocalizationsEs extends AppLocalizations {
   String get basicListingBadge => 'Listado básico';
 
   @override
+  String get eventThreadTitle => 'Hilo del evento';
+
+  @override
+  String get eventThreadHelp =>
+      'Un hilo privado para el anfitrión y quienes confirmaron asistencia. Se ocultan teléfonos, correos y usuarios de redes.';
+
+  @override
+  String get eventThreadOpen => 'Abrir hilo del evento';
+
+  @override
+  String get eventThreadRsvpRequired =>
+      'Confirma asistencia para unirte al hilo.';
+
+  @override
+  String get eventThreadEmpty =>
+      'Aún no hay mensajes. Saluda y comparte el plan.';
+
+  @override
+  String get eventThreadHint => 'Escribe un mensaje';
+
+  @override
+  String get eventThreadSend => 'Enviar';
+
+  @override
+  String get eventThreadSendFailed =>
+      'No se pudo enviar el mensaje. Inténtalo de nuevo.';
+
+  @override
+  String get eventThreadRemove => 'Quitar mensaje';
+
+  @override
+  String get eventThreadReport => 'Reportar mensaje';
+
+  @override
+  String get eventThreadBlock => 'Bloquear usuario';
+
+  @override
+  String get eventThreadDirectMessage => 'Mensaje privado';
+
+  @override
+  String get eventThreadDmPremiumTitle =>
+      'Los mensajes privados son una función Premium';
+
+  @override
+  String get eventThreadDmPremiumBody =>
+      'Los anfitriones Premium pueden escribir a los asistentes fuera del hilo. Quienes reciben el mensaje pueden desactivarlo.';
+
+  @override
+  String get eventThreadDmSent => 'Mensaje privado enviado.';
+
+  @override
+  String get eventThreadOptOutDms => 'Desactivar mensajes privados';
+
+  @override
+  String get eventThreadAllowDms => 'Permitir mensajes privados';
+
+  @override
+  String get eventThreadMember => 'Asistente';
+
+  @override
+  String eventThreadReadCount(int count) {
+    return 'Leído por $count';
+  }
+
+  @override
+  String get eventThreadHostMessage => 'Mensaje del anfitrión';
+
+  @override
+  String get eventThreadOpenDm => 'Abrir mensajes privados';
+
+  @override
+  String get eventThreadDmEmpty => 'Aún no hay mensajes privados.';
+
+  @override
   String get unlockMediaGallery => 'Desbloquear galería completa';
 
   @override

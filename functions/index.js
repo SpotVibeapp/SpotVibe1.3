@@ -71,6 +71,8 @@ const {
   shouldGateBasicRsvp,
 } = require('./lib/featureFlags');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
+const eventMessagingHandlers = require('./lib/eventMessagingHandlers');
+
 const zlib = require('zlib');
 const { planFeedFields } = require('./lib/feedFields');
 const { assessParallelModeration } = require('./lib/parallelModeration');
@@ -216,6 +218,24 @@ async function collectUserDeletions(uid) {
   // firestore.indexes.json).
   push(await db.collectionGroup('rsvps').where('userId', '==', uid).get());
   push(await db.collectionGroup('comments').where('authorId', '==', uid).get());
+  try {
+    push(await db.collectionGroup('thread_messages').where('authorId', '==', uid).get());
+  } catch (e) {
+    console.warn('thread_messages purge skipped:', e && e.message);
+  }
+  try {
+    push(await db.collectionGroup('dm_messages').where('authorId', '==', uid).get());
+  } catch (e) {
+    console.warn('dm_messages purge skipped:', e && e.message);
+  }
+  try {
+    const dmsHost = await db.collection('event_dms').where('hostId', '==', uid).get();
+    push(dmsHost);
+    const dmsAtt = await db.collection('event_dms').where('attendeeId', '==', uid).get();
+    push(dmsAtt);
+  } catch (e) {
+    console.warn('event_dms purge skipped:', e && e.message);
+  }
 
   push(await db.collection('event_claims').where('userId', '==', uid).get());
   push(await db.collection('user_reports').where('reportedById', '==', uid).get());
@@ -2107,4 +2127,56 @@ exports.downgradeExpiredGems = onSchedule(
     const result = await downgradeExpiredRichGems();
     console.log(`downgradeExpiredGems: hid rich fields on ${result.updated} gem(s)`);
   }
+);
+
+
+// Event threads and host-to-attendee DMs. Writes go through these callables
+// so Premium gates, RSVP checks, rate limits, PII masking, and moderation
+// are server-enforced. Deploy after firebase reauth; do not merge rules
+// until 1.0.15 is the installed beta.
+eventMessagingHandlers.install({
+  exports,
+  onCall,
+  HttpsError,
+  admin,
+  containsBanned,
+  runParallelModeration,
+  verifiedEntitlement,
+  revenueCatSecretKey,
+});
+
+exports.parallelModerateThreadMessage = parallelOnCreate(
+  'events/{eventId}/thread_messages/{messageId}',
+  (snap) => ({
+    text: snap.get('text') || '',
+    authorId: snap.get('authorId') || '',
+    targetPath: snap.ref.path,
+  })
+);
+
+exports.parallelModerateDirectMessage = parallelOnCreate(
+  'event_dms/{threadId}/dm_messages/{messageId}',
+  (snap) => ({
+    text: snap.get('text') || '',
+    authorId: snap.get('authorId') || '',
+    targetPath: snap.ref.path,
+  })
+);
+
+/** Mask phone numbers, emails, and social handles on public comments. */
+async function maskCommentPii(event) {
+  const snap = event.data && event.data.after;
+  if (!snap || !snap.exists) return;
+  const text = snap.get('text') || '';
+  const masked = require('./lib/piiMask').maskContactInfo(text);
+  if (masked === String(text).replace(/\s{2,}/g, ' ').trim()) return;
+  await snap.ref.update({ text: masked, piiMasked: true });
+}
+exports.maskEventCommentPii = require('firebase-functions/v2/firestore').onDocumentWritten(
+  'events/{eventId}/comments/{commentId}',
+  maskCommentPii
+);
+exports.maskGemCommentPii = require('firebase-functions/v2/firestore').onDocumentWritten(
+  'gems/{gemId}/comments/{commentId}',
+  maskCommentPii
 );

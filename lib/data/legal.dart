@@ -43,7 +43,7 @@ const LegalDocument kPrivacyPolicy = LegalDocument(
       'Account: name, email, password (stored by Firebase Authentication, not in plain text), and a profile photo if you upload one or sign in with Google or Apple.\n\n'
           'Events you create: title, description, start and end time, up to five photos including a cover, up to three short videos (up to 30 seconds each), location, ticket price, and optional contact, branding, and public organizer social-profile links. Social links you choose to add are visible on that event page. We do not collect social-media passwords, connect to your social account, or post on your behalf. If you choose to generate an AI promo background, we send the event title, description, category, venue context, selected visual style, and optional art-direction text to OpenAI to generate that image. Poster Studio formats a share poster from the event details you entered; it does not ask OpenAI to invent poster text.\n\n'
           'Ask SpotVibe: if you choose the signed-in AI event-search assistant, we send your short search request to OpenAI only to turn it into search filters. We do not send your account email or precise device location to OpenAI for this feature. The app then retrieves displayed event listings separately from SpotVibe and Ticketmaster; the AI assistant does not create event listings. Do not include sensitive personal information in an AI request.\n\n'
-          'RSVPs and comments: whether you are going, and any text you post.\n\n'
+          'RSVPs, comments, and messages: whether you are going, comments you post, and messages you send in an event thread or a host-to-attendee direct message. Event threads are visible to the host and people who RSVP’d. Direct messages are visible only to the host and that attendee. We automatically hide phone numbers, emails, and social handles in these messages and in comments.\n\n'
           'Venue / event claims: your name, work email, phone, organization, role, and any proof you submit so we can verify you are authorized.\n\n'
           'Support: anything you email us.',
     ),
@@ -70,7 +70,7 @@ const LegalDocument kPrivacyPolicy = LegalDocument(
     LegalSection(
       'When we share information',
       'Service providers that host or process data for us: Google Firebase (auth, database, file storage for photos and short videos), Apple and Google (app stores and in-app purchases), RevenueCat (subscription status), Ticketmaster (outbound event search only), and OpenAI (only when you choose to generate an AI promo background or Ask SpotVibe to interpret a search request).\n\n'
-          'The public: events you publish, public RSVPs, and comments are visible to other users.\n\n'
+          'The public: events you publish, public RSVPs, and comments are visible to other users. Event-thread messages are visible only to the host and RSVP’d attendees. Host-to-attendee direct messages are visible only to those two people.\n\n'
           'Legal: if required by law, to protect people, or in a sale of the business.\n\n'
           'We do not sell your personal information.',
     ),
@@ -128,7 +128,7 @@ const LegalDocument kTermsOfUse = LegalDocument(
     ),
     LegalSection(
       'Your content',
-      'You keep ownership of events, photos, short videos, comments, and claim materials you submit. You grant SpotVibe a worldwide, non-exclusive license to host, display, and distribute that content in the app and in shares or previews so the service can work.\n\n'
+      'You keep ownership of events, photos, short videos, comments, event-thread and direct messages, and claim materials you submit. You grant SpotVibe a worldwide, non-exclusive license to host, display, and distribute that content in the app and in shares or previews so the service can work.\n\n'
           'Events must be real, not duplicates, and use accurate images of that event or venue. Do not post spam, illegal activity, hate, harassment, sexual content involving minors, or anyone’s private information.\n\n'
           'If you add an organizer social link, you must control that public profile and may not use it to impersonate a person, venue, or platform. Social links open externally; SpotVibe does not connect to or post through your account.\n\n'
           'We may remove content or suspend accounts that break these rules, including false venue claims.',
