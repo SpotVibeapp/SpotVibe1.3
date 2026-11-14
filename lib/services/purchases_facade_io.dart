@@ -2,7 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 export 'package:purchases_flutter/purchases_flutter.dart'
-    show CustomerInfo, Offering, Offerings, Package, StoreProduct;
+    show
+        CustomerInfo,
+        IntroEligibility,
+        IntroEligibilityStatus,
+        Offering,
+        Offerings,
+        Package,
+        StoreProduct;
 
 /// Mobile RevenueCat SDK. The web build never imports this library.
 class PurchasesBinding {
@@ -64,6 +71,19 @@ class PurchasesBinding {
       return await Purchases.restorePurchases();
     } catch (_) {
       return null;
+    }
+  }
+
+  static Future<Map<String, IntroEligibility>> checkIntroEligibility(
+    List<String> productIds,
+  ) async {
+    if (productIds.isEmpty) return {};
+    try {
+      return await Purchases.checkTrialOrIntroductoryPriceEligibility(
+        productIds,
+      );
+    } catch (_) {
+      return {};
     }
   }
 }

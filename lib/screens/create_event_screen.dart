@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../data/event_time.dart';
 import '../data/media_urls.dart';
 import '../data/pricing.dart';
+import '../services/feature_flags.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/category_labels.dart';
 import '../models/user_event.dart';
@@ -73,6 +74,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   final List<String> _remoteVideoUrls = [];
   int _initialPhotoCount = 0;
   int _initialVideoCount = 0;
+  int _initialDescriptionLength = 0;
+  bool _hadExistingSocialLinks = false;
+  bool _hadExistingChatLink = false;
   bool _aiGeneratedCover = false;
   bool _uploadingMedia = false;
   bool _hasCheckedEventCreationGuide = false;
@@ -83,8 +87,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   final _contactPhoneController = TextEditingController();
   final _contactWebsiteController = TextEditingController();
   final _contactSocialController = TextEditingController();
-  // Public organizer social links are available to every creator. They are
-  // event-level links, not social account sign-in or automatic posting.
+  // Public organizer social links are a Premium perk. Existing free posts
+  // may keep links they already published (grandfathered).
   final _instagramController = TextEditingController();
   final _facebookController = TextEditingController();
   final _snapchatController = TextEditingController();
@@ -107,6 +111,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     if (e != null) {
       _titleController.text = e.title;
       _descriptionController.text = e.description;
+      _initialDescriptionLength = e.description.length;
+      _hadExistingSocialLinks = e.socialLinks.isNotEmpty;
+      _hadExistingChatLink = (e.chatLink ?? "").trim().isNotEmpty;
       _locationController.text = e.location;
       _addressController.text = e.address;
       _cityController.text = e.city;
@@ -676,11 +683,31 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       );
       return;
     }
-    final socialLinks = EventSocialLinks.fromInput(rawSocialLinks);
+    var socialLinks = EventSocialLinks.fromInput(rawSocialLinks);
     final auth = context.read<AuthProvider>();
     // Admin access is equivalent to creator Premium capability for event
     // tools, without creating or implying a billing entitlement.
     final hasCreatorAccess = _isCreatorPro || auth.isAdmin;
+    if (!hasCreatorAccess) {
+      // New social links require Premium. Grandfathered posts keep the
+      // values already on the event; the server also enforces this.
+      if (_hadExistingSocialLinks && widget.editingEvent != null) {
+        socialLinks = widget.editingEvent!.socialLinks;
+      } else {
+        socialLinks = const EventSocialLinks.empty();
+      }
+    }
+    final flags = context.read<FeatureFlags>();
+    final allowedDesc = allowedFreeDescriptionLength(
+      cap: flags.freeEventDescriptionMax,
+      existingLength: _initialDescriptionLength,
+    );
+    if (!hasCreatorAccess && _descriptionController.text.length > allowedDesc) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.descriptionFreeTooLong(allowedDesc))),
+      );
+      return;
+    }
     final subCheck = context.read<SubscriptionProvider>();
     // Admins post unlimited official events without the free-plan cap.
     if (!_isEditing && !subCheck.isSubscribed && !auth.isAdmin) {
@@ -688,14 +715,24 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       if (uid != null) {
         final mine = await context.read<UserEventRepository>().getEventsForUser(uid);
         final active = countActiveUserEvents(mine.map((e) => e.dateTime));
-        if (!canPostAnotherFreeEvent(active, isPremium: false)) {
+        final flags = context.read<FeatureFlags>();
+        final postedThisMonth = countPostsInCalendarMonth(mine.map((e) => e.createdAt));
+        if (!canPostAnotherFreeEventThisMonth(
+              postedThisMonth,
+              isPremium: false,
+              cap: flags.freeEventPostsPerMonth,
+            ) ||
+            !canPostAnotherFreeEvent(active, isPremium: false)) {
           if (!mounted) return;
           final upgrade = await showDialog<bool>(
             context: context,
             builder: (ctx) => AlertDialog(
               title: Text(l10n.freePlanLimit),
               content: Text(
-                l10n.freePlanLimitBody(l10n.trialLabel),
+                l10n.freePlanLimitMonthlyBody(
+                  flags.freeEventPostsPerMonth,
+                  kFreeUserActiveEventLimit,
+                ),
               ),
               actions: [
                 TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.notNow)),
@@ -849,7 +886,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       videoUrls: videoUrls,
       category: _selectedCategory,
       mapLink: _mapLinkController.text.trim().isEmpty ? null : _mapLinkController.text.trim(),
-      chatLink: _chatLinkController.text.trim().isEmpty ? null : _chatLinkController.text.trim(),
+      chatLink: !hasCreatorAccess
+          ? (_hadExistingChatLink ? widget.editingEvent?.chatLink : null)
+          : (_chatLinkController.text.trim().isEmpty
+              ? null
+              : _chatLinkController.text.trim()),
       isPremiumListing: _isPremiumListing,
       isCreatorPro: hasCreatorAccess,
       recurringType: hasCreatorAccess ? _recurringType : RecurringType.none,
@@ -956,7 +997,27 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               hint: l10n.descriptionHint,
               icon: Icons.description_rounded,
               maxLines: 4,
-              validator: (v) => (v == null || v.trim().isEmpty) ? l10n.descriptionRequired : null,
+              maxLength: hasCreatorAccess
+                  ? null
+                  : allowedFreeDescriptionLength(
+                      cap: context.watch<FeatureFlags>().freeEventDescriptionMax,
+                      existingLength: _initialDescriptionLength,
+                    ),
+              helperText: hasCreatorAccess
+                  ? null
+                  : l10n.descriptionFreeHelper(
+                      context.watch<FeatureFlags>().freeEventDescriptionMax,
+                    ),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return l10n.descriptionRequired;
+                if (hasCreatorAccess) return null;
+                final cap = allowedFreeDescriptionLength(
+                  cap: context.read<FeatureFlags>().freeEventDescriptionMax,
+                  existingLength: _initialDescriptionLength,
+                );
+                if (v.length > cap) return l10n.descriptionFreeTooLong(cap);
+                return null;
+              },
             ),
             const SizedBox(height: AppTheme.spacingMd),
 
@@ -1262,24 +1323,44 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: AppTheme.spacingMd),
-            _FormField(
-              controller: _chatLinkController,
-              label: l10n.chatLink,
-              hint: 'https://discord.gg/... or WhatsApp, Telegram link',
-              icon: Icons.forum_rounded,
-              keyboardType: TextInputType.url,
-            ),
+            if (hasCreatorAccess || _hadExistingChatLink)
+              _FormField(
+                controller: _chatLinkController,
+                label: l10n.chatLink,
+                hint: 'https://discord.gg/... or WhatsApp, Telegram link',
+                icon: Icons.forum_rounded,
+                keyboardType: TextInputType.url,
+                enabled: hasCreatorAccess,
+                helperText: hasCreatorAccess
+                    ? null
+                    : l10n.chatLinkGrandfathered,
+              )
+            else ...[
+              _MediaGalleryUpgradeBanner(
+                description: l10n.chatLinkPremiumPerk,
+                actionLabel: l10n.chatLinkPremiumLocked,
+                onUpgrade: _openPaywall,
+              ),
+            ],
             const SizedBox(height: AppTheme.spacingLg),
 
-            // Public social links are intentionally separate from Premium
-            // contact/branding tools: every signed-in creator can add them.
-            _OrganizerSocialLinksForm(
-              instagramController: _instagramController,
-              facebookController: _facebookController,
-              snapchatController: _snapchatController,
-              tiktokController: _tiktokController,
-              youtubeController: _youtubeController,
-            ),
+            if (hasCreatorAccess || _hadExistingSocialLinks)
+              _OrganizerSocialLinksForm(
+                instagramController: _instagramController,
+                facebookController: _facebookController,
+                snapchatController: _snapchatController,
+                tiktokController: _tiktokController,
+                youtubeController: _youtubeController,
+                enabled: hasCreatorAccess,
+              )
+            else ...[
+              _SectionHeader(title: l10n.organizerSocialLinks),
+              _MediaGalleryUpgradeBanner(
+                description: l10n.socialLinksPremiumPerk,
+                actionLabel: l10n.socialLinksPremiumLocked,
+                onUpgrade: _openPaywall,
+              ),
+            ],
             const SizedBox(height: AppTheme.spacingLg),
 
             // ── Premium section ──────────────────────────────────────────────
@@ -1324,6 +1405,7 @@ class _OrganizerSocialLinksForm extends StatelessWidget {
   final TextEditingController snapchatController;
   final TextEditingController tiktokController;
   final TextEditingController youtubeController;
+  final bool enabled;
 
   const _OrganizerSocialLinksForm({
     required this.instagramController,
@@ -1331,6 +1413,7 @@ class _OrganizerSocialLinksForm extends StatelessWidget {
     required this.snapchatController,
     required this.tiktokController,
     required this.youtubeController,
+    this.enabled = true,
   });
 
   @override
@@ -1350,6 +1433,7 @@ class _OrganizerSocialLinksForm extends StatelessWidget {
         const SizedBox(height: AppTheme.spacingMd),
         _FormField(
           controller: instagramController,
+          enabled: enabled,
           label: l10n.instagramOptional,
           hint: l10n.socialProfileHint,
           icon: Icons.camera_alt_rounded,
@@ -1358,6 +1442,7 @@ class _OrganizerSocialLinksForm extends StatelessWidget {
         const SizedBox(height: AppTheme.spacingMd),
         _FormField(
           controller: facebookController,
+          enabled: enabled,
           label: l10n.facebookOptional,
           hint: l10n.socialProfileHint,
           icon: Icons.facebook_rounded,
@@ -1366,6 +1451,7 @@ class _OrganizerSocialLinksForm extends StatelessWidget {
         const SizedBox(height: AppTheme.spacingMd),
         _FormField(
           controller: snapchatController,
+          enabled: enabled,
           label: l10n.snapchatOptional,
           hint: l10n.socialProfileHint,
           icon: Icons.chat_bubble_rounded,
@@ -1374,6 +1460,7 @@ class _OrganizerSocialLinksForm extends StatelessWidget {
         const SizedBox(height: AppTheme.spacingMd),
         _FormField(
           controller: tiktokController,
+          enabled: enabled,
           label: l10n.tiktokOptional,
           hint: l10n.socialProfileHint,
           icon: Icons.music_note_rounded,
@@ -1382,6 +1469,7 @@ class _OrganizerSocialLinksForm extends StatelessWidget {
         const SizedBox(height: AppTheme.spacingMd),
         _FormField(
           controller: youtubeController,
+          enabled: enabled,
           label: l10n.youtubeOptional,
           hint: l10n.socialProfileHint,
           icon: Icons.play_circle_fill_rounded,
@@ -1820,6 +1908,9 @@ class _FormField extends StatelessWidget {
   final String hint;
   final IconData icon;
   final int maxLines;
+  final int? maxLength;
+  final String? helperText;
+  final bool enabled;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
   final ValueChanged<String>? onChanged;
@@ -1830,6 +1921,9 @@ class _FormField extends StatelessWidget {
     required this.hint,
     required this.icon,
     this.maxLines = 1,
+    this.maxLength,
+    this.helperText,
+    this.enabled = true,
     this.keyboardType,
     this.validator,
     this.onChanged,
@@ -1841,12 +1935,15 @@ class _FormField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
+      maxLength: maxLength,
+      enabled: enabled,
       keyboardType: keyboardType,
       validator: validator,
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
+        helperText: helperText,
         prefixIcon: Icon(icon, size: AppTheme.iconSm, color: colors.onSurfaceVariant),
       ),
     );

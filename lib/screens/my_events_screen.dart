@@ -241,7 +241,7 @@ class _EventAnalyticsRow extends StatelessWidget {
             Icon(Icons.bar_chart_rounded, size: AppTheme.iconSm, color: appColors.creatorTeal),
             const SizedBox(width: AppTheme.spacingXs),
             Text(
-              '${event.analyticsViews} views · ${event.analyticsSaves} saves · ${event.analyticsClicks} clicks',
+              '${event.analyticsViews} views · ${event.analyticsSaves} saves · ${event.analyticsShares} shares',
               style: text.labelSmall?.copyWith(color: appColors.creatorTeal, fontWeight: FontWeight.w600),
             ),
             const Spacer(),

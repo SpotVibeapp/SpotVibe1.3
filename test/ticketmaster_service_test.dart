@@ -149,7 +149,7 @@ void main() {
     expect(url, contains('chihuahuas-logo'));
   });
 
-  test('uses the ballpark photo when Ticketmaster only sent stock art', () {
+  test('leaves Ticketmaster genre stock as a generic URL, not a venue photo', () {
     final event = eventFromTicketmaster({
       'id': 'G5vYZglove',
       'name': 'El Paso Chihuahuas vs. Round Rock Express',
@@ -175,8 +175,8 @@ void main() {
       },
     });
     expect(event, isNotNull);
-    expect(event!.imageUrl, contains('southwest_university_park'));
-    expect(event.imageUrl.startsWith('assets/venues/'), isTrue);
+    expect(event!.imageUrl, contains('/dam/c/'));
+    expect(isGenericEventImage(event.imageUrl), isTrue);
   });
 
   test('prefers unique attraction art over fallback and /dam/c/ stock', () {
@@ -203,18 +203,20 @@ void main() {
     expect(url, 'https://s1.ticketm.net/dam/a/e67/artist_TABLET_LANDSCAPE_16_9.jpg');
   });
 
-  test('returns empty when every image is generic stock', () {
+  test('keeps generic stock when that is all Ticketmaster sent', () {
+    const stock = 'https://s1.ticketm.net/dam/c/aaa/music_16_9.jpg';
     expect(
       pickTicketmasterImage([
         {
-          'url': 'https://s1.ticketm.net/dam/c/aaa/music_16_9.jpg',
+          'url': stock,
           'width': 2048,
           'ratio': '16_9',
           'fallback': true,
         },
       ]),
-      isEmpty,
+      stock,
     );
+    expect(isGenericEventImage(stock), isTrue);
   });
 
   test('uses attraction art when the event only has stock images', () {
