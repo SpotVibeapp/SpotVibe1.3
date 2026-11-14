@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../config/app_config.dart';
 import '../data/event_codec.dart';
 import '../data/rules_compat.dart';
+import '../models/attendance_mode.dart';
 import '../models/user_event.dart';
 import '../models/event_social_link.dart';
 import 'user_event_repository.dart';
@@ -299,6 +300,8 @@ class FirebaseUserEventRepository extends UserEventRepository {
     String? brandColor,
     String? brandLogoUrl,
     String? featuredWeekKey,
+    AttendanceMode attendanceMode = AttendanceMode.rsvpRequested,
+    String? ticketUrl,
   }) {
     return _guard(() async {
       final event = UserCreatedEvent(
@@ -333,6 +336,8 @@ class FirebaseUserEventRepository extends UserEventRepository {
         brandColor: brandColor,
         brandLogoUrl: brandLogoUrl,
         featuredWeekKey: featuredWeekKey,
+        attendanceMode: attendanceMode,
+        ticketUrl: ticketUrl,
       );
       return _saveEvent(event, isCreate: true, endDateTime: endDateTime);
     }, () => super.createEvent(
@@ -366,6 +371,8 @@ class FirebaseUserEventRepository extends UserEventRepository {
           brandColor: brandColor,
           brandLogoUrl: brandLogoUrl,
           featuredWeekKey: featuredWeekKey,
+          attendanceMode: attendanceMode,
+          ticketUrl: ticketUrl,
         ));
   }
 

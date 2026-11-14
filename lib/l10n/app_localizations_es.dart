@@ -2709,4 +2709,54 @@ class AppLocalizationsEs extends AppLocalizations {
   String eventTextPlaceholderSemantics(String headline) {
     return 'Sin foto del evento. $headline';
   }
+
+  @override
+  String get attendanceModeSection => 'Cómo se unen las personas';
+
+  @override
+  String get attendanceModeDropIn => 'Pase libre';
+
+  @override
+  String get attendanceModeRsvp => 'Se pide confirmar asistencia';
+
+  @override
+  String get attendanceModeTickets => 'Boletos';
+
+  @override
+  String get attendanceModeDropInHelp =>
+      'Un botón sencillo de \"Voy\". Ideal para ventas de garage y tianguis.';
+
+  @override
+  String get attendanceModeRsvpHelp =>
+      'La gente confirma que va, y ves el recuento y la lista de nombres. Ideal para noches de juegos.';
+
+  @override
+  String get attendanceModeTicketsHelp =>
+      'Envía a la gente a tu enlace de boletos. Es una función Premium.';
+
+  @override
+  String get attendanceTicketUrl => 'Enlace de boletos';
+
+  @override
+  String get attendanceTicketUrlRequired =>
+      'Agrega un enlace de boletos para eventos con entrada.';
+
+  @override
+  String get imGoing => 'Voy';
+
+  @override
+  String get youAreGoing => 'Vas a ir';
+
+  @override
+  String goingCount(int count) {
+    return '$count van';
+  }
+
+  @override
+  String get attendanceTicketsPremiumTitle =>
+      'Los enlaces de boletos son una función Premium';
+
+  @override
+  String get attendanceTicketsPremiumBody =>
+      'Pasa a Premium para enviar a la gente a un enlace de boletos. El pase libre y confirmar asistencia siguen siendo gratis.';
 }

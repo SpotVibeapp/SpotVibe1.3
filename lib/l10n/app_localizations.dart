@@ -4830,6 +4830,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No event photo. {headline}'**
   String eventTextPlaceholderSemantics(String headline);
+
+  /// No description provided for @attendanceModeSection.
+  ///
+  /// In en, this message translates to:
+  /// **'How people join'**
+  String get attendanceModeSection;
+
+  /// No description provided for @attendanceModeDropIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop-in'**
+  String get attendanceModeDropIn;
+
+  /// No description provided for @attendanceModeRsvp.
+  ///
+  /// In en, this message translates to:
+  /// **'RSVP requested'**
+  String get attendanceModeRsvp;
+
+  /// No description provided for @attendanceModeTickets.
+  ///
+  /// In en, this message translates to:
+  /// **'Tickets'**
+  String get attendanceModeTickets;
+
+  /// No description provided for @attendanceModeDropInHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'A light \"I\'m going\" button. Best for yard sales and flea markets.'**
+  String get attendanceModeDropInHelp;
+
+  /// No description provided for @attendanceModeRsvpHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'People confirm they\'re coming, and you see a headcount and name list. Best for game nights.'**
+  String get attendanceModeRsvpHelp;
+
+  /// No description provided for @attendanceModeTicketsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Sends people to your ticket link. This is a Premium perk.'**
+  String get attendanceModeTicketsHelp;
+
+  /// No description provided for @attendanceTicketUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Ticket link'**
+  String get attendanceTicketUrl;
+
+  /// No description provided for @attendanceTicketUrlRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a ticket link for ticketed events.'**
+  String get attendanceTicketUrlRequired;
+
+  /// No description provided for @imGoing.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m going'**
+  String get imGoing;
+
+  /// No description provided for @youAreGoing.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re going'**
+  String get youAreGoing;
+
+  /// No description provided for @goingCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} going'**
+  String goingCount(int count);
+
+  /// No description provided for @attendanceTicketsPremiumTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ticket links are a Premium perk'**
+  String get attendanceTicketsPremiumTitle;
+
+  /// No description provided for @attendanceTicketsPremiumBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade to Premium to send people to a ticket link. Drop-in and RSVP requested stay free.'**
+  String get attendanceTicketsPremiumBody;
 }
 
 class _AppLocalizationsDelegate

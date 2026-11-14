@@ -8,6 +8,7 @@ import '../data/pricing.dart';
 import '../services/feature_flags.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/category_labels.dart';
+import '../models/attendance_mode.dart';
 import '../models/user_event.dart';
 import '../models/event_social_link.dart';
 import '../providers/auth_provider.dart';
@@ -25,6 +26,7 @@ import '../platform/local_media.dart';
 import '../theme/theme.dart';
 import '../widgets/common/fullscreen_image_viewer.dart';
 import '../widgets/events/ai_promo_image_dialog.dart';
+import '../widgets/billing/soft_paywall_sheet.dart';
 import '../widgets/events/event_creation_guide.dart';
 import '../widgets/events/event_media_editor.dart';
 import '../widgets/events/event_poster_studio.dart';
@@ -64,6 +66,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   DateTime _selectedEndDate = DateTime.now().add(const Duration(days: 7));
   TimeOfDay? _selectedEndTime;
   String _selectedCategory = 'Music';
+  AttendanceMode _attendanceMode = AttendanceMode.rsvpRequested;
+  bool _attendanceTouched = false;
+  final _ticketUrlController = TextEditingController();
   bool _isPremiumListing = false;
   String? _moderationError;
   late final String _eventMediaId;
@@ -143,6 +148,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               minute: endDateTime.minute,
             );
       _selectedCategory = e.category;
+      _attendanceMode = e.attendanceMode;
+      _attendanceTouched = true;
+      _ticketUrlController.text = e.ticketUrl ?? '';
       _isPremiumListing = e.isPremiumListing;
       // Restore Premium fields if the event was created on Premium
       _isCreatorPro = e.isCreatorPro;
@@ -193,6 +201,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     _videoUrlController.dispose();
     _mapLinkController.dispose();
     _chatLinkController.dispose();
+    _ticketUrlController.dispose();
     _contactPhoneController.dispose();
     _contactWebsiteController.dispose();
     _contactSocialController.dispose();
@@ -865,6 +874,17 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     coverUrl = photoUrls.isEmpty ? '' : photoUrls.first;
     final videoUrl = videoUrls.isEmpty ? null : videoUrls.first;
 
+    if (_attendanceMode == AttendanceMode.tickets) {
+      final url = _ticketUrlController.text.trim();
+      final parsed = Uri.tryParse(url);
+      if (url.isEmpty || parsed == null || !parsed.hasScheme) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.attendanceTicketUrlRequired)),
+        );
+        return;
+      }
+    }
+
     final provider = context.read<CreateEventProvider>();
     final result = await provider.submit(
       id: _eventMediaId,
@@ -894,6 +914,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       socialLinks: socialLinks,
       brandColor: hasCreatorAccess ? _brandColorController.text.trim() : null,
       brandLogoUrl: hasCreatorAccess ? _brandLogoController.text.trim() : null,
+      attendanceMode: _attendanceMode,
+      ticketUrl: _attendanceMode == AttendanceMode.tickets
+          ? _ticketUrlController.text.trim()
+          : null,
     );
 
     if (!mounted) return;
@@ -1019,7 +1043,35 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             _CategoryDropdown(
               value: _selectedCategory,
               categories: _categories,
-              onChanged: (v) => setState(() => _selectedCategory = v!),
+              onChanged: (v) => setState(() {
+                _selectedCategory = v!;
+                if (!_attendanceTouched) {
+                  final premium = context.read<SubscriptionProvider>().isSubscribed;
+                  _attendanceMode = defaultAttendanceMode(_selectedCategory, isPremium: premium);
+                }
+              }),
+            ),
+            const SizedBox(height: AppTheme.spacingMd),
+            _AttendanceModePicker(
+              mode: _attendanceMode,
+              ticketUrlController: _ticketUrlController,
+              isPremium: context.watch<SubscriptionProvider>().isSubscribed,
+              onChanged: (mode) async {
+                final premium = context.read<SubscriptionProvider>().isSubscribed;
+                if (mode == AttendanceMode.tickets && !premium) {
+                  final l10n = AppLocalizations.of(context)!;
+                  await showSoftPaywallSheet(
+                    context,
+                    title: l10n.attendanceTicketsPremiumTitle,
+                    body: l10n.attendanceTicketsPremiumBody,
+                  );
+                  return;
+                }
+                setState(() {
+                  _attendanceTouched = true;
+                  _attendanceMode = mode;
+                });
+              },
             ),
             const SizedBox(height: AppTheme.spacingLg),
 
@@ -2166,6 +2218,58 @@ class _ErrorBanner extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+
+class _AttendanceModePicker extends StatelessWidget {
+  final AttendanceMode mode;
+  final TextEditingController ticketUrlController;
+  final bool isPremium;
+  final ValueChanged<AttendanceMode> onChanged;
+
+  const _AttendanceModePicker({
+    required this.mode,
+    required this.ticketUrlController,
+    required this.isPremium,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final text = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.attendanceModeSection, style: text.titleSmall),
+        const SizedBox(height: AppTheme.spacingXs),
+        for (final item in <(AttendanceMode, String, String)>[
+          (AttendanceMode.dropIn, l10n.attendanceModeDropIn, l10n.attendanceModeDropInHelp),
+          (AttendanceMode.rsvpRequested, l10n.attendanceModeRsvp, l10n.attendanceModeRsvpHelp),
+          (AttendanceMode.tickets, l10n.attendanceModeTickets, l10n.attendanceModeTicketsHelp),
+        ])
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(
+              mode == item.$1 ? Icons.radio_button_checked : Icons.radio_button_off,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            title: Text(item.$2),
+            subtitle: Text(item.$3),
+            onTap: () => onChanged(item.$1),
+          ),
+        if (mode == AttendanceMode.tickets && isPremium)
+          TextField(
+            controller: ticketUrlController,
+            keyboardType: TextInputType.url,
+            decoration: InputDecoration(
+              labelText: l10n.attendanceTicketUrl,
+              prefixIcon: const Icon(Icons.link_rounded),
+            ),
+          ),
+      ],
     );
   }
 }

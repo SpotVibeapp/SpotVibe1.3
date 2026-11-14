@@ -1,4 +1,5 @@
 import 'package:uuid/uuid.dart';
+import '../models/attendance_mode.dart';
 import '../models/user_event.dart';
 import '../models/event_social_link.dart';
 export '../models/user_event.dart' show RecurringType;
@@ -126,6 +127,8 @@ class UserEventRepository {
     String? brandColor,
     String? brandLogoUrl,
     String? featuredWeekKey,
+    AttendanceMode attendanceMode = AttendanceMode.rsvpRequested,
+    String? ticketUrl,
   }) async {
     await Future.delayed(const Duration(milliseconds: 300));
     final event = UserCreatedEvent(
@@ -160,6 +163,8 @@ class UserEventRepository {
       brandColor: brandColor,
       brandLogoUrl: brandLogoUrl,
       featuredWeekKey: featuredWeekKey,
+      attendanceMode: attendanceMode,
+      ticketUrl: ticketUrl,
     );
     _events.add(event);
     return event;

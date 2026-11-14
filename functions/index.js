@@ -1499,6 +1499,7 @@ exports.saveUserEvent = onCall(
         'free-cap': 'Free organizers can have 2 upcoming events. Upgrade to Premium to post more.',
         'free-media': 'Free event posts include one photo, no videos, and a short description. Upgrade to Premium for a full gallery and a longer write-up.',
         'free-description': 'Free event descriptions are limited to a short blurb. Upgrade to Premium for a full description.',
+        'premium-required': 'Ticket links are a Premium perk. Choose Drop-in or RSVP requested, or upgrade to Premium.',
       };
       throw new HttpsError(
         'failed-precondition',

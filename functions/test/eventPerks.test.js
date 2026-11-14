@@ -5,6 +5,8 @@ const assert = require('node:assert/strict');
 const {
   alreadyFreeShaped,
   applyEntitlementToEvent,
+  resolveAttendanceMode,
+  inferAttendanceMode,
   clientUploadAllowed,
   countUpcoming,
   downgradeEventData,
@@ -192,5 +194,33 @@ describe('helpers', () => {
     assert.equal(shouldDowngradeWebhookType('REFUND'), true);
     assert.equal(shouldDowngradeWebhookType('CANCELLATION'), false);
     assert.equal(shouldDowngradeWebhookType('RENEWAL'), false);
+  });
+});
+
+describe('attendance modes', () => {
+  const { resolveAttendanceMode, inferAttendanceMode, applyEntitlementToEvent, downgradeEventData } = require('../lib/eventPerks');
+
+  it('infers RSVP requested for existing events, and tickets only for first-party ticket links', () => {
+    assert.equal(inferAttendanceMode({}), 'rsvpRequested');
+    assert.equal(inferAttendanceMode({ sourceUrl: 'https://ticketmaster.com/x' }), 'rsvpRequested');
+    assert.equal(inferAttendanceMode({ kind: 'user', ticketUrl: 'https://tickets.example/x' }), 'tickets');
+    assert.equal(inferAttendanceMode({ attendanceMode: 'dropIn' }), 'dropIn');
+  });
+
+  it('rejects tickets mode for free organizers and downgrades it on lapse', () => {
+    const denied = resolveAttendanceMode({ attendanceMode: 'tickets' }, { pro: false });
+    assert.equal(denied.ok, false);
+    assert.equal(denied.reason, 'premium-required');
+    const allowed = resolveAttendanceMode({ attendanceMode: 'tickets' }, { pro: true });
+    assert.equal(allowed.ok, true);
+    const applied = applyEntitlementToEvent(
+      { title: 'Show', description: 'd', attendanceMode: 'tickets', ticketUrl: 'https://tickets.example/x' },
+      { pro: false, isCreate: true, upcomingCount: 0 },
+    );
+    assert.equal(applied.ok, false);
+    assert.equal(applied.reason, 'premium-required');
+    const { patch, changed } = downgradeEventData({ attendanceMode: 'tickets', imageUrl: 'https://x/p.jpg' });
+    assert.equal(changed, true);
+    assert.equal(patch.attendanceMode, 'rsvpRequested');
   });
 });

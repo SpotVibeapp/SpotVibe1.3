@@ -26,6 +26,7 @@ import '../widgets/common/jambase_attribution.dart';
 import '../widgets/common/section_title.dart';
 import '../widgets/common/source_badge.dart';
 import '../widgets/common/user_action_sheet.dart';
+import '../widgets/events/attendance_mode_label.dart';
 import '../widgets/events/attendees_section.dart';
 import '../widgets/events/comment_section.dart';
 import '../widgets/events/practical_details_section.dart';
@@ -258,6 +259,11 @@ class _DetailContent extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(height: AppTheme.spacingSm),
+                  AttendanceModeLabel(
+                    mode: event.attendanceMode,
+                    style: text.titleSmall,
+                  ),
                   const SizedBox(height: AppTheme.spacingMd),
                   GetTicketsButton(event: event),
                   if (event.sourceUrl != null && event.sourceUrl!.isNotEmpty)
@@ -272,7 +278,7 @@ class _DetailContent extends StatelessWidget {
                   const SizedBox(height: AppTheme.spacingLg),
                   _CounterRow(key: countersKey, event: event, eventIndex: eventIndex),
                   const SizedBox(height: AppTheme.spacingLg),
-                  RsvpButton(key: rsvpKey),
+                  RsvpButton(key: rsvpKey, mode: event.attendanceMode),
                   const SizedBox(height: AppTheme.spacingLg),
                   SectionTitle(title: l10n.aboutThisEvent, accent: catColor),
                   const SizedBox(height: AppTheme.spacingSm),
@@ -302,7 +308,7 @@ class _DetailContent extends StatelessWidget {
                     ClaimVenueBanner(event: event),
                   ],
                   const SizedBox(height: AppTheme.spacingLg),
-                  AttendeesSection(accent: catColor),
+                  AttendeesSection(accent: catColor, mode: event.attendanceMode),
                   const SizedBox(height: AppTheme.spacingLg),
                   SimilarEventsSection(currentEvent: event),
                   const SizedBox(height: AppTheme.spacingLg),

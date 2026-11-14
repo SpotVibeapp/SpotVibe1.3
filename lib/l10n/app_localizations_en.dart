@@ -2677,4 +2677,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String eventTextPlaceholderSemantics(String headline) {
     return 'No event photo. $headline';
   }
+
+  @override
+  String get attendanceModeSection => 'How people join';
+
+  @override
+  String get attendanceModeDropIn => 'Drop-in';
+
+  @override
+  String get attendanceModeRsvp => 'RSVP requested';
+
+  @override
+  String get attendanceModeTickets => 'Tickets';
+
+  @override
+  String get attendanceModeDropInHelp =>
+      'A light \"I\'m going\" button. Best for yard sales and flea markets.';
+
+  @override
+  String get attendanceModeRsvpHelp =>
+      'People confirm they\'re coming, and you see a headcount and name list. Best for game nights.';
+
+  @override
+  String get attendanceModeTicketsHelp =>
+      'Sends people to your ticket link. This is a Premium perk.';
+
+  @override
+  String get attendanceTicketUrl => 'Ticket link';
+
+  @override
+  String get attendanceTicketUrlRequired =>
+      'Add a ticket link for ticketed events.';
+
+  @override
+  String get imGoing => 'I\'m going';
+
+  @override
+  String get youAreGoing => 'You\'re going';
+
+  @override
+  String goingCount(int count) {
+    return '$count going';
+  }
+
+  @override
+  String get attendanceTicketsPremiumTitle => 'Ticket links are a Premium perk';
+
+  @override
+  String get attendanceTicketsPremiumBody =>
+      'Upgrade to Premium to send people to a ticket link. Drop-in and RSVP requested stay free.';
 }

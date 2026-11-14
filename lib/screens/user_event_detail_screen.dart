@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../data/event_time.dart';
 import '../l10n/app_localizations.dart';
+import '../models/attendance_mode.dart';
 import '../models/user_event.dart';
 import '../providers/auth_provider.dart';
 import '../services/event_analytics_service.dart';
@@ -19,6 +20,7 @@ import '../widgets/common/app_avatar.dart';
 import '../widgets/common/network_photo.dart';
 import '../widgets/common/event_image_placeholder.dart';
 import '../widgets/common/fullscreen_image_viewer.dart';
+import '../widgets/events/attendance_mode_label.dart';
 import '../widgets/events/attendees_section.dart';
 import '../widgets/events/comment_section.dart';
 import '../widgets/events/rsvp_button.dart';
@@ -348,9 +350,29 @@ class _UserEventDetailContent extends StatelessWidget {
                   ],
 
                   const Divider(height: AppTheme.spacingXl),
-                  const RsvpButton(),
-                  const SizedBox(height: AppTheme.spacingLg),
-                  AttendeesSection(accent: categoryAccent(event.category)),
+                  AttendanceModeLabel(
+                    mode: event.attendanceMode,
+                    style: text.titleSmall,
+                  ),
+                  const SizedBox(height: AppTheme.spacingMd),
+                  if (event.attendanceMode == AttendanceMode.tickets &&
+                      (event.ticketUrl ?? '').isNotEmpty)
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: () => launchUrl(Uri.parse(event.ticketUrl!), mode: LaunchMode.externalApplication),
+                        icon: const Icon(Icons.confirmation_number_outlined),
+                        label: Text(l10n.tickets),
+                      ),
+                    ),
+                  if (event.attendanceMode != AttendanceMode.tickets) ...[
+                    RsvpButton(mode: event.attendanceMode),
+                    const SizedBox(height: AppTheme.spacingLg),
+                    AttendeesSection(
+                      accent: categoryAccent(event.category),
+                      mode: event.attendanceMode,
+                    ),
+                  ],
                   const SizedBox(height: AppTheme.spacingLg),
                   CommentSection(accent: categoryAccent(event.category)),
                   const SizedBox(height: AppTheme.spacingXl),

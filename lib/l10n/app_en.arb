@@ -1261,5 +1261,20 @@
     "placeholders": {
       "headline": { "type": "String" }
     }
-  }
+  },
+  "attendanceModeSection": "How people join",
+  "attendanceModeDropIn": "Drop-in",
+  "attendanceModeRsvp": "RSVP requested",
+  "attendanceModeTickets": "Tickets",
+  "attendanceModeDropInHelp": "A light \"I'm going\" button. Best for yard sales and flea markets.",
+  "attendanceModeRsvpHelp": "People confirm they're coming, and you see a headcount and name list. Best for game nights.",
+  "attendanceModeTicketsHelp": "Sends people to your ticket link. This is a Premium perk.",
+  "attendanceTicketUrl": "Ticket link",
+  "attendanceTicketUrlRequired": "Add a ticket link for ticketed events.",
+  "imGoing": "I'm going",
+  "youAreGoing": "You're going",
+  "goingCount": "{count} going",
+  "@goingCount": {"placeholders": {"count": {"type": "int"}}},
+  "attendanceTicketsPremiumTitle": "Ticket links are a Premium perk",
+  "attendanceTicketsPremiumBody": "Upgrade to Premium to send people to a ticket link. Drop-in and RSVP requested stay free."
 }

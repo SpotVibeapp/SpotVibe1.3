@@ -1,4 +1,5 @@
 import 'media_urls.dart';
+import '../models/attendance_mode.dart';
 import '../models/event.dart';
 import '../models/event_social_link.dart';
 import '../models/rsvp.dart';
@@ -74,6 +75,12 @@ Map<String, dynamic> eventToMap(Event event, {String kind = 'curated'}) {
     'isCreatorPro': event.isCreatorPro,
     'featuredWeekKey': event.featuredWeekKey,
     'socialLinks': event.socialLinks.toStorageMap(),
+    'attendanceMode': event.attendanceMode.storageName,
+    if (event.ticketUrl != null && event.ticketUrl!.isNotEmpty) 'ticketUrl': event.ticketUrl,
+    if (event.attendanceMode == AttendanceMode.tickets &&
+        event.ticketUrl != null &&
+        event.ticketUrl!.isNotEmpty)
+      'sourceUrl': event.ticketUrl,
   };
 }
 
@@ -128,6 +135,15 @@ Event eventFromMap(String id, Map<String, dynamic> data) {
         (data['creatorId'] as String?)?.isNotEmpty == true,
     creatorId: data['creatorId'] as String? ?? '',
     socialLinks: EventSocialLinks.fromStorage(data['socialLinks']),
+    ticketUrl: (data['ticketUrl'] as String?)?.trim().isNotEmpty == true
+        ? data['ticketUrl'] as String
+        : data['sourceUrl'] as String?,
+    attendanceMode: resolveAttendanceMode(
+      stored: data['attendanceMode'] as String?,
+      ticketUrl: (data['ticketUrl'] as String?) ?? (data['sourceUrl'] as String?),
+      isTicketed: data['isTicketed'] as bool? ?? false,
+      isUserCreated: data['kind'] == 'user' || (data['creatorId'] as String?)?.isNotEmpty == true,
+    ),
   );
 }
 
@@ -209,6 +225,9 @@ Map<String, dynamic> userEventToMap(UserCreatedEvent event) {
         isUserCreated: true,
         creatorId: event.creatorId,
         socialLinks: event.socialLinks,
+        attendanceMode: event.attendanceMode,
+        ticketUrl: event.ticketUrl,
+        sourceUrl: event.ticketUrl,
       ),
       kind: 'user',
     ),
@@ -234,6 +253,12 @@ Map<String, dynamic> userEventToMap(UserCreatedEvent event) {
     'analyticsClicks': event.analyticsClicks,
     'analyticsShares': event.analyticsShares,
     'socialLinks': event.socialLinks.toStorageMap(),
+    'attendanceMode': event.attendanceMode.storageName,
+    if (event.ticketUrl != null && event.ticketUrl!.isNotEmpty) 'ticketUrl': event.ticketUrl,
+    if (event.attendanceMode == AttendanceMode.tickets &&
+        event.ticketUrl != null &&
+        event.ticketUrl!.isNotEmpty)
+      'sourceUrl': event.ticketUrl,
   };
 }
 
@@ -291,5 +316,14 @@ UserCreatedEvent userEventFromMap(String id, Map<String, dynamic> data) {
     analyticsShares: (data['analyticsShares'] as num?)?.toInt() ?? 0,
     featuredWeekKey: data['featuredWeekKey'] as String?,
     socialLinks: EventSocialLinks.fromStorage(data['socialLinks']),
+    ticketUrl: (data['ticketUrl'] as String?)?.trim().isNotEmpty == true
+        ? data['ticketUrl'] as String
+        : data['sourceUrl'] as String?,
+    attendanceMode: resolveAttendanceMode(
+      stored: data['attendanceMode'] as String?,
+      ticketUrl: (data['ticketUrl'] as String?) ?? (data['sourceUrl'] as String?),
+      isTicketed: data['isTicketed'] as bool? ?? false,
+      isUserCreated: data['kind'] == 'user' || (data['creatorId'] as String?)?.isNotEmpty == true,
+    ),
   );
 }

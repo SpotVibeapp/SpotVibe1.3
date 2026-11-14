@@ -73,6 +73,39 @@ function eventCreatorIdFromPath(objectName) {
   return parts[1] || null;
 }
 
+
+const ATTENDANCE_MODES = ['dropIn', 'rsvpRequested', 'tickets'];
+
+function inferAttendanceMode(data) {
+  const raw = data && data.attendanceMode;
+  if (ATTENDANCE_MODES.includes(raw)) return raw;
+  const ticket = typeof (data && (data.ticketUrl || data.sourceUrl)) === 'string'
+    ? String(data.ticketUrl || data.sourceUrl).trim()
+    : '';
+  const isUser = !!(data && (data.kind === 'user' || data.creatorId));
+  if (isUser && ((data && data.isTicketed === true) || ticket)) return 'tickets';
+  return 'rsvpRequested';
+}
+
+function defaultAttendanceMode(category, pro) {
+  if (category === 'Community' || category === 'Other') return 'dropIn';
+  if (category === 'Music' && pro) return 'tickets';
+  return 'rsvpRequested';
+}
+
+/**
+ * Tickets mode requires Premium (or an admin). Missing or unknown values
+ * are inferred from a ticket URL / isTicketed, otherwise RSVP requested.
+ */
+function resolveAttendanceMode(data, options) {
+  const privileged = !!(options && (options.pro || options.isAdmin));
+  const mode = inferAttendanceMode(data || {});
+  if (mode === 'tickets' && !privileged) {
+    return { ok: false, reason: 'premium-required', mode: null };
+  }
+  return { ok: true, mode };
+}
+
 function alreadyFreeShaped(data) {
   if (!data || typeof data !== 'object') return true;
   if (data.featuredWeekKey) return false;
@@ -109,6 +142,9 @@ function downgradeEventData(data) {
     videoUrls: videos,
     videoUrl: videos[0] || null,
   };
+  if (src.attendanceMode === 'tickets') {
+    next.attendanceMode = 'rsvpRequested';
+  }
   const changed = PREMIUM_ONLY_FIELDS.some((key) => {
     const before = src[key] == null || src[key] === '' || src[key] === false || src[key] === 'none'
       ? null
@@ -119,7 +155,8 @@ function downgradeEventData(data) {
     return String(before) !== String(after);
   }) || JSON.stringify(normalizeUrlList([src.imageUrl, ...(src.imageUrls || [])], 99)) !== JSON.stringify(photos)
     || JSON.stringify(normalizeUrlList([src.videoUrl, ...(src.videoUrls || [])], 99)) !== JSON.stringify(videos)
-    || hasSocialLinks(src.socialLinks);
+    || hasSocialLinks(src.socialLinks)
+    || (src.attendanceMode === 'tickets');
   return { patch: next, changed };
 }
 
@@ -187,6 +224,21 @@ function applyEntitlementToEvent(input, options) {
   event.videoUrls = videos;
   event.videoUrl = videos[0] || null;
   event.isCreatorPro = privileged;
+
+  const attendance = resolveAttendanceMode(src, { pro, isAdmin, existing });
+  if (!attendance.ok) {
+    return { ok: false, reason: attendance.reason, event: null };
+  }
+  event.attendanceMode = attendance.mode;
+  const ticketUrl = typeof src.ticketUrl === 'string' ? src.ticketUrl.trim()
+    : (typeof src.sourceUrl === 'string' ? src.sourceUrl.trim() : '');
+  if (event.attendanceMode === 'tickets') {
+    event.ticketUrl = ticketUrl || null;
+    event.sourceUrl = ticketUrl || src.sourceUrl || null;
+  } else if (!existing.sourceUrl) {
+    // Don't invent a ticket link on a free or RSVP/drop-in post.
+    event.ticketUrl = ticketUrl || null;
+  }
 
   // Featuring is only granted by featureEvent, never by this path.
   if (isCreate) {
@@ -330,6 +382,9 @@ module.exports = {
   isExtraEventMediaPath,
   eventCreatorIdFromPath,
   alreadyFreeShaped,
+  inferAttendanceMode,
+  defaultAttendanceMode,
+  resolveAttendanceMode,
   downgradeEventData,
   countUpcoming,
   applyEntitlementToEvent,
