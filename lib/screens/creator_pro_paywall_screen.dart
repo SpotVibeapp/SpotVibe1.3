@@ -232,7 +232,6 @@ class _CreatorFeatureList extends StatelessWidget {
     (Icons.bar_chart_rounded, 'Analytics Dashboard', 'Views, saves & click-throughs per event'),
     (Icons.palette_rounded, 'Custom Branding', 'Your logo and accent color on every page'),
     (Icons.phone_rounded, 'Contact Button', 'Phone, website & organizer contact tools on event page'),
-    (Icons.block_rounded, 'No Ads on Your Pages', 'Clean, distraction-free event pages'),
   ];
 
   @override
@@ -325,8 +324,7 @@ class _FreeVsProComparison extends StatelessWidget {
           _ComparisonRow(label: 'Featured placement', free: false, pro: true, appColors: appColors, text: text, colors: colors),
           _ComparisonRow(label: 'Analytics dashboard', free: false, pro: true, appColors: appColors, text: text, colors: colors),
           _ComparisonRow(label: 'Custom branding', free: false, pro: true, appColors: appColors, text: text, colors: colors),
-          _ComparisonRow(label: 'Contact button', free: false, pro: true, appColors: appColors, text: text, colors: colors),
-          _ComparisonRow(label: 'No ads on pages', free: false, pro: true, appColors: appColors, text: text, colors: colors, isLast: true),
+          _ComparisonRow(label: 'Contact button', free: false, pro: true, appColors: appColors, text: text, colors: colors, isLast: true),
         ],
       ),
     );

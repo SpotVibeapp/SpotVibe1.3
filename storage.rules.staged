@@ -1,0 +1,50 @@
+rules_version = '2';
+
+// STAGED — do not deploy until 1.0.15+ is the installed Play beta AND
+// organizers on that build can upload extra Premium media through a
+// signed-URL path (or they will lose photo_2+ / video_2+ uploads).
+// See STAGED_RULES_DEPLOY.md.
+//
+// After that gate: firebase deploy --only storage
+// (replace storage.rules with this file first, or copy the event match).
+//
+// Client writes are limited to the Free allowance:
+//   events/{uid}/{eventId}/cover.*      cover photo
+//   events/{uid}/{eventId}/video_1_*    first short video
+// Extra gallery files are written only by Cloud Functions / signed URLs.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function isFreeEventMediaFile(fileName) {
+      return fileName.matches('cover[.].+')
+          || fileName.matches('video_1_.*');
+    }
+
+    match /users/{uid}/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(uid)
+                   && request.resource.size < 6 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    match /events/{uid}/{eventId}/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(uid)
+                   && isFreeEventMediaFile(fileName)
+                   && request.resource.size < 60 * 1024 * 1024
+                   && (request.resource.contentType.matches('image/.*')
+                       || request.resource.contentType.matches('video/.*'));
+    }
+
+    match /gems/{uid}/{gemId}/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(uid)
+                   && request.resource.size < 6 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

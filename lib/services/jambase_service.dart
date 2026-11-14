@@ -4,9 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../data/el_paso_events.dart';
 import '../data/event_dedupe.dart';
-import '../data/event_images.dart';
 import '../models/event.dart';
 import 'live_event_source.dart';
 import 'provider_proxy.dart';
@@ -829,10 +827,6 @@ Event? eventFromJamBase(Map<String, dynamic> json) {
 
   final ranked = _rankedPerformers(json);
   var imageUrl = _jamBaseImage(json, ranked) ?? '';
-  if (isGenericEventImage(imageUrl)) {
-    final venuePhoto = venueImageFor(venueName, title: title);
-    if (venuePhoto != null) imageUrl = venuePhoto;
-  }
 
   final free = json['isAccessibleForFree'] == true;
   final cost = free ? null : _jamBasePrice(json);

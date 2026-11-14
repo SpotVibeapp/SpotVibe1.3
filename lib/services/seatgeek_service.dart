@@ -1,9 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
-import '../data/el_paso_events.dart';
 import '../data/event_dedupe.dart';
-import '../data/event_images.dart';
 import '../models/event.dart';
 import 'live_event_source.dart';
 import 'provider_proxy.dart';
@@ -303,10 +301,6 @@ Event? eventFromSeatGeek(Map<String, dynamic> json) {
   }
 
   var imageUrl = _seatGeekImage(json) ?? '';
-  if (isGenericEventImage(imageUrl)) {
-    final venuePhoto = venueImageFor(venueName, title: title);
-    if (venuePhoto != null) imageUrl = venuePhoto;
-  }
 
   // SeatGeek stopped populating `stats` prices in mid-2026; read them when
   // present but never invent a number.

@@ -8,6 +8,7 @@ import '../../providers/event_provider.dart';
 import '../../theme/theme.dart';
 import '../common/event_image_placeholder.dart';
 import '../common/jambase_attribution.dart';
+import 'repeated_event_date_badge.dart';
 
 class SimilarEventsSection extends StatelessWidget {
   final Event currentEvent;
@@ -28,7 +29,9 @@ class SimilarEventsSection extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context)!;
 
-    return Column(
+    return RepeatedImageryScope(
+      events: [currentEvent, ...similar],
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
@@ -62,6 +65,7 @@ class SimilarEventsSection extends StatelessWidget {
             padding: const EdgeInsets.only(top: AppTheme.spacingSm),
           ),
       ],
+    ),
     );
   }
 }
