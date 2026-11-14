@@ -1,6 +1,10 @@
 rules_version = '2';
 
 // Deploy: firebase deploy --only storage
+// This file stays v14-compatible. The entitlement-gated event media
+// rules live in storage.rules.staged — do not deploy them until
+// 1.0.15 is the installed beta and a signed-URL upload path exists.
+// See STAGED_RULES_DEPLOY.md.
 //
 //   users/{uid}/avatar.jpg                   profile photos
 //   events/{uid}/{eventId}/cover.*           primary event cover photo

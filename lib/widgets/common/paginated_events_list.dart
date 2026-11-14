@@ -7,6 +7,7 @@ import '../../providers/personalization_provider.dart';
 import '../../theme/responsive.dart';
 import '../../theme/theme.dart';
 import '../events/event_card.dart';
+import '../events/repeated_event_date_badge.dart';
 import 'jambase_attribution.dart';
 
 const int kEventsPerPage = 15;
@@ -247,22 +248,32 @@ class _PaginatedEventsListState extends State<PaginatedEventsList> {
       },
     );
 
-    // The parent pins the bar outside its scroll view.
-    if (widget.pageController != null) return list;
+    // Date badges need the full current result set, including events on
+    // other pages and in the showcase header, so two Chihuahuas games
+    // still look distinct when they are not on the same page.
+    Widget scoped(Widget child) => RepeatedImageryScope(
+          events: provider.events,
+          child: child,
+        );
 
-    return Column(
-      children: [
-        Expanded(child: list),
-        if (_totalPages > 1)
-          _PaginationBar(
-            currentPage: _currentPage,
-            totalPages: _totalPages,
-            onPrev: _currentPage > 0 ? () => _go(_currentPage - 1) : null,
-            onNext: _currentPage < _totalPages - 1
-                ? () => _go(_currentPage + 1)
-                : null,
-          ),
-      ],
+    // The parent pins the bar outside its scroll view.
+    if (widget.pageController != null) return scoped(list);
+
+    return scoped(
+      Column(
+        children: [
+          Expanded(child: list),
+          if (_totalPages > 1)
+            _PaginationBar(
+              currentPage: _currentPage,
+              totalPages: _totalPages,
+              onPrev: _currentPage > 0 ? () => _go(_currentPage - 1) : null,
+              onNext: _currentPage < _totalPages - 1
+                  ? () => _go(_currentPage + 1)
+                  : null,
+            ),
+        ],
+      ),
     );
   }
 }

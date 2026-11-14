@@ -133,6 +133,16 @@ class RevenueCatService {
     return WebBillingController.instance.purchase(productId);
   }
 
+  /// Store intro-offer eligibility for [productIds]. Web and an unconfigured
+  /// SDK return an empty map (treated as unknown — the paywall will not
+  /// promise a trial).
+  Future<Map<String, IntroEligibility>> checkIntroEligibility(
+    List<String> productIds,
+  ) async {
+    if (kIsWeb || !_initialized) return {};
+    return PurchasesBinding.checkIntroEligibility(productIds);
+  }
+
   /// Restore previous purchases. Returns true when the pro entitlement is restored.
   Future<bool> restorePurchases() async {
     if (kIsWeb) return WebBillingController.instance.restore();

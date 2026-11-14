@@ -20,15 +20,15 @@ Paste any analyze/test failures to me before building.
 
 ## B. Smoke-test on the device (SM-F956U), a DEBUG or PROFILE run
 
-- [ ] App launches (no AdMob "Missing application ID" crash).
-- [ ] Home feed loads events; banner + "Remove ads with Premium" shows (free user).
+- [ ] App launches.
+- [ ] Home feed loads events. (Banner ads were removed November 14, 2026.)
 - [ ] Event detail: media gallery, photo enlarge, video play.
 - [ ] Create/edit: add cover + gallery photo → tap to enlarge; add video → plays.
 - [ ] Empty category: no bottom overflow.
 - [ ] Map: jump-to-area loads events + gems; "Showing: City, ST" banner; search
       bar clears the home buttons; reset returns to GPS.
 - [ ] Paywall opens (from Remove-ads link and profile).
-- [ ] Premium/reviewer path: banners + upsell disappear (ad-free is real).
+- [ ] Premium/reviewer path: paywall no longer lists an ad-free perk.
 
 ## C. Build the release App Bundle
 

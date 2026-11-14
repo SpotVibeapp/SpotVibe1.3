@@ -14,12 +14,12 @@ import '../theme/responsive.dart';
 import '../theme/theme.dart';
 import '../services/event_analytics_service.dart';
 import '../widgets/events/claim_venue_banner.dart';
-import '../widgets/events/detail_ad.dart';
 import '../widgets/events/event_media_gallery.dart';
 import '../widgets/events/event_share_card.dart';
 import '../widgets/events/organizer_social_links.dart';
 import '../widgets/common/app_avatar.dart';
 import '../widgets/common/event_image_placeholder.dart';
+import '../widgets/events/repeated_event_date_badge.dart';
 import '../widgets/common/fullscreen_image_viewer.dart';
 import '../widgets/common/guided_tour.dart';
 import '../widgets/common/jambase_attribution.dart';
@@ -28,6 +28,7 @@ import '../widgets/common/source_badge.dart';
 import '../widgets/common/user_action_sheet.dart';
 import '../widgets/events/attendees_section.dart';
 import '../widgets/events/comment_section.dart';
+import '../widgets/events/event_thread_section.dart';
 import '../widgets/events/practical_details_section.dart';
 import '../widgets/events/get_tickets_button.dart';
 import '../widgets/events/quick_actions_section.dart';
@@ -96,8 +97,15 @@ class _DetailContent extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final isAdmin = context.watch<AuthProvider>().isAdmin;
     final catColor = categoryAccent(event.category);
+    final feedEvents = context.watch<EventProvider>().events;
+    final scopeEvents = [
+      event,
+      ...feedEvents.where((other) => other.id != event.id),
+    ];
 
-    return Scaffold(
+    return RepeatedImageryScope(
+      events: scopeEvents,
+      child: Scaffold(
       body: WideContent(
         maxWidth: 880,
         child: Stack(
@@ -294,15 +302,10 @@ class _DetailContent extends StatelessWidget {
                     const SizedBox(height: AppTheme.spacingLg),
                     ClaimVenueBanner(event: event),
                   ],
-                  if (!isAdmin && event.showsAds) ...[
-                    const SizedBox(height: AppTheme.spacingLg),
-                    // Real AdMob banner for free users (collapses to nothing for
-                    // Premium/web). The house promo is the fallback when ads are
-                    // unsupported so the space is never wasted.
-                    const DetailAd(),
-                  ],
                   const SizedBox(height: AppTheme.spacingLg),
                   AttendeesSection(accent: catColor),
+                  const SizedBox(height: AppTheme.spacingLg),
+                  EventThreadSection(eventId: event.id, creatorId: event.creatorId, accent: catColor),
                   const SizedBox(height: AppTheme.spacingLg),
                   SimilarEventsSection(currentEvent: event),
                   const SizedBox(height: AppTheme.spacingLg),
@@ -340,6 +343,7 @@ class _DetailContent extends StatelessWidget {
         ],
         ),
       ),
+    ),
     );
   }
 

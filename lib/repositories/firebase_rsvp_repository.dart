@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../data/event_codec.dart';
+import '../data/pii_mask.dart';
 import '../models/rsvp.dart';
 import '../services/ban_service.dart';
 import 'rsvp_repository.dart';
@@ -73,7 +74,7 @@ class FirebaseRsvpRepository implements RsvpRepository {
         authorId: authorId,
         authorName: authorName,
         authorAvatarUrl: authorAvatar,
-        text: text,
+        text: maskContactInfo(text),
         createdAt: DateTime.now(),
       );
       await _comments(eventId).doc(comment.id).set({

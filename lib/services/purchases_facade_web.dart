@@ -57,6 +57,14 @@ class CustomerInfo {
   final List<String> allPurchasedProductIdentifiers;
 }
 
+enum IntroEligibilityStatus { unknown, ineligible, eligible }
+
+class IntroEligibility {
+  IntroEligibility({this.status = IntroEligibilityStatus.unknown});
+
+  final IntroEligibilityStatus status;
+}
+
 class PurchasesBinding {
   static Future<bool> configure(String apiKey) async => false;
 
@@ -71,4 +79,9 @@ class PurchasesBinding {
   static Future<CustomerInfo?> purchase(Package package) async => null;
 
   static Future<CustomerInfo?> restore() async => null;
+
+  static Future<Map<String, IntroEligibility>> checkIntroEligibility(
+    List<String> productIds,
+  ) async =>
+      {};
 }
