@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../data/event_time.dart';
 import '../../data/road_trip_destinations.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/ai_event_search.dart';
 import '../../models/event.dart';
+import '../../models/gem.dart';
+import '../../providers/gem_provider.dart';
+import '../../data/gem_search.dart';
 import '../../services/ai_event_search_service.dart';
 import '../../services/event_service.dart';
 import '../../theme/theme.dart';
@@ -224,7 +229,7 @@ class _AiEventSearchAssistantState extends State<_AiEventSearchAssistant> {
       final plan = await _searchService.interpret(query);
       final groups = await _fetchRealResults(plan);
       if (!mounted) return;
-      final found = groups.any((group) => group.events.isNotEmpty);
+      final found = groups.any((group) => group.events.isNotEmpty || group.gems.isNotEmpty);
       setState(() {
         _groups = groups;
         _messages.add(
@@ -279,10 +284,35 @@ class _AiEventSearchAssistantState extends State<_AiEventSearchAssistant> {
           // mismatch hide real Ticketmaster or user-created listings.
           events = await _loadLocation(target.location, plan, ignoreCategory: true);
         }
+        var gems = <Gem>[];
+        if (plan.includeGems || plan.gemSearchText.isNotEmpty) {
+          try {
+            final query = plan.gemSearchText.isNotEmpty
+                ? plan.gemSearchText
+                : (plan.specificSearchText ?? plan.searchText);
+            gems = context.read<GemProvider>().gemsMatching(query);
+            if (plan.businessType != null) {
+              final type = GemBusinessType.fromKey(plan.businessType);
+              if (type != null) {
+                gems = gems.where((g) => g.businessType == type).toList();
+              }
+            }
+            if (plan.dealsOnly) {
+              gems = gems.where((g) => gemHasActiveOffer(g)).toList();
+            }
+            if (plan.openNow) {
+              gems = gemsOpenNow(gems);
+            }
+            gems = gems.take(6).toList(growable: false);
+          } catch (_) {
+            gems = const [];
+          }
+        }
         return _AssistantResultGroup(
           location: target.location,
           isRoadTrip: target.isRoadTrip,
           events: events.take(6).toList(growable: false),
+          gems: gems,
         );
       }),
     );
@@ -717,7 +747,7 @@ class _AssistantResultGroupView extends StatelessWidget {
                 ],
               ),
             ),
-            if (group.events.isEmpty)
+            if (group.events.isEmpty && group.gems.isEmpty)
               Padding(
                 padding: const EdgeInsets.fromLTRB(
                   AppTheme.spacingMd,
@@ -737,6 +767,29 @@ class _AssistantResultGroupView extends StatelessWidget {
                   onTap: () => onOpenEvent(event),
                 ),
               ),
+            if (group.gems.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppTheme.spacingMd, AppTheme.spacingSm, AppTheme.spacingMd, 4,
+                ),
+                child: Text(
+                  l10n.gemsDiscoverSection,
+                  style: text.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+              ...group.gems.map(
+                (gem) => ListTile(
+                  leading: const Icon(Icons.diamond_rounded),
+                  title: Text(gem.name),
+                  subtitle: Text(
+                    gem.summary,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onTap: () => context.push('/gem', extra: gem),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -847,10 +900,12 @@ class _AssistantResultGroup {
   final AiSearchLocation location;
   final bool isRoadTrip;
   final List<Event> events;
+  final List<Gem> gems;
 
   const _AssistantResultGroup({
     required this.location,
     required this.isRoadTrip,
     required this.events,
+    this.gems = const [],
   });
 }

@@ -10,6 +10,7 @@ import '../services/maps_service.dart';
 import '../theme/theme.dart';
 import '../widgets/common/fullscreen_image_viewer.dart';
 import '../widgets/gems/gem_cover.dart';
+import '../widgets/events/event_reviews_section.dart';
 
 /// Detail page for a single community hidden gem. Shows the place, its
 /// description, who added it, directions, and community interaction — likes and
@@ -367,6 +368,11 @@ class _GemDetailScreenState extends State<GemDetailScreen> {
                     ),
                     icon: const Icon(Icons.directions_rounded),
                     label: Text(l10n.gemsDirections),
+                  ),
+                  const SizedBox(height: AppTheme.spacingLg),
+                  GemEventReviewsSection(
+                    gemId: _gem.id,
+                    accent: colors.primary,
                   ),
                   const SizedBox(height: AppTheme.spacingLg),
                   Text(

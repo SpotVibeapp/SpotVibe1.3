@@ -104,6 +104,13 @@ class AppConfig {
     defaultValue: 'https://liveeventsproxy-kfzltbt5ja-uc.a.run.app',
   );
 
+  /// `saveUserEvent`: authoritative create/update. Premium perks are
+  /// applied only after the server checks the RevenueCat `pro` entitlement.
+  static const String saveUserEventFunctionUrl = String.fromEnvironment(
+    'SAVE_USER_EVENT_FUNCTION_URL',
+    defaultValue: 'https://saveuserevent-kfzltbt5ja-uc.a.run.app',
+  );
+
   /// When true, profile and event writes that the deployed rules reject
   /// retry once with the legacy v14 field shape. The strict shape is always
   /// tried first, so this does not put an email or a featured week on a
@@ -114,5 +121,59 @@ class AppConfig {
   static const bool rulesCompatRetries = bool.fromEnvironment(
     'RULES_COMPAT_RETRIES',
     defaultValue: true,
+  );
+
+  /// `saveGem`: authoritative create/update. Rich/promo fields and
+  /// `richUntil` are applied only after a RevenueCat `pro` check.
+  static const String saveGemFunctionUrl = String.fromEnvironment(
+    'SAVE_GEM_FUNCTION_URL',
+    defaultValue: 'https://savegem-kfzltbt5ja-uc.a.run.app',
+  );
+
+  /// `renewGemRich`: restarts a 30-day promotional window for an existing gem.
+  static const String renewGemRichFunctionUrl = String.fromEnvironment(
+    'RENEW_GEM_RICH_FUNCTION_URL',
+    defaultValue: 'https://renewgemrich-kfzltbt5ja-uc.a.run.app',
+  );
+
+  /// `sendEventThreadMessage` and the other event-messaging callables.
+  /// Confirm the Cloud Run URLs after the first deploy.
+  static const String sendEventThreadMessageFunctionUrl = String.fromEnvironment(
+    'SEND_EVENT_THREAD_MESSAGE_FUNCTION_URL',
+    defaultValue: 'https://sendeventthreadmessage-kfzltbt5ja-uc.a.run.app',
+  );
+  static const String removeEventThreadMessageFunctionUrl = String.fromEnvironment(
+    'REMOVE_EVENT_THREAD_MESSAGE_FUNCTION_URL',
+    defaultValue: 'https://removeeventthreadmessage-kfzltbt5ja-uc.a.run.app',
+  );
+  static const String setEventThreadMuteFunctionUrl = String.fromEnvironment(
+    'SET_EVENT_THREAD_MUTE_FUNCTION_URL',
+    defaultValue: 'https://seteventthreadmute-kfzltbt5ja-uc.a.run.app',
+  );
+  static const String markEventThreadReadFunctionUrl = String.fromEnvironment(
+    'MARK_EVENT_THREAD_READ_FUNCTION_URL',
+    defaultValue: 'https://markeventthreadread-kfzltbt5ja-uc.a.run.app',
+  );
+  static const String sendEventDirectMessageFunctionUrl = String.fromEnvironment(
+    'SEND_EVENT_DIRECT_MESSAGE_FUNCTION_URL',
+    defaultValue: 'https://sendeventdirectmessage-kfzltbt5ja-uc.a.run.app',
+  );
+
+  /// Event review callables. Confirm Cloud Run URLs after the first deploy.
+  static const String submitEventReviewFunctionUrl = String.fromEnvironment(
+    'SUBMIT_EVENT_REVIEW_FUNCTION_URL',
+    defaultValue: 'https://submiteventreview-kfzltbt5ja-uc.a.run.app',
+  );
+  static const String replyToEventReviewFunctionUrl = String.fromEnvironment(
+    'REPLY_TO_EVENT_REVIEW_FUNCTION_URL',
+    defaultValue: 'https://replytoeventreview-kfzltbt5ja-uc.a.run.app',
+  );
+  static const String recordEndedRsvpFunctionUrl = String.fromEnvironment(
+    'RECORD_ENDED_RSVP_FUNCTION_URL',
+    defaultValue: 'https://recordendedrsvp-kfzltbt5ja-uc.a.run.app',
+  );
+  static const String markPlayReviewPromptedFunctionUrl = String.fromEnvironment(
+    'MARK_PLAY_REVIEW_PROMPTED_FUNCTION_URL',
+    defaultValue: 'https://markplayreviewprompted-kfzltbt5ja-uc.a.run.app',
   );
 }

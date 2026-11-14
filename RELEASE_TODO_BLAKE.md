@@ -36,8 +36,8 @@ firebase functions:secrets:set JAMBASE_API_KEY           --project spotvibe-cfa0
 ```
 
 The app no longer accepts provider keys. Delete them from your local
-`secrets.json` and from any CI variables (RevenueCat *public* SDK keys and
-AdMob ids stay as dart-defines).
+`secrets.json` and from any CI variables (RevenueCat *public* SDK keys stay as dart-defines).
+AdMob banner / app ids are no longer used — remove `ADMOB_*` from `secrets.json` if present.
 
 ## 2. Deploy the functions (first)
 
@@ -112,14 +112,11 @@ in the new feed query.
 `pubspec.yaml` is `1.0.15+15`. Play rejects anything ≤ 14 (v14 is live in
 beta). Bump to `+16` or higher if 15 is ever uploaded and rejected.
 
-Release builds now **fail** unless real AdMob ids are supplied (debug still
-uses Google's test ids):
+Ads have been removed, so release builds no longer require AdMob ids.
 
 ```bash
-# AdMob App ID: admobAppId=ca-app-pub-…~… in android/gradle.properties
-# (or export ORG_GRADLE_PROJECT_admobAppId=ca-app-pub-…~…). See ADMOB_SETUP_GUIDE.md.
 flutter build appbundle --release \
-  --dart-define-from-file=secrets.json      # REVENUECAT_*, ADMOB_BANNER_ANDROID, ...
+  --dart-define-from-file=secrets.json      # RevenueCat public SDK keys only
 ```
 
 The iOS build (Mac) needs the steps in `IOS_RELEASE_TODO_BLAKE.md`.
@@ -170,3 +167,47 @@ while v14 is still in use, the v14 sign-up break is the one to avoid. It can
 be softened by allowing a non-blank email on create (the `scrubPublicUserPii`
 trigger moves it within seconds). That is a one-line rules change; ask for it
 if you want it.
+
+
+## Ads were removed (November 14, 2026)
+
+Banner ads were the only ad format in the app. The AdMob SDK, UMP consent
+flow, ATT prompt, `app-ads.txt` work, and "ad-free pages" Premium perk are
+gone. You do **not** need to set up AdMob consent messages or `app-ads.txt`.
+
+When you ship 1.0.15, in Play Console → Policy → App content:
+
+- **Does your app contain ads?** → **No**
+- **Advertising ID** → **No** (the app no longer uses one)
+- Republish the updated `legal_site/privacy.html` to the live privacy URL
+  so it matches the in-app policy (no AdMob data sharing)
+- Remove any `ADMOB_*` keys from local `secrets.json` and CI
+
+See `PLAY_APP_CONTENT.md` for the full data-safety wording.
+
+## Event messaging (Play Console)
+
+Users can now message each other in a private event thread (host + RSVP'd attendees). Premium hosts can also send direct messages to people who RSVP'd. Recipients can opt out. Phone numbers, emails, and social handles are masked, and messages go through the existing moderation pipeline.
+
+Do this in Play Console before a store release that includes messaging:
+
+1. **Content rating questionnaire:** users interact / user-to-user communication is now Yes (or the equivalent "Users can communicate" item). Retake or update the questionnaire if the current rating was collected before messaging existed.
+2. **Data safety form:** add user messages / user-generated content if that row is not already covered. Messages are collected, not sold, not used for ads, optional, for app functionality.
+3. **User-generated content policy:** confirm a public support / report contact is listed (privacy@spotvibeapp.com or the in-app report flow). In-app report and block already exist.
+4. **Functions deploy:** after `firebase login --reauth`, deploy the new messaging callables (`sendEventThreadMessage`, `removeEventThreadMessage`, `setEventThreadMute`, `markEventThreadRead`, `sendEventDirectMessage`) and the comment PII-mask triggers. Confirm the Cloud Run URLs if they differ from the defaults in `AppConfig`.
+5. **Do not deploy Firestore or Storage rules until 1.0.15 is the installed beta.** Thread rules are staged in this branch.
+
+## Event reviews (Play Console)
+
+Event reviews (1–5 stars plus an optional short note) are user-generated content. Only people who RSVP'd can review, and only after the event has ended. Host ratings show on free profiles. Premium businesses can reply and see reviews in analytics. Standing Hidden Gems are not reviewed directly; they only inherit reviews from events held there.
+
+The app also uses Google Play's `in_app_review` API. It asks for a Play Store rating after the user's **second** event they RSVP'd to that has ended, once only, with no incentives and no filtering based on whether they liked the event.
+
+Do this in Play Console before a store release that includes reviews:
+
+1. **Data safety form:** reviews / user-generated content are collected, not sold, not used for ads, optional, for app functionality. Update this if the current form does not already cover that row.
+2. **User-generated content policy:** report and block already exist; keep a public support contact listed.
+3. **Functions deploy:** after `firebase login --reauth`, deploy `submitEventReview`, `replyToEventReview`, `recordEndedRsvp`, and `markPlayReviewPrompted`. Confirm the Cloud Run URLs if they differ from `AppConfig`.
+4. **Do not deploy Firestore or Storage rules until 1.0.15 is the installed beta.** Review rules are staged in this branch.
+5. You do not need a special Play Console toggle for `in_app_review`, but do not offer rewards or gate the prompt on a positive rating.
+

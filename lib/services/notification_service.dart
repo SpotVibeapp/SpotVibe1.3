@@ -92,6 +92,17 @@ class NotificationService {
     );
   }
 
+  /// Premium-only heads-up when a newly approved Hidden Gem is near the user.
+  Future<void> notifyNewGemNearby({required String name}) async {
+    if (!await _canSendWith(_preferences.getNewGemsNearby())) return;
+    await _send(
+      id: _nextNotifId(),
+      channelKey: _kChannelEvents,
+      title: '✨ New Hidden Gem nearby',
+      body: '"$name" was just added near you. Premium members can visit it first.',
+    );
+  }
+
   // ── Bookmark / interested update ──────────────────────────────────────────
 
   /// Confirms the user's own save action if event-update alerts are enabled.

@@ -51,6 +51,7 @@ dependencies:
   # Subscriptions
   # v9+ uses Google Play Billing Library 8, required for new Play submissions.
   purchases_flutter: ^9.10.2
+  in_app_review: ^2.0.10
 
   # Social sign-in (Google + Apple; buttons hidden until each provider is
   # configured - see lib/config/app_config.dart)
@@ -64,9 +65,6 @@ dependencies:
   image_picker: ^1.1.2
   video_player: ^2.9.5
 
-  # Ads (banner ads for free users; ad-free is a Premium benefit)
-  google_mobile_ads: ^5.3.1
-
   # Browser APIs for the web build (downloads, notifications). Phone
   # builds do not import this library.
   web: ^1.1.0
@@ -78,7 +76,7 @@ dependencies:
   cloud_firestore: ^6.8.0
   firebase_storage: ^13.0.0
   cloud_functions: ^6.0.5
-  app_tracking_transparency: ^2.0.7
+  firebase_remote_config: ^6.7.1
 
 dev_dependencies:
   flutter_test:

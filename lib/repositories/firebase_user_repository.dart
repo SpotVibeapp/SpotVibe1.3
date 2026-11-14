@@ -393,6 +393,54 @@ class FirebaseUserRepository implements UserRepository {
     }
 
     try {
+      final threadMsgs = await _db
+          .collectionGroup('thread_messages')
+          .where('authorId', isEqualTo: uid)
+          .get();
+      for (final d in threadMsgs.docs) {
+        batch.delete(d.reference);
+      }
+    } catch (e) {
+      debugPrint('thread_messages purge skipped (deploy firestore.indexes.json): $e');
+    }
+
+    try {
+      final dms = await _db
+          .collectionGroup('dm_messages')
+          .where('authorId', isEqualTo: uid)
+          .get();
+      for (final d in dms.docs) {
+        batch.delete(d.reference);
+      }
+    } catch (e) {
+      debugPrint('dm_messages purge skipped (deploy firestore.indexes.json): $e');
+    }
+
+    try {
+      final reviews = await _db
+          .collectionGroup('reviews')
+          .where('authorId', isEqualTo: uid)
+          .get();
+      for (final d in reviews.docs) {
+        batch.delete(d.reference);
+      }
+    } catch (e) {
+      debugPrint('reviews purge skipped (deploy firestore.indexes.json): $e');
+    }
+
+    try {
+      final gemReviews = await _db
+          .collectionGroup('event_reviews')
+          .where('authorId', isEqualTo: uid)
+          .get();
+      for (final d in gemReviews.docs) {
+        batch.delete(d.reference);
+      }
+    } catch (e) {
+      debugPrint('event_reviews purge skipped (deploy firestore.indexes.json): $e');
+    }
+
+    try {
       final claims = await _db
           .collection('event_claims')
           .where('userId', isEqualTo: uid)

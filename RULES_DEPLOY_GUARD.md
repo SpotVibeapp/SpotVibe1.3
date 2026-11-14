@@ -1,3 +1,5 @@
+<!-- Also read STAGED_RULES_DEPLOY.md before any rules deploy. The tightened rules in this branch must wait until 1.0.15 is the installed beta. -->
+
 # Rules deploy guard (v14 beta)
 
 `firestore.rules` in this repo is the strict set: no real email or phone on
