@@ -197,3 +197,17 @@ Do this in Play Console before a store release that includes messaging:
 4. **Functions deploy:** after `firebase login --reauth`, deploy the new messaging callables (`sendEventThreadMessage`, `removeEventThreadMessage`, `setEventThreadMute`, `markEventThreadRead`, `sendEventDirectMessage`) and the comment PII-mask triggers. Confirm the Cloud Run URLs if they differ from the defaults in `AppConfig`.
 5. **Do not deploy Firestore or Storage rules until 1.0.15 is the installed beta.** Thread rules are staged in this branch.
 
+## Event reviews (Play Console)
+
+Event reviews (1–5 stars plus an optional short note) are user-generated content. Only people who RSVP'd can review, and only after the event has ended. Host ratings show on free profiles. Premium businesses can reply and see reviews in analytics. Standing Hidden Gems are not reviewed directly; they only inherit reviews from events held there.
+
+The app also uses Google Play's `in_app_review` API. It asks for a Play Store rating after the user's **second** event they RSVP'd to that has ended, once only, with no incentives and no filtering based on whether they liked the event.
+
+Do this in Play Console before a store release that includes reviews:
+
+1. **Data safety form:** reviews / user-generated content are collected, not sold, not used for ads, optional, for app functionality. Update this if the current form does not already cover that row.
+2. **User-generated content policy:** report and block already exist; keep a public support contact listed.
+3. **Functions deploy:** after `firebase login --reauth`, deploy `submitEventReview`, `replyToEventReview`, `recordEndedRsvp`, and `markPlayReviewPrompted`. Confirm the Cloud Run URLs if they differ from `AppConfig`.
+4. **Do not deploy Firestore or Storage rules until 1.0.15 is the installed beta.** Review rules are staged in this branch.
+5. You do not need a special Play Console toggle for `in_app_review`, but do not offer rewards or gate the prompt on a positive rating.
+

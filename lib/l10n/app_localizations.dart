@@ -2017,6 +2017,120 @@ abstract class AppLocalizations {
   /// **'No private messages yet.'**
   String get eventThreadDmEmpty;
 
+  /// No description provided for @eventReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews'**
+  String get eventReviewTitle;
+
+  /// No description provided for @eventReviewHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Only people who RSVP\'d can leave a short star review after the event ends. Notes go through the same moderation as other posts.'**
+  String get eventReviewHelp;
+
+  /// No description provided for @eventReviewCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate this event'**
+  String get eventReviewCta;
+
+  /// No description provided for @eventReviewEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Update your review'**
+  String get eventReviewEdit;
+
+  /// No description provided for @eventReviewNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional short note'**
+  String get eventReviewNoteHint;
+
+  /// No description provided for @eventReviewSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit review'**
+  String get eventReviewSubmit;
+
+  /// No description provided for @eventReviewSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks for the review.'**
+  String get eventReviewSubmitted;
+
+  /// No description provided for @eventReviewFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save that review. Try again.'**
+  String get eventReviewFailed;
+
+  /// No description provided for @eventReviewRsvpRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'RSVP to this event, then come back after it ends to leave a review.'**
+  String get eventReviewRsvpRequired;
+
+  /// No description provided for @eventReviewNotEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews open after the event ends.'**
+  String get eventReviewNotEnded;
+
+  /// No description provided for @eventReviewEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No reviews yet.'**
+  String get eventReviewEmpty;
+
+  /// No description provided for @eventReviewHostRating.
+  ///
+  /// In en, this message translates to:
+  /// **'{avg} ({count})'**
+  String eventReviewHostRating(String avg, int count);
+
+  /// No description provided for @eventReviewReply.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get eventReviewReply;
+
+  /// No description provided for @eventReviewReplyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a reply'**
+  String get eventReviewReplyHint;
+
+  /// No description provided for @eventReviewHostReply.
+  ///
+  /// In en, this message translates to:
+  /// **'Host reply: {reply}'**
+  String eventReviewHostReply(String reply);
+
+  /// No description provided for @eventReviewReplyPremiumTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review replies are a Premium perk'**
+  String get eventReviewReplyPremiumTitle;
+
+  /// No description provided for @eventReviewReplyPremiumBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium businesses can reply to reviews and see them in analytics. Your rating is already visible on your profile for free.'**
+  String get eventReviewReplyPremiumBody;
+
+  /// No description provided for @eventReviewReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Report review'**
+  String get eventReviewReport;
+
+  /// No description provided for @eventReviewGemHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'These reviews come from events held at this Hidden Gem. Standing spots are not reviewed directly.'**
+  String get eventReviewGemHelp;
+
   /// No description provided for @unlockMediaGallery.
   ///
   /// In en, this message translates to:

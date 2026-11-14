@@ -364,6 +364,26 @@ service cloud.firestore {
         allow create, update: if isOwner(uid)
             && request.resource.data.keys().hasOnly(['lastReadAtMs', 'lastReadMessageId', 'updatedAt']);
       }
+
+      // Server-computed host ratings. Shown on free and Premium profiles.
+      match /review_stats/{docId} {
+        allow read: if true;
+        allow write: if false;
+      }
+      match /business_review_stats/{docId} {
+        allow read: if true;
+        allow write: if false;
+      }
+      // Ended RSVPs used to trigger the Play in-app review prompt after
+      // the user's second ended event. Written only by recordEndedRsvp.
+      match /ended_rsvps/{eventId} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow write: if false;
+      }
+      match /play_review_prompt/{docId} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow write: if false;
+      }
     }
 
 
@@ -463,6 +483,17 @@ service cloud.firestore {
         allow read: if isAdmin() || isOwner(userId) || isEventHost(eventId);
         allow create, update, delete: if false;
       }
+
+      // Event reviews. Client writes go through submitEventReview /
+      // replyToEventReview. Aggregates are server-computed.
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create, update, delete: if false;
+      }
+      match /review_stats/{docId} {
+        allow read: if true;
+        allow write: if false;
+      }
     }
 
     function isBusinessPromoGem(data) {
@@ -545,6 +576,17 @@ service cloud.firestore {
         allow update, delete: if isAdmin()
                               || (isSignedIn()
                                   && resource.data.authorId == request.auth.uid);
+      }
+
+      // Reviews attached from events held at this gem. No direct gem
+      // reviews; clients cannot write these.
+      match /event_reviews/{reviewId} {
+        allow read: if true;
+        allow write: if false;
+      }
+      match /review_stats/{docId} {
+        allow read: if true;
+        allow write: if false;
       }
     }
 

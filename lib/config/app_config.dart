@@ -158,4 +158,22 @@ class AppConfig {
     'SEND_EVENT_DIRECT_MESSAGE_FUNCTION_URL',
     defaultValue: 'https://sendeventdirectmessage-kfzltbt5ja-uc.a.run.app',
   );
+
+  /// Event review callables. Confirm Cloud Run URLs after the first deploy.
+  static const String submitEventReviewFunctionUrl = String.fromEnvironment(
+    'SUBMIT_EVENT_REVIEW_FUNCTION_URL',
+    defaultValue: 'https://submiteventreview-kfzltbt5ja-uc.a.run.app',
+  );
+  static const String replyToEventReviewFunctionUrl = String.fromEnvironment(
+    'REPLY_TO_EVENT_REVIEW_FUNCTION_URL',
+    defaultValue: 'https://replytoeventreview-kfzltbt5ja-uc.a.run.app',
+  );
+  static const String recordEndedRsvpFunctionUrl = String.fromEnvironment(
+    'RECORD_ENDED_RSVP_FUNCTION_URL',
+    defaultValue: 'https://recordendedrsvp-kfzltbt5ja-uc.a.run.app',
+  );
+  static const String markPlayReviewPromptedFunctionUrl = String.fromEnvironment(
+    'MARK_PLAY_REVIEW_PROMPTED_FUNCTION_URL',
+    defaultValue: 'https://markplayreviewprompted-kfzltbt5ja-uc.a.run.app',
+  );
 }

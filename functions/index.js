@@ -72,6 +72,8 @@ const {
 } = require('./lib/featureFlags');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const eventMessagingHandlers = require('./lib/eventMessagingHandlers');
+const eventReviewHandlers = require('./lib/eventReviewHandlers');
+const { collectReviewArtifacts, recomputeReviewTargets } = require('./lib/eventReviewCleanup');
 
 const zlib = require('zlib');
 const { planFeedFields } = require('./lib/feedFields');
@@ -142,7 +144,13 @@ exports.deleteUser = onCall(async (request) => {
   }
   const uid = request.auth.uid;
 
+  const reviewBits = await collectReviewArtifacts(admin.firestore(), uid);
   await commitDeletions(await collectUserDeletions(uid));
+  try {
+    await recomputeReviewTargets(admin.firestore(), admin, reviewBits.targets);
+  } catch (e) {
+    console.warn('review aggregate recompute after delete skipped:', e && e.message);
+  }
 
   try {
     await admin.auth().deleteUser(uid);
@@ -235,6 +243,12 @@ async function collectUserDeletions(uid) {
     push(dmsAtt);
   } catch (e) {
     console.warn('event_dms purge skipped:', e && e.message);
+  }
+  try {
+    const reviewBits = await collectReviewArtifacts(db, uid);
+    reviewBits.refs.forEach((ref) => refs.push(ref));
+  } catch (e) {
+    console.warn('reviews purge skipped:', e && e.message);
   }
 
   push(await db.collection('event_claims').where('userId', '==', uid).get());
@@ -2179,4 +2193,27 @@ exports.maskEventCommentPii = require('firebase-functions/v2/firestore').onDocum
 exports.maskGemCommentPii = require('firebase-functions/v2/firestore').onDocumentWritten(
   'gems/{gemId}/comments/{commentId}',
   maskCommentPii
+);
+
+// Event reviews. Writes go through callables so RSVP, ended-event, star
+// range, moderation, and server-computed aggregates stay enforced.
+// Deploy after firebase reauth; do not deploy rules before 1.0.15.
+eventReviewHandlers.install({
+  exports,
+  onCall,
+  HttpsError,
+  admin,
+  containsBanned,
+  runParallelModeration,
+  verifiedEntitlement,
+  revenueCatSecretKey,
+});
+
+exports.parallelModerateEventReview = parallelOnCreate(
+  'events/{eventId}/reviews/{reviewId}',
+  (snap) => ({
+    text: snap.get('note') || '',
+    authorId: snap.get('authorId') || '',
+    targetPath: snap.ref.path,
+  })
 );

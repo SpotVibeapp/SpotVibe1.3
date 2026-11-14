@@ -1127,6 +1127,74 @@ class AppLocalizationsEs extends AppLocalizations {
   String get eventThreadDmEmpty => 'Aún no hay mensajes privados.';
 
   @override
+  String get eventReviewTitle => 'Reseñas';
+
+  @override
+  String get eventReviewHelp =>
+      'Solo quienes confirmaron asistencia pueden dejar una reseña con estrellas cuando el evento termina. Las notas pasan por la misma moderación que el resto de publicaciones.';
+
+  @override
+  String get eventReviewCta => 'Califica este evento';
+
+  @override
+  String get eventReviewEdit => 'Actualiza tu reseña';
+
+  @override
+  String get eventReviewNoteHint => 'Nota breve opcional';
+
+  @override
+  String get eventReviewSubmit => 'Enviar reseña';
+
+  @override
+  String get eventReviewSubmitted => 'Gracias por tu reseña.';
+
+  @override
+  String get eventReviewFailed =>
+      'No se pudo guardar la reseña. Inténtalo de nuevo.';
+
+  @override
+  String get eventReviewRsvpRequired =>
+      'Confirma asistencia y vuelve cuando el evento termine para dejar una reseña.';
+
+  @override
+  String get eventReviewNotEnded =>
+      'Las reseñas se abren cuando termina el evento.';
+
+  @override
+  String get eventReviewEmpty => 'Aún no hay reseñas.';
+
+  @override
+  String eventReviewHostRating(String avg, int count) {
+    return '$avg ($count)';
+  }
+
+  @override
+  String get eventReviewReply => 'Responder';
+
+  @override
+  String get eventReviewReplyHint => 'Escribe una respuesta';
+
+  @override
+  String eventReviewHostReply(String reply) {
+    return 'Respuesta del anfitrión: $reply';
+  }
+
+  @override
+  String get eventReviewReplyPremiumTitle =>
+      'Responder reseñas es una función Premium';
+
+  @override
+  String get eventReviewReplyPremiumBody =>
+      'Los negocios Premium pueden responder reseñas y verlas en sus analíticas. La calificación ya aparece en tu perfil de forma gratuita.';
+
+  @override
+  String get eventReviewReport => 'Reportar reseña';
+
+  @override
+  String get eventReviewGemHelp =>
+      'Estas reseñas provienen de eventos en esta Joya oculta. Los lugares fijos no se reseñan de forma directa.';
+
+  @override
   String get unlockMediaGallery => 'Desbloquear galería completa';
 
   @override

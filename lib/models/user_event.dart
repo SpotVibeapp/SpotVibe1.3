@@ -66,6 +66,8 @@ class UserCreatedEvent {
   final int analyticsShares;
   /// Public organizer profile links shown on this event page.
   final EventSocialLinks socialLinks;
+  /// Optional Hidden Gem this event is held at. Reviews also attach there.
+  final String? gemId;
 
   const UserCreatedEvent({
     required this.id,
@@ -105,6 +107,7 @@ class UserCreatedEvent {
     this.analyticsClicks = 0,
     this.analyticsShares = 0,
     this.socialLinks = const EventSocialLinks.empty(),
+    this.gemId,
   });
 
   bool get isFree => cost == null || cost == 0;
@@ -183,6 +186,8 @@ class UserCreatedEvent {
     int? analyticsClicks,
     int? analyticsShares,
     EventSocialLinks? socialLinks,
+    String? gemId,
+    bool clearGemId = false,
   }) =>
       UserCreatedEvent(
         id: id,
@@ -225,5 +230,6 @@ class UserCreatedEvent {
         analyticsClicks: analyticsClicks ?? this.analyticsClicks,
         analyticsShares: analyticsShares ?? this.analyticsShares,
         socialLinks: socialLinks ?? this.socialLinks,
+        gemId: clearGemId ? null : (gemId ?? this.gemId),
       );
 }

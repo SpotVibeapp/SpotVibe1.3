@@ -67,7 +67,7 @@ Answer honestly; SpotVibe is a **social / user-generated-content** app, not a ga
 | App category | **Social Networking / Reference, News, or Educational** → choose **Social** | Users create events, comment, follow each other. |
 | Violence, sexual content, profanity, drugs, gambling (as *app-authored* content) | **No** to all | The app itself doesn't author such content. |
 | **Does the app allow users to interact or exchange content / communicate?** | **Yes** | Comments on events, follow, RSVP lists are user-to-user. |
-| Users can share user-generated content | **Yes** | Users publish events (text, photos, video), comments, and private event-thread or host-to-attendee messages. |
+| Users can share user-generated content | **Yes** | Users publish events (text, photos, video), comments, event reviews (stars and optional notes), and private event-thread or host-to-attendee messages. |
 | Shares user's current physical location with other users | **No** | Location is used to *sort* the feed on-device; it is not broadcast to other users. Event locations are venue addresses the organizer typed, not the user's GPS. |
 | Digital purchases | **Yes** | Auto-renewing subscriptions (Premium). |
 | Unrestricted internet access (in-app browser to arbitrary web) | **No** | Ticket links open the system browser; there's no arbitrary in-app web browser. |
@@ -123,7 +123,7 @@ data* to them beyond an area/lat-lng for search, so treat carefully; see note).
 | **App interactions** (screens/events opened) | Yes | No | No | — | Analytics / App functionality |
 | **Crash logs** | Yes | No | No | — | App functionality (stability) |
 | **Diagnostics** | Yes | No | No | — | App functionality |
-| **Other user-generated content** (event text, comments, RSVPs, event-thread and direct messages, claim info) | Yes | No | No | Optional | App functionality |
+| **Other user-generated content** (event text, comments, RSVPs, reviews, event-thread and direct messages, claim info) | Yes | No | No | Optional | App functionality |
 | **AI request text** (Ask SpotVibe search text; event title/description/category/venue for AI promo image) | Yes | **Yes → OpenAI** | Processing only | Optional (user must invoke AI) | App functionality (generate filters / promo image) |
 
 **Notes for the reviewer text fields:**

@@ -13,6 +13,7 @@ import '../theme/category_colors.dart';
 import '../theme/responsive.dart';
 import '../theme/theme.dart';
 import '../services/event_analytics_service.dart';
+import '../services/event_review_service.dart';
 import '../widgets/events/claim_venue_banner.dart';
 import '../widgets/events/event_media_gallery.dart';
 import '../widgets/events/event_share_card.dart';
@@ -29,6 +30,8 @@ import '../widgets/common/user_action_sheet.dart';
 import '../widgets/events/attendees_section.dart';
 import '../widgets/events/comment_section.dart';
 import '../widgets/events/event_thread_section.dart';
+import '../widgets/events/event_reviews_section.dart';
+import '../widgets/events/host_rating_badge.dart';
 import '../widgets/events/practical_details_section.dart';
 import '../widgets/events/get_tickets_button.dart';
 import '../widgets/events/quick_actions_section.dart';
@@ -59,6 +62,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               widget.event.id,
               viewerId: context.read<AuthProvider>().user?.id,
             );
+        final uid = context.read<AuthProvider>().user?.id;
+        if (uid != null && uid.isNotEmpty && widget.event.isUserCreated) {
+          EventReviewService().maybeRequestPlayReview(eventId: widget.event.id);
+        }
       } catch (_) {}
     });
   }
@@ -306,6 +313,16 @@ class _DetailContent extends StatelessWidget {
                   AttendeesSection(accent: catColor),
                   const SizedBox(height: AppTheme.spacingLg),
                   EventThreadSection(eventId: event.id, creatorId: event.creatorId, accent: catColor),
+                  if (event.isUserCreated) ...[
+                    const SizedBox(height: AppTheme.spacingLg),
+                    EventReviewsSection(
+                      eventId: event.id,
+                      creatorId: event.creatorId,
+                      dateTime: event.dateTime,
+                      endDateTime: event.endDateTime,
+                      accent: catColor,
+                    ),
+                  ],
                   const SizedBox(height: AppTheme.spacingLg),
                   SimilarEventsSection(currentEvent: event),
                   const SizedBox(height: AppTheme.spacingLg),
@@ -585,6 +602,8 @@ class _OrganizerRow extends StatelessWidget {
             children: [
               Text(event.organizerName, style: text.titleSmall),
               Text(l10n.organizer, style: text.labelSmall),
+              if (event.isUserCreated && event.creatorId.isNotEmpty)
+                HostRatingBadge(hostId: event.creatorId),
             ],
           ),
         ),
