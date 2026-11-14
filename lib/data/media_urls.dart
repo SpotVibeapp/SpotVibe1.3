@@ -2,9 +2,10 @@
 const int kMaxEventPhotos = 5;
 const int kMaxEventVideos = 3;
 
-/// A useful Free listing can still have a proper cover and a short clip.
+/// A useful Free listing has a cover photo. Additional photos and any
+/// video are Premium.
 const int kFreeEventPhotos = 1;
-const int kFreeEventVideos = 1;
+const int kFreeEventVideos = 0;
 
 /// The gallery allowance shown in the creator UI. The full 5-photo / 3-video
 /// experience belongs to Premium organizers and the official admin account.

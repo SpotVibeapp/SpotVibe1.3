@@ -12,14 +12,15 @@ import 'user_event_repository.dart';
 
 /// Fields a client must never write on an event doc: the paid weekly
 /// feature (set by the `featureEvent` Cloud Function) and the public
-/// counters (only ever bumped atomically, see [incrementAnalytics] and
-/// FirebaseEventRepository's save transaction). firestore.rules enforces it.
+/// counters (bumped by the recordEventAnalytics callable, or by a
+/// client increment only while the staged rules are still not deployed).
 const List<String> kServerManagedEventFields = ['featuredWeekKey', 'featuredAt'];
 const List<String> kEventCounterFields = [
   'analyticsSearchImpressions',
   'analyticsViews',
   'analyticsSaves',
   'analyticsClicks',
+  'analyticsShares',
   'bookmarkedCount',
   'interestedCount',
 ];
@@ -107,6 +108,116 @@ class FirebaseUserEventRepository extends UserEventRepository {
       batch.set(_events.doc(id), body, options);
       await batch.commit();
     });
+  }
+
+  bool _callableSaveUnavailable = false;
+
+  /// Client-side free shape used only when [saveUserEvent] is not deployed
+  /// yet. Never writes featuring or other Premium perk fields.
+  @visibleForTesting
+  static Map<String, dynamic> freeShapedFallback(Map<String, dynamic> raw) {
+    final images = _firstUrls(raw['imageUrls'] ?? raw['imageUrl'], 1);
+    final videos = _firstUrls(raw['videoUrls'] ?? raw['videoUrl'], 1);
+    final out = Map<String, dynamic>.of(raw);
+    out['imageUrls'] = images;
+    out['imageUrl'] = images.isEmpty ? '' : images.first;
+    out['videoUrls'] = videos;
+    out['videoUrl'] = videos.isEmpty ? null : videos.first;
+    out['recurringType'] = 'none';
+    out['contactPhone'] = null;
+    out['contactWebsite'] = null;
+    out['contactSocial'] = null;
+    out['brandColor'] = null;
+    out['brandLogoUrl'] = null;
+    out['isPremiumListing'] = false;
+    out['isCreatorPro'] = false;
+    out.remove('featuredWeekKey');
+    out.remove('featuredAt');
+    return out;
+  }
+
+  static List<String> _firstUrls(dynamic value, int limit) {
+    final source = value is Iterable ? value : (value == null ? const [] : [value]);
+    final seen = <String>{};
+    final out = <String>[];
+    for (final item in source) {
+      final url = item?.toString().trim() ?? '';
+      if (url.isEmpty || !seen.add(url)) continue;
+      out.add(url);
+      if (out.length >= limit) break;
+    }
+    return out;
+  }
+
+  Future<UserCreatedEvent> _saveEvent(
+    UserCreatedEvent event, {
+    required bool isCreate,
+    required DateTime endDateTime,
+  }) async {
+    if (!_callableSaveUnavailable) {
+      try {
+        return await _saveThroughCallable(event, isCreate: isCreate);
+      } on FirebaseFunctionsException catch (e) {
+        if (e.code == 'failed-precondition' ||
+            e.code == 'unauthenticated' ||
+            e.code == 'permission-denied' ||
+            e.code == 'invalid-argument') {
+          rethrow;
+        }
+        debugPrint('saveUserEvent callable failed (${e.code}): $e');
+        if (e.code != 'not-found' &&
+            e.code != 'unavailable' &&
+            e.code != 'unimplemented' &&
+            e.code != 'internal') {
+          rethrow;
+        }
+        _callableSaveUnavailable = true;
+      } catch (e) {
+        debugPrint('saveUserEvent callable failed: $e');
+        _callableSaveUnavailable = true;
+      }
+    }
+
+    final payload = {
+      ...freeShapedFallback(userEventToMap(event)),
+      'dateTime': Timestamp.fromDate(event.dateTime),
+      'endDateTime': Timestamp.fromDate(endDateTime),
+      if (isCreate) 'createdAt': FieldValue.serverTimestamp(),
+      if (!isCreate) 'updatedAt': FieldValue.serverTimestamp(),
+    };
+    await _commitMirrors(event.id, payload, isCreate: isCreate);
+    return userEventFromMap(event.id, {
+      ...userEventToMap(event),
+      ...freeShapedFallback(userEventToMap(event)),
+    });
+  }
+
+  Future<UserCreatedEvent> _saveThroughCallable(
+    UserCreatedEvent event, {
+    required bool isCreate,
+  }) async {
+    final callable =
+        _functions.httpsCallableFromUrl(AppConfig.saveUserEventFunctionUrl);
+    final payload = <String, dynamic>{
+      ...userEventToMap(event),
+      'id': event.id,
+      'dateTimeMs': event.dateTime.millisecondsSinceEpoch,
+      'endDateTimeMs': event.endDateTime?.millisecondsSinceEpoch,
+      'createdAtMs': event.createdAt.millisecondsSinceEpoch,
+    };
+    payload.remove('dateTime');
+    payload.remove('endDateTime');
+    payload.remove('createdAt');
+    payload.remove('updatedAt');
+    final result = await callable.call<Map<String, dynamic>>({
+      'isCreate': isCreate,
+      'event': payload,
+    });
+    final data = Map<String, dynamic>.from(result.data);
+    final saved = data['event'] is Map
+        ? Map<String, dynamic>.from(data['event'] as Map)
+        : payload;
+    return userEventFromMap(event.id, saved);
   }
 
   Future<T> _guard<T>(Future<T> Function() action, Future<T> Function() orElse) async {
@@ -223,14 +334,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
         brandLogoUrl: brandLogoUrl,
         featuredWeekKey: featuredWeekKey,
       );
-      final payload = {
-        ...userEventToMap(event),
-        'dateTime': Timestamp.fromDate(event.dateTime),
-        'endDateTime': Timestamp.fromDate(endDateTime),
-        'createdAt': FieldValue.serverTimestamp(),
-      };
-      await _commitMirrors(event.id, payload, isCreate: true);
-      return event;
+      return _saveEvent(event, isCreate: true, endDateTime: endDateTime);
     }, () => super.createEvent(
           id: id,
           creatorId: creatorId,
@@ -268,15 +372,11 @@ class FirebaseUserEventRepository extends UserEventRepository {
   @override
   Future<UserCreatedEvent> updateEvent(UserCreatedEvent updated) {
     return _guard(() async {
-      final payload = {
-        ...userEventToMap(updated),
-        'dateTime': Timestamp.fromDate(updated.dateTime),
-        if (updated.endDateTime != null)
-          'endDateTime': Timestamp.fromDate(updated.endDateTime!),
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
-      await _commitMirrors(updated.id, payload, isCreate: false);
-      return updated;
+      return _saveEvent(
+        updated,
+        isCreate: false,
+        endDateTime: updated.endDateTime ?? updated.dateTime,
+      );
     }, () => super.updateEvent(updated));
   }
 
@@ -342,9 +442,11 @@ class FirebaseUserEventRepository extends UserEventRepository {
     }
   }
 
-  /// Bumps Premium analytics counters. Each counter is its own atomic
-  /// `FieldValue.increment(1)` write on each mirror: firestore.rules only
-  /// accept exactly +1 on exactly one analytics field per write.
+  /// Bumps Premium analytics counters through `recordEventAnalytics`.
+  /// Falls back to a direct +1 write only if the callable is not deployed
+  /// yet; that fallback will stop working once the staged rules go live.
+  bool _callableAnalyticsUnavailable = false;
+
   @override
   Future<void> incrementAnalytics(
     String eventId, {
@@ -352,6 +454,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
     int views = 0,
     int saves = 0,
     int clicks = 0,
+    int shares = 0,
   }) async {
     if (_useFallback) {
       await super.incrementAnalytics(
@@ -360,14 +463,77 @@ class FirebaseUserEventRepository extends UserEventRepository {
         views: views,
         saves: saves,
         clicks: clicks,
+        shares: shares,
       );
       return;
     }
+    final metrics = <String>[
+      if (impressions > 0) 'impressions',
+      if (views > 0) 'views',
+      if (saves > 0) 'saves',
+      if (clicks > 0) 'clicks',
+      if (shares > 0) 'shares',
+    ];
+    if (metrics.isEmpty) return;
+    if (!_callableAnalyticsUnavailable) {
+      var usedCallable = false;
+      var callableFailed = false;
+      for (final metric in metrics) {
+        try {
+          final callable = _functions.httpsCallableFromUrl(
+            AppConfig.recordEventAnalyticsFunctionUrl,
+          );
+          await callable.call<Map<String, dynamic>>({
+            'eventId': eventId,
+            'metric': metric,
+          });
+          usedCallable = true;
+        } on FirebaseFunctionsException catch (e) {
+          if (e.code == 'unauthenticated' || e.code == 'invalid-argument') {
+            return;
+          }
+          if (e.code == 'not-found' ||
+              e.code == 'unavailable' ||
+              e.code == 'unimplemented' ||
+              e.code == 'internal') {
+            callableFailed = true;
+            debugPrint('recordEventAnalytics failed (${e.code}): $e');
+          } else {
+            debugPrint('recordEventAnalytics skipped (${e.code}): $e');
+            return;
+          }
+        } catch (e) {
+          callableFailed = true;
+          debugPrint('recordEventAnalytics failed: $e');
+        }
+      }
+      if (usedCallable && !callableFailed) return;
+      if (callableFailed) _callableAnalyticsUnavailable = true;
+    }
+    await _incrementAnalyticsOnClient(
+      eventId,
+      impressions: impressions,
+      views: views,
+      saves: saves,
+      clicks: clicks,
+      shares: shares,
+    );
+  }
+
+  Future<void> _incrementAnalyticsOnClient(
+    String eventId, {
+    int impressions = 0,
+    int views = 0,
+    int saves = 0,
+    int clicks = 0,
+    int shares = 0,
+  }) async {
     final fields = analyticsIncrementFields(
       impressions: impressions,
       views: views,
       saves: saves,
       clicks: clicks,
+      shares: shares,
     );
     for (final field in fields) {
       for (final ref in [_userEvents.doc(eventId), _events.doc(eventId)]) {
@@ -392,11 +558,13 @@ List<String> analyticsIncrementFields({
   int views = 0,
   int saves = 0,
   int clicks = 0,
+  int shares = 0,
 }) {
   return [
     if (impressions > 0) 'analyticsSearchImpressions',
     if (views > 0) 'analyticsViews',
     if (saves > 0) 'analyticsSaves',
     if (clicks > 0) 'analyticsClicks',
+    if (shares > 0) 'analyticsShares',
   ];
 }

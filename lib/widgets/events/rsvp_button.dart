@@ -4,7 +4,10 @@ import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/rsvp_provider.dart';
+import '../../providers/subscription_provider.dart';
+import '../../services/feature_flags.dart';
 import '../../theme/theme.dart';
+import '../billing/soft_paywall_sheet.dart';
 
 /// Full-width RSVP button with an inline privacy toggle.
 /// Shows an RSVP action sheet when the user is not yet RSVP'd.
@@ -41,7 +44,7 @@ class RsvpButton extends StatelessWidget {
       child: FilledButton.icon(
         onPressed: rsvp.isSubmitting
             ? null
-            : () => _showRsvpSheet(context, rsvp, auth),
+            : () => _onRsvpPressed(context, rsvp, auth),
         icon: rsvp.isSubmitting
             ? SizedBox(
                 width: 16,
@@ -58,6 +61,29 @@ class RsvpButton extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _onRsvpPressed(
+    BuildContext context,
+    RsvpProvider rsvp,
+    AuthProvider auth,
+  ) async {
+    final flags = context.read<FeatureFlags>();
+    final premium = context.read<SubscriptionProvider>().isSubscribed;
+    if (shouldGateBasicRsvp(
+      basicRsvpFlagOn: flags.gateBasicRsvpPremium,
+      isSubscribed: premium,
+    )) {
+      final l10n = AppLocalizations.of(context)!;
+      await showSoftPaywallSheet(
+        context,
+        title: l10n.rsvpTicketsPremiumTitle,
+        body: l10n.rsvpTicketsPremiumBody,
+      );
+      return;
+    }
+    if (!context.mounted) return;
+    _showRsvpSheet(context, rsvp, auth);
   }
 
   void _showRsvpSheet(

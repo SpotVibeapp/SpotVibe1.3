@@ -104,6 +104,13 @@ class AppConfig {
     defaultValue: 'https://liveeventsproxy-kfzltbt5ja-uc.a.run.app',
   );
 
+  /// `saveUserEvent`: authoritative create/update. Premium perks are
+  /// applied only after the server checks the RevenueCat `pro` entitlement.
+  static const String saveUserEventFunctionUrl = String.fromEnvironment(
+    'SAVE_USER_EVENT_FUNCTION_URL',
+    defaultValue: 'https://saveuserevent-kfzltbt5ja-uc.a.run.app',
+  );
+
   /// When true, profile and event writes that the deployed rules reject
   /// retry once with the legacy v14 field shape. The strict shape is always
   /// tried first, so this does not put an email or a featured week on a
@@ -114,5 +121,25 @@ class AppConfig {
   static const bool rulesCompatRetries = bool.fromEnvironment(
     'RULES_COMPAT_RETRIES',
     defaultValue: true,
+  );
+
+  /// `saveGem`: authoritative create/update. Rich/promo fields and
+  /// `richUntil` are applied only after a RevenueCat `pro` check.
+  static const String saveGemFunctionUrl = String.fromEnvironment(
+    'SAVE_GEM_FUNCTION_URL',
+    defaultValue: 'https://savegem-kfzltbt5ja-uc.a.run.app',
+  );
+
+  /// `renewGemRich`: restarts a 30-day promotional window for an existing gem.
+  static const String renewGemRichFunctionUrl = String.fromEnvironment(
+    'RENEW_GEM_RICH_FUNCTION_URL',
+    defaultValue: 'https://renewgemrich-kfzltbt5ja-uc.a.run.app',
+  );
+
+  /// `recordEventAnalytics`: authoritative +1 on a Premium dashboard
+  /// counter. The staged rules block client increments.
+  static const String recordEventAnalyticsFunctionUrl = String.fromEnvironment(
+    'RECORD_EVENT_ANALYTICS_FUNCTION_URL',
+    defaultValue: 'https://recordeventanalytics-kfzltbt5ja-uc.a.run.app',
   );
 }

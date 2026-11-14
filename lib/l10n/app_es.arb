@@ -152,26 +152,86 @@
   "youAreOnPremium": "Tienes Premium",
   "premiumUnlockedBody": "Eventos recurrentes, galerías multimedia, analíticas, marca y reclamaciones verificadas están desbloqueados.",
   "freePerk1": "Publica hasta 2 eventos únicos próximos a la vez",
-  "freePerk2": "Página de evento básica: título, descripción, 1 foto de portada, 1 video corto, ubicación y hora",
+  "freePerk2": "Página de evento básica: título, una descripción corta, 1 foto de portada, ubicación y hora",
   "freePerk3": "Tu evento aparece en el feed público",
   "premiumPerk1Title": "Eventos recurrentes",
   "premiumPerk1Subtitle": "Publica una vez y repite semanal o mensualmente",
   "premiumPerk2Title": "Posicionamiento destacado",
   "premiumPerk2Subtitle": "Arriba del feed de la categoría 1 vez por semana",
-  "premiumPerk3Title": "Panel de analíticas",
-  "premiumPerk3Subtitle": "Vistas, guardados y clics en vivo",
+  "premiumPerk3Title": "Panel completo de analíticas",
+  "premiumPerk3Subtitle": "Clics y estadísticas más detalladas, además de los conteos públicos",
   "premiumPerk4Title": "Marca personalizada",
   "premiumPerk4Subtitle": "Logo y colores de marca en la página de tu evento",
   "premiumPerk5Title": "Botón de contacto",
-  "premiumPerk5Subtitle": "Teléfono, sitio web y herramientas de contacto",
-  "premiumPerk6Title": "Sin anuncios",
-  "premiumPerk6Subtitle": "Páginas de evento limpias y sin anuncios",
-  "premiumPerk7Title": "Reclama eventos existentes",
-  "premiumPerk7Subtitle": "Verifica primero. Tu primer reclamo es gratis",
+  "premiumPerk5Subtitle": "Teléfono y sitio web en la página de tu evento",
+  "premiumPerk7Title": "Reclamos de eventos adicionales",
+  "premiumPerk7Subtitle": "Desbloquea más reclamos después del primero, que es gratis",
   "premiumPerk8Title": "Galería multimedia",
   "premiumPerk8Subtitle": "Hasta 5 fotos y 3 videos cortos en cada evento",
   "trialLabel": "prueba gratuita de 7 días",
   "startFreeTrial": "Comienza tu prueba gratuita de 7 días",
+  "subscribeForPrice": "Suscribirme — {price}",
+  "@subscribeForPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "billingNoTrial": "{price} · facturación mensual · cancela cuando quieras",
+  "@billingNoTrial": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "billingFoundingOpenNoTrial": "{price} fijo para recintos fundadores · quedan {remaining} de {limit} · cancela cuando quieras",
+  "@billingFoundingOpenNoTrial": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      },
+      "remaining": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "foundingPackageMissing": "El paquete de precio fundador no está en la tienda ahora, así que no te cobraremos la tarifa de $9.99. Inténtalo más tarde, o suscríbete al precio estándar si aparece abajo.",
+  "rsvpTicketsPremiumTitle": "El RSVP y los boletos son parte de Premium",
+  "rsvpTicketsPremiumBody": "Aún puedes guardar y seguir este evento gratis. Confirmar tu RSVP es una función Premium. Mejora tu plan para que el organizador sepa que vas.",
+  "getTicketsPremiumBody": "Los botones de boletos abren al vendedor oficial (como Ticketmaster). Es un enlace externo, no una compra dentro de SpotVibe. Guardar y seguir el evento sigue siendo gratis. Hazte Premium para abrir enlaces de boletos.",
+  "freePlanLimitMonthlyBody": "Los organizadores gratuitos pueden publicar {cap} eventos por mes calendario, y solo {upcoming} eventos próximos a la vez. Pásate a Premium para quitar ambos límites.",
+  "@freePlanLimitMonthlyBody": {
+    "placeholders": {
+      "cap": { "type": "int" },
+      "upcoming": { "type": "int" }
+    }
+  },
+  "newGemNearbyTitle": "Nuevo tesoro escondido cerca",
+  "newGemNearbyBody": "Recién se agregó {name} cerca de ti. Los miembros Premium pueden verlo primero.",
+  "@newGemNearbyBody": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notifNewGems": "Nuevos tesoros escondidos cerca",
+  "notifNewGemsSubtitle": "Un aviso cuando se aprueba un tesoro cerca de ti (Premium)",
+  "premiumPerkEarlyGemsTitle": "Tesoros escondidos anticipados",
+  "premiumPerkEarlyGemsSubtitle": "Ve los tesoros recién agregados de inmediato, más un aviso cercano",
+  "premiumPerkUnlimitedPostsTitle": "Eventos próximos ilimitados",
+  "premiumPerkUnlimitedPostsSubtitle": "Sin límite de 2 eventos próximos ni de publicaciones mensuales",
+  "eventPublicStats": "{views} vistas · {saves} interesados · {shares} compartidos",
+  "@eventPublicStats": {
+    "placeholders": {
+      "views": { "type": "int" },
+      "saves": { "type": "int" },
+      "shares": { "type": "int" }
+    }
+  },
   "perMonth": "{price}/mes",
   "@perMonth": {
     "placeholders": {
@@ -428,7 +488,7 @@
   },
   "photoGalleryHint": "Agrega hasta 5 fotos en total. La portada cuenta como la primera.",
   "photoGalleryFreeHint": "Los eventos gratis incluyen 1 foto de portada. Premium desbloquea hasta 5 fotos.",
-  "videoGalleryFreeHint": "Los eventos gratis incluyen 1 video corto. Premium desbloquea hasta 3 videos.",
+  "videoGalleryFreeHint": "Los videos son una función Premium. Los eventos gratis solo incluyen la foto de portada.",
   "noAdditionalPhotos": "Agrega fotos desde tu biblioteca o cámara.",
   "addPhotoUrl": "Agregar enlace de foto (opcional)",
   "addPhotoLink": "Agregar enlace de foto",
@@ -484,7 +544,14 @@
     }
   },
   "photos": "Fotos",
-  "mediaPremiumPerk": "Premium desbloquea hasta 5 fotos y 3 videos por evento.",
+  "mediaPremiumPerk": "Premium desbloquea hasta 5 fotos, 3 videos, una descripción más larga y enlaces sociales.",
+  "descriptionFreeHelper": "Las publicaciones gratis pueden usar unos {max} caracteres. Premium desbloquea una descripción más larga.",
+  "@descriptionFreeHelper": { "placeholders": { "max": { "type": "int" } } },
+  "descriptionFreeTooLong": "Las descripciones gratis están limitadas a {max} caracteres. Pasa a Premium para un texto más largo.",
+  "@descriptionFreeTooLong": { "placeholders": { "max": { "type": "int" } } },
+  "socialLinksPremiumPerk": "Los enlaces sociales (Instagram, Facebook y más) son una función Premium para que la gente pueda seguir tu negocio.",
+  "socialLinksPremiumLocked": "Agrega Instagram, Facebook y otros enlaces de seguimiento con Premium.",
+  "basicListingBadge": "Listado básico",
   "unlockMediaGallery": "Desbloquear galería completa",
   "videos": "Videos",
   "chatLink": "Enlace de chat comunitario (opcional)",
@@ -528,7 +595,7 @@
   "premiumUnlimited": "Premium — eventos ilimitados",
   "premiumIncludes": "Incluye galerías multimedia, eventos recurrentes, analíticas, marca y reclamaciones.",
   "freePlan": "Plan gratis",
-  "freePlanBody": "Hasta 2 eventos únicos próximos a la vez. Página básica con 1 foto de portada, 1 video corto, título, descripción, ubicación, hora y enlaces públicos del organizador en el feed público.",
+  "freePlanBody": "Hasta 2 eventos únicos próximos a la vez y 4 publicaciones por mes calendario. Página básica con 1 foto de portada, una descripción corta (unas 300 caracteres), título, ubicación y hora. Los invitados pueden confirmar asistencia y ver quién va. Edita cuando quieras, comparte una tarjeta simple y reclama tu primer evento existente gratis. Guardar y seguir eventos sigue siendo gratis.",
   "upgradeToPremium": "Mejora a Premium — {price}",
   "@upgradeToPremium": {
     "placeholders": {
@@ -897,7 +964,7 @@
   "eventCreationGuideTooltip": "Cómo crear un evento",
   "eventCreationGuideCardTitle": "Crea con confianza",
   "eventCreationGuideCardBody": "Sigue la lista rápida y compara exactamente lo que incluyen Gratis y Premium.",
-  "eventCreationGuideMediaSummary": "Gratis: 1 foto de portada + 1 video corto. Premium: hasta 5 fotos en total (incluida la portada) + 3 videos cortos.",
+  "eventCreationGuideMediaSummary": "Gratis: 1 foto de portada y una descripción corta. Premium: hasta 5 fotos, 3 videos cortos, una descripción más larga, enlaces sociales y analíticas.",
   "openEventCreationGuide": "Abrir guía para creadores",
   "eventCreationGuideIntro": "Una lista simple para publicar un evento claro y listo para compartir.",
   "eventCreationGuideCurrentPlan": "Tu plan actual",
@@ -911,7 +978,7 @@
   "eventCreationGuideMediaTitle": "3. Agrega medios según tu plan",
   "eventCreationGuidePlanIntro": "La foto de portada cuenta como la foto 1. Cada video debe durar 30 segundos o menos y pesar menos de 50 MB.",
   "eventCreationGuideFreeEvents": "Hasta 2 eventos únicos próximos a la vez",
-  "eventCreationGuideFreeMedia": "1 foto de portada en total y 1 video corto por evento",
+  "eventCreationGuideFreeMedia": "1 foto de portada y una descripción corta (unas 300 caracteres)",
   "eventCreationGuideFreePublish": "Página básica del evento con enlaces públicos del organizador en el feed público",
   "eventCreationGuidePremiumEvents": "Eventos ilimitados, incluidos eventos recurrentes semanales o mensuales",
   "eventCreationGuidePremiumMedia": "Hasta 5 fotos en total (incluida la portada) y 3 videos cortos por evento",
@@ -1098,6 +1165,101 @@
       "count": {
         "type": "int"
       }
+    }
+  },
+
+  "gemShareForkTitle": "¿Qué te gustaría hacer?",
+  "gemShareForkSubtitle": "Comparte un lugar que te encanta gratis, o promociona tu negocio con un anuncio Premium de 30 días.",
+  "gemShareCommunityTitle": "Compartir un lugar que me encanta",
+  "gemShareCommunityBody": "Para cualquiera que publique de forma casual: un excursionista que comparte un sendero, alguien que señala un lugar especial. Una ficha básica con el nombre, la categoría, el pin del mapa y una nota corta. Gratis, y no es para promociones.",
+  "gemShareBusinessTitle": "Promocionar mi negocio",
+  "gemShareBusinessBody": "Para negocios que se promocionan: happy hour, ofertas, descuentos u otras promociones. Fotos, una descripción completa, contacto del negocio y una oferta estructurada. Incluido en Premium a $12.99 al mes, vigente 30 días.",
+  "gemShareBusinessCta": "Continuar con Premium",
+  "gemCommunityFormTitle": "Compartir un lugar que me encanta",
+  "gemBusinessFormTitle": "Promocionar mi negocio",
+  "gemPromoTitleLabel": "Título de la oferta",
+  "gemPromoTitleHint": "p. ej. Happy hour, 20% de descuento en tacos",
+  "gemPromoDetailsLabel": "Detalles de la oferta",
+  "gemPromoDetailsHint": "Qué recibe la gente y cualquier límite",
+  "gemPromoStartsLabel": "La oferta empieza",
+  "gemPromoEndsLabel": "La oferta termina",
+  "gemContactPhoneLabel": "Teléfono del negocio",
+  "gemContactWebsiteLabel": "Sitio web del negocio",
+  "gemRichExpiresOn": "El anuncio promocional termina el {date}",
+  "@gemRichExpiresOn": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "gemRichExpired": "Este anuncio promocional terminó. La ficha básica sigue siendo pública.",
+  "gemRenewRich": "Renovar por 30 días",
+  "gemRenewingRich": "Renovando…",
+  "gemRenewRichSuccess": "Tu anuncio promocional está vigente otros 30 días.",
+  "gemRenewRichNeedsPremium": "Renovar un anuncio promocional está incluido en Premium.",
+  "gemRichReminderTitle": "Tu gema promocional está por terminar",
+  "gemRichReminderBody": "{name} volverá a una ficha básica en unos días. Renueva para mantener las fotos, tu oferta y el contacto del negocio.",
+  "@gemRichReminderBody": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "gemPromoOnBasicHint": "Las ofertas promocionales y el contacto del negocio pertenecen a Promocionar mi negocio.",
+  "gemCategoryHikingTrails": "Senderos para caminar",
+  "gemCategoryBikeTrails": "Rutas para bicicleta",
+  "gemCategoryParks": "Parques",
+  "gemCategoryViewpoints": "Miradores",
+  "gemCategoryCommunityPools": "Albercas comunitarias",
+  "gemCategoryNature": "Naturaleza",
+  "gemCategoryMuseums": "Museos",
+  "gemCategoryArt": "Arte",
+  "gemCategoryHistoric": "Histórico",
+  "gemCategoryLandmarks": "Lugares emblemáticos",
+  "gemCategoryRestaurants": "Restaurantes y comida",
+  "gemCategoryAttractions": "Atracciones",
+  "gemCategoryOther": "Otro",
+  "premiumPerkRichGems": "Gemas ocultas de negocio por 30 días",
+  "premiumPerkRichGemsSubtitle": "Fotos, descripción completa, contacto y ofertas. Se renueva con tu suscripción de $12.99 al mes.",
+  "freePlanPerkCommunityGems": "Comparte una gema oculta básica gratis: un sendero o un lugar especial, sin promociones",
+
+  "gemsKeywordHint": "Busca nombres, lugares u ofertas",
+  "gemsRadiusMiles": "{miles} mi",
+  "@gemsRadiusMiles": { "placeholders": { "miles": { "type": "int" } } },
+  "gemsSortNearest": "Más cerca",
+  "gemsSortNewest": "Más recientes",
+  "gemsSortMostLiked": "Más gustados",
+  "gemsOpenNow": "Abierto ahora",
+  "gemsDealsNearYou": "Ofertas cerca de ti",
+  "gemsPromotedLabel": "Promocionado",
+  "gemsBusinessTypeLabel": "Tipo de negocio",
+  "gemsAllBusinessTypes": "Todos los tipos",
+  "gemsLoadMore": "Cargar más",
+  "gemsDiscoverSection": "Gemas ocultas",
+  "gemBusinessTypeRestaurant": "Restaurante",
+  "gemBusinessTypeBar": "Bar",
+  "gemBusinessTypeCafe": "Café",
+  "gemBusinessTypeHikingTrail": "Sendero para caminar",
+  "gemBusinessTypeBikeTrail": "Ruta para bicicleta",
+  "gemBusinessTypePool": "Alberca",
+  "gemBusinessTypePark": "Parque",
+  "gemBusinessTypeMuseum": "Museo",
+  "gemBusinessTypeShop": "Tienda",
+  "gemBusinessTypeOther": "Otro",
+  "eventMoreDates": "+{count} fechas más",
+  "@eventMoreDates": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "eventRepeatedDateSemantics": "Fecha de este listado: {details}",
+  "@eventRepeatedDateSemantics": {
+    "placeholders": {
+      "details": { "type": "String" }
+    }
+  },
+  "eventTextPlaceholderSemantics": "Sin foto del evento. {headline}",
+  "@eventTextPlaceholderSemantics": {
+    "placeholders": {
+      "headline": { "type": "String" }
     }
   }
 }

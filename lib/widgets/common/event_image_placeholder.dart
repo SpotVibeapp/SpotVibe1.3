@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
-import '../../data/el_paso_events.dart';
 import '../../data/event_images.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
+import '../events/repeated_event_date_badge.dart';
 import 'network_photo.dart';
 
 /// Cover photo for an event card / detail hero.
 ///
-/// 1. Unique Ticketmaster / uploaded photo when we have one.
-/// 2. Bundled real venue photo (ballpark, Coliseum, Plaza, …).
-/// 3. A branded poster unique to that event — never blank, never the
-///    shared baseball-glove stock art.
+/// A unique Ticketmaster / uploaded photo is shown when we have one.
+/// Empty URLs, failed loads, Ticketmaster `/dam/c/` genre stock, avatars,
+/// and the app's bundled `assets/venues/` fallbacks are not shown as
+/// photos — they become a typographic placeholder (title, or venue when
+/// the title is weak) with an optional category icon.
 class EventCoverImage extends StatelessWidget {
   final String imageUrl;
   final String category;
@@ -19,6 +21,7 @@ class EventCoverImage extends StatelessWidget {
   final double? height;
   final BoxFit fit;
   final Color? placeholderColor;
+  final Event? event;
 
   const EventCoverImage({
     super.key,
@@ -30,6 +33,7 @@ class EventCoverImage extends StatelessWidget {
     this.height,
     this.fit = BoxFit.cover,
     this.placeholderColor,
+    this.event,
   });
 
   factory EventCoverImage.fromEvent(
@@ -38,12 +42,8 @@ class EventCoverImage extends StatelessWidget {
     Color? placeholderColor,
     BoxFit fit = BoxFit.cover,
   }) {
-    var url = event.imageUrl;
-    if (isGenericEventImage(url)) {
-      url = venueImageFor(event.location, title: event.title) ?? '';
-    }
     return EventCoverImage(
-      imageUrl: url,
+      imageUrl: event.imageUrl,
       category: event.category,
       title: event.title,
       venue: event.location,
@@ -51,6 +51,7 @@ class EventCoverImage extends StatelessWidget {
       height: height,
       fit: fit,
       placeholderColor: placeholderColor,
+      event: event,
     );
   }
 
@@ -74,28 +75,55 @@ class EventCoverImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Skip empties, avatars, AND Ticketmaster genre stock.
-    if (isGenericEventImage(imageUrl)) return _poster();
-    if (imageUrl.startsWith('assets/')) {
-      return Image.asset(
+    final Widget child;
+    if (isGenericEventImage(imageUrl)) {
+      child = _poster();
+    } else if (imageUrl.startsWith('assets/')) {
+      child = Image.asset(
         imageUrl,
         fit: fit,
         width: double.infinity,
         height: height,
         errorBuilder: (_, __, ___) => _poster(),
       );
+    } else {
+      child = NetworkPhoto(
+        imageUrl: imageUrl,
+        httpHeaders: _kImageHeaders,
+        fit: fit,
+        width: double.infinity,
+        height: height,
+        // Show the branded poster WHILE loading, not an empty coloured box.
+        // Remote venue photos (e.g. Wikimedia FilePath redirects) can hang or
+        // fail; the poster guarantees a card is never blank, and the real photo
+        // fades in over it once it arrives.
+        placeholder: (_, __) => _poster(),
+        errorWidget: (_, __, ___) => _poster(),
+      );
     }
-    return NetworkPhoto(
-      imageUrl: imageUrl,
-      httpHeaders: _kImageHeaders,
-      fit: fit,
-      width: double.infinity,
-      height: height,
-      // Show the branded poster WHILE loading, not an empty coloured box.
-      // Remote venue photos (e.g. Wikimedia FilePath redirects) can hang or
-      // fail; the poster guarantees a card is never blank, and the real photo
-      // fades in over it once it arrives.
-      placeholder: (_, __) => _poster(),
-      errorWidget: (_, __, ___) => _poster(),
+    return _withRepeatedDateBadge(context, child);
+  }
+
+  Widget _withRepeatedDateBadge(BuildContext context, Widget child) {
+    final badge = RepeatedImageryScope.badgeFor(context, event);
+    if (badge == null) return child;
+    return Stack(
+      fit: height == null ? StackFit.expand : StackFit.loose,
+      children: [
+        child,
+        Positioned(
+          top: 8,
+          left: 8,
+          right: 8,
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: RepeatedEventDateBadge(
+              badge: badge,
+              compact: height != null && height! < 110,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -140,31 +168,6 @@ class UniqueEventCover extends StatelessWidget {
     return hash.abs();
   }
 
-  static String _monogram(String title) {
-    final words =
-        title
-            .replaceAll(RegExp(r'[^A-Za-z0-9 ]'), ' ')
-            .split(RegExp(r'\s+'))
-            .where((w) => w.isNotEmpty)
-            .where((w) {
-              final lower = w.toLowerCase();
-              return lower != 'the' &&
-                  lower != 'el' &&
-                  lower != 'la' &&
-                  lower != 'a' &&
-                  lower != 'an' &&
-                  lower != 'vs' &&
-                  lower != 'v';
-            })
-            .toList();
-    if (words.isEmpty) return 'SV';
-    if (words.length == 1) {
-      final w = words.first.toUpperCase();
-      return w.length >= 2 ? w.substring(0, 2) : w;
-    }
-    return (words[0][0] + words[1][0]).toUpperCase();
-  }
-
   static IconData _iconForCategory(String category) {
     switch (category.toLowerCase()) {
       case 'music':
@@ -202,161 +205,95 @@ class UniqueEventCover extends StatelessWidget {
     final seed = eventId.isNotEmpty ? eventId : '$title|$venue|$category';
     final hash = _hash(seed);
     final palette = _palettes[hash % _palettes.length];
-    final monogram = _monogram(title.isNotEmpty ? title : category);
     final icon = _iconForCategory(category);
     final compact = height != null && height! < 130;
+    final headline = eventPlaceholderHeadline(title: title, venue: venue);
+    final display = headline.isNotEmpty
+        ? headline
+        : (category.trim().isNotEmpty ? category.trim() : 'Event');
+    final l10n = AppLocalizations.of(context);
+    final semanticsLabel = l10n != null
+        ? l10n.eventTextPlaceholderSemantics(display)
+        : display;
 
-    final categoryLabel = category.isEmpty
-        ? 'Event'
-        : category[0].toUpperCase() + category.substring(1);
-
-    return Container(
-      height: height,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: palette,
+    return Semantics(
+      label: semanticsLabel,
+      image: false,
+      child: Container(
+        height: height,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: palette,
+          ),
         ),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Positioned.fill(child: CustomPaint(painter: _CoverPatternPainter(seed: hash))),
-          // Large category glyph watermark — makes the poster feel designed
-          // rather than empty, and hints at what kind of event it is.
-          Positioned(
-            right: compact ? -8 : -6,
-            bottom: compact ? -10 : -6,
-            child: Icon(
-              icon,
-              size: compact ? 84 : 132,
-              color: Colors.white.withValues(alpha: 0.12),
-            ),
-          ),
-          // Bottom scrim so title text stays legible over the pattern/glyph.
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.28),
-                  ],
-                  stops: const [0.45, 1.0],
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(compact ? 10 : 16),
-            child: Column(
+        padding: EdgeInsets.fromLTRB(
+          compact ? 12 : 18,
+          compact ? 12 : 18,
+          compact ? 12 : 18,
+          compact ? 10 : 16,
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final maxH = constraints.maxHeight.isFinite
+                ? constraints.maxHeight
+                : 180;
+            final tight = maxH < 72;
+            final showIcon = maxH >= 56;
+            final showVenue = maxH >= 100 &&
+                headline.isNotEmpty &&
+                venue.trim().isNotEmpty &&
+                venue.trim().toLowerCase() != headline.toLowerCase();
+            final fontSize = tight ? 14.0 : compact ? 16.0 : 26.0;
+            final maxLines = tight ? 2 : compact ? 3 : 4;
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: compact ? 36 : 48,
-                      height: compact ? 36 : 48,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white24),
-                      ),
-                      child: Text(
-                        monogram,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: compact ? 14 : 18,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    // Category chip — reads as an intentional label, not a
-                    // lonely stray icon.
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: compact ? 8 : 10,
-                        vertical: compact ? 3 : 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white24),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(icon,
-                              color: Colors.white,
-                              size: compact ? 12 : 14),
-                          if (!compact) ...[
-                            const SizedBox(width: 5),
-                            Text(
-                              categoryLabel,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 11,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
+                if (showIcon)
+                  Icon(
+                    icon,
+                    color: Colors.white.withValues(alpha: 0.92),
+                    size: compact ? 18 : 26,
+                  ),
+                if (showIcon) const Spacer(),
+                Flexible(
+                  child: Text(
+                  display,
+                  maxLines: maxLines,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: fontSize,
+                    height: 1.12,
+                    letterSpacing: -0.3,
+                  ),
                 ),
-                const Spacer(),
-                if (title.isNotEmpty)
+                ),
+                if (showVenue) ...[
+                  const SizedBox(height: 6),
                   Text(
-                    title,
-                    maxLines: compact ? 2 : 3,
+                    venue.trim(),
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: compact ? 13 : 18,
-                      height: 1.15,
+                      color: Colors.white.withValues(alpha: 0.86),
+                      fontWeight: FontWeight.w600,
+                      fontSize: compact ? 11 : 13,
                     ),
-                  ),
-                if (venue.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.place_rounded,
-                          color: Colors.white.withValues(alpha: 0.82),
-                          size: compact ? 11 : 13),
-                      const SizedBox(width: 3),
-                      Expanded(
-                        child: Text(
-                          venue,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.82),
-                            fontWeight: FontWeight.w600,
-                            fontSize: compact ? 10 : 12,
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ],
-            ),
-          ),
-        ],
+            );
+          },
+        ),
       ),
     );
   }
 }
+
 
 /// Kept for older call sites (stories, user events). Renders a unique poster
 /// from category alone.
@@ -370,33 +307,4 @@ class EventImagePlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return UniqueEventCover(category: category, height: height);
   }
-}
-
-class _CoverPatternPainter extends CustomPainter {
-  final int seed;
-  const _CoverPatternPainter({required this.seed});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint =
-        Paint()
-          ..color = Colors.white.withValues(alpha: 0.07)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.2;
-    final step = 18.0 + (seed % 10);
-    final offset = (seed % 12).toDouble();
-    for (double x = -size.height + offset; x < size.width + size.height; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x + size.height, size.height), paint);
-    }
-    final fill =
-        Paint()
-          ..color = Colors.white.withValues(alpha: 0.05)
-          ..style = PaintingStyle.fill;
-    final r = 28.0 + (seed % 20);
-    canvas.drawCircle(Offset(size.width * 0.85, size.height * 0.2), r, fill);
-    canvas.drawCircle(Offset(size.width * 0.1, size.height * 0.75), r * 0.6, fill);
-  }
-
-  @override
-  bool shouldRepaint(_CoverPatternPainter oldDelegate) => oldDelegate.seed != seed;
 }

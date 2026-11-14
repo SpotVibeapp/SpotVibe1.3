@@ -2,7 +2,21 @@ import 'dart:math' as math;
 
 import 'package:uuid/uuid.dart';
 
+import '../data/gem_listing.dart';
 import '../models/gem.dart';
+
+class GemQueryPage {
+  const GemQueryPage({
+    required this.gems,
+    this.cursor,
+    this.hasMore = false,
+  });
+
+  final List<Gem> gems;
+  /// Opaque resume token. Firebase uses a document snapshot; memory uses an int.
+  final Object? cursor;
+  final bool hasMore;
+}
 
 /// Abstract gem store with an in-memory implementation used as a fallback when
 /// Firestore is unavailable (mirrors [UserEventRepository]). The Firebase
@@ -12,6 +26,33 @@ class GemRepository {
   final Map<String, List<GemComment>> _comments = {};
   final Map<String, Set<String>> _likes = {}; // gemId -> set of uids
   final _uuid = const Uuid();
+
+  /// Geo-bounded page: hidden==false, optional geoCells cover, newest first.
+  /// The caller trims with haversine and applies keyword filters.
+  Future<GemQueryPage> queryGems({
+    double? lat,
+    double? lng,
+    double radiusMiles = 60,
+    int limit = 40,
+    Object? startAfter,
+  }) async {
+    var list = _memory.where((g) => !g.hidden).toList();
+    if (lat != null && lng != null) {
+      list = list
+          .where((g) =>
+              distanceMiles(lat, lng, g.latitude, g.longitude) <= radiusMiles)
+          .toList();
+    }
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final offset = startAfter is int ? startAfter : 0;
+    final slice = list.skip(offset).take(limit).toList();
+    final next = offset + slice.length;
+    return GemQueryPage(
+      gems: slice,
+      cursor: next,
+      hasMore: next < list.length,
+    );
+  }
 
   /// All non-hidden gems, nearest to [lat]/[lng] first when provided.
   Future<List<Gem>> getGems({
@@ -98,6 +139,18 @@ class GemRepository {
         likedByMe: gem.likedByMe,
         hidden: gem.hidden,
         createdAt: gem.createdAt,
+        approvedAt: gem.approvedAt,
+        visibleToFreeAt: gem.visibleToFreeAt,
+        listingKind: gem.listingKind,
+        richUntil: gem.richUntil,
+        richActivatedAt: gem.richActivatedAt,
+        contactPhone: gem.contactPhone,
+        contactWebsite: gem.contactWebsite,
+        socialLinks: gem.socialLinks,
+        promoTitle: gem.promoTitle,
+        promoDetails: gem.promoDetails,
+        promoStartsAt: gem.promoStartsAt,
+        promoEndsAt: gem.promoEndsAt,
       );
 
   GemComment _commentWithId(GemComment c, String id) => GemComment(
@@ -109,6 +162,30 @@ class GemRepository {
         hidden: c.hidden,
         createdAt: c.createdAt,
       );
+
+  /// Restarts a 30-day promotional window. The Firebase implementation
+  /// goes through the `renewGemRich` callable; this in-memory path is
+  /// for tests and the offline fallback.
+  Future<Gem> renewGemRich(
+    String gemId, {
+    required String requestingUserId,
+    bool isAdmin = false,
+  }) async {
+    final idx = _memory.indexWhere((g) => g.id == gemId);
+    if (idx < 0) throw StateError('This gem no longer exists.');
+    final existing = _memory[idx];
+    if (!isAdmin && existing.creatorId != requestingUserId) {
+      throw StateError('Only the person who added this gem can renew it.');
+    }
+    final now = DateTime.now();
+    final renewed = existing.copyWith(
+      listingKind: GemListingKind.business,
+      richUntil: now.add(const Duration(days: kGemRichDurationDays)),
+      richActivatedAt: now,
+    );
+    _memory[idx] = renewed;
+    return renewed;
+  }
 
   Future<void> deleteGem(String id) async {
     _memory.removeWhere((g) => g.id == id);

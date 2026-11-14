@@ -232,6 +232,7 @@ Map<String, dynamic> userEventToMap(UserCreatedEvent event) {
     'analyticsViews': event.analyticsViews,
     'analyticsSaves': event.analyticsSaves,
     'analyticsClicks': event.analyticsClicks,
+    'analyticsShares': event.analyticsShares,
     'socialLinks': event.socialLinks.toStorageMap(),
   };
 }
@@ -287,6 +288,8 @@ UserCreatedEvent userEventFromMap(String id, Map<String, dynamic> data) {
     analyticsViews: (data['analyticsViews'] as num?)?.toInt() ?? 0,
     analyticsSaves: (data['analyticsSaves'] as num?)?.toInt() ?? 0,
     analyticsClicks: (data['analyticsClicks'] as num?)?.toInt() ?? 0,
+    analyticsShares: (data['analyticsShares'] as num?)?.toInt() ?? 0,
+    featuredWeekKey: data['featuredWeekKey'] as String?,
     socialLinks: EventSocialLinks.fromStorage(data['socialLinks']),
   );
 }
