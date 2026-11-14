@@ -76,6 +76,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   int _initialVideoCount = 0;
   int _initialDescriptionLength = 0;
   bool _hadExistingSocialLinks = false;
+  bool _hadExistingChatLink = false;
   bool _aiGeneratedCover = false;
   bool _uploadingMedia = false;
   bool _hasCheckedEventCreationGuide = false;
@@ -112,6 +113,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       _descriptionController.text = e.description;
       _initialDescriptionLength = e.description.length;
       _hadExistingSocialLinks = e.socialLinks.isNotEmpty;
+      _hadExistingChatLink = (e.chatLink ?? "").trim().isNotEmpty;
       _locationController.text = e.location;
       _addressController.text = e.address;
       _cityController.text = e.city;
@@ -884,7 +886,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       videoUrls: videoUrls,
       category: _selectedCategory,
       mapLink: _mapLinkController.text.trim().isEmpty ? null : _mapLinkController.text.trim(),
-      chatLink: _chatLinkController.text.trim().isEmpty ? null : _chatLinkController.text.trim(),
+      chatLink: !hasCreatorAccess
+          ? (_hadExistingChatLink ? widget.editingEvent?.chatLink : null)
+          : (_chatLinkController.text.trim().isEmpty
+              ? null
+              : _chatLinkController.text.trim()),
       isPremiumListing: _isPremiumListing,
       isCreatorPro: hasCreatorAccess,
       recurringType: hasCreatorAccess ? _recurringType : RecurringType.none,
@@ -1317,13 +1323,25 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: AppTheme.spacingMd),
-            _FormField(
-              controller: _chatLinkController,
-              label: l10n.chatLink,
-              hint: 'https://discord.gg/... or WhatsApp, Telegram link',
-              icon: Icons.forum_rounded,
-              keyboardType: TextInputType.url,
-            ),
+            if (hasCreatorAccess || _hadExistingChatLink)
+              _FormField(
+                controller: _chatLinkController,
+                label: l10n.chatLink,
+                hint: 'https://discord.gg/... or WhatsApp, Telegram link',
+                icon: Icons.forum_rounded,
+                keyboardType: TextInputType.url,
+                enabled: hasCreatorAccess,
+                helperText: hasCreatorAccess
+                    ? null
+                    : l10n.chatLinkGrandfathered,
+              )
+            else ...[
+              _MediaGalleryUpgradeBanner(
+                description: l10n.chatLinkPremiumPerk,
+                actionLabel: l10n.chatLinkPremiumLocked,
+                onUpgrade: _openPaywall,
+              ),
+            ],
             const SizedBox(height: AppTheme.spacingLg),
 
             if (hasCreatorAccess || _hadExistingSocialLinks)

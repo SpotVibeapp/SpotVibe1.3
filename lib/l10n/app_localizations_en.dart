@@ -2677,4 +2677,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String eventTextPlaceholderSemantics(String headline) {
     return 'No event photo. $headline';
   }
+
+  @override
+  String get chatLinkPremiumPerk =>
+      'Hosts and attendees can coordinate in the event message thread. A public Discord, WhatsApp, or Telegram link is a Premium perk.';
+
+  @override
+  String get chatLinkPremiumLocked =>
+      'Unlock a public community chat link with Premium';
+
+  @override
+  String get chatLinkGrandfathered =>
+      'This existing link is kept on this post. New or changed community chat links need Premium.';
 }

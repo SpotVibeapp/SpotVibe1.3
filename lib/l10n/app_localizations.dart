@@ -4830,6 +4830,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No event photo. {headline}'**
   String eventTextPlaceholderSemantics(String headline);
+
+  /// No description provided for @chatLinkPremiumPerk.
+  ///
+  /// In en, this message translates to:
+  /// **'Hosts and attendees can coordinate in the event message thread. A public Discord, WhatsApp, or Telegram link is a Premium perk.'**
+  String get chatLinkPremiumPerk;
+
+  /// No description provided for @chatLinkPremiumLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock a public community chat link with Premium'**
+  String get chatLinkPremiumLocked;
+
+  /// No description provided for @chatLinkGrandfathered.
+  ///
+  /// In en, this message translates to:
+  /// **'This existing link is kept on this post. New or changed community chat links need Premium.'**
+  String get chatLinkGrandfathered;
 }
 
 class _AppLocalizationsDelegate

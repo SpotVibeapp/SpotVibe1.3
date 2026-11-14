@@ -32,6 +32,7 @@ const PREMIUM_ONLY_FIELDS = [
   'isCreatorPro',
   'featuredWeekKey',
   'featuredAt',
+  'chatLink',
 ];
 
 function normalizeUrlList(values, limit) {
@@ -81,10 +82,11 @@ function alreadyFreeShaped(data) {
   if (isRecurring(data.recurringType)) return false;
   if (data.contactPhone || data.contactWebsite || data.contactSocial) return false;
   if (data.brandColor || data.brandLogoUrl) return false;
-  // Media, description, and social links are not checked here. Existing
-  // free posts may already have a video, a longer description, or social
-  // links; the write trigger must not strip those. Lapse cleanup uses
-  // downgradeEventData instead.
+  // Media, description, social links, and community chat links are not
+  // checked here. Existing free posts may already have a video, a longer
+  // description, social links, or a Discord/WhatsApp link; the write
+  // trigger must not strip those. Lapse cleanup uses downgradeEventData
+  // instead.
   return true;
 }
 
@@ -104,6 +106,7 @@ function downgradeEventData(data) {
     featuredWeekKey: null,
     featuredAt: null,
     socialLinks: {},
+    chatLink: null,
     imageUrls: photos,
     imageUrl: photos[0] || '',
     videoUrls: videos,
@@ -230,6 +233,19 @@ function applyEntitlementToEvent(input, options) {
       event.socialLinks = emptySocialLinks();
     }
 
+    // Community chat links (Discord, WhatsApp, Telegram) are Premium on
+    // new or changed posts. Existing free posts keep the link they already
+    // published. The host can still clear it.
+    const existingChat = normalizeChatLink(existing.chatLink);
+    const submittedChat = normalizeChatLink(event.chatLink);
+    if (!submittedChat) {
+      event.chatLink = null;
+    } else if (existingChat && submittedChat === existingChat) {
+      event.chatLink = existingChat;
+    } else {
+      event.chatLink = existingChat;
+    }
+
     const submittedDesc = typeof event.description === 'string' ? event.description : '';
     const existingDesc = typeof existing.description === 'string' ? existing.description : '';
     const promo = looksLikePromoOrLinks(submittedDesc);
@@ -274,6 +290,10 @@ function stripPromoLinks(text) {
 function hasSocialLinks(links) {
   if (!links || typeof links !== 'object') return false;
   return Object.values(links).some((v) => typeof v === 'string' && v.trim());
+}
+
+function normalizeChatLink(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
 function emptySocialLinks() {

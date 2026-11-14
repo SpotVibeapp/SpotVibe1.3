@@ -1261,5 +1261,8 @@
     "placeholders": {
       "headline": { "type": "String" }
     }
-  }
+  },
+  "chatLinkPremiumPerk": "Hosts and attendees can coordinate in the event message thread. A public Discord, WhatsApp, or Telegram link is a Premium perk.",
+  "chatLinkPremiumLocked": "Unlock a public community chat link with Premium",
+  "chatLinkGrandfathered": "This existing link is kept on this post. New or changed community chat links need Premium."
 }
