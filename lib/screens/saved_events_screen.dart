@@ -3,10 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/event_provider.dart';
 import '../theme/theme.dart';
-import '../widgets/common/ad_banner.dart';
 import '../widgets/common/empty_state_view.dart';
 import '../widgets/common/jambase_attribution.dart';
 import '../widgets/events/event_card.dart';
+import '../widgets/events/repeated_event_date_badge.dart';
 
 class SavedEventsScreen extends StatelessWidget {
   const SavedEventsScreen({super.key});
@@ -61,7 +61,9 @@ class SavedEventsScreen extends StatelessWidget {
                   actionLabel: 'Explore Events',
                   onAction: () => context.go('/'),
                 )
-              : Column(
+              : RepeatedImageryScope(
+                  events: saved,
+                  child: Column(
                   children: [
                     Expanded(
                       child: ListView.builder(
@@ -95,9 +97,8 @@ class SavedEventsScreen extends StatelessWidget {
                         },
                       ),
                     ),
-                    // Anchored banner for free users (collapses for Premium/web).
-                    const AdBanner(),
                   ],
+                ),
                 ),
     );
   }

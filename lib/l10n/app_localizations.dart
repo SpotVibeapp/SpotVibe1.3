@@ -809,7 +809,7 @@ abstract class AppLocalizations {
   /// No description provided for @freePerk2.
   ///
   /// In en, this message translates to:
-  /// **'Basic event page — title, description, 1 cover photo, 1 short video, location, time'**
+  /// **'Basic event page — title, a short description, 1 cover photo, location, time'**
   String get freePerk2;
 
   /// No description provided for @freePerk3.
@@ -845,13 +845,13 @@ abstract class AppLocalizations {
   /// No description provided for @premiumPerk3Title.
   ///
   /// In en, this message translates to:
-  /// **'Analytics dashboard'**
+  /// **'Full analytics dashboard'**
   String get premiumPerk3Title;
 
   /// No description provided for @premiumPerk3Subtitle.
   ///
   /// In en, this message translates to:
-  /// **'Live views, saves, and click-throughs'**
+  /// **'Click-throughs and deeper stats, on top of public counts'**
   String get premiumPerk3Subtitle;
 
   /// No description provided for @premiumPerk4Title.
@@ -875,31 +875,19 @@ abstract class AppLocalizations {
   /// No description provided for @premiumPerk5Subtitle.
   ///
   /// In en, this message translates to:
-  /// **'Phone, website, and organizer contact tools'**
+  /// **'Phone and website on your event page'**
   String get premiumPerk5Subtitle;
-
-  /// No description provided for @premiumPerk6Title.
-  ///
-  /// In en, this message translates to:
-  /// **'No ads'**
-  String get premiumPerk6Title;
-
-  /// No description provided for @premiumPerk6Subtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Clean event pages with no ads'**
-  String get premiumPerk6Subtitle;
 
   /// No description provided for @premiumPerk7Title.
   ///
   /// In en, this message translates to:
-  /// **'Claim existing events'**
+  /// **'Additional event claims'**
   String get premiumPerk7Title;
 
   /// No description provided for @premiumPerk7Subtitle.
   ///
   /// In en, this message translates to:
-  /// **'Verify first. Your first claim is free'**
+  /// **'Unlock more claims after your first free one'**
   String get premiumPerk7Subtitle;
 
   /// No description provided for @premiumPerk8Title.
@@ -925,6 +913,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Start 7-day free trial'**
   String get startFreeTrial;
+
+  /// No description provided for @subscribeForPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe — {price}'**
+  String subscribeForPrice(String price);
+
+  /// No description provided for @billingNoTrial.
+  ///
+  /// In en, this message translates to:
+  /// **'{price} · billed monthly · cancel anytime'**
+  String billingNoTrial(String price);
+
+  /// No description provided for @billingFoundingOpenNoTrial.
+  ///
+  /// In en, this message translates to:
+  /// **'{price} locked for founding venues · {remaining} of {limit} left · cancel anytime'**
+  String billingFoundingOpenNoTrial(String price, int remaining, int limit);
+
+  /// No description provided for @foundingPackageMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The founding-price package is not in the store right now, so we will not charge you the \$9.99 founding rate. Try again later, or subscribe at the standard price if it appears below.'**
+  String get foundingPackageMissing;
+
+  /// No description provided for @rsvpTicketsPremiumTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'RSVP and tickets are part of Premium'**
+  String get rsvpTicketsPremiumTitle;
+
+  /// No description provided for @rsvpTicketsPremiumBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You can still save and follow this event for free. Confirming your RSVP is a Premium feature. Upgrade to let organizers know you\'re going.'**
+  String get rsvpTicketsPremiumBody;
+
+  /// No description provided for @getTicketsPremiumBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Ticket buttons open the official seller (like Ticketmaster). That is an outbound link, not a purchase inside SpotVibe. Saving and following this event stays free. Upgrade to Premium to open ticket links.'**
+  String get getTicketsPremiumBody;
+
+  /// No description provided for @freePlanLimitMonthlyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Free organizers can post {cap} events per calendar month, and only {upcoming} upcoming events at a time. Upgrade to Premium to remove both caps.'**
+  String freePlanLimitMonthlyBody(int cap, int upcoming);
+
+  /// No description provided for @newGemNearbyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Hidden Gem nearby'**
+  String get newGemNearbyTitle;
+
+  /// No description provided for @newGemNearbyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} was just added near you. Premium members can visit it first.'**
+  String newGemNearbyBody(String name);
+
+  /// No description provided for @notifNewGems.
+  ///
+  /// In en, this message translates to:
+  /// **'New Hidden Gems nearby'**
+  String get notifNewGems;
+
+  /// No description provided for @notifNewGemsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A heads-up when a new gem is approved near you (Premium)'**
+  String get notifNewGemsSubtitle;
+
+  /// No description provided for @premiumPerkEarlyGemsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Early Hidden Gems'**
+  String get premiumPerkEarlyGemsTitle;
+
+  /// No description provided for @premiumPerkEarlyGemsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'See newly added gems immediately, plus a nearby heads-up'**
+  String get premiumPerkEarlyGemsSubtitle;
+
+  /// No description provided for @premiumPerkUnlimitedPostsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited upcoming events'**
+  String get premiumPerkUnlimitedPostsTitle;
+
+  /// No description provided for @premiumPerkUnlimitedPostsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No two-event cap and no monthly post cap'**
+  String get premiumPerkUnlimitedPostsSubtitle;
+
+  /// No description provided for @eventPublicStats.
+  ///
+  /// In en, this message translates to:
+  /// **'{views} views · {saves} interested · {shares} shares'**
+  String eventPublicStats(int views, int saves, int shares);
 
   /// No description provided for @perMonth.
   ///
@@ -1654,7 +1744,7 @@ abstract class AppLocalizations {
   /// No description provided for @videoGalleryFreeHint.
   ///
   /// In en, this message translates to:
-  /// **'Free listings include 1 short video. Premium unlocks up to 3 videos.'**
+  /// **'Videos are a Premium perk. Free listings can use a cover photo only.'**
   String get videoGalleryFreeHint;
 
   /// No description provided for @noAdditionalPhotos.
@@ -1762,8 +1852,38 @@ abstract class AppLocalizations {
   /// No description provided for @mediaPremiumPerk.
   ///
   /// In en, this message translates to:
-  /// **'Premium unlocks up to 5 photos and 3 videos per event.'**
+  /// **'Premium unlocks up to 5 photos, 3 videos, a longer description, and social links.'**
   String get mediaPremiumPerk;
+
+  /// No description provided for @descriptionFreeHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Free posts can use about {max} characters. Premium unlocks a longer description.'**
+  String descriptionFreeHelper(int max);
+
+  /// No description provided for @descriptionFreeTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Free descriptions are limited to {max} characters. Upgrade to Premium for a longer listing.'**
+  String descriptionFreeTooLong(int max);
+
+  /// No description provided for @socialLinksPremiumPerk.
+  ///
+  /// In en, this message translates to:
+  /// **'Social links (Instagram, Facebook, and more) are a Premium perk so people can follow your business.'**
+  String get socialLinksPremiumPerk;
+
+  /// No description provided for @socialLinksPremiumLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Instagram, Facebook, and other follow links with Premium.'**
+  String get socialLinksPremiumLocked;
+
+  /// No description provided for @basicListingBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic listing'**
+  String get basicListingBadge;
 
   /// No description provided for @unlockMediaGallery.
   ///
@@ -1984,7 +2104,7 @@ abstract class AppLocalizations {
   /// No description provided for @freePlanBody.
   ///
   /// In en, this message translates to:
-  /// **'Up to 2 upcoming one-time events at a time. Basic page with 1 cover photo, 1 short video, title, description, location, time, and public organizer social links in the public feed.'**
+  /// **'Up to 2 upcoming one-time events at a time and 4 posts per calendar month. Basic page with 1 cover photo, a short description (about 300 characters), title, location, and time. Guests can RSVP and see who is going. Edit anytime, share a simple card, and claim your first existing event free. Save and follow events stay free.'**
   String get freePlanBody;
 
   /// No description provided for @upgradeToPremium.
@@ -3430,7 +3550,7 @@ abstract class AppLocalizations {
   /// No description provided for @eventCreationGuideMediaSummary.
   ///
   /// In en, this message translates to:
-  /// **'Free: 1 cover photo + 1 short video. Premium: up to 5 photos total (including the cover) + 3 short videos.'**
+  /// **'Free: 1 cover photo and a short description. Premium: up to 5 photos, 3 short videos, a longer description, social links, and analytics.'**
   String get eventCreationGuideMediaSummary;
 
   /// No description provided for @openEventCreationGuide.
@@ -3514,7 +3634,7 @@ abstract class AppLocalizations {
   /// No description provided for @eventCreationGuideFreeMedia.
   ///
   /// In en, this message translates to:
-  /// **'1 cover photo total and 1 short video per event'**
+  /// **'1 cover photo and a short description (about 300 characters)'**
   String get eventCreationGuideFreeMedia;
 
   /// No description provided for @eventCreationGuideFreePublish.
@@ -4308,6 +4428,408 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} gems'**
   String mapGemsLayer(int count);
+
+  /// No description provided for @gemShareForkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What would you like to do?'**
+  String get gemShareForkTitle;
+
+  /// No description provided for @gemShareForkSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share a place you love for free, or promote your business with a 30-day Premium listing.'**
+  String get gemShareForkSubtitle;
+
+  /// No description provided for @gemShareCommunityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share a spot you love'**
+  String get gemShareCommunityTitle;
+
+  /// No description provided for @gemShareCommunityBody.
+  ///
+  /// In en, this message translates to:
+  /// **'For anyone posting casually — a hiker sharing a trail, someone pointing out a cool spot. A basic card with the name, category, map pin, and a short note. Free, and not for promotions.'**
+  String get gemShareCommunityBody;
+
+  /// No description provided for @gemShareBusinessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Promote my business'**
+  String get gemShareBusinessTitle;
+
+  /// No description provided for @gemShareBusinessBody.
+  ///
+  /// In en, this message translates to:
+  /// **'For businesses promoting themselves — happy hour, sales, discounts, or other offers. Photos, a full description, business contact, and a structured offer. Included with Premium at \$12.99/month, live for 30 days.'**
+  String get gemShareBusinessBody;
+
+  /// No description provided for @gemShareBusinessCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Premium'**
+  String get gemShareBusinessCta;
+
+  /// No description provided for @gemCommunityFormTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share a spot you love'**
+  String get gemCommunityFormTitle;
+
+  /// No description provided for @gemBusinessFormTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Promote my business'**
+  String get gemBusinessFormTitle;
+
+  /// No description provided for @gemPromoTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer title'**
+  String get gemPromoTitleLabel;
+
+  /// No description provided for @gemPromoTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Happy hour, 20% off tacos'**
+  String get gemPromoTitleHint;
+
+  /// No description provided for @gemPromoDetailsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer details'**
+  String get gemPromoDetailsLabel;
+
+  /// No description provided for @gemPromoDetailsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What people get, and any limits'**
+  String get gemPromoDetailsHint;
+
+  /// No description provided for @gemPromoStartsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer starts'**
+  String get gemPromoStartsLabel;
+
+  /// No description provided for @gemPromoEndsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer ends'**
+  String get gemPromoEndsLabel;
+
+  /// No description provided for @gemContactPhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Business phone'**
+  String get gemContactPhoneLabel;
+
+  /// No description provided for @gemContactWebsiteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Business website'**
+  String get gemContactWebsiteLabel;
+
+  /// No description provided for @gemRichExpiresOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Promotional listing ends {date}'**
+  String gemRichExpiresOn(String date);
+
+  /// No description provided for @gemRichExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This promotional listing has ended. The basic card is still public.'**
+  String get gemRichExpired;
+
+  /// No description provided for @gemRenewRich.
+  ///
+  /// In en, this message translates to:
+  /// **'Renew for 30 days'**
+  String get gemRenewRich;
+
+  /// No description provided for @gemRenewingRich.
+  ///
+  /// In en, this message translates to:
+  /// **'Renewing…'**
+  String get gemRenewingRich;
+
+  /// No description provided for @gemRenewRichSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Your promotional listing is live for another 30 days.'**
+  String get gemRenewRichSuccess;
+
+  /// No description provided for @gemRenewRichNeedsPremium.
+  ///
+  /// In en, this message translates to:
+  /// **'Renewing a promotional listing is included with Premium.'**
+  String get gemRenewRichNeedsPremium;
+
+  /// No description provided for @gemRichReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your promotional gem is ending soon'**
+  String get gemRichReminderTitle;
+
+  /// No description provided for @gemRichReminderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} drops back to a basic card in a few days. Renew to keep photos, your offer, and business contact live.'**
+  String gemRichReminderBody(String name);
+
+  /// No description provided for @gemPromoOnBasicHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Promotional offers and business contact belong on a Promote my business listing.'**
+  String get gemPromoOnBasicHint;
+
+  /// No description provided for @gemCategoryHikingTrails.
+  ///
+  /// In en, this message translates to:
+  /// **'Hiking trails'**
+  String get gemCategoryHikingTrails;
+
+  /// No description provided for @gemCategoryBikeTrails.
+  ///
+  /// In en, this message translates to:
+  /// **'Bike trails'**
+  String get gemCategoryBikeTrails;
+
+  /// No description provided for @gemCategoryParks.
+  ///
+  /// In en, this message translates to:
+  /// **'Parks'**
+  String get gemCategoryParks;
+
+  /// No description provided for @gemCategoryViewpoints.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewpoints'**
+  String get gemCategoryViewpoints;
+
+  /// No description provided for @gemCategoryCommunityPools.
+  ///
+  /// In en, this message translates to:
+  /// **'Community pools'**
+  String get gemCategoryCommunityPools;
+
+  /// No description provided for @gemCategoryNature.
+  ///
+  /// In en, this message translates to:
+  /// **'Nature'**
+  String get gemCategoryNature;
+
+  /// No description provided for @gemCategoryMuseums.
+  ///
+  /// In en, this message translates to:
+  /// **'Museums'**
+  String get gemCategoryMuseums;
+
+  /// No description provided for @gemCategoryArt.
+  ///
+  /// In en, this message translates to:
+  /// **'Art'**
+  String get gemCategoryArt;
+
+  /// No description provided for @gemCategoryHistoric.
+  ///
+  /// In en, this message translates to:
+  /// **'Historic'**
+  String get gemCategoryHistoric;
+
+  /// No description provided for @gemCategoryLandmarks.
+  ///
+  /// In en, this message translates to:
+  /// **'Landmarks'**
+  String get gemCategoryLandmarks;
+
+  /// No description provided for @gemCategoryRestaurants.
+  ///
+  /// In en, this message translates to:
+  /// **'Restaurants & food'**
+  String get gemCategoryRestaurants;
+
+  /// No description provided for @gemCategoryAttractions.
+  ///
+  /// In en, this message translates to:
+  /// **'Attractions'**
+  String get gemCategoryAttractions;
+
+  /// No description provided for @gemCategoryOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get gemCategoryOther;
+
+  /// No description provided for @premiumPerkRichGems.
+  ///
+  /// In en, this message translates to:
+  /// **'30-day business Hidden Gems'**
+  String get premiumPerkRichGems;
+
+  /// No description provided for @premiumPerkRichGemsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos, a full description, contact details, and promo offers. Renews with your \$12.99/month subscription.'**
+  String get premiumPerkRichGemsSubtitle;
+
+  /// No description provided for @freePlanPerkCommunityGems.
+  ///
+  /// In en, this message translates to:
+  /// **'Share a basic Hidden Gem for free — a trail or a cool spot, no promotions'**
+  String get freePlanPerkCommunityGems;
+
+  /// No description provided for @gemsKeywordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search names, places, or offers'**
+  String get gemsKeywordHint;
+
+  /// No description provided for @gemsRadiusMiles.
+  ///
+  /// In en, this message translates to:
+  /// **'{miles} mi'**
+  String gemsRadiusMiles(int miles);
+
+  /// No description provided for @gemsSortNearest.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearest'**
+  String get gemsSortNearest;
+
+  /// No description provided for @gemsSortNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest'**
+  String get gemsSortNewest;
+
+  /// No description provided for @gemsSortMostLiked.
+  ///
+  /// In en, this message translates to:
+  /// **'Most liked'**
+  String get gemsSortMostLiked;
+
+  /// No description provided for @gemsOpenNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Open now'**
+  String get gemsOpenNow;
+
+  /// No description provided for @gemsDealsNearYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Deals near you'**
+  String get gemsDealsNearYou;
+
+  /// No description provided for @gemsPromotedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Promoted'**
+  String get gemsPromotedLabel;
+
+  /// No description provided for @gemsBusinessTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Business type'**
+  String get gemsBusinessTypeLabel;
+
+  /// No description provided for @gemsAllBusinessTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'All types'**
+  String get gemsAllBusinessTypes;
+
+  /// No description provided for @gemsLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get gemsLoadMore;
+
+  /// No description provided for @gemsDiscoverSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden Gems'**
+  String get gemsDiscoverSection;
+
+  /// No description provided for @gemBusinessTypeRestaurant.
+  ///
+  /// In en, this message translates to:
+  /// **'Restaurant'**
+  String get gemBusinessTypeRestaurant;
+
+  /// No description provided for @gemBusinessTypeBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Bar'**
+  String get gemBusinessTypeBar;
+
+  /// No description provided for @gemBusinessTypeCafe.
+  ///
+  /// In en, this message translates to:
+  /// **'Cafe'**
+  String get gemBusinessTypeCafe;
+
+  /// No description provided for @gemBusinessTypeHikingTrail.
+  ///
+  /// In en, this message translates to:
+  /// **'Hiking trail'**
+  String get gemBusinessTypeHikingTrail;
+
+  /// No description provided for @gemBusinessTypeBikeTrail.
+  ///
+  /// In en, this message translates to:
+  /// **'Bike trail'**
+  String get gemBusinessTypeBikeTrail;
+
+  /// No description provided for @gemBusinessTypePool.
+  ///
+  /// In en, this message translates to:
+  /// **'Pool'**
+  String get gemBusinessTypePool;
+
+  /// No description provided for @gemBusinessTypePark.
+  ///
+  /// In en, this message translates to:
+  /// **'Park'**
+  String get gemBusinessTypePark;
+
+  /// No description provided for @gemBusinessTypeMuseum.
+  ///
+  /// In en, this message translates to:
+  /// **'Museum'**
+  String get gemBusinessTypeMuseum;
+
+  /// No description provided for @gemBusinessTypeShop.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop'**
+  String get gemBusinessTypeShop;
+
+  /// No description provided for @gemBusinessTypeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get gemBusinessTypeOther;
+
+  /// No description provided for @eventMoreDates.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} more dates'**
+  String eventMoreDates(int count);
+
+  /// No description provided for @eventRepeatedDateSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'This listing date: {details}'**
+  String eventRepeatedDateSemantics(String details);
+
+  /// No description provided for @eventTextPlaceholderSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'No event photo. {headline}'**
+  String eventTextPlaceholderSemantics(String headline);
 }
 
 class _AppLocalizationsDelegate

@@ -1,5 +1,7 @@
 # iOS App Store release — steps only Blake can do
 
+> **November 14, 2026:** Banner ads and the AdMob SDK were removed. Skip the AdMob, UMP, ATT-for-ads, SKAdNetwork, and `app-ads.txt` steps in this file. They no longer apply.
+
 > Backend deploy order, secrets, migrations and Android notes for the
 > release-blocker fixes: see **RELEASE_TODO_BLAKE.md** (do those first).
 
@@ -54,7 +56,9 @@ After step 1, run on the Mac:
 It copies `CLIENT_ID` / `REVERSED_CLIENT_ID` from `GoogleService-Info.plist`
 into `ios/Flutter/AppIds.local.xcconfig` (gitignored). Then test Google sign-in.
 
-## 4. AdMob (iOS)
+## 4. AdMob (iOS) — no longer required
+
+Skipped. Ads were removed from the app on November 14, 2026.
 1. AdMob console → Apps → add **SpotVibe (iOS)**, linked to the App Store
    listing once it exists. Copy the iOS **app id** (`ca-app-pub-…~…`).
 2. Add to `ios/Flutter/AppIds.local.xcconfig`:

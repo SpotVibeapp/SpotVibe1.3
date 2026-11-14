@@ -294,7 +294,4 @@ class Event {
   /// True when this event holds the current week's "featured" slot.
   bool get isFeaturedThisWeek => isFeaturedInCurrentWeek(featuredWeekKey);
 
-  /// True when the event page should show the in-feed promo — i.e. the
-  /// listing owner hasn't paid for Premium (which removes ads).
-  bool get showsAds => !isPremiumListing;
 }

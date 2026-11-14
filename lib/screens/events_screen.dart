@@ -15,7 +15,7 @@ import '../services/event_service.dart';
 import '../services/location_service.dart';
 import '../theme/responsive.dart';
 import '../theme/theme.dart';
-import '../widgets/common/ad_banner.dart';
+import '../widgets/gems/discover_gems_results.dart';
 import '../widgets/common/category_chips.dart';
 import '../widgets/common/empty_state_view.dart';
 import '../widgets/common/event_card_skeleton.dart';
@@ -531,11 +531,6 @@ class _EventsScreenState extends State<EventsScreen> {
                   // Page navigation stays pinned (and slim) so the page
                   // numbers are always on screen while the feed scrolls.
                   FeedPaginationBar(controller: _pageController),
-                  // Anchored banner ad for free users (collapses for Premium
-                  // and on web). Sits between the feed and the navigation. On
-                  // very short screens the upsell row under it is dropped so
-                  // the ad slot does not eat a third of the height.
-                  AdBanner(showRemoveAdsUpsell: !compactHeight),
                   GuidedTour(
                     tourId: 'home',
                     steps: [
@@ -1010,6 +1005,7 @@ class _EventsList extends StatelessWidget {
           ? heroIds
           : const <String>{},
       feedHeader: [
+        const DiscoverGemsResults(),
         if (eventProvider.showingSampleFeed)
           _SampleFeedBanner(
             onHide: eventProvider.hideSampleFeed,
