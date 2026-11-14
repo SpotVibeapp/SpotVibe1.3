@@ -183,29 +183,51 @@ class _PriceBlock extends StatelessWidget {
 
     return Column(
       children: [
-        Text(
-          l10n.trialLabel,
-          style: text.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: appColors.proGold,
+        if (sub.promisesFreeTrial) ...[
+          Text(
+            l10n.trialLabel,
+            style: text.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: appColors.proGold,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          l10n.thenPrice(price),
-          style: text.headlineLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: appColors.proGold,
-            fontSize: 36,
+          const SizedBox(height: 4),
+          Text(
+            l10n.thenPrice(price),
+            style: text.headlineLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: appColors.proGold,
+              fontSize: 36,
+            ),
           ),
-        ),
+        ] else ...[
+          Text(
+            price,
+            style: text.headlineLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: appColors.proGold,
+              fontSize: 36,
+            ),
+          ),
+        ],
         const SizedBox(height: 4),
         Text(
           sub.billingFinePrint,
           style: text.bodySmall?.copyWith(color: colors.onSurfaceVariant),
           textAlign: TextAlign.center,
         ),
-        if (sub.offerFoundingPrice && !sub.isFoundingMember) ...[
+        if (sub.foundingPackageMissing) ...[
+          const SizedBox(height: 8),
+          Text(
+            l10n.foundingPackageMissing,
+            style: text.bodySmall?.copyWith(
+              color: colors.error,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+        if (sub.offerFoundingPrice && !sub.isFoundingMember && !sub.foundingPackageMissing) ...[
           const SizedBox(height: 8),
           Text(
             l10n.foundingLock(
@@ -300,7 +322,6 @@ class _FeatureList extends StatelessWidget {
       (l10n.premiumPerk3Title, l10n.premiumPerk3Subtitle),
       (l10n.premiumPerk4Title, l10n.premiumPerk4Subtitle),
       (l10n.premiumPerk5Title, l10n.premiumPerk5Subtitle),
-      (l10n.premiumPerk6Title, l10n.premiumPerk6Subtitle),
       (l10n.premiumPerk7Title, l10n.premiumPerk7Subtitle),
       (l10n.premiumPerk8Title, l10n.premiumPerk8Subtitle),
     ];

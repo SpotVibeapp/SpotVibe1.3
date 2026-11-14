@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../config/app_config.dart';
 import '../data/event_codec.dart';
 import '../data/rules_compat.dart';
+import '../models/attendance_mode.dart';
 import '../models/user_event.dart';
 import '../models/event_social_link.dart';
 import 'user_event_repository.dart';
@@ -20,6 +21,7 @@ const List<String> kEventCounterFields = [
   'analyticsViews',
   'analyticsSaves',
   'analyticsClicks',
+  'analyticsShares',
   'bookmarkedCount',
   'interestedCount',
 ];
@@ -109,6 +111,116 @@ class FirebaseUserEventRepository extends UserEventRepository {
     });
   }
 
+  bool _callableSaveUnavailable = false;
+
+  /// Client-side free shape used only when [saveUserEvent] is not deployed
+  /// yet. Never writes featuring or other Premium perk fields.
+  @visibleForTesting
+  static Map<String, dynamic> freeShapedFallback(Map<String, dynamic> raw) {
+    final images = _firstUrls(raw['imageUrls'] ?? raw['imageUrl'], 1);
+    final videos = _firstUrls(raw['videoUrls'] ?? raw['videoUrl'], 1);
+    final out = Map<String, dynamic>.of(raw);
+    out['imageUrls'] = images;
+    out['imageUrl'] = images.isEmpty ? '' : images.first;
+    out['videoUrls'] = videos;
+    out['videoUrl'] = videos.isEmpty ? null : videos.first;
+    out['recurringType'] = 'none';
+    out['contactPhone'] = null;
+    out['contactWebsite'] = null;
+    out['contactSocial'] = null;
+    out['brandColor'] = null;
+    out['brandLogoUrl'] = null;
+    out['isPremiumListing'] = false;
+    out['isCreatorPro'] = false;
+    out.remove('featuredWeekKey');
+    out.remove('featuredAt');
+    return out;
+  }
+
+  static List<String> _firstUrls(dynamic value, int limit) {
+    final source = value is Iterable ? value : (value == null ? const [] : [value]);
+    final seen = <String>{};
+    final out = <String>[];
+    for (final item in source) {
+      final url = item?.toString().trim() ?? '';
+      if (url.isEmpty || !seen.add(url)) continue;
+      out.add(url);
+      if (out.length >= limit) break;
+    }
+    return out;
+  }
+
+  Future<UserCreatedEvent> _saveEvent(
+    UserCreatedEvent event, {
+    required bool isCreate,
+    required DateTime endDateTime,
+  }) async {
+    if (!_callableSaveUnavailable) {
+      try {
+        return await _saveThroughCallable(event, isCreate: isCreate);
+      } on FirebaseFunctionsException catch (e) {
+        if (e.code == 'failed-precondition' ||
+            e.code == 'unauthenticated' ||
+            e.code == 'permission-denied' ||
+            e.code == 'invalid-argument') {
+          rethrow;
+        }
+        debugPrint('saveUserEvent callable failed (${e.code}): $e');
+        if (e.code != 'not-found' &&
+            e.code != 'unavailable' &&
+            e.code != 'unimplemented' &&
+            e.code != 'internal') {
+          rethrow;
+        }
+        _callableSaveUnavailable = true;
+      } catch (e) {
+        debugPrint('saveUserEvent callable failed: $e');
+        _callableSaveUnavailable = true;
+      }
+    }
+
+    final payload = {
+      ...freeShapedFallback(userEventToMap(event)),
+      'dateTime': Timestamp.fromDate(event.dateTime),
+      'endDateTime': Timestamp.fromDate(endDateTime),
+      if (isCreate) 'createdAt': FieldValue.serverTimestamp(),
+      if (!isCreate) 'updatedAt': FieldValue.serverTimestamp(),
+    };
+    await _commitMirrors(event.id, payload, isCreate: isCreate);
+    return userEventFromMap(event.id, {
+      ...userEventToMap(event),
+      ...freeShapedFallback(userEventToMap(event)),
+    });
+  }
+
+  Future<UserCreatedEvent> _saveThroughCallable(
+    UserCreatedEvent event, {
+    required bool isCreate,
+  }) async {
+    final callable =
+        _functions.httpsCallableFromUrl(AppConfig.saveUserEventFunctionUrl);
+    final payload = <String, dynamic>{
+      ...userEventToMap(event),
+      'id': event.id,
+      'dateTimeMs': event.dateTime.millisecondsSinceEpoch,
+      'endDateTimeMs': event.endDateTime?.millisecondsSinceEpoch,
+      'createdAtMs': event.createdAt.millisecondsSinceEpoch,
+    };
+    payload.remove('dateTime');
+    payload.remove('endDateTime');
+    payload.remove('createdAt');
+    payload.remove('updatedAt');
+    final result = await callable.call<Map<String, dynamic>>({
+      'isCreate': isCreate,
+      'event': payload,
+    });
+    final data = Map<String, dynamic>.from(result.data);
+    final saved = data['event'] is Map
+        ? Map<String, dynamic>.from(data['event'] as Map)
+        : payload;
+    return userEventFromMap(event.id, saved);
+  }
+
   Future<T> _guard<T>(Future<T> Function() action, Future<T> Function() orElse) async {
     if (_useFallback) return orElse();
     try {
@@ -188,6 +300,8 @@ class FirebaseUserEventRepository extends UserEventRepository {
     String? brandColor,
     String? brandLogoUrl,
     String? featuredWeekKey,
+    AttendanceMode attendanceMode = AttendanceMode.rsvpRequested,
+    String? ticketUrl,
   }) {
     return _guard(() async {
       final event = UserCreatedEvent(
@@ -222,15 +336,10 @@ class FirebaseUserEventRepository extends UserEventRepository {
         brandColor: brandColor,
         brandLogoUrl: brandLogoUrl,
         featuredWeekKey: featuredWeekKey,
+        attendanceMode: attendanceMode,
+        ticketUrl: ticketUrl,
       );
-      final payload = {
-        ...userEventToMap(event),
-        'dateTime': Timestamp.fromDate(event.dateTime),
-        'endDateTime': Timestamp.fromDate(endDateTime),
-        'createdAt': FieldValue.serverTimestamp(),
-      };
-      await _commitMirrors(event.id, payload, isCreate: true);
-      return event;
+      return _saveEvent(event, isCreate: true, endDateTime: endDateTime);
     }, () => super.createEvent(
           id: id,
           creatorId: creatorId,
@@ -262,21 +371,19 @@ class FirebaseUserEventRepository extends UserEventRepository {
           brandColor: brandColor,
           brandLogoUrl: brandLogoUrl,
           featuredWeekKey: featuredWeekKey,
+          attendanceMode: attendanceMode,
+          ticketUrl: ticketUrl,
         ));
   }
 
   @override
   Future<UserCreatedEvent> updateEvent(UserCreatedEvent updated) {
     return _guard(() async {
-      final payload = {
-        ...userEventToMap(updated),
-        'dateTime': Timestamp.fromDate(updated.dateTime),
-        if (updated.endDateTime != null)
-          'endDateTime': Timestamp.fromDate(updated.endDateTime!),
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
-      await _commitMirrors(updated.id, payload, isCreate: false);
-      return updated;
+      return _saveEvent(
+        updated,
+        isCreate: false,
+        endDateTime: updated.endDateTime ?? updated.dateTime,
+      );
     }, () => super.updateEvent(updated));
   }
 
@@ -352,6 +459,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
     int views = 0,
     int saves = 0,
     int clicks = 0,
+    int shares = 0,
   }) async {
     if (_useFallback) {
       await super.incrementAnalytics(
@@ -360,6 +468,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
         views: views,
         saves: saves,
         clicks: clicks,
+        shares: shares,
       );
       return;
     }
@@ -368,6 +477,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
       views: views,
       saves: saves,
       clicks: clicks,
+      shares: shares,
     );
     for (final field in fields) {
       for (final ref in [_userEvents.doc(eventId), _events.doc(eventId)]) {
@@ -392,11 +502,13 @@ List<String> analyticsIncrementFields({
   int views = 0,
   int saves = 0,
   int clicks = 0,
+  int shares = 0,
 }) {
   return [
     if (impressions > 0) 'analyticsSearchImpressions',
     if (views > 0) 'analyticsViews',
     if (saves > 0) 'analyticsSaves',
     if (clicks > 0) 'analyticsClicks',
+    if (shares > 0) 'analyticsShares',
   ];
 }

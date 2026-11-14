@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
+import '../../models/attendance_mode.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/rsvp_provider.dart';
+import '../../providers/subscription_provider.dart';
+import '../../services/feature_flags.dart';
 import '../../theme/theme.dart';
+import '../billing/soft_paywall_sheet.dart';
 
 /// Full-width RSVP button with an inline privacy toggle.
 /// Shows an RSVP action sheet when the user is not yet RSVP'd.
 class RsvpButton extends StatelessWidget {
-  const RsvpButton({super.key});
+  final AttendanceMode mode;
+  const RsvpButton({super.key, this.mode = AttendanceMode.rsvpRequested});
 
   @override
   Widget build(BuildContext context) {
@@ -17,6 +22,10 @@ class RsvpButton extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+
+    if (mode == AttendanceMode.tickets) {
+      return const SizedBox.shrink();
+    }
 
     if (!auth.isLoggedIn || auth.isGuest) {
       return SizedBox(
@@ -33,7 +42,7 @@ class RsvpButton extends StatelessWidget {
     }
 
     if (rsvp.hasRsvp) {
-      return _AttendingTile(rsvp: rsvp, colors: colors, text: text);
+      return _AttendingTile(rsvp: rsvp, colors: colors, text: text, mode: mode);
     }
 
     return SizedBox(
@@ -41,7 +50,7 @@ class RsvpButton extends StatelessWidget {
       child: FilledButton.icon(
         onPressed: rsvp.isSubmitting
             ? null
-            : () => _showRsvpSheet(context, rsvp, auth),
+            : () => _onRsvpPressed(context, rsvp, auth),
         icon: rsvp.isSubmitting
             ? SizedBox(
                 width: 16,
@@ -52,12 +61,47 @@ class RsvpButton extends StatelessWidget {
                 ),
               )
             : const Icon(Icons.event_available_rounded),
-        label: Text(AppLocalizations.of(context)!.rsvpToThisEvent),
+        label: Text(mode == AttendanceMode.dropIn
+            ? AppLocalizations.of(context)!.imGoing
+            : AppLocalizations.of(context)!.rsvpToThisEvent),
         style: FilledButton.styleFrom(
           minimumSize: const Size(double.infinity, 48),
         ),
       ),
     );
+  }
+
+  Future<void> _onRsvpPressed(
+    BuildContext context,
+    RsvpProvider rsvp,
+    AuthProvider auth,
+  ) async {
+    final flags = context.read<FeatureFlags>();
+    final premium = context.read<SubscriptionProvider>().isSubscribed;
+    if (shouldGateBasicRsvp(
+      basicRsvpFlagOn: flags.gateBasicRsvpPremium,
+      isSubscribed: premium,
+    )) {
+      final l10n = AppLocalizations.of(context)!;
+      await showSoftPaywallSheet(
+        context,
+        title: l10n.rsvpTicketsPremiumTitle,
+        body: l10n.rsvpTicketsPremiumBody,
+      );
+      return;
+    }
+    if (!context.mounted) return;
+    if (mode == AttendanceMode.dropIn) {
+      final user = auth.user;
+      if (user == null) return;
+      await rsvp.rsvp(
+        userName: user.displayName,
+        avatarUrl: user.avatarUrl,
+        isPrivate: false,
+      );
+      return;
+    }
+    _showRsvpSheet(context, rsvp, auth);
   }
 
   void _showRsvpSheet(
@@ -81,11 +125,13 @@ class _AttendingTile extends StatelessWidget {
   final RsvpProvider rsvp;
   final ColorScheme colors;
   final TextTheme text;
+  final AttendanceMode mode;
 
   const _AttendingTile({
     required this.rsvp,
     required this.colors,
     required this.text,
+    required this.mode,
   });
 
   @override
@@ -110,16 +156,17 @@ class _AttendingTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n.youAreAttending,
+                  mode == AttendanceMode.dropIn ? l10n.youAreGoing : l10n.youAreAttending,
                   style: text.labelLarge?.copyWith(
                     color: colors.primary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                Text(
-                  rsvp.myRsvpIsPrivate ? l10n.privateRsvp : l10n.publicRsvp,
-                  style: text.labelSmall?.copyWith(color: colors.onPrimaryContainer),
-                ),
+                if (mode != AttendanceMode.dropIn)
+                  Text(
+                    rsvp.myRsvpIsPrivate ? l10n.privateRsvp : l10n.publicRsvp,
+                    style: text.labelSmall?.copyWith(color: colors.onPrimaryContainer),
+                  ),
               ],
             ),
           ),

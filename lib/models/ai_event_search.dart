@@ -108,6 +108,11 @@ class AiEventSearchPlan {
   final String? category;
   final String datePreset;
   final AiSearchLocation? requestedLocation;
+  final bool includeGems;
+  final String gemSearchText;
+  final String? businessType;
+  final bool openNow;
+  final bool dealsOnly;
 
   /// Returns a provider keyword only when the AI plan contains a distinctive
   /// term (for example an artist, venue, or event title). Generic requests
@@ -142,6 +147,11 @@ class AiEventSearchPlan {
     required this.category,
     required this.datePreset,
     required this.requestedLocation,
+    this.includeGems = false,
+    this.gemSearchText = '',
+    this.businessType,
+    this.openNow = false,
+    this.dealsOnly = false,
   });
 
   factory AiEventSearchPlan.fromMap(Map<String, dynamic> data) {
@@ -161,6 +171,9 @@ class AiEventSearchPlan {
     final rawPreset = cleanText(data['datePreset'], 32);
     final rawCategory = cleanText(data['category'], 60);
 
+    final gemText = cleanText(data['gemSearchText'] ?? data['searchText'], 120);
+    final include = data['includeGems'] == true || gemText.isNotEmpty;
+    final rawType = cleanText(data['businessType'], 40);
     return AiEventSearchPlan(
       searchText: cleanText(data['searchText'], 120),
       category: supportedCategories.contains(rawCategory) ? rawCategory : null,
@@ -168,6 +181,11 @@ class AiEventSearchPlan {
           supportedDatePresets.contains(rawPreset) ? rawPreset : 'all',
       requestedLocation:
           city.isEmpty ? null : AiSearchLocation(city: city, state: state),
+      includeGems: include,
+      gemSearchText: gemText,
+      businessType: rawType.isEmpty ? null : rawType,
+      openNow: data['openNow'] == true,
+      dealsOnly: data['dealsOnly'] == true,
     );
   }
 }

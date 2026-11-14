@@ -152,26 +152,86 @@
   "youAreOnPremium": "You're on Premium",
   "premiumUnlockedBody": "Recurring events, rich media galleries, analytics, branding, and verified claims are unlocked.",
   "freePerk1": "Post up to 2 upcoming one-time events at a time",
-  "freePerk2": "Basic event page — title, description, 1 cover photo, 1 short video, location, time",
+  "freePerk2": "Basic event page — title, a short description, 1 cover photo, location, time",
   "freePerk3": "Event appears in the public feed",
   "premiumPerk1Title": "Recurring events",
   "premiumPerk1Subtitle": "Post once — repeats weekly or monthly",
   "premiumPerk2Title": "Featured placement",
   "premiumPerk2Subtitle": "Top of the category feed 1× per week",
-  "premiumPerk3Title": "Analytics dashboard",
-  "premiumPerk3Subtitle": "Live views, saves, and click-throughs",
+  "premiumPerk3Title": "Full analytics dashboard",
+  "premiumPerk3Subtitle": "Click-throughs and deeper stats, on top of public counts",
   "premiumPerk4Title": "Custom branding",
   "premiumPerk4Subtitle": "Logo and brand colors on your event page",
   "premiumPerk5Title": "Contact button",
-  "premiumPerk5Subtitle": "Phone, website, and organizer contact tools",
-  "premiumPerk6Title": "No ads",
-  "premiumPerk6Subtitle": "Clean event pages with no ads",
-  "premiumPerk7Title": "Claim existing events",
-  "premiumPerk7Subtitle": "Verify first. Your first claim is free",
+  "premiumPerk5Subtitle": "Phone and website on your event page",
+  "premiumPerk7Title": "Additional event claims",
+  "premiumPerk7Subtitle": "Unlock more claims after your first free one",
   "premiumPerk8Title": "Rich media gallery",
   "premiumPerk8Subtitle": "Up to 5 photos and 3 short videos on every event",
   "trialLabel": "7-day free trial",
   "startFreeTrial": "Start 7-day free trial",
+  "subscribeForPrice": "Subscribe — {price}",
+  "@subscribeForPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "billingNoTrial": "{price} · billed monthly · cancel anytime",
+  "@billingNoTrial": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "billingFoundingOpenNoTrial": "{price} locked for founding venues · {remaining} of {limit} left · cancel anytime",
+  "@billingFoundingOpenNoTrial": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      },
+      "remaining": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "foundingPackageMissing": "The founding-price package is not in the store right now, so we will not charge you the $9.99 founding rate. Try again later, or subscribe at the standard price if it appears below.",
+  "rsvpTicketsPremiumTitle": "RSVP and tickets are part of Premium",
+  "rsvpTicketsPremiumBody": "You can still save and follow this event for free. Confirming your RSVP is a Premium feature. Upgrade to let organizers know you're going.",
+  "getTicketsPremiumBody": "Ticket buttons open the official seller (like Ticketmaster). That is an outbound link, not a purchase inside SpotVibe. Saving and following this event stays free. Upgrade to Premium to open ticket links.",
+  "freePlanLimitMonthlyBody": "Free organizers can post {cap} events per calendar month, and only {upcoming} upcoming events at a time. Upgrade to Premium to remove both caps.",
+  "@freePlanLimitMonthlyBody": {
+    "placeholders": {
+      "cap": { "type": "int" },
+      "upcoming": { "type": "int" }
+    }
+  },
+  "newGemNearbyTitle": "New Hidden Gem nearby",
+  "newGemNearbyBody": "{name} was just added near you. Premium members can visit it first.",
+  "@newGemNearbyBody": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notifNewGems": "New Hidden Gems nearby",
+  "notifNewGemsSubtitle": "A heads-up when a new gem is approved near you (Premium)",
+  "premiumPerkEarlyGemsTitle": "Early Hidden Gems",
+  "premiumPerkEarlyGemsSubtitle": "See newly added gems immediately, plus a nearby heads-up",
+  "premiumPerkUnlimitedPostsTitle": "Unlimited upcoming events",
+  "premiumPerkUnlimitedPostsSubtitle": "No two-event cap and no monthly post cap",
+  "eventPublicStats": "{views} views · {saves} interested · {shares} shares",
+  "@eventPublicStats": {
+    "placeholders": {
+      "views": { "type": "int" },
+      "saves": { "type": "int" },
+      "shares": { "type": "int" }
+    }
+  },
   "perMonth": "{price}/month",
   "@perMonth": {
     "placeholders": {
@@ -428,7 +488,7 @@
   },
   "photoGalleryHint": "Add up to 5 photos total. Your cover photo counts as the first.",
   "photoGalleryFreeHint": "Free listings include 1 cover photo. Premium unlocks up to 5 photos.",
-  "videoGalleryFreeHint": "Free listings include 1 short video. Premium unlocks up to 3 videos.",
+  "videoGalleryFreeHint": "Videos are a Premium perk. Free listings can use a cover photo only.",
   "noAdditionalPhotos": "Add photos from your library or camera.",
   "addPhotoUrl": "Add photo link (optional)",
   "addPhotoLink": "Add photo link",
@@ -484,7 +544,14 @@
     }
   },
   "photos": "Photos",
-  "mediaPremiumPerk": "Premium unlocks up to 5 photos and 3 videos per event.",
+  "mediaPremiumPerk": "Premium unlocks up to 5 photos, 3 videos, a longer description, and social links.",
+  "descriptionFreeHelper": "Free posts can use about {max} characters. Premium unlocks a longer description.",
+  "@descriptionFreeHelper": { "placeholders": { "max": { "type": "int" } } },
+  "descriptionFreeTooLong": "Free descriptions are limited to {max} characters. Upgrade to Premium for a longer listing.",
+  "@descriptionFreeTooLong": { "placeholders": { "max": { "type": "int" } } },
+  "socialLinksPremiumPerk": "Social links (Instagram, Facebook, and more) are a Premium perk so people can follow your business.",
+  "socialLinksPremiumLocked": "Add Instagram, Facebook, and other follow links with Premium.",
+  "basicListingBadge": "Basic listing",
   "unlockMediaGallery": "Unlock full gallery",
   "videos": "Videos",
   "chatLink": "Community Chat Link (optional)",
@@ -528,7 +595,7 @@
   "premiumUnlimited": "Premium — unlimited events",
   "premiumIncludes": "Rich media galleries, recurring events, analytics, branding, and claims are included.",
   "freePlan": "Free plan",
-  "freePlanBody": "Up to 2 upcoming one-time events at a time. Basic page with 1 cover photo, 1 short video, title, description, location, time, and public organizer social links in the public feed.",
+  "freePlanBody": "Up to 2 upcoming one-time events at a time and 4 posts per calendar month. Basic page with 1 cover photo, a short description (about 300 characters), title, location, and time. Guests can RSVP and see who is going. Edit anytime, share a simple card, and claim your first existing event free. Save and follow events stay free.",
   "upgradeToPremium": "Upgrade to Premium — {price}",
   "@upgradeToPremium": {
     "placeholders": {
@@ -897,7 +964,7 @@
   "eventCreationGuideTooltip": "How to create an event",
   "eventCreationGuideCardTitle": "Create with confidence",
   "eventCreationGuideCardBody": "Follow the quick checklist and compare exactly what Free and Premium include.",
-  "eventCreationGuideMediaSummary": "Free: 1 cover photo + 1 short video. Premium: up to 5 photos total (including the cover) + 3 short videos.",
+  "eventCreationGuideMediaSummary": "Free: 1 cover photo and a short description. Premium: up to 5 photos, 3 short videos, a longer description, social links, and analytics.",
   "openEventCreationGuide": "Open creator guide",
   "eventCreationGuideIntro": "A simple checklist for publishing a clear, share-ready event.",
   "eventCreationGuideCurrentPlan": "Your current plan",
@@ -911,7 +978,7 @@
   "eventCreationGuideMediaTitle": "3. Add media that fits your plan",
   "eventCreationGuidePlanIntro": "The cover photo counts as photo 1. Every video must be 30 seconds or less and under 50 MB.",
   "eventCreationGuideFreeEvents": "Up to 2 upcoming one-time events at a time",
-  "eventCreationGuideFreeMedia": "1 cover photo total and 1 short video per event",
+  "eventCreationGuideFreeMedia": "1 cover photo and a short description (about 300 characters)",
   "eventCreationGuideFreePublish": "Basic event page with public organizer social links in the public feed",
   "eventCreationGuidePremiumEvents": "Unlimited events, including weekly or monthly recurring events",
   "eventCreationGuidePremiumMedia": "Up to 5 photos total (cover included) and 3 short videos per event",
@@ -1099,5 +1166,115 @@
         "type": "int"
       }
     }
-  }
+  },
+
+  "gemShareForkTitle": "What would you like to do?",
+  "gemShareForkSubtitle": "Share a place you love for free, or promote your business with a 30-day Premium listing.",
+  "gemShareCommunityTitle": "Share a spot you love",
+  "gemShareCommunityBody": "For anyone posting casually — a hiker sharing a trail, someone pointing out a cool spot. A basic card with the name, category, map pin, and a short note. Free, and not for promotions.",
+  "gemShareBusinessTitle": "Promote my business",
+  "gemShareBusinessBody": "For businesses promoting themselves — happy hour, sales, discounts, or other offers. Photos, a full description, business contact, and a structured offer. Included with Premium at $12.99/month, live for 30 days.",
+  "gemShareBusinessCta": "Continue with Premium",
+  "gemCommunityFormTitle": "Share a spot you love",
+  "gemBusinessFormTitle": "Promote my business",
+  "gemPromoTitleLabel": "Offer title",
+  "gemPromoTitleHint": "e.g. Happy hour, 20% off tacos",
+  "gemPromoDetailsLabel": "Offer details",
+  "gemPromoDetailsHint": "What people get, and any limits",
+  "gemPromoStartsLabel": "Offer starts",
+  "gemPromoEndsLabel": "Offer ends",
+  "gemContactPhoneLabel": "Business phone",
+  "gemContactWebsiteLabel": "Business website",
+  "gemRichExpiresOn": "Promotional listing ends {date}",
+  "@gemRichExpiresOn": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "gemRichExpired": "This promotional listing has ended. The basic card is still public.",
+  "gemRenewRich": "Renew for 30 days",
+  "gemRenewingRich": "Renewing…",
+  "gemRenewRichSuccess": "Your promotional listing is live for another 30 days.",
+  "gemRenewRichNeedsPremium": "Renewing a promotional listing is included with Premium.",
+  "gemRichReminderTitle": "Your promotional gem is ending soon",
+  "gemRichReminderBody": "{name} drops back to a basic card in a few days. Renew to keep photos, your offer, and business contact live.",
+  "@gemRichReminderBody": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "gemPromoOnBasicHint": "Promotional offers and business contact belong on a Promote my business listing.",
+  "gemCategoryHikingTrails": "Hiking trails",
+  "gemCategoryBikeTrails": "Bike trails",
+  "gemCategoryParks": "Parks",
+  "gemCategoryViewpoints": "Viewpoints",
+  "gemCategoryCommunityPools": "Community pools",
+  "gemCategoryNature": "Nature",
+  "gemCategoryMuseums": "Museums",
+  "gemCategoryArt": "Art",
+  "gemCategoryHistoric": "Historic",
+  "gemCategoryLandmarks": "Landmarks",
+  "gemCategoryRestaurants": "Restaurants & food",
+  "gemCategoryAttractions": "Attractions",
+  "gemCategoryOther": "Other",
+  "premiumPerkRichGems": "30-day business Hidden Gems",
+  "premiumPerkRichGemsSubtitle": "Photos, a full description, contact details, and promo offers. Renews with your $12.99/month subscription.",
+  "freePlanPerkCommunityGems": "Share a basic Hidden Gem for free — a trail or a cool spot, no promotions",
+
+  "gemsKeywordHint": "Search names, places, or offers",
+  "gemsRadiusMiles": "{miles} mi",
+  "@gemsRadiusMiles": { "placeholders": { "miles": { "type": "int" } } },
+  "gemsSortNearest": "Nearest",
+  "gemsSortNewest": "Newest",
+  "gemsSortMostLiked": "Most liked",
+  "gemsOpenNow": "Open now",
+  "gemsDealsNearYou": "Deals near you",
+  "gemsPromotedLabel": "Promoted",
+  "gemsBusinessTypeLabel": "Business type",
+  "gemsAllBusinessTypes": "All types",
+  "gemsLoadMore": "Load more",
+  "gemsDiscoverSection": "Hidden Gems",
+  "gemBusinessTypeRestaurant": "Restaurant",
+  "gemBusinessTypeBar": "Bar",
+  "gemBusinessTypeCafe": "Cafe",
+  "gemBusinessTypeHikingTrail": "Hiking trail",
+  "gemBusinessTypeBikeTrail": "Bike trail",
+  "gemBusinessTypePool": "Pool",
+  "gemBusinessTypePark": "Park",
+  "gemBusinessTypeMuseum": "Museum",
+  "gemBusinessTypeShop": "Shop",
+  "gemBusinessTypeOther": "Other",
+  "eventMoreDates": "+{count} more dates",
+  "@eventMoreDates": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "eventRepeatedDateSemantics": "This listing date: {details}",
+  "@eventRepeatedDateSemantics": {
+    "placeholders": {
+      "details": { "type": "String" }
+    }
+  },
+  "eventTextPlaceholderSemantics": "No event photo. {headline}",
+  "@eventTextPlaceholderSemantics": {
+    "placeholders": {
+      "headline": { "type": "String" }
+    }
+  },
+  "attendanceModeSection": "How people join",
+  "attendanceModeDropIn": "Drop-in",
+  "attendanceModeRsvp": "RSVP requested",
+  "attendanceModeTickets": "Tickets",
+  "attendanceModeDropInHelp": "A light \"I'm going\" button. Best for yard sales and flea markets.",
+  "attendanceModeRsvpHelp": "People confirm they're coming, and you see a headcount and name list. Best for game nights.",
+  "attendanceModeTicketsHelp": "Sends people to your ticket link. This is a Premium perk.",
+  "attendanceTicketUrl": "Ticket link",
+  "attendanceTicketUrlRequired": "Add a ticket link for ticketed events.",
+  "imGoing": "I'm going",
+  "youAreGoing": "You're going",
+  "goingCount": "{count} going",
+  "@goingCount": {"placeholders": {"count": {"type": "int"}}},
+  "attendanceTicketsPremiumTitle": "Ticket links are a Premium perk",
+  "attendanceTicketsPremiumBody": "Upgrade to Premium to send people to a ticket link. Drop-in and RSVP requested stay free."
 }

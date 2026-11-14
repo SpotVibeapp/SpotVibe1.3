@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
+import '../../models/attendance_mode.dart';
 import '../../providers/rsvp_provider.dart';
 import '../../theme/theme.dart';
 import '../common/app_avatar.dart';
@@ -10,8 +11,13 @@ class AttendeesSection extends StatelessWidget {
   /// Accent color for the section header bar (usually the event's category
   /// color). Defaults to the brand violet when not supplied.
   final Color accent;
+  final AttendanceMode mode;
 
-  const AttendeesSection({super.key, this.accent = AppTheme.brandViolet});
+  const AttendeesSection({
+    super.key,
+    this.accent = AppTheme.brandViolet,
+    this.mode = AttendanceMode.rsvpRequested,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +25,18 @@ class AttendeesSection extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context)!;
+
+    if (mode == AttendanceMode.tickets) {
+      return const SizedBox.shrink();
+    }
+
+    if (mode == AttendanceMode.dropIn) {
+      final count = rsvp.totalRsvpCount;
+      return Text(
+        count == 0 ? l10n.beFirstToGo : l10n.goingCount(count),
+        style: text.bodyMedium,
+      );
+    }
 
     if (rsvp.totalRsvpCount == 0) {
       return Column(

@@ -1,6 +1,7 @@
 import '../data/event_time.dart';
 import '../data/media_urls.dart';
 import '../data/pricing.dart';
+import '../models/attendance_mode.dart';
 import '../models/user_event.dart';
 import '../models/event_social_link.dart';
 import '../repositories/user_event_repository.dart';
@@ -56,6 +57,8 @@ class UserEventService {
     EventSocialLinks socialLinks = const EventSocialLinks.empty(),
     String? brandColor,
     String? brandLogoUrl,
+    AttendanceMode attendanceMode = AttendanceMode.rsvpRequested,
+    String? ticketUrl,
   }) async {
     if (title.trim().isEmpty) throw ArgumentError('Event title is required.');
     if (description.trim().isEmpty) throw ArgumentError('Description is required.');
@@ -65,6 +68,9 @@ class UserEventService {
     }
     if (!isCreatorPro && recurringType != RecurringType.none) {
       throw ArgumentError('Recurring events require SpotVibe Premium.');
+    }
+    if (!isCreatorPro && attendanceMode == AttendanceMode.tickets) {
+      throw ArgumentError('Ticket links require SpotVibe Premium.');
     }
 
     final normalizedImages = normalizeMediaUrls([imageUrl, ...imageUrls]);
@@ -108,6 +114,8 @@ class UserEventService {
       socialLinks: socialLinks,
       brandColor: brandColor?.trim().isNotEmpty == true ? brandColor!.trim() : null,
       brandLogoUrl: brandLogoUrl?.trim().isNotEmpty == true ? brandLogoUrl!.trim() : null,
+      attendanceMode: attendanceMode,
+      ticketUrl: ticketUrl?.trim().isNotEmpty == true ? ticketUrl!.trim() : null,
     );
 
     // The weekly featured slot is a paid perk granted server-side (the

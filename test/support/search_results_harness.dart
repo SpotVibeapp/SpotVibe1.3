@@ -9,7 +9,11 @@ import 'package:spotvibe_app/models/event_save.dart';
 import 'package:spotvibe_app/providers/auth_provider.dart';
 import 'package:spotvibe_app/providers/event_provider.dart';
 import 'package:spotvibe_app/providers/personalization_provider.dart';
+import 'package:spotvibe_app/providers/gem_provider.dart';
 import 'package:spotvibe_app/providers/subscription_provider.dart';
+import 'package:spotvibe_app/repositories/gem_repository.dart';
+import 'package:spotvibe_app/services/gem_service.dart';
+import 'package:spotvibe_app/services/feature_flags.dart';
 import 'package:spotvibe_app/repositories/event_repository.dart';
 import 'package:spotvibe_app/repositories/mock_user_repository.dart';
 import 'package:spotvibe_app/repositories/personalization_repository.dart';
@@ -117,7 +121,6 @@ void stubPlatformChannels() {
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   for (final channel in const [
-    'plugins.flutter.io/google_mobile_ads',
     'flutter.baseflow.com/geolocator',
     'flutter.baseflow.com/geolocator_android',
     'purchases_flutter',
@@ -162,6 +165,10 @@ Future<EventProvider> pumpSearchResults(
   final subscription = SubscriptionProvider(service: RevenueCatService());
   final personalization =
       PersonalizationProvider(repository: PersonalizationRepository());
+  final gemProvider = GemProvider(
+    service: GemService(repository: GemRepository()),
+    flags: FeatureFlags(autoFetch: false),
+  );
 
   await tester.pumpWidget(
     MultiProvider(
@@ -172,6 +179,9 @@ Future<EventProvider> pumpSearchResults(
         ChangeNotifierProvider<SubscriptionProvider>.value(value: subscription),
         ChangeNotifierProvider<PersonalizationProvider>.value(
             value: personalization),
+        ChangeNotifierProvider<GemProvider>.value(value: gemProvider),
+        ChangeNotifierProvider<FeatureFlags>.value(
+            value: FeatureFlags(autoFetch: false)),
       ],
       child: RepaintBoundary(
         key: boundaryKey,

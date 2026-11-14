@@ -5,8 +5,10 @@ import 'package:uuid/uuid.dart';
 import '../data/event_time.dart';
 import '../data/media_urls.dart';
 import '../data/pricing.dart';
+import '../services/feature_flags.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/category_labels.dart';
+import '../models/attendance_mode.dart';
 import '../models/user_event.dart';
 import '../models/event_social_link.dart';
 import '../providers/auth_provider.dart';
@@ -24,6 +26,7 @@ import '../platform/local_media.dart';
 import '../theme/theme.dart';
 import '../widgets/common/fullscreen_image_viewer.dart';
 import '../widgets/events/ai_promo_image_dialog.dart';
+import '../widgets/billing/soft_paywall_sheet.dart';
 import '../widgets/events/event_creation_guide.dart';
 import '../widgets/events/event_media_editor.dart';
 import '../widgets/events/event_poster_studio.dart';
@@ -63,6 +66,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   DateTime _selectedEndDate = DateTime.now().add(const Duration(days: 7));
   TimeOfDay? _selectedEndTime;
   String _selectedCategory = 'Music';
+  AttendanceMode _attendanceMode = AttendanceMode.rsvpRequested;
+  bool _attendanceTouched = false;
+  final _ticketUrlController = TextEditingController();
   bool _isPremiumListing = false;
   String? _moderationError;
   late final String _eventMediaId;
@@ -73,6 +79,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   final List<String> _remoteVideoUrls = [];
   int _initialPhotoCount = 0;
   int _initialVideoCount = 0;
+  int _initialDescriptionLength = 0;
+  bool _hadExistingSocialLinks = false;
   bool _aiGeneratedCover = false;
   bool _uploadingMedia = false;
   bool _hasCheckedEventCreationGuide = false;
@@ -83,8 +91,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   final _contactPhoneController = TextEditingController();
   final _contactWebsiteController = TextEditingController();
   final _contactSocialController = TextEditingController();
-  // Public organizer social links are available to every creator. They are
-  // event-level links, not social account sign-in or automatic posting.
+  // Public organizer social links are a Premium perk. Existing free posts
+  // may keep links they already published (grandfathered).
   final _instagramController = TextEditingController();
   final _facebookController = TextEditingController();
   final _snapchatController = TextEditingController();
@@ -107,6 +115,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     if (e != null) {
       _titleController.text = e.title;
       _descriptionController.text = e.description;
+      _initialDescriptionLength = e.description.length;
+      _hadExistingSocialLinks = e.socialLinks.isNotEmpty;
       _locationController.text = e.location;
       _addressController.text = e.address;
       _cityController.text = e.city;
@@ -138,6 +148,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               minute: endDateTime.minute,
             );
       _selectedCategory = e.category;
+      _attendanceMode = e.attendanceMode;
+      _attendanceTouched = true;
+      _ticketUrlController.text = e.ticketUrl ?? '';
       _isPremiumListing = e.isPremiumListing;
       // Restore Premium fields if the event was created on Premium
       _isCreatorPro = e.isCreatorPro;
@@ -188,6 +201,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     _videoUrlController.dispose();
     _mapLinkController.dispose();
     _chatLinkController.dispose();
+    _ticketUrlController.dispose();
     _contactPhoneController.dispose();
     _contactWebsiteController.dispose();
     _contactSocialController.dispose();
@@ -676,11 +690,31 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       );
       return;
     }
-    final socialLinks = EventSocialLinks.fromInput(rawSocialLinks);
+    var socialLinks = EventSocialLinks.fromInput(rawSocialLinks);
     final auth = context.read<AuthProvider>();
     // Admin access is equivalent to creator Premium capability for event
     // tools, without creating or implying a billing entitlement.
     final hasCreatorAccess = _isCreatorPro || auth.isAdmin;
+    if (!hasCreatorAccess) {
+      // New social links require Premium. Grandfathered posts keep the
+      // values already on the event; the server also enforces this.
+      if (_hadExistingSocialLinks && widget.editingEvent != null) {
+        socialLinks = widget.editingEvent!.socialLinks;
+      } else {
+        socialLinks = const EventSocialLinks.empty();
+      }
+    }
+    final flags = context.read<FeatureFlags>();
+    final allowedDesc = allowedFreeDescriptionLength(
+      cap: flags.freeEventDescriptionMax,
+      existingLength: _initialDescriptionLength,
+    );
+    if (!hasCreatorAccess && _descriptionController.text.length > allowedDesc) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.descriptionFreeTooLong(allowedDesc))),
+      );
+      return;
+    }
     final subCheck = context.read<SubscriptionProvider>();
     // Admins post unlimited official events without the free-plan cap.
     if (!_isEditing && !subCheck.isSubscribed && !auth.isAdmin) {
@@ -688,14 +722,24 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       if (uid != null) {
         final mine = await context.read<UserEventRepository>().getEventsForUser(uid);
         final active = countActiveUserEvents(mine.map((e) => e.dateTime));
-        if (!canPostAnotherFreeEvent(active, isPremium: false)) {
+        final flags = context.read<FeatureFlags>();
+        final postedThisMonth = countPostsInCalendarMonth(mine.map((e) => e.createdAt));
+        if (!canPostAnotherFreeEventThisMonth(
+              postedThisMonth,
+              isPremium: false,
+              cap: flags.freeEventPostsPerMonth,
+            ) ||
+            !canPostAnotherFreeEvent(active, isPremium: false)) {
           if (!mounted) return;
           final upgrade = await showDialog<bool>(
             context: context,
             builder: (ctx) => AlertDialog(
               title: Text(l10n.freePlanLimit),
               content: Text(
-                l10n.freePlanLimitBody(l10n.trialLabel),
+                l10n.freePlanLimitMonthlyBody(
+                  flags.freeEventPostsPerMonth,
+                  kFreeUserActiveEventLimit,
+                ),
               ),
               actions: [
                 TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.notNow)),
@@ -830,6 +874,17 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     coverUrl = photoUrls.isEmpty ? '' : photoUrls.first;
     final videoUrl = videoUrls.isEmpty ? null : videoUrls.first;
 
+    if (_attendanceMode == AttendanceMode.tickets) {
+      final url = _ticketUrlController.text.trim();
+      final parsed = Uri.tryParse(url);
+      if (url.isEmpty || parsed == null || !parsed.hasScheme) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.attendanceTicketUrlRequired)),
+        );
+        return;
+      }
+    }
+
     final provider = context.read<CreateEventProvider>();
     final result = await provider.submit(
       id: _eventMediaId,
@@ -859,6 +914,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       socialLinks: socialLinks,
       brandColor: hasCreatorAccess ? _brandColorController.text.trim() : null,
       brandLogoUrl: hasCreatorAccess ? _brandLogoController.text.trim() : null,
+      attendanceMode: _attendanceMode,
+      ticketUrl: _attendanceMode == AttendanceMode.tickets
+          ? _ticketUrlController.text.trim()
+          : null,
     );
 
     if (!mounted) return;
@@ -956,7 +1015,27 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               hint: l10n.descriptionHint,
               icon: Icons.description_rounded,
               maxLines: 4,
-              validator: (v) => (v == null || v.trim().isEmpty) ? l10n.descriptionRequired : null,
+              maxLength: hasCreatorAccess
+                  ? null
+                  : allowedFreeDescriptionLength(
+                      cap: context.watch<FeatureFlags>().freeEventDescriptionMax,
+                      existingLength: _initialDescriptionLength,
+                    ),
+              helperText: hasCreatorAccess
+                  ? null
+                  : l10n.descriptionFreeHelper(
+                      context.watch<FeatureFlags>().freeEventDescriptionMax,
+                    ),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return l10n.descriptionRequired;
+                if (hasCreatorAccess) return null;
+                final cap = allowedFreeDescriptionLength(
+                  cap: context.read<FeatureFlags>().freeEventDescriptionMax,
+                  existingLength: _initialDescriptionLength,
+                );
+                if (v.length > cap) return l10n.descriptionFreeTooLong(cap);
+                return null;
+              },
             ),
             const SizedBox(height: AppTheme.spacingMd),
 
@@ -964,7 +1043,35 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             _CategoryDropdown(
               value: _selectedCategory,
               categories: _categories,
-              onChanged: (v) => setState(() => _selectedCategory = v!),
+              onChanged: (v) => setState(() {
+                _selectedCategory = v!;
+                if (!_attendanceTouched) {
+                  final premium = context.read<SubscriptionProvider>().isSubscribed;
+                  _attendanceMode = defaultAttendanceMode(_selectedCategory, isPremium: premium);
+                }
+              }),
+            ),
+            const SizedBox(height: AppTheme.spacingMd),
+            _AttendanceModePicker(
+              mode: _attendanceMode,
+              ticketUrlController: _ticketUrlController,
+              isPremium: context.watch<SubscriptionProvider>().isSubscribed,
+              onChanged: (mode) async {
+                final premium = context.read<SubscriptionProvider>().isSubscribed;
+                if (mode == AttendanceMode.tickets && !premium) {
+                  final l10n = AppLocalizations.of(context)!;
+                  await showSoftPaywallSheet(
+                    context,
+                    title: l10n.attendanceTicketsPremiumTitle,
+                    body: l10n.attendanceTicketsPremiumBody,
+                  );
+                  return;
+                }
+                setState(() {
+                  _attendanceTouched = true;
+                  _attendanceMode = mode;
+                });
+              },
             ),
             const SizedBox(height: AppTheme.spacingLg),
 
@@ -1271,15 +1378,23 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             ),
             const SizedBox(height: AppTheme.spacingLg),
 
-            // Public social links are intentionally separate from Premium
-            // contact/branding tools: every signed-in creator can add them.
-            _OrganizerSocialLinksForm(
-              instagramController: _instagramController,
-              facebookController: _facebookController,
-              snapchatController: _snapchatController,
-              tiktokController: _tiktokController,
-              youtubeController: _youtubeController,
-            ),
+            if (hasCreatorAccess || _hadExistingSocialLinks)
+              _OrganizerSocialLinksForm(
+                instagramController: _instagramController,
+                facebookController: _facebookController,
+                snapchatController: _snapchatController,
+                tiktokController: _tiktokController,
+                youtubeController: _youtubeController,
+                enabled: hasCreatorAccess,
+              )
+            else ...[
+              _SectionHeader(title: l10n.organizerSocialLinks),
+              _MediaGalleryUpgradeBanner(
+                description: l10n.socialLinksPremiumPerk,
+                actionLabel: l10n.socialLinksPremiumLocked,
+                onUpgrade: _openPaywall,
+              ),
+            ],
             const SizedBox(height: AppTheme.spacingLg),
 
             // ── Premium section ──────────────────────────────────────────────
@@ -1324,6 +1439,7 @@ class _OrganizerSocialLinksForm extends StatelessWidget {
   final TextEditingController snapchatController;
   final TextEditingController tiktokController;
   final TextEditingController youtubeController;
+  final bool enabled;
 
   const _OrganizerSocialLinksForm({
     required this.instagramController,
@@ -1331,6 +1447,7 @@ class _OrganizerSocialLinksForm extends StatelessWidget {
     required this.snapchatController,
     required this.tiktokController,
     required this.youtubeController,
+    this.enabled = true,
   });
 
   @override
@@ -1350,6 +1467,7 @@ class _OrganizerSocialLinksForm extends StatelessWidget {
         const SizedBox(height: AppTheme.spacingMd),
         _FormField(
           controller: instagramController,
+          enabled: enabled,
           label: l10n.instagramOptional,
           hint: l10n.socialProfileHint,
           icon: Icons.camera_alt_rounded,
@@ -1358,6 +1476,7 @@ class _OrganizerSocialLinksForm extends StatelessWidget {
         const SizedBox(height: AppTheme.spacingMd),
         _FormField(
           controller: facebookController,
+          enabled: enabled,
           label: l10n.facebookOptional,
           hint: l10n.socialProfileHint,
           icon: Icons.facebook_rounded,
@@ -1366,6 +1485,7 @@ class _OrganizerSocialLinksForm extends StatelessWidget {
         const SizedBox(height: AppTheme.spacingMd),
         _FormField(
           controller: snapchatController,
+          enabled: enabled,
           label: l10n.snapchatOptional,
           hint: l10n.socialProfileHint,
           icon: Icons.chat_bubble_rounded,
@@ -1374,6 +1494,7 @@ class _OrganizerSocialLinksForm extends StatelessWidget {
         const SizedBox(height: AppTheme.spacingMd),
         _FormField(
           controller: tiktokController,
+          enabled: enabled,
           label: l10n.tiktokOptional,
           hint: l10n.socialProfileHint,
           icon: Icons.music_note_rounded,
@@ -1382,6 +1503,7 @@ class _OrganizerSocialLinksForm extends StatelessWidget {
         const SizedBox(height: AppTheme.spacingMd),
         _FormField(
           controller: youtubeController,
+          enabled: enabled,
           label: l10n.youtubeOptional,
           hint: l10n.socialProfileHint,
           icon: Icons.play_circle_fill_rounded,
@@ -1820,6 +1942,9 @@ class _FormField extends StatelessWidget {
   final String hint;
   final IconData icon;
   final int maxLines;
+  final int? maxLength;
+  final String? helperText;
+  final bool enabled;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
   final ValueChanged<String>? onChanged;
@@ -1830,6 +1955,9 @@ class _FormField extends StatelessWidget {
     required this.hint,
     required this.icon,
     this.maxLines = 1,
+    this.maxLength,
+    this.helperText,
+    this.enabled = true,
     this.keyboardType,
     this.validator,
     this.onChanged,
@@ -1841,12 +1969,15 @@ class _FormField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
+      maxLength: maxLength,
+      enabled: enabled,
       keyboardType: keyboardType,
       validator: validator,
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
+        helperText: helperText,
         prefixIcon: Icon(icon, size: AppTheme.iconSm, color: colors.onSurfaceVariant),
       ),
     );
@@ -2087,6 +2218,58 @@ class _ErrorBanner extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+
+class _AttendanceModePicker extends StatelessWidget {
+  final AttendanceMode mode;
+  final TextEditingController ticketUrlController;
+  final bool isPremium;
+  final ValueChanged<AttendanceMode> onChanged;
+
+  const _AttendanceModePicker({
+    required this.mode,
+    required this.ticketUrlController,
+    required this.isPremium,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final text = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.attendanceModeSection, style: text.titleSmall),
+        const SizedBox(height: AppTheme.spacingXs),
+        for (final item in <(AttendanceMode, String, String)>[
+          (AttendanceMode.dropIn, l10n.attendanceModeDropIn, l10n.attendanceModeDropInHelp),
+          (AttendanceMode.rsvpRequested, l10n.attendanceModeRsvp, l10n.attendanceModeRsvpHelp),
+          (AttendanceMode.tickets, l10n.attendanceModeTickets, l10n.attendanceModeTicketsHelp),
+        ])
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(
+              mode == item.$1 ? Icons.radio_button_checked : Icons.radio_button_off,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            title: Text(item.$2),
+            subtitle: Text(item.$3),
+            onTap: () => onChanged(item.$1),
+          ),
+        if (mode == AttendanceMode.tickets && isPremium)
+          TextField(
+            controller: ticketUrlController,
+            keyboardType: TextInputType.url,
+            decoration: InputDecoration(
+              labelText: l10n.attendanceTicketUrl,
+              prefixIcon: const Icon(Icons.link_rounded),
+            ),
+          ),
+      ],
     );
   }
 }

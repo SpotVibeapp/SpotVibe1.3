@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../data/event_time.dart';
 import '../data/media_urls.dart';
+import 'attendance_mode.dart';
 import 'event_social_link.dart';
 
 /// How often a Premium event auto-repeats.
@@ -62,8 +63,14 @@ class UserCreatedEvent {
   final int analyticsSaves;
   /// Live click-through count for the analytics dashboard.
   final int analyticsClicks;
+  /// Public share count shown on the event page for every organizer.
+  final int analyticsShares;
   /// Public organizer profile links shown on this event page.
   final EventSocialLinks socialLinks;
+  /// How attendees signal they are coming.
+  final AttendanceMode attendanceMode;
+  /// Ticket URL used when [attendanceMode] is tickets.
+  final String? ticketUrl;
 
   const UserCreatedEvent({
     required this.id,
@@ -101,7 +108,10 @@ class UserCreatedEvent {
     this.analyticsViews = 0,
     this.analyticsSaves = 0,
     this.analyticsClicks = 0,
+    this.analyticsShares = 0,
     this.socialLinks = const EventSocialLinks.empty(),
+    this.attendanceMode = AttendanceMode.rsvpRequested,
+    this.ticketUrl,
   });
 
   bool get isFree => cost == null || cost == 0;
@@ -178,7 +188,11 @@ class UserCreatedEvent {
     int? analyticsViews,
     int? analyticsSaves,
     int? analyticsClicks,
+    int? analyticsShares,
     EventSocialLinks? socialLinks,
+    AttendanceMode? attendanceMode,
+    String? ticketUrl,
+    bool clearTicketUrl = false,
   }) =>
       UserCreatedEvent(
         id: id,
@@ -219,6 +233,9 @@ class UserCreatedEvent {
         analyticsViews: analyticsViews ?? this.analyticsViews,
         analyticsSaves: analyticsSaves ?? this.analyticsSaves,
         analyticsClicks: analyticsClicks ?? this.analyticsClicks,
+        analyticsShares: analyticsShares ?? this.analyticsShares,
         socialLinks: socialLinks ?? this.socialLinks,
+        attendanceMode: attendanceMode ?? this.attendanceMode,
+        ticketUrl: clearTicketUrl ? null : (ticketUrl ?? this.ticketUrl),
       );
 }

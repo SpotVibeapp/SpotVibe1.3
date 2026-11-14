@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
 import '../../theme/category_colors.dart';
 import '../../theme/theme.dart';
+import 'attendance_mode_label.dart';
 import '../common/event_image_placeholder.dart';
 import '../common/source_badge.dart';
 
@@ -347,6 +348,8 @@ class _EventDetails extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
+          const SizedBox(height: 2),
+          AttendanceModeLabel(mode: event.attendanceMode),
           const SizedBox(height: AppTheme.spacingXs),
           Row(
             children: [
