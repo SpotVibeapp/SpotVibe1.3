@@ -39,6 +39,8 @@
  *  - saveGem / renewGemRich callables — Hidden Gems basic vs 30-day rich
  *                           business listings; richUntil is set only here
  *  - downgradeExpiredGems scheduled — hide expired promotional fields
+ *  - spawnRecurringEvents scheduled — creates the next Premium recurring
+ *                           occurrence after the current one has started
  */
 const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
 const { onObjectFinalized } = require('firebase-functions/v2/storage');
@@ -73,6 +75,7 @@ const {
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const zlib = require('zlib');
 const { planFeedFields } = require('./lib/feedFields');
+const { shouldSpawn, nextOccurrence, buildSpawnedEvent } = require('./lib/recurringSpawn');
 const { assessParallelModeration } = require('./lib/parallelModeration');
 const {
   applyEntitlementToGem,
@@ -1569,6 +1572,10 @@ exports.saveUserEvent = onCall(
       payload.isPremiumListing = false;
     }
 
+    if (creating && (payload.recurringType === 'weekly' || payload.recurringType === 'monthly')) {
+      payload.seriesId = payload.seriesId || eventId;
+      if (typeof payload.occurrenceIndex !== 'number') payload.occurrenceIndex = 0;
+    }
     const feedPatch = planFeedFields(payload);
     const toWrite = feedPatch ? { ...payload, ...feedPatch } : payload;
     const batch = db.batch();
@@ -2106,5 +2113,107 @@ exports.downgradeExpiredGems = onSchedule(
   async () => {
     const result = await downgradeExpiredRichGems();
     console.log(`downgradeExpiredGems: hid rich fields on ${result.updated} gem(s)`);
+  }
+);
+
+/**
+ * Creates the next occurrence of a Premium recurring event after the
+ * current start has passed. Spawned dates do not increment the monthly
+ * post quota (a series counts as one post). RSVPs and analytics are not
+ * copied. Hosts who have lapsed Premium are skipped.
+ */
+exports.spawnRecurringEvents = onSchedule(
+  {
+    schedule: 'every day 03:00',
+    timeZone: 'America/Denver',
+    timeoutSeconds: 540,
+    secrets: [revenueCatSecretKey],
+  },
+  async () => {
+    const db = admin.firestore();
+    const nowMs = Date.now();
+    const types = ['weekly', 'monthly'];
+    const candidates = [];
+    for (const type of types) {
+      const snap = await db
+        .collection('user_events')
+        .where('recurringType', '==', type)
+        .limit(200)
+        .get();
+      candidates.push(...snap.docs);
+    }
+    const entitlementCache = new Map();
+    let spawned = 0;
+    let skipped = 0;
+    for (const doc of candidates) {
+      const data = { id: doc.id, ...(doc.data() || {}) };
+      if (!shouldSpawn(data, nowMs)) {
+        skipped += 1;
+        continue;
+      }
+      const uid = data.creatorId;
+      if (!uid) {
+        skipped += 1;
+        continue;
+      }
+      if (!entitlementCache.has(uid)) {
+        const adminSnap = await db.collection('admins').doc(uid).get();
+        if (adminSnap.exists) {
+          entitlementCache.set(uid, { pro: true, admin: true });
+        } else {
+          const status = await verifiedEntitlementOrNull(uid);
+          entitlementCache.set(uid, status || { pro: false });
+        }
+      }
+      const access = entitlementCache.get(uid);
+      if (!access || !access.pro) {
+        skipped += 1;
+        continue;
+      }
+      const next = nextOccurrence(data.dateTimeMs, data.endDateTimeMs, data.recurringType, nowMs);
+      if (!next) {
+        skipped += 1;
+        continue;
+      }
+      const newId = randomUUID();
+      const seriesId = data.seriesId || doc.id;
+      const userEventRef = db.collection('user_events').doc(doc.id);
+      const eventRef = db.collection('events').doc(doc.id);
+      const newUserRef = db.collection('user_events').doc(newId);
+      const newEventRef = db.collection('events').doc(newId);
+      try {
+        const wrote = await db.runTransaction(async (tx) => {
+          const parentSnap = await tx.get(userEventRef);
+          if (!parentSnap.exists) return false;
+          const parent = { id: parentSnap.id, ...(parentSnap.data() || {}) };
+          if (parent.nextSpawnedEventId) {
+            const child = await tx.get(db.collection('user_events').doc(parent.nextSpawnedEventId));
+            if (child.exists) return false;
+          }
+          const payload = buildSpawnedEvent(parent, {
+            newId,
+            startMs: next.startMs,
+            endMs: next.endMs,
+            nowMs,
+            seriesId,
+          });
+          payload.createdAt = admin.firestore.FieldValue.serverTimestamp();
+          payload.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+          const feedPatch = planFeedFields(payload);
+          const toWrite = feedPatch ? { ...payload, ...feedPatch } : payload;
+          tx.set(newUserRef, toWrite);
+          tx.set(newEventRef, toWrite);
+          tx.set(userEventRef, { nextSpawnedEventId: newId, seriesId }, { merge: true });
+          tx.set(eventRef, { nextSpawnedEventId: newId, seriesId }, { merge: true });
+          return true;
+        });
+        if (wrote) spawned += 1;
+        else skipped += 1;
+      } catch (error) {
+        skipped += 1;
+        console.error('spawnRecurringEvents failed for', doc.id, error && error.message);
+      }
+    }
+    console.log(`spawnRecurringEvents: spawned ${spawned}, skipped ${skipped}`);
   }
 );
