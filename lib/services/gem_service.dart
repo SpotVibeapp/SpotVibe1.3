@@ -147,6 +147,9 @@ class GemService {
     String? promoDetails,
     DateTime? promoStartsAt,
     DateTime? promoEndsAt,
+    GemBusinessType? businessType,
+    String? offerTitle,
+    String? offerText,
     String? id,
   }) async {
     if (creatorId.isEmpty || creatorId == 'guest') {
@@ -195,6 +198,9 @@ class GemService {
       promoDetails: isBusiness ? promoDetails : null,
       promoStartsAt: isBusiness ? promoStartsAt : null,
       promoEndsAt: isBusiness ? promoEndsAt : null,
+      businessType: isBusiness ? businessType : null,
+      offerTitle: isBusiness ? offerTitle : null,
+      offerText: isBusiness ? offerText : null,
     );
     final created = await _repository.createGem(gem);
     return GemWriteResult.ok(created);
@@ -231,6 +237,12 @@ class GemService {
     bool clearPromoStartsAt = false,
     DateTime? promoEndsAt,
     bool clearPromoEndsAt = false,
+    GemBusinessType? businessType,
+    bool clearBusinessType = false,
+    String? offerTitle,
+    bool clearOfferTitle = false,
+    String? offerText,
+    bool clearOfferText = false,
   }) async {
     final existing = await _repository.getGemById(gemId);
     if (existing == null) {
@@ -264,13 +276,15 @@ class GemService {
       name: name.trim(),
       category: category,
       summary: summary.trim(),
-      description: isBusiness ? description.trim() : '',
+      description: isBusiness ? description.trim() : existing.description,
       latitude: latitude,
       longitude: longitude,
       address: address.trim(),
       city: city.trim(),
       state: state.trim(),
-      imageUrls: isBusiness ? imageUrls : const [],
+      // Keep any photos a legacy community listing already had; new community
+      // posts don't add photos from this form.
+      imageUrls: isBusiness ? imageUrls : existing.imageUrls,
       listingKind: kind,
       contactPhone: isBusiness ? contactPhone : null,
       clearContactPhone: !isBusiness || clearContactPhone,
@@ -285,6 +299,12 @@ class GemService {
       clearPromoStartsAt: !isBusiness || clearPromoStartsAt,
       promoEndsAt: isBusiness ? promoEndsAt : null,
       clearPromoEndsAt: !isBusiness || clearPromoEndsAt,
+      businessType: isBusiness ? businessType : null,
+      clearBusinessType: !isBusiness || clearBusinessType,
+      offerTitle: isBusiness ? offerTitle : null,
+      clearOfferTitle: !isBusiness || clearOfferTitle,
+      offerText: isBusiness ? offerText : null,
+      clearOfferText: !isBusiness || clearOfferText,
     );
     final saved = await _repository.updateGem(updated);
     return GemWriteResult.ok(saved);

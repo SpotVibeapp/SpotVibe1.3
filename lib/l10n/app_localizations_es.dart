@@ -2518,14 +2518,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gemBusinessFormTitle => 'Promocionar mi negocio';
 
   @override
-  String get gemPromoTitleLabel => 'Título de la oferta';
+  String get gemPromoTitleLabel => 'Título de la promo (opcional)';
 
   @override
   String get gemPromoTitleHint =>
       'p. ej. Happy hour, 20% de descuento en tacos';
 
   @override
-  String get gemPromoDetailsLabel => 'Detalles de la oferta';
+  String get gemPromoDetailsLabel => 'Detalles de la promo (opcional)';
 
   @override
   String get gemPromoDetailsHint => 'Qué recibe la gente y cualquier límite';
@@ -2537,10 +2537,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gemPromoEndsLabel => 'La oferta termina';
 
   @override
-  String get gemContactPhoneLabel => 'Teléfono del negocio';
+  String get gemContactPhoneLabel => 'Teléfono (opcional)';
 
   @override
-  String get gemContactWebsiteLabel => 'Sitio web del negocio';
+  String get gemContactWebsiteLabel => 'Sitio web (opcional)';
 
   @override
   String gemRichExpiresOn(String date) {
@@ -2709,4 +2709,31 @@ class AppLocalizationsEs extends AppLocalizations {
   String eventTextPlaceholderSemantics(String headline) {
     return 'Sin foto del evento. $headline';
   }
+
+  @override
+  String get gemForkShareTitle => 'Comparte un lugar que te encanta';
+
+  @override
+  String get gemForkShareBody =>
+      'Un listado sencillo y gratis: el nombre, un resumen corto y un punto en el mapa. Ideal para senderos, albercas y favoritos del barrio.';
+
+  @override
+  String get gemForkPromoteTitle => 'Promociona mi negocio';
+
+  @override
+  String get gemForkPromoteBody =>
+      'Un listado Premium de 30 días con fotos, descripción completa, contacto y una oferta, como una hora feliz.';
+
+  @override
+  String get gemForkPromoteLocked =>
+      'Los listados de negocio son una función Premium';
+
+  @override
+  String get gemOfferTitleLabel => 'Título de la oferta (opcional)';
+
+  @override
+  String get gemOfferTextLabel => 'Detalles de la oferta (opcional)';
+
+  @override
+  String get gemBusinessTypeLabel => 'Tipo de lugar';
 }

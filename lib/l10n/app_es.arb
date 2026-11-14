@@ -1261,5 +1261,17 @@
     "placeholders": {
       "headline": { "type": "String" }
     }
-  }
+  },
+  "gemForkShareTitle": "Comparte un lugar que te encanta",
+  "gemForkShareBody": "Un listado sencillo y gratis: el nombre, un resumen corto y un punto en el mapa. Ideal para senderos, albercas y favoritos del barrio.",
+  "gemForkPromoteTitle": "Promociona mi negocio",
+  "gemForkPromoteBody": "Un listado Premium de 30 días con fotos, descripción completa, contacto y una oferta, como una hora feliz.",
+  "gemForkPromoteLocked": "Los listados de negocio son una función Premium",
+  "gemContactPhoneLabel": "Teléfono (opcional)",
+  "gemContactWebsiteLabel": "Sitio web (opcional)",
+  "gemPromoTitleLabel": "Título de la promo (opcional)",
+  "gemPromoDetailsLabel": "Detalles de la promo (opcional)",
+  "gemOfferTitleLabel": "Título de la oferta (opcional)",
+  "gemOfferTextLabel": "Detalles de la oferta (opcional)",
+  "gemBusinessTypeLabel": "Tipo de lugar"
 }

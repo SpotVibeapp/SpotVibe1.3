@@ -4486,7 +4486,7 @@ abstract class AppLocalizations {
   /// No description provided for @gemPromoTitleLabel.
   ///
   /// In en, this message translates to:
-  /// **'Offer title'**
+  /// **'Promo title (optional)'**
   String get gemPromoTitleLabel;
 
   /// No description provided for @gemPromoTitleHint.
@@ -4498,7 +4498,7 @@ abstract class AppLocalizations {
   /// No description provided for @gemPromoDetailsLabel.
   ///
   /// In en, this message translates to:
-  /// **'Offer details'**
+  /// **'Promo details (optional)'**
   String get gemPromoDetailsLabel;
 
   /// No description provided for @gemPromoDetailsHint.
@@ -4522,13 +4522,13 @@ abstract class AppLocalizations {
   /// No description provided for @gemContactPhoneLabel.
   ///
   /// In en, this message translates to:
-  /// **'Business phone'**
+  /// **'Phone (optional)'**
   String get gemContactPhoneLabel;
 
   /// No description provided for @gemContactWebsiteLabel.
   ///
   /// In en, this message translates to:
-  /// **'Business website'**
+  /// **'Website (optional)'**
   String get gemContactWebsiteLabel;
 
   /// No description provided for @gemRichExpiresOn.
@@ -4830,6 +4830,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No event photo. {headline}'**
   String eventTextPlaceholderSemantics(String headline);
+
+  /// No description provided for @gemForkShareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share a spot you love'**
+  String get gemForkShareTitle;
+
+  /// No description provided for @gemForkShareBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A free, casual listing: the name, a short summary, and a map pin. Great for trails, pools, and neighborhood favorites.'**
+  String get gemForkShareBody;
+
+  /// No description provided for @gemForkPromoteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Promote my business'**
+  String get gemForkPromoteTitle;
+
+  /// No description provided for @gemForkPromoteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A Premium 30-day listing with photos, a full description, contact info, and a promo offer like a happy hour.'**
+  String get gemForkPromoteBody;
+
+  /// No description provided for @gemForkPromoteLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Business listings are a Premium perk'**
+  String get gemForkPromoteLocked;
+
+  /// No description provided for @gemOfferTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer title (optional)'**
+  String get gemOfferTitleLabel;
+
+  /// No description provided for @gemOfferTextLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer details (optional)'**
+  String get gemOfferTextLabel;
+
+  /// No description provided for @gemBusinessTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type of place'**
+  String get gemBusinessTypeLabel;
 }
 
 class _AppLocalizationsDelegate

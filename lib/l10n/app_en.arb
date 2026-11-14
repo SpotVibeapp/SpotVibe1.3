@@ -1261,5 +1261,17 @@
     "placeholders": {
       "headline": { "type": "String" }
     }
-  }
+  },
+  "gemForkShareTitle": "Share a spot you love",
+  "gemForkShareBody": "A free, casual listing: the name, a short summary, and a map pin. Great for trails, pools, and neighborhood favorites.",
+  "gemForkPromoteTitle": "Promote my business",
+  "gemForkPromoteBody": "A Premium 30-day listing with photos, a full description, contact info, and a promo offer like a happy hour.",
+  "gemForkPromoteLocked": "Business listings are a Premium perk",
+  "gemContactPhoneLabel": "Phone (optional)",
+  "gemContactWebsiteLabel": "Website (optional)",
+  "gemPromoTitleLabel": "Promo title (optional)",
+  "gemPromoDetailsLabel": "Promo details (optional)",
+  "gemOfferTitleLabel": "Offer title (optional)",
+  "gemOfferTextLabel": "Offer details (optional)",
+  "gemBusinessTypeLabel": "Type of place"
 }

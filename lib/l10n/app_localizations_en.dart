@@ -2487,13 +2487,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gemBusinessFormTitle => 'Promote my business';
 
   @override
-  String get gemPromoTitleLabel => 'Offer title';
+  String get gemPromoTitleLabel => 'Promo title (optional)';
 
   @override
   String get gemPromoTitleHint => 'e.g. Happy hour, 20% off tacos';
 
   @override
-  String get gemPromoDetailsLabel => 'Offer details';
+  String get gemPromoDetailsLabel => 'Promo details (optional)';
 
   @override
   String get gemPromoDetailsHint => 'What people get, and any limits';
@@ -2505,10 +2505,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gemPromoEndsLabel => 'Offer ends';
 
   @override
-  String get gemContactPhoneLabel => 'Business phone';
+  String get gemContactPhoneLabel => 'Phone (optional)';
 
   @override
-  String get gemContactWebsiteLabel => 'Business website';
+  String get gemContactWebsiteLabel => 'Website (optional)';
 
   @override
   String gemRichExpiresOn(String date) {
@@ -2677,4 +2677,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String eventTextPlaceholderSemantics(String headline) {
     return 'No event photo. $headline';
   }
+
+  @override
+  String get gemForkShareTitle => 'Share a spot you love';
+
+  @override
+  String get gemForkShareBody =>
+      'A free, casual listing: the name, a short summary, and a map pin. Great for trails, pools, and neighborhood favorites.';
+
+  @override
+  String get gemForkPromoteTitle => 'Promote my business';
+
+  @override
+  String get gemForkPromoteBody =>
+      'A Premium 30-day listing with photos, a full description, contact info, and a promo offer like a happy hour.';
+
+  @override
+  String get gemForkPromoteLocked => 'Business listings are a Premium perk';
+
+  @override
+  String get gemOfferTitleLabel => 'Offer title (optional)';
+
+  @override
+  String get gemOfferTextLabel => 'Offer details (optional)';
+
+  @override
+  String get gemBusinessTypeLabel => 'Type of place';
 }
