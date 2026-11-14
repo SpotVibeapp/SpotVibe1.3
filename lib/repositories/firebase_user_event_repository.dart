@@ -12,8 +12,8 @@ import 'user_event_repository.dart';
 
 /// Fields a client must never write on an event doc: the paid weekly
 /// feature (set by the `featureEvent` Cloud Function) and the public
-/// counters (only ever bumped atomically, see [incrementAnalytics] and
-/// FirebaseEventRepository's save transaction). firestore.rules enforces it.
+/// counters (bumped by the recordEventAnalytics callable, or by a
+/// client increment only while the staged rules are still not deployed).
 const List<String> kServerManagedEventFields = ['featuredWeekKey', 'featuredAt'];
 const List<String> kEventCounterFields = [
   'analyticsSearchImpressions',
@@ -442,9 +442,11 @@ class FirebaseUserEventRepository extends UserEventRepository {
     }
   }
 
-  /// Bumps Premium analytics counters. Each counter is its own atomic
-  /// `FieldValue.increment(1)` write on each mirror: firestore.rules only
-  /// accept exactly +1 on exactly one analytics field per write.
+  /// Bumps Premium analytics counters through `recordEventAnalytics`.
+  /// Falls back to a direct +1 write only if the callable is not deployed
+  /// yet; that fallback will stop working once the staged rules go live.
+  bool _callableAnalyticsUnavailable = false;
+
   @override
   Future<void> incrementAnalytics(
     String eventId, {
@@ -465,6 +467,67 @@ class FirebaseUserEventRepository extends UserEventRepository {
       );
       return;
     }
+    final metrics = <String>[
+      if (impressions > 0) 'impressions',
+      if (views > 0) 'views',
+      if (saves > 0) 'saves',
+      if (clicks > 0) 'clicks',
+      if (shares > 0) 'shares',
+    ];
+    if (metrics.isEmpty) return;
+    if (!_callableAnalyticsUnavailable) {
+      var usedCallable = false;
+      var callableFailed = false;
+      for (final metric in metrics) {
+        try {
+          final callable = _functions.httpsCallableFromUrl(
+            AppConfig.recordEventAnalyticsFunctionUrl,
+          );
+          await callable.call<Map<String, dynamic>>({
+            'eventId': eventId,
+            'metric': metric,
+          });
+          usedCallable = true;
+        } on FirebaseFunctionsException catch (e) {
+          if (e.code == 'unauthenticated' || e.code == 'invalid-argument') {
+            return;
+          }
+          if (e.code == 'not-found' ||
+              e.code == 'unavailable' ||
+              e.code == 'unimplemented' ||
+              e.code == 'internal') {
+            callableFailed = true;
+            debugPrint('recordEventAnalytics failed (${e.code}): $e');
+          } else {
+            debugPrint('recordEventAnalytics skipped (${e.code}): $e');
+            return;
+          }
+        } catch (e) {
+          callableFailed = true;
+          debugPrint('recordEventAnalytics failed: $e');
+        }
+      }
+      if (usedCallable && !callableFailed) return;
+      if (callableFailed) _callableAnalyticsUnavailable = true;
+    }
+    await _incrementAnalyticsOnClient(
+      eventId,
+      impressions: impressions,
+      views: views,
+      saves: saves,
+      clicks: clicks,
+      shares: shares,
+    );
+  }
+
+  Future<void> _incrementAnalyticsOnClient(
+    String eventId, {
+    int impressions = 0,
+    int views = 0,
+    int saves = 0,
+    int clicks = 0,
+    int shares = 0,
+  }) async {
     final fields = analyticsIncrementFields(
       impressions: impressions,
       views: views,

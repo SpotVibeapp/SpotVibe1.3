@@ -239,19 +239,9 @@ service cloud.firestore {
           && (!('interestedCount' in data) || data.interestedCount == 0)
           && isFreeShapedEvent(data);
     }
-    function bumpedByOne(field) {
-      return request.resource.data[field] is int
-          && request.resource.data[field] == resource.data.get(field, 0) + 1;
-    }
-    // Exactly one analytics counter changes, by exactly +1.
-    function isSingleAnalyticsBump() {
-      return changedKeys().size() == 1
-          && ((changedKeys().hasOnly(['analyticsSearchImpressions']) && bumpedByOne('analyticsSearchImpressions'))
-              || (changedKeys().hasOnly(['analyticsViews']) && bumpedByOne('analyticsViews'))
-              || (changedKeys().hasOnly(['analyticsSaves']) && bumpedByOne('analyticsSaves'))
-              || (changedKeys().hasOnly(['analyticsClicks']) && bumpedByOne('analyticsClicks'))
-              || (changedKeys().hasOnly(['analyticsShares']) && bumpedByOne('analyticsShares')));
-    }
+    // Analytics counters are no longer client-writable. The
+    // recordEventAnalytics callable (Admin SDK) is the only bump path
+    // once these staged rules are deployed.
     // bookmarkedCount / interestedCount move by ±1 only together with the
     // caller's own saved_events/{eventId} flag flipping in the same
     // transaction (this is exactly what the app — including the live v14
@@ -400,7 +390,6 @@ service cloud.firestore {
                         || (isCreatorContentEdit()
                             && (!changedKeys().hasAny(['visibleUntilMs'])
                                 || hasValidFeedKey(request.resource.data)))
-                        || (isSignedIn() && isSingleAnalyticsBump())
                         || (isSignedIn() && isSaveCounterUpdate(eventId)));
       allow delete: if isAdmin()
                     || (isSignedIn()
@@ -523,8 +512,7 @@ service cloud.firestore {
                     && hasValidSocialLinks(request.resource.data)
                     && keepsValidEventTiming(request.resource.data, resource.data)
                     && (isAdmin()
-                        || isCreatorContentEdit()
-                        || (isSignedIn() && isSingleAnalyticsBump()));
+                        || isCreatorContentEdit());
       allow delete: if isAdmin()
                     || (isSignedIn()
                         && resource.data.creatorId == request.auth.uid);

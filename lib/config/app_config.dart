@@ -135,4 +135,11 @@ class AppConfig {
     'RENEW_GEM_RICH_FUNCTION_URL',
     defaultValue: 'https://renewgemrich-kfzltbt5ja-uc.a.run.app',
   );
+
+  /// `recordEventAnalytics`: authoritative +1 on a Premium dashboard
+  /// counter. The staged rules block client increments.
+  static const String recordEventAnalyticsFunctionUrl = String.fromEnvironment(
+    'RECORD_EVENT_ANALYTICS_FUNCTION_URL',
+    defaultValue: 'https://recordeventanalytics-kfzltbt5ja-uc.a.run.app',
+  );
 }

@@ -39,6 +39,9 @@
  *  - saveGem / renewGemRich callables — Hidden Gems basic vs 30-day rich
  *                           business listings; richUntil is set only here
  *  - downgradeExpiredGems scheduled — hide expired promotional fields
+ *  - recordEventAnalytics callable — authoritative +1 on Premium
+ *                           dashboard counters; clients cannot write them
+ *                           once the staged rules are deployed
  */
 const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
 const { onObjectFinalized } = require('firebase-functions/v2/storage');
@@ -73,6 +76,13 @@ const {
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const zlib = require('zlib');
 const { planFeedFields } = require('./lib/feedFields');
+const {
+  counterFieldFor,
+  isValidEventId,
+  isRateLimited,
+  rateWindowMsFor,
+  shouldSkipSelf,
+} = require('./lib/eventAnalytics');
 const { assessParallelModeration } = require('./lib/parallelModeration');
 const {
   applyEntitlementToGem,
@@ -2106,5 +2116,64 @@ exports.downgradeExpiredGems = onSchedule(
   async () => {
     const result = await downgradeExpiredRichGems();
     console.log(`downgradeExpiredGems: hid rich fields on ${result.updated} gem(s)`);
+  }
+);
+
+/**
+ * Authoritative +1 for a Premium analytics counter. The staged Firestore
+ * rules block client increments, so this must be deployed before those
+ * rules go live. Rate-limited per user per event. Hosts are not counted
+ * on their own views or search impressions.
+ *
+ * Returns { ok, skipped? }. Errors: unauthenticated, invalid-argument.
+ */
+exports.recordEventAnalytics = onCall(
+  {
+    timeoutSeconds: 15,
+    invoker: 'private',
+  },
+  async (request) => {
+    const uid = request.auth && request.auth.uid;
+    if (!uid) {
+      throw new HttpsError('unauthenticated', 'Sign in to record analytics.');
+    }
+    const data = request.data || {};
+    const eventId = data.eventId;
+    const metric = typeof data.metric === 'string' ? data.metric : '';
+    const field = counterFieldFor(metric);
+    if (!isValidEventId(eventId) || !field) {
+      throw new HttpsError('invalid-argument', 'eventId and metric are required.');
+    }
+    const db = admin.firestore();
+    const eventRef = db.collection('events').doc(eventId);
+    const userEventRef = db.collection('user_events').doc(eventId);
+    const [eventSnap, userSnap] = await Promise.all([eventRef.get(), userEventRef.get()]);
+    if (!eventSnap.exists && !userSnap.exists) {
+      return { ok: true, skipped: 'not-found' };
+    }
+    const creatorId = (userSnap.exists && userSnap.get('creatorId'))
+      || (eventSnap.exists && eventSnap.get('creatorId'))
+      || null;
+    if (shouldSkipSelf(metric, uid, creatorId)) {
+      return { ok: true, skipped: 'self' };
+    }
+    const rateRef = db.collection('users').doc(uid)
+      .collection('analytics_rate').doc(eventId);
+    const nowMs = Date.now();
+    const windowMs = rateWindowMsFor(metric);
+    const result = { ok: true, skipped: null };
+    await db.runTransaction(async (tx) => {
+      const rateSnap = await tx.get(rateRef);
+      const lastMs = rateSnap.exists ? rateSnap.get(metric) : 0;
+      if (isRateLimited(lastMs, nowMs, windowMs)) {
+        result.skipped = 'rate';
+        return;
+      }
+      tx.set(rateRef, { [metric]: nowMs, updatedAtMs: nowMs }, { merge: true });
+      const inc = { [field]: admin.firestore.FieldValue.increment(1) };
+      if (eventSnap.exists) tx.update(eventRef, inc);
+      if (userSnap.exists) tx.update(userEventRef, inc);
+    });
+    return result;
   }
 );

@@ -31,7 +31,8 @@ entitlement-gated file is `storage.rules.staged`.
    functions below are live on `spotvibe-cfa08`:
    `saveUserEvent`, `featureEvent`, `claimFoundingSlot`,
    `downgradeExpiredPremium`, `enforceEventPerksOnWrite`,
-   `enforceEventPerksOnFeedWrite`, and ideally `revenueCatWebhook`.
+   `enforceEventPerksOnFeedWrite`, `recordEventAnalytics`, and
+   ideally `revenueCatWebhook`.
 2. Deploy Firestore rules only:
    `firebase deploy --only firestore:rules`
    After this, client writes must stay free-shaped. Premium perk
@@ -53,8 +54,14 @@ entitlement-gated file is `storage.rules.staged`.
   turn on perk fields, and cannot expand media past the free
   allowance. Unchanged leftover perk fields on an existing doc are
   left alone (the lapse job / write trigger still downgrades them).
-- `analyticsShares` may be bumped by exactly +1, like the other
-  public counters.
+- Analytics counters (`analyticsSearchImpressions`, `analyticsViews`,
+  `analyticsSaves`, `analyticsClicks`, `analyticsShares`) are not
+  client-writable. Only the `recordEventAnalytics` callable may bump
+  them. **Deploy that callable (and 1.0.15) before these rules.**
+  Shipping the rules first would break analytics on the live beta,
+  which still writes `FieldValue.increment(1)` from the client. A
+  runtime flag cannot help once the rules block those writes; the
+  safety gate is this deploy order, not a Remote Config switch.
 
 ## Rollback
 
