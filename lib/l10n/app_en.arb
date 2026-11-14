@@ -1276,5 +1276,8 @@
   "goingCount": "{count} going",
   "@goingCount": {"placeholders": {"count": {"type": "int"}}},
   "attendanceTicketsPremiumTitle": "Ticket links are a Premium perk",
-  "attendanceTicketsPremiumBody": "Upgrade to Premium to send people to a ticket link. Drop-in and RSVP requested stay free."
+  "attendanceTicketsPremiumBody": "Upgrade to Premium to send people to a ticket link. Drop-in and RSVP requested stay free.",
+  "chatLinkPremiumPerk": "Hosts and attendees can coordinate in the event message thread. A public Discord, WhatsApp, or Telegram link is a Premium perk.",
+  "chatLinkPremiumLocked": "Unlock a public community chat link with Premium",
+  "chatLinkGrandfathered": "This existing link is kept on this post. New or changed community chat links need Premium."
 }

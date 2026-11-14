@@ -73,6 +73,7 @@ describe('applyEntitlementToEvent', () => {
       videoUrls: ['https://x.test/v1.mp4'],
       description: 'x'.repeat(420),
       socialLinks: { instagram: 'https://instagram.com/shop' },
+      chatLink: 'https://discord.gg/game-night',
     };
     const result = applyEntitlementToEvent({
       ...base,
@@ -83,6 +84,37 @@ describe('applyEntitlementToEvent', () => {
     assert.deepEqual(result.event.videoUrls, existing.videoUrls);
     assert.equal(result.event.description.length, 420);
     assert.deepEqual(result.event.socialLinks, existing.socialLinks);
+    assert.equal(result.event.chatLink, existing.chatLink);
+  });
+
+  it('blocks a new or changed community chat link on a free post', () => {
+    const created = applyEntitlementToEvent({
+      ...base,
+      chatLink: 'https://discord.gg/new',
+    }, { pro: false, isCreate: true, upcomingCount: 0 });
+    assert.equal(created.ok, true);
+    assert.equal(created.event.chatLink, null);
+
+    const existing = { chatLink: 'https://discord.gg/game-night' };
+    const changed = applyEntitlementToEvent({
+      ...base,
+      chatLink: 'https://chat.whatsapp.com/new',
+    }, { pro: false, isCreate: false, existing });
+    assert.equal(changed.event.chatLink, existing.chatLink);
+
+    const cleared = applyEntitlementToEvent({
+      ...base,
+      chatLink: '',
+    }, { pro: false, isCreate: false, existing });
+    assert.equal(cleared.event.chatLink, null);
+  });
+
+  it('lets Premium keep a community chat link', () => {
+    const result = applyEntitlementToEvent({
+      ...base,
+      chatLink: 'https://discord.gg/club',
+    }, { pro: true, isCreate: true, upcomingCount: 0 });
+    assert.equal(result.event.chatLink, 'https://discord.gg/club');
   });
 
   it('strips and flags promo links in a new free description', () => {
@@ -156,12 +188,18 @@ describe('downgradeEventData', () => {
     assert.deepEqual(patch.imageUrls, ['a']);
     assert.deepEqual(patch.videoUrls, []);
     assert.deepEqual(patch.socialLinks, {});
+    assert.equal(patch.chatLink, null);
   });
 
   it('reports no change when already free-shaped', () => {
     const data = { title: 'Stay', recurringType: 'none', imageUrls: ['a'], videoUrls: [] };
     assert.equal(alreadyFreeShaped(data), true);
     assert.equal(downgradeEventData(data).changed, false);
+    assert.equal(alreadyFreeShaped({
+      ...data,
+      chatLink: 'https://discord.gg/legacy',
+      socialLinks: { instagram: 'https://instagram.com/shop' },
+    }), true);
   });
 });
 

@@ -2759,4 +2759,16 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get attendanceTicketsPremiumBody =>
       'Pasa a Premium para enviar a la gente a un enlace de boletos. El pase libre y confirmar asistencia siguen siendo gratis.';
+
+  @override
+  String get chatLinkPremiumPerk =>
+      'Anfitriones y asistentes pueden coordinar en el hilo del evento. Un enlace público de Discord, WhatsApp o Telegram es una función Premium.';
+
+  @override
+  String get chatLinkPremiumLocked =>
+      'Desbloquea un enlace público de chat con Premium';
+
+  @override
+  String get chatLinkGrandfathered =>
+      'Este enlace existente se mantiene en esta publicación. Los enlaces nuevos o modificados requieren Premium.';
 }

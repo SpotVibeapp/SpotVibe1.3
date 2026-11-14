@@ -2726,4 +2726,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get attendanceTicketsPremiumBody =>
       'Upgrade to Premium to send people to a ticket link. Drop-in and RSVP requested stay free.';
+
+  @override
+  String get chatLinkPremiumPerk =>
+      'Hosts and attendees can coordinate in the event message thread. A public Discord, WhatsApp, or Telegram link is a Premium perk.';
+
+  @override
+  String get chatLinkPremiumLocked =>
+      'Unlock a public community chat link with Premium';
+
+  @override
+  String get chatLinkGrandfathered =>
+      'This existing link is kept on this post. New or changed community chat links need Premium.';
 }
