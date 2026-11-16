@@ -107,6 +107,20 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "event_dms",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "participants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "lastMessageAtMs",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [

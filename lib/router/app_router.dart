@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../screens/messages_screen.dart';
 import '../screens/notification_preferences_screen.dart';
 import '../screens/notifications_screen.dart';
 import '../models/event.dart';
@@ -290,6 +291,7 @@ class AppRouter {
         ),
         GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
         GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
+        GoRoute(path: '/messages', builder: (context, state) => const MessagesScreen()),
         GoRoute(
           path: '/admin',
           builder: (context, state) {

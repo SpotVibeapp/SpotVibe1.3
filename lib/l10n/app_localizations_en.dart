@@ -2748,4 +2748,76 @@ class AppLocalizationsEn extends AppLocalizations {
   String eventTextPlaceholderSemantics(String headline) {
     return 'No event photo. $headline';
   }
+
+  @override
+  String get messagesTitle => 'Messages';
+
+  @override
+  String get messagesEmpty =>
+      'No messages yet. RSVP to an event, then tap \"Message the host\" on the event page.';
+
+  @override
+  String get messagesSignIn => 'Sign in to see your messages.';
+
+  @override
+  String messagesYouPrefix(String text) {
+    return 'You: $text';
+  }
+
+  @override
+  String get messagesRoleHost => 'Host';
+
+  @override
+  String get messagesRoleAttendee => 'Attendee';
+
+  @override
+  String messagesAboutEvent(String title) {
+    return 'About $title';
+  }
+
+  @override
+  String get messagesMessageHost => 'Message the host';
+
+  @override
+  String get messagesNewConversationHint =>
+      'Ask the host a question. It goes to their Messages inbox. Phone numbers, emails, and social handles are hidden.';
+
+  @override
+  String get messagesHostStartHint =>
+      'Start a private conversation with this attendee. They can reply or opt out.';
+
+  @override
+  String get messagesReportConversation => 'Report conversation';
+
+  @override
+  String get messagesReportMessage => 'Report message';
+
+  @override
+  String get messagesBlockUser => 'Block this person';
+
+  @override
+  String get messagesBlockConfirmTitle => 'Block this person?';
+
+  @override
+  String get messagesBlockConfirmBody =>
+      'Neither of you will be able to message the other, and this conversation is hidden.';
+
+  @override
+  String get messagesBlock => 'Block';
+
+  @override
+  String get messagesBlocked => 'Blocked.';
+
+  @override
+  String get messagesReported => 'Thanks. Our team will review it.';
+
+  @override
+  String get messagesTooLong => 'Messages can be up to 1000 characters.';
+
+  @override
+  String get messagesUnknownUser => 'SpotVibe member';
+
+  @override
+  String get messagesLoadFailed =>
+      'Couldn\'t load messages. Check your connection and try again.';
 }

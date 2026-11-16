@@ -7,6 +7,7 @@ import '../../models/event_message.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/rsvp_provider.dart';
 import '../../providers/subscription_provider.dart';
+import '../../screens/direct_conversation_screen.dart';
 import '../../services/event_messaging_service.dart';
 import '../../theme/theme.dart';
 import '../billing/soft_paywall_sheet.dart';
@@ -16,6 +17,7 @@ import '../common/section_title.dart';
 class EventThreadSection extends StatelessWidget {
   final String eventId;
   final String creatorId;
+  final String eventTitle;
   final Color accent;
 
   const EventThreadSection({
@@ -23,6 +25,7 @@ class EventThreadSection extends StatelessWidget {
     required this.eventId,
     required this.creatorId,
     required this.accent,
+    this.eventTitle = '',
   });
 
   bool _canJoin(BuildContext context) {
@@ -88,6 +91,7 @@ class EventThreadSection extends StatelessWidget {
       builder: (ctx) => _EventThreadSheet(
         eventId: eventId,
         creatorId: creatorId,
+        eventTitle: eventTitle,
         service: service,
         isHost: isHost,
         isPremium: premium,
@@ -101,6 +105,7 @@ class EventThreadSection extends StatelessWidget {
 class _EventThreadSheet extends StatefulWidget {
   final String eventId;
   final String creatorId;
+  final String eventTitle;
   final EventMessagingService service;
   final bool isHost;
   final bool isPremium;
@@ -110,6 +115,7 @@ class _EventThreadSheet extends StatefulWidget {
   const _EventThreadSheet({
     required this.eventId,
     required this.creatorId,
+    required this.eventTitle,
     required this.service,
     required this.isHost,
     required this.isPremium,
@@ -126,10 +132,20 @@ class _EventThreadSheetState extends State<_EventThreadSheet> {
   bool _sending = false;
   bool _optOutDms = false;
   Map<String, int> _receipts = const {};
+  Stream<EventDirectThread?>? _hostThreadStream;
 
   @override
   void initState() {
     super.initState();
+    if (!widget.isHost && widget.creatorId.isNotEmpty && widget.uid.isNotEmpty) {
+      _hostThreadStream = widget.service.watchDirectThreadMeta(
+        widget.service.directThreadId(
+          eventId: widget.eventId,
+          hostId: widget.creatorId,
+          attendeeId: widget.uid,
+        ),
+      );
+    }
     widget.service.getMute(widget.eventId, widget.uid).then((mute) {
       if (mounted) setState(() => _optOutDms = mute?['optOutDms'] == true);
     });
@@ -204,27 +220,35 @@ class _EventThreadSheetState extends State<_EventThreadSheet> {
             ),
             if (!widget.isHost && widget.creatorId.isNotEmpty)
               StreamBuilder<EventDirectThread?>(
-                stream: widget.service.watchDirectThreadMeta(
-                  widget.service.directThreadId(
-                    eventId: widget.eventId,
-                    hostId: widget.creatorId,
-                    attendeeId: widget.uid,
-                  ),
-                ),
+                stream: _hostThreadStream,
                 builder: (context, snap) {
                   final thread = snap.data;
-                  if (thread == null) return const SizedBox.shrink();
+                  final unread = thread?.unreadFor(widget.uid) ?? 0;
                   return ListTile(
+                    key: const Key('messageHostTile'),
                     contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.mail_outline),
-                    title: Text(l10n.eventThreadHostMessage),
-                    subtitle: Text(
-                      thread.lastPreview,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    leading: Badge(
+                      isLabelVisible: unread > 0,
+                      label: Text(DirectMessagePolicy.unreadLabel(unread)),
+                      child: const Icon(Icons.mail_outline),
                     ),
+                    title: Text(l10n.messagesMessageHost),
+                    subtitle: thread == null || thread.lastPreview.isEmpty
+                        ? null
+                        : Text(
+                            thread.lastPreview,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () => _openDirectThread(thread),
+                    onTap: () => openDirectConversation(
+                      context,
+                      eventId: widget.eventId,
+                      hostId: widget.creatorId,
+                      attendeeId: widget.uid,
+                      eventTitle: widget.eventTitle,
+                      service: widget.service,
+                    ),
                   );
                 },
               ),
@@ -343,146 +367,40 @@ class _EventThreadSheetState extends State<_EventThreadSheet> {
     } else if (action == 'block') {
       await context.read<AuthProvider>().blockUser(message.authorId);
     } else if (action == 'dm') {
-      if (!widget.isPremium) {
-        await showSoftPaywallSheet(
-          context,
-          title: l10n.eventThreadDmPremiumTitle,
-          body: l10n.eventThreadDmPremiumBody,
-        );
-        return;
-      }
-      await _composeDirectMessage(message.authorId);
+      await _openHostConversation(message.authorId, message.authorName);
     }
   }
 
-  Future<void> _composeDirectMessage(String attendeeId) async {
+  /// Host opens (or starts) a 1:1 conversation with an attendee. Starting a
+  /// new one needs Premium; continuing an existing one is free.
+  Future<void> _openHostConversation(String attendeeId, String attendeeName) async {
     final l10n = AppLocalizations.of(context)!;
-    final controller = TextEditingController();
-    final sent = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.eventThreadDirectMessage),
-        content: TextField(
-          controller: controller,
-          maxLines: 4,
-          maxLength: 1000,
-          decoration: InputDecoration(hintText: l10n.eventThreadHint),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.eventThreadSend),
-          ),
-        ],
-      ),
+    final threadId = widget.service.directThreadId(
+      eventId: widget.eventId,
+      hostId: widget.creatorId,
+      attendeeId: attendeeId,
     );
-    final text = controller.text.trim();
-    controller.dispose();
-    if (sent != true || text.isEmpty) return;
+    var exists = false;
     try {
-      await widget.service.sendDirectMessage(
-        eventId: widget.eventId,
-        attendeeId: attendeeId,
-        text: text,
+      exists = await widget.service.watchDirectThreadMeta(threadId).first != null;
+    } catch (_) {}
+    if (!mounted) return;
+    if (DirectMessagePolicy.hostNeedsPremium(threadExists: exists, isPremium: widget.isPremium)) {
+      await showSoftPaywallSheet(
+        context,
+        title: l10n.eventThreadDmPremiumTitle,
+        body: l10n.eventThreadDmPremiumBody,
       );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.eventThreadDmSent)));
-      }
-    } on FirebaseFunctionsException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? l10n.eventThreadSendFailed)),
-        );
-      }
+      return;
     }
-  }
-
-  Future<void> _openDirectThread(EventDirectThread thread) async {
-    final l10n = AppLocalizations.of(context)!;
-    final controller = TextEditingController();
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: AppTheme.spacingMd,
-            right: AppTheme.spacingMd,
-            bottom: MediaQuery.viewInsetsOf(ctx).bottom + AppTheme.spacingMd,
-          ),
-          child: SizedBox(
-            height: MediaQuery.sizeOf(ctx).height * 0.6,
-            child: Column(
-              children: [
-                Text(l10n.eventThreadHostMessage, style: Theme.of(ctx).textTheme.titleMedium),
-                const SizedBox(height: AppTheme.spacingSm),
-                Expanded(
-                  child: StreamBuilder<List<EventMessage>>(
-                    stream: widget.service.watchDirectMessages(thread.id),
-                    builder: (context, snap) {
-                      final messages = snap.data ?? const <EventMessage>[];
-                      if (messages.isEmpty) {
-                        return Center(child: Text(l10n.eventThreadDmEmpty));
-                      }
-                      return ListView.builder(
-                        itemCount: messages.length,
-                        itemBuilder: (context, i) {
-                          final m = messages[i];
-                          return ListTile(
-                            dense: true,
-                            title: Text(m.authorId == widget.uid ? widget.authorName : l10n.eventThreadHostMessage),
-                            subtitle: Text(m.text),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: controller,
-                        minLines: 1,
-                        maxLines: 4,
-                        maxLength: 1000,
-                        decoration: InputDecoration(
-                          hintText: l10n.eventThreadHint,
-                          counterText: '',
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.send_rounded),
-                      onPressed: () async {
-                        final text = controller.text.trim();
-                        if (text.isEmpty) return;
-                        try {
-                          await widget.service.sendDirectMessage(
-                            eventId: widget.eventId,
-                            attendeeId: thread.attendeeId,
-                            text: text,
-                          );
-                          controller.clear();
-                        } on FirebaseFunctionsException catch (e) {
-                          if (ctx.mounted) {
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(content: Text(e.message ?? l10n.eventThreadSendFailed)),
-                            );
-                          }
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+    await openDirectConversation(
+      context,
+      eventId: widget.eventId,
+      hostId: widget.creatorId,
+      attendeeId: attendeeId,
+      eventTitle: widget.eventTitle,
+      otherName: attendeeName,
+      service: widget.service,
     );
-    controller.dispose();
   }
 }

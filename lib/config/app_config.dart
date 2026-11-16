@@ -158,4 +158,8 @@ class AppConfig {
     'SEND_EVENT_DIRECT_MESSAGE_FUNCTION_URL',
     defaultValue: 'https://sendeventdirectmessage-kfzltbt5ja-uc.a.run.app',
   );
+  static const String markEventDirectReadFunctionUrl = String.fromEnvironment(
+    'MARK_EVENT_DIRECT_READ_FUNCTION_URL',
+    defaultValue: 'https://markeventdirectread-kfzltbt5ja-uc.a.run.app',
+  );
 }

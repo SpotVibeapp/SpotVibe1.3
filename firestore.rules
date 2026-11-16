@@ -21,6 +21,8 @@ rules_version = '2';
 //   user_events/{id}                 creator extras (mirrors events/)
 //   event_claims/{id}
 //   user_reports/{id}
+//   event_dms/{threadId}             1:1 host/attendee conversations (callable writes)
+//   event_dms/{threadId}/dm_messages/{id}
 //   partner_promo_codes/{id}         admin-only store-code inventory
 //   meta/event_seed, meta/founding   read-only; written by Cloud Functions
 //   featured_weeks/{uid_week}        Cloud Functions only (weekly feature)
@@ -83,11 +85,12 @@ service cloud.firestore {
           || (data.description is string && data.description.size() <= 400);
     }
     function descriptionNotExpandedPastFree() {
+      // Rules functions allow only let/return (no if statements).
       let after = request.resource.data.get('description', '');
-      if (!(after is string)) return false;
-      if (after.size() <= 400) return true;
       let before = resource.data.get('description', '');
-      return before is string && after.size() <= before.size();
+      return after is string
+          && (after.size() <= 400
+              || (before is string && after.size() <= before.size()));
     }
     function emptyOrNone(value) {
       return value == null || value == '' || value == 'none' || value == false;
@@ -622,20 +625,38 @@ service cloud.firestore {
       allow update: if false;
     }
 
-    // Host-to-attendee direct messages (Premium host only; writes via callable).
+    // 1:1 host/attendee conversations ("Messages" inbox). All writes go
+    // through the sendEventDirectMessage / markEventDirectRead callables, so
+    // senderId, Premium gating, RSVP checks, blocks, size limits, PII masking
+    // and moderation are server-enforced; clients can never write here.
+    // Reads are participants-only. Staged: do not deploy until 1.0.15 is the
+    // installed beta (see STAGED_RULES_DEPLOY.md).
+    function isDmParticipantData(data) {
+      return isSignedIn()
+          && (request.auth.uid in data.get('participants', [])
+              || data.get('hostId', '') == request.auth.uid
+              || data.get('attendeeId', '') == request.auth.uid);
+    }
+    function isDmThreadParticipant(threadId) {
+      return isSignedIn()
+          && exists(/databases/$(database)/documents/event_dms/$(threadId))
+          && isDmParticipantData(get(/databases/$(database)/documents/event_dms/$(threadId)).data);
+    }
     match /event_dms/{threadId} {
-      allow read: if isAdmin()
-                  || (isSignedIn()
-                      && (resource.data.hostId == request.auth.uid
-                          || resource.data.attendeeId == request.auth.uid));
+      // A not-yet-started conversation reads as empty only for a caller whose
+      // uid is part of the deterministic id ({eventId}_{hostId}_{attendeeId}),
+      // so the app can show "start a conversation" without probing others.
+      allow get: if isAdmin()
+                 || (resource == null
+                     && isSignedIn()
+                     && threadId.split('_').hasAny([request.auth.uid]))
+                 || (resource != null && isDmParticipantData(resource.data));
+      // Inbox query must filter on participants array-contains the caller.
+      allow list: if isAdmin()
+                  || (isSignedIn() && request.auth.uid in resource.data.participants);
       allow create, update, delete: if false;
       match /dm_messages/{messageId} {
-        allow read: if isAdmin()
-                    || (isSignedIn()
-                        && (get(/databases/$(database)/documents/event_dms/$(threadId)).data.hostId
-                              == request.auth.uid
-                            || get(/databases/$(database)/documents/event_dms/$(threadId)).data.attendeeId
-                              == request.auth.uid));
+        allow read: if isAdmin() || isDmThreadParticipant(threadId);
         allow create, update, delete: if false;
       }
     }

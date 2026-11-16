@@ -9,6 +9,9 @@ const {
   DM_RATE_WINDOW_MS,
   isThreadParticipant,
   dmThreadId,
+  dmSendDecision,
+  dmRecipient,
+  isDmParticipant,
   rateOk,
 } = require('./eventMessaging');
 
@@ -168,13 +171,27 @@ function install(deps) {
     return { ok: true, receipt: !!(status && status.pro) };
   });
 
+  async function displayNameOf(db, uid) {
+    try {
+      const snap = await db.collection('users').doc(uid).get();
+      const name = snap.exists ? (snap.get('name') || snap.get('displayName') || '') : '';
+      return String(name).slice(0, 80);
+    } catch (_) {
+      return '';
+    }
+  }
+
+  // 1:1 conversation between an event's host and one attendee. Attendees who
+  // RSVP'd can start one with the host for free; hosts need Premium to start
+  // one. Replies in an existing conversation are free for both sides.
   fns.sendEventDirectMessage = onCall(callOpts, async (request) => {
     const uid = request.auth && request.auth.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Sign in.');
     const eventId = request.data && request.data.eventId;
     const attendeeId = request.data && request.data.attendeeId;
     const raw = String((request.data && request.data.text) || '').trim();
-    if (!eventId || !attendeeId) {
+    if (typeof eventId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(eventId)
+        || typeof attendeeId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(attendeeId)) {
       throw new HttpsError('invalid-argument', 'eventId and attendeeId are required.');
     }
     if (!raw) throw new HttpsError('invalid-argument', 'Message cannot be empty.');
@@ -185,68 +202,112 @@ function install(deps) {
       throw new HttpsError('failed-precondition', 'That message cannot be sent.');
     }
     const db = admin.firestore();
-    const part = await requireParticipant(db, eventId, uid);
-    const hostId = (part.event && part.event.creatorId) || '';
+    const eventSnap = await db.collection('events').doc(eventId).get();
+    if (!eventSnap.exists) throw new HttpsError('not-found', 'Event not found.');
+    const event = eventSnap.data() || {};
+    const hostId = event.creatorId || '';
     if (!hostId) {
       throw new HttpsError('failed-precondition', 'This event has no host.');
     }
     if (attendeeId === hostId) {
       throw new HttpsError('invalid-argument', 'You cannot message yourself.');
     }
-    const isHostSender = part.host === true;
-    const isAttendeeReply = !isHostSender && uid === attendeeId;
-    if (!isHostSender && !isAttendeeReply) {
-      throw new HttpsError('permission-denied', 'Only the host and that attendee can use this conversation.');
-    }
+    const senderIsHost = uid === hostId;
+    const senderIsAttendee = uid === attendeeId;
+    const recipientId = dmRecipient(uid, hostId, attendeeId);
     const threadId = dmThreadId(eventId, hostId, attendeeId);
     const threadRef = db.collection('event_dms').doc(threadId);
-    if (isHostSender) {
+    const [threadSnap, rsvpSnap, muteSnap, blocked] = await Promise.all([
+      threadRef.get(),
+      db.collection('events').doc(eventId).collection('rsvps').doc(attendeeId).get(),
+      db.collection('events').doc(eventId).collection('thread_mutes').doc(attendeeId).get(),
+      (senderIsHost || senderIsAttendee) ? isBlocked(db, uid, recipientId) : Promise.resolve(false),
+    ]);
+    const threadExists = threadSnap.exists;
+    let senderIsPro = false;
+    if (senderIsHost && !threadExists) {
       const status = await verifiedEntitlement(uid);
-      if (!status || !status.pro) {
-        throw new HttpsError('permission-denied', 'Direct messages to attendees are a Premium perk.', { reason: 'premium-required' });
-      }
-      const rsvp = await db.collection('events').doc(eventId).collection('rsvps').doc(attendeeId).get();
-      if (!rsvp.exists) {
-        throw new HttpsError('permission-denied', 'You can only message people who RSVP\'d.');
-      }
-      const mute = await db.collection('events').doc(eventId).collection('thread_mutes').doc(attendeeId).get();
-      if (mute.exists && mute.get('optOutDms') === true) {
-        throw new HttpsError('permission-denied', 'This attendee has opted out of direct messages.');
-      }
-    } else {
-      const existing = await threadRef.get();
-      if (!existing.exists) {
-        throw new HttpsError('permission-denied', 'The host has to start this conversation first.');
-      }
+      senderIsPro = !!(status && status.pro);
     }
-    if (await isBlocked(db, uid, isHostSender ? attendeeId : hostId)) {
-      throw new HttpsError('permission-denied', 'You cannot message this person.');
+    const decision = dmSendDecision({
+      senderIsHost,
+      senderIsAttendee,
+      threadExists,
+      startedBy: threadExists ? (threadSnap.get('startedBy') || '') : '',
+      attendeeId,
+      senderIsPro,
+      attendeeRsvpd: rsvpSnap.exists,
+      attendeeOptedOut: muteSnap.exists && muteSnap.get('optOutDms') === true,
+      blocked,
+    });
+    if (!decision.ok) {
+      throw new HttpsError(decision.code, decision.message, { reason: decision.reason });
     }
     await bumpRate(db, uid, 'dm', DM_RATE_LIMIT, DM_RATE_WINDOW_MS);
     const text = maskContactInfo(raw);
     const createdAtMs = Date.now();
-    await threadRef.set({
+    const FieldValue = admin.firestore.FieldValue;
+    const patch = {
       eventId,
-      hostId: uid,
+      eventTitle: String(event.title || '').slice(0, 120),
+      hostId,
       attendeeId,
+      participants: [hostId, attendeeId],
       lastMessageAtMs: createdAtMs,
       lastPreview: text.slice(0, 80),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
+      lastAuthorId: uid,
+      unread: { [recipientId]: FieldValue.increment(1), [uid]: 0 },
+      readAtMs: { [uid]: createdAtMs },
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+    if (!threadExists) {
+      const [hostName, attendeeName] = await Promise.all([
+        displayNameOf(db, hostId),
+        displayNameOf(db, attendeeId),
+      ]);
+      patch.startedBy = uid;
+      patch.createdAtMs = createdAtMs;
+      patch.names = { [hostId]: hostName, [attendeeId]: attendeeName };
+    }
     const msgRef = threadRef.collection('dm_messages').doc();
-    await msgRef.set({
+    const batch = db.batch();
+    batch.set(threadRef, patch, { merge: true });
+    batch.set(msgRef, {
       authorId: uid,
       text,
       createdAtMs,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
       hidden: false,
     });
+    await batch.commit();
     await runParallelModeration({
       text,
       authorId: uid,
       targetPath: msgRef.path,
     });
-    return { ok: true, threadId, id: msgRef.id, text };
+    return { ok: true, threadId, id: msgRef.id, text, started: decision.starts };
+  });
+
+  // Clears the caller's unread count on a 1:1 conversation.
+  fns.markEventDirectRead = onCall(callOpts, async (request) => {
+    const uid = request.auth && request.auth.uid;
+    if (!uid) throw new HttpsError('unauthenticated', 'Sign in.');
+    const threadId = request.data && request.data.threadId;
+    if (typeof threadId !== 'string' || !/^[A-Za-z0-9_-]{1,400}$/.test(threadId)) {
+      throw new HttpsError('invalid-argument', 'threadId is required.');
+    }
+    const db = admin.firestore();
+    const ref = db.collection('event_dms').doc(threadId);
+    const snap = await ref.get();
+    if (!snap.exists || !isDmParticipant(snap.data(), uid)) {
+      throw new HttpsError('permission-denied', 'Not your conversation.');
+    }
+    const now = Date.now();
+    await ref.update({
+      [`unread.${uid}`]: 0,
+      [`readAtMs.${uid}`]: now,
+    });
+    return { ok: true, readAtMs: now };
   });
 
   return fns;

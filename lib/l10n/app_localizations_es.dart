@@ -2783,4 +2783,77 @@ class AppLocalizationsEs extends AppLocalizations {
   String eventTextPlaceholderSemantics(String headline) {
     return 'Sin foto del evento. $headline';
   }
+
+  @override
+  String get messagesTitle => 'Mensajes';
+
+  @override
+  String get messagesEmpty =>
+      'Aún no tienes mensajes. Confirma asistencia a un evento y toca \"Escribir al anfitrión\" en la página del evento.';
+
+  @override
+  String get messagesSignIn => 'Inicia sesión para ver tus mensajes.';
+
+  @override
+  String messagesYouPrefix(String text) {
+    return 'Tú: $text';
+  }
+
+  @override
+  String get messagesRoleHost => 'Anfitrión';
+
+  @override
+  String get messagesRoleAttendee => 'Asistente';
+
+  @override
+  String messagesAboutEvent(String title) {
+    return 'Sobre $title';
+  }
+
+  @override
+  String get messagesMessageHost => 'Escribir al anfitrión';
+
+  @override
+  String get messagesNewConversationHint =>
+      'Hazle una pregunta al anfitrión. Llegará a su bandeja de Mensajes. Los teléfonos, correos y usuarios de redes se ocultan.';
+
+  @override
+  String get messagesHostStartHint =>
+      'Inicia una conversación privada con este asistente. Puede responder o desactivar los mensajes.';
+
+  @override
+  String get messagesReportConversation => 'Reportar conversación';
+
+  @override
+  String get messagesReportMessage => 'Reportar mensaje';
+
+  @override
+  String get messagesBlockUser => 'Bloquear a esta persona';
+
+  @override
+  String get messagesBlockConfirmTitle => '¿Bloquear a esta persona?';
+
+  @override
+  String get messagesBlockConfirmBody =>
+      'Ninguno de los dos podrá escribirle al otro y esta conversación se ocultará.';
+
+  @override
+  String get messagesBlock => 'Bloquear';
+
+  @override
+  String get messagesBlocked => 'Bloqueado.';
+
+  @override
+  String get messagesReported => 'Gracias. Nuestro equipo lo revisará.';
+
+  @override
+  String get messagesTooLong =>
+      'Los mensajes pueden tener hasta 1000 caracteres.';
+
+  @override
+  String get messagesUnknownUser => 'Miembro de SpotVibe';
+
+  @override
+  String get messagesLoadFailed =>
+      'No se pudieron cargar los mensajes. Revisa tu conexión e inténtalo de nuevo.';
 }

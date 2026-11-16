@@ -353,7 +353,7 @@ class _UserEventDetailContent extends StatelessWidget {
                   const SizedBox(height: AppTheme.spacingLg),
                   AttendeesSection(accent: categoryAccent(event.category)),
                   const SizedBox(height: AppTheme.spacingLg),
-                  EventThreadSection(eventId: event.id, creatorId: event.creatorId, accent: categoryAccent(event.category)),
+                  EventThreadSection(eventId: event.id, creatorId: event.creatorId, eventTitle: event.title, accent: categoryAccent(event.category)),
                   const SizedBox(height: AppTheme.spacingLg),
                   CommentSection(accent: categoryAccent(event.category)),
                   const SizedBox(height: AppTheme.spacingXl),
