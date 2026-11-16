@@ -4962,6 +4962,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No event photo. {headline}'**
   String eventTextPlaceholderSemantics(String headline);
+
+  /// No description provided for @messagesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get messagesTitle;
+
+  /// No description provided for @messagesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet. RSVP to an event, then tap \"Message the host\" on the event page.'**
+  String get messagesEmpty;
+
+  /// No description provided for @messagesSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to see your messages.'**
+  String get messagesSignIn;
+
+  /// No description provided for @messagesYouPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'You: {text}'**
+  String messagesYouPrefix(String text);
+
+  /// No description provided for @messagesRoleHost.
+  ///
+  /// In en, this message translates to:
+  /// **'Host'**
+  String get messagesRoleHost;
+
+  /// No description provided for @messagesRoleAttendee.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendee'**
+  String get messagesRoleAttendee;
+
+  /// No description provided for @messagesAboutEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'About {title}'**
+  String messagesAboutEvent(String title);
+
+  /// No description provided for @messagesMessageHost.
+  ///
+  /// In en, this message translates to:
+  /// **'Message the host'**
+  String get messagesMessageHost;
+
+  /// No description provided for @messagesNewConversationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask the host a question. It goes to their Messages inbox. Phone numbers, emails, and social handles are hidden.'**
+  String get messagesNewConversationHint;
+
+  /// No description provided for @messagesHostStartHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a private conversation with this attendee. They can reply or opt out.'**
+  String get messagesHostStartHint;
+
+  /// No description provided for @messagesReportConversation.
+  ///
+  /// In en, this message translates to:
+  /// **'Report conversation'**
+  String get messagesReportConversation;
+
+  /// No description provided for @messagesReportMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Report message'**
+  String get messagesReportMessage;
+
+  /// No description provided for @messagesBlockUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Block this person'**
+  String get messagesBlockUser;
+
+  /// No description provided for @messagesBlockConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Block this person?'**
+  String get messagesBlockConfirmTitle;
+
+  /// No description provided for @messagesBlockConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Neither of you will be able to message the other, and this conversation is hidden.'**
+  String get messagesBlockConfirmBody;
+
+  /// No description provided for @messagesBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Block'**
+  String get messagesBlock;
+
+  /// No description provided for @messagesBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked.'**
+  String get messagesBlocked;
+
+  /// No description provided for @messagesReported.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks. Our team will review it.'**
+  String get messagesReported;
+
+  /// No description provided for @messagesTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages can be up to 1000 characters.'**
+  String get messagesTooLong;
+
+  /// No description provided for @messagesUnknownUser.
+  ///
+  /// In en, this message translates to:
+  /// **'SpotVibe member'**
+  String get messagesUnknownUser;
+
+  /// No description provided for @messagesLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load messages. Check your connection and try again.'**
+  String get messagesLoadFailed;
 }
 
 class _AppLocalizationsDelegate

@@ -1284,5 +1284,26 @@
     "placeholders": {
       "headline": { "type": "String" }
     }
-  }
+  },
+  "messagesTitle": "Mensajes",
+  "messagesEmpty": "Aún no tienes mensajes. Confirma asistencia a un evento y toca \"Escribir al anfitrión\" en la página del evento.",
+  "messagesSignIn": "Inicia sesión para ver tus mensajes.",
+  "messagesYouPrefix": "Tú: {text}",
+  "messagesRoleHost": "Anfitrión",
+  "messagesRoleAttendee": "Asistente",
+  "messagesAboutEvent": "Sobre {title}",
+  "messagesMessageHost": "Escribir al anfitrión",
+  "messagesNewConversationHint": "Hazle una pregunta al anfitrión. Llegará a su bandeja de Mensajes. Los teléfonos, correos y usuarios de redes se ocultan.",
+  "messagesHostStartHint": "Inicia una conversación privada con este asistente. Puede responder o desactivar los mensajes.",
+  "messagesReportConversation": "Reportar conversación",
+  "messagesReportMessage": "Reportar mensaje",
+  "messagesBlockUser": "Bloquear a esta persona",
+  "messagesBlockConfirmTitle": "¿Bloquear a esta persona?",
+  "messagesBlockConfirmBody": "Ninguno de los dos podrá escribirle al otro y esta conversación se ocultará.",
+  "messagesBlock": "Bloquear",
+  "messagesBlocked": "Bloqueado.",
+  "messagesReported": "Gracias. Nuestro equipo lo revisará.",
+  "messagesTooLong": "Los mensajes pueden tener hasta 1000 caracteres.",
+  "messagesUnknownUser": "Miembro de SpotVibe",
+  "messagesLoadFailed": "No se pudieron cargar los mensajes. Revisa tu conexión e inténtalo de nuevo."
 }

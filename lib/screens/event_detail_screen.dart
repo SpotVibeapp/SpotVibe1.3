@@ -305,7 +305,7 @@ class _DetailContent extends StatelessWidget {
                   const SizedBox(height: AppTheme.spacingLg),
                   AttendeesSection(accent: catColor),
                   const SizedBox(height: AppTheme.spacingLg),
-                  EventThreadSection(eventId: event.id, creatorId: event.creatorId, accent: catColor),
+                  EventThreadSection(eventId: event.id, creatorId: event.creatorId, eventTitle: event.title, accent: catColor),
                   const SizedBox(height: AppTheme.spacingLg),
                   SimilarEventsSection(currentEvent: event),
                   const SizedBox(height: AppTheme.spacingLg),

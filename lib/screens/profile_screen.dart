@@ -8,6 +8,8 @@ import '../data/legal.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 import '../services/deep_link_service.dart';
+import '../services/event_messaging_service.dart';
+import 'messages_screen.dart';
 import '../services/tour_service.dart';
 import '../providers/follow_provider.dart';
 import '../providers/locale_provider.dart';
@@ -21,6 +23,10 @@ import '../widgets/common/app_icon_mark.dart';
 import '../widgets/common/follow_stats_row.dart';
 import '../widgets/common/guided_tour.dart';
 import '../widgets/common/pro_badge.dart';
+
+// Lazily created on first use (after Firebase init) and shared so the
+// Messages unread badge keeps a single listener.
+final EventMessagingService _messagingService = EventMessagingService();
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -222,6 +228,19 @@ class ProfileScreen extends StatelessWidget {
                     label: l10n.myEvents,
                     onTap: () => context.push('/my-events'),
                   ),
+                ),
+                _SettingsTile(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  label: l10n.messagesTitle,
+                  trailing: MessagesUnreadBadge(
+                    uid: context.read<AuthProvider>().user?.id ?? '',
+                    service: _messagingService,
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  onTap: () => context.push('/messages'),
                 ),
                 _SettingsTile(
                   icon: Icons.diamond_outlined,

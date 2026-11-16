@@ -1284,5 +1284,28 @@
     "placeholders": {
       "headline": { "type": "String" }
     }
-  }
+  },
+  "messagesTitle": "Messages",
+  "messagesEmpty": "No messages yet. RSVP to an event, then tap \"Message the host\" on the event page.",
+  "messagesSignIn": "Sign in to see your messages.",
+  "messagesYouPrefix": "You: {text}",
+  "@messagesYouPrefix": {"placeholders": {"text": {"type": "String"}}},
+  "messagesRoleHost": "Host",
+  "messagesRoleAttendee": "Attendee",
+  "messagesAboutEvent": "About {title}",
+  "@messagesAboutEvent": {"placeholders": {"title": {"type": "String"}}},
+  "messagesMessageHost": "Message the host",
+  "messagesNewConversationHint": "Ask the host a question. It goes to their Messages inbox. Phone numbers, emails, and social handles are hidden.",
+  "messagesHostStartHint": "Start a private conversation with this attendee. They can reply or opt out.",
+  "messagesReportConversation": "Report conversation",
+  "messagesReportMessage": "Report message",
+  "messagesBlockUser": "Block this person",
+  "messagesBlockConfirmTitle": "Block this person?",
+  "messagesBlockConfirmBody": "Neither of you will be able to message the other, and this conversation is hidden.",
+  "messagesBlock": "Block",
+  "messagesBlocked": "Blocked.",
+  "messagesReported": "Thanks. Our team will review it.",
+  "messagesTooLong": "Messages can be up to 1000 characters.",
+  "messagesUnknownUser": "SpotVibe member",
+  "messagesLoadFailed": "Couldn't load messages. Check your connection and try again."
 }

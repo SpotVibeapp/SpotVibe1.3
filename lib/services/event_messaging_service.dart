@@ -10,10 +10,13 @@ class EventMessagingService {
     FirebaseFirestore? firestore,
     FirebaseFunctions? functions,
   })  : _db = firestore ?? FirebaseFirestore.instance,
-        _functions = functions ?? FirebaseFunctions.instance;
+        _functionsOverride = functions;
 
   final FirebaseFirestore _db;
-  final FirebaseFunctions _functions;
+  final FirebaseFunctions? _functionsOverride;
+
+  // Resolved lazily so tests can use a fake Firestore without a Firebase app.
+  FirebaseFunctions get _functions => _functionsOverride ?? FirebaseFunctions.instance;
 
   CollectionReference<Map<String, dynamic>> _messages(String eventId) =>
       _db.collection('events').doc(eventId).collection('thread_messages');
@@ -104,16 +107,54 @@ class EventMessagingService {
     });
   }
 
-  Future<void> sendDirectMessage({
+  /// Sends a message in the 1:1 conversation between the event host and
+  /// [attendeeId]. An attendee starting a conversation with the host passes
+  /// their own uid as [attendeeId]. Returns the conversation id.
+  Future<String> sendDirectMessage({
     required String eventId,
     required String attendeeId,
     required String text,
   }) async {
-    await _call(AppConfig.sendEventDirectMessageFunctionUrl, {
+    final out = await _call(AppConfig.sendEventDirectMessageFunctionUrl, {
       'eventId': eventId,
       'attendeeId': attendeeId,
       'text': text,
     });
+    return out['threadId'] as String? ?? '';
+  }
+
+  /// Clears the caller's unread count on a conversation.
+  Future<void> markDirectRead(String threadId) async {
+    await _call(AppConfig.markEventDirectReadFunctionUrl, {'threadId': threadId});
+  }
+
+  /// The caller's conversations, newest first (the Messages inbox).
+  Stream<List<EventDirectThread>> watchInbox(String uid) {
+    if (uid.isEmpty) return Stream.value(const []);
+    return _db
+        .collection('event_dms')
+        .where('participants', arrayContains: uid)
+        .orderBy('lastMessageAtMs', descending: true)
+        .limit(100)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => EventDirectThread.fromMap(d.id, d.data()))
+            .toList());
+  }
+
+  /// Total unread messages across the caller's conversations.
+  Stream<int> watchTotalUnread(String uid) =>
+      watchInbox(uid).map((threads) => DirectMessagePolicy.totalUnread(threads, uid));
+
+  /// People the caller has blocked (their conversations are hidden).
+  Stream<Set<String>> watchBlockedIds(String uid) {
+    if (uid.isEmpty) return Stream.value(const <String>{});
+    return _db
+        .collection('blocks')
+        .doc(uid)
+        .collection('blocked')
+        .snapshots()
+        .map((snap) => snap.docs.map((d) => d.id).toSet());
   }
 
   String directThreadId({

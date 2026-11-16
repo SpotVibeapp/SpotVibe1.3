@@ -19,6 +19,12 @@ import {
   writeBatch,
   runTransaction,
   deleteDoc,
+  collection,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  addDoc,
 } from 'firebase/firestore';
 
 let env;
@@ -352,3 +358,84 @@ describe('staged Premium perk caps on client writes', () => {
   });
 });
 
+
+describe('event_dms 1:1 conversations (Messages inbox)', () => {
+  const tid = 'e1_host_att';
+  const thread = {
+    eventId: 'e1',
+    hostId: 'host',
+    attendeeId: 'att',
+    participants: ['host', 'att'],
+    lastMessageAtMs: 1000,
+    lastPreview: 'hi',
+    lastAuthorId: 'att',
+    startedBy: 'att',
+    unread: { host: 1, att: 0 },
+  };
+  const seedThread = () => seed(async (d) => {
+    await setDoc(doc(d, `event_dms/${tid}`), thread);
+    await setDoc(doc(d, `event_dms/${tid}/dm_messages/m1`), {
+      authorId: 'att', text: 'hi', createdAtMs: 1000, hidden: false,
+    });
+  });
+
+  test('participants can read the conversation and its messages', async () => {
+    await seedThread();
+    for (const uid of ['host', 'att']) {
+      await assertSucceeds(getDoc(doc(db(uid), `event_dms/${tid}`)));
+      await assertSucceeds(getDoc(doc(db(uid), `event_dms/${tid}/dm_messages/m1`)));
+      await assertSucceeds(getDocs(collection(db(uid), `event_dms/${tid}/dm_messages`)));
+    }
+  });
+
+  test('non-participants and guests cannot read it', async () => {
+    await seedThread();
+    await assertFails(getDoc(doc(db('mallory'), `event_dms/${tid}`)));
+    await assertFails(getDoc(doc(db('mallory'), `event_dms/${tid}/dm_messages/m1`)));
+    await assertFails(getDocs(collection(db('mallory'), `event_dms/${tid}/dm_messages`)));
+    await assertFails(getDoc(doc(db(null), `event_dms/${tid}`)));
+  });
+
+  test('admins can read for moderation', async () => {
+    await seedThread();
+    await makeAdmin('root');
+    await assertSucceeds(getDoc(doc(db('root'), `event_dms/${tid}`)));
+    await assertSucceeds(getDoc(doc(db('root'), `event_dms/${tid}/dm_messages/m1`)));
+  });
+
+  test('inbox query works only when filtered to the caller', async () => {
+    await seedThread();
+    const inbox = (uid, who) => query(
+      collection(db(uid), 'event_dms'),
+      where('participants', 'array-contains', who),
+      orderBy('lastMessageAtMs', 'desc'),
+    );
+    await assertSucceeds(getDocs(inbox('att', 'att')));
+    await assertSucceeds(getDocs(inbox('host', 'host')));
+    await assertFails(getDocs(inbox('mallory', 'att')));
+    await assertFails(getDocs(collection(db('att'), 'event_dms')));
+  });
+
+  test('a not-yet-started conversation reads as empty only for its own members', async () => {
+    const snap = await assertSucceeds(getDoc(doc(db('att'), 'event_dms/e9_host_att')));
+    assert.equal(snap.exists(), false);
+    await assertFails(getDoc(doc(db('mallory'), 'event_dms/e9_host_att')));
+    await assertFails(getDocs(collection(db('att'), 'event_dms/e9_host_att/dm_messages')));
+  });
+
+  test('clients cannot create, spoof, edit, or delete conversations or messages', async () => {
+    await seedThread();
+    await assertFails(setDoc(doc(db('att'), 'event_dms/e2_host_att'), { ...thread, eventId: 'e2' }));
+    await assertFails(updateDoc(doc(db('att'), `event_dms/${tid}`), { 'unread.att': 0 }));
+    await assertFails(updateDoc(doc(db('host'), `event_dms/${tid}`), { participants: ['host', 'att', 'x'] }));
+    await assertFails(deleteDoc(doc(db('host'), `event_dms/${tid}`)));
+    await assertFails(addDoc(collection(db('att'), `event_dms/${tid}/dm_messages`), {
+      authorId: 'att', text: 'x', createdAtMs: 2000,
+    }));
+    await assertFails(addDoc(collection(db('att'), `event_dms/${tid}/dm_messages`), {
+      authorId: 'host', text: 'spoofed', createdAtMs: 2000,
+    }));
+    await assertFails(updateDoc(doc(db('att'), `event_dms/${tid}/dm_messages/m1`), { text: 'edited' }));
+    await assertFails(deleteDoc(doc(db('host'), `event_dms/${tid}/dm_messages/m1`)));
+  });
+});
