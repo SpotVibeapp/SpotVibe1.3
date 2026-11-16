@@ -39,6 +39,7 @@ import '../screens/submit_gem_screen.dart';
 import '../screens/gem_detail_screen.dart';
 import '../screens/legal_document_screen.dart';
 import '../screens/login_screen.dart';
+import '../screens/web_submit_event_screen.dart';
 import '../screens/my_events_screen.dart';
 import '../screens/my_gems_screen.dart';
 import '../screens/paywall_screen.dart';
@@ -289,6 +290,10 @@ class AppRouter {
           },
         ),
         GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+        // Public, no account required. Used by the Flutter web app at
+        // https://spotvibeapp.com/app/submit. Submissions go to the
+        // submitWebEvent callable and stay in the moderation queue.
+        GoRoute(path: '/submit', builder: (context, state) => const WebSubmitEventScreen()),
         GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
         GoRoute(
           path: '/admin',

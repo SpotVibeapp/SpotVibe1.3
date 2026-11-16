@@ -460,6 +460,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                     const SizedBox(height: AppTheme.spacingSm),
+                    TextButton(
+                      onPressed: () => context.go('/submit'),
+                      child: Text(
+                        'Post an event without an account',
+                        style: text.labelMedium?.copyWith(color: colors.primary),
+                      ),
+                    ),
+                    const SizedBox(height: AppTheme.spacingSm),
                     OutlinedButton.icon(
                       onPressed: () {
                         context.read<AuthProvider>().continueAsGuest();

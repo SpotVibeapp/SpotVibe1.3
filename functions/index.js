@@ -30,6 +30,10 @@
  *  - liveEventsProxy     callable — Ticketmaster/SeatGeek/JamBase gateway; the
  *                           provider keys live only in Secret Manager, answers
  *                           are cached in Firestore and shared by all users
+ *  - submitWebEvent      callable — no-app web form; writes event_submissions
+ *                           (server-only queue). Not deployed until Blake OKs.
+ *  - reviewWebSubmission callable — admin-only approve/reject; on approve,
+ *                           writes events/{id} and private contact subdoc
  *  - saveUserEvent       callable — authoritative event create/update; Premium
  *                           perks require a RevenueCat `pro` check
  *  - enforceEventPerksOnWrite / enforceEventPerksOnFeedWrite
@@ -67,7 +71,6 @@ const {
   calendarMonthKey,
   canPostThisMonth,
   normalizeFlags,
-  visibleToFreeAtMs,
   shouldGateBasicRsvp,
 } = require('./lib/featureFlags');
 const {
@@ -1430,6 +1433,97 @@ exports.transcodeEventVideo = onObjectFinalized(
   }
 );
 
+
+// ── No-app web submission form (DRAFT, not deployed) ─────────────────────────
+// The Flutter web app at /app/submit (and only that form) calls submitWebEvent.
+// Submissions land in the server-only `event_submissions` queue (no client
+// rule → deny-all) and only reach `events/` when an admin calls
+// reviewWebSubmission. Contact email is written to events/{id}/private/contact,
+// never to the public event document. No firestore.rules change is required.
+const {
+  validateSubmission,
+  submissionDoc,
+  submissionToEvent,
+  privateContactDoc,
+} = require('./lib/webSubmission');
+
+const WEB_SUBMIT_DAILY_LIMIT_PER_IP = 5;
+
+exports.submitWebEvent = onCall(
+  // Requires App Check (reCAPTCHA Enterprise) to be registered for the web
+  // app before deploy; unverified calls are rejected. Invoker IAM may need
+  // the same Cloud Run workaround as the other callables (org policy blocks
+  // allUsers). Do not deploy until Blake OKs.
+  { enforceAppCheck: true },
+  async (request) => {
+    const nowMs = Date.now();
+    const result = validateSubmission(request.data, nowMs);
+    if (result.spam) return { ok: true }; // silently drop honeypot hits
+    if (!result.ok) {
+      throw new HttpsError('invalid-argument', 'Please check: ' + result.errors.join(', '));
+    }
+    const ip = (request.rawRequest && request.rawRequest.ip) || 'unknown';
+    const ipHash = require('crypto').createHash('sha256').update(ip).digest('hex').slice(0, 32);
+    const day = new Date(nowMs).toISOString().slice(0, 10);
+    const db = admin.firestore();
+    const counterRef = db.collection('submission_rate').doc(`${ipHash}_${day}`);
+    const subRef = db.collection('event_submissions').doc();
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(counterRef);
+      const count = snap.exists ? snap.data().count || 0 : 0;
+      if (count >= WEB_SUBMIT_DAILY_LIMIT_PER_IP) {
+        throw new HttpsError('resource-exhausted', 'Too many submissions today.');
+      }
+      tx.set(counterRef, { count: count + 1, day }, { merge: true });
+      tx.set(subRef, {
+        ...submissionDoc(result.value, { ipHash, nowMs }),
+        flagged: containsBanned(result.value.title + ' ' + result.value.description),
+      });
+    });
+    return { ok: true, id: subRef.id };
+  }
+);
+
+exports.reviewWebSubmission = onCall(async (request) => {
+  if (!request.auth || !request.auth.uid) {
+    throw new HttpsError('unauthenticated', 'Sign in required.');
+  }
+  const db = admin.firestore();
+  const caller = await db.collection('admins').doc(request.auth.uid).get();
+  if (!caller.exists) throw new HttpsError('permission-denied', 'Admins only.');
+  const { id, decision, note } = request.data || {};
+  if (typeof id !== 'string' || !['approve', 'reject'].includes(decision)) {
+    throw new HttpsError('invalid-argument', 'id and decision are required.');
+  }
+  const subRef = db.collection('event_submissions').doc(id);
+  const nowMs = Date.now();
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(subRef);
+    if (!snap.exists || snap.data().status !== 'pending') {
+      throw new HttpsError('failed-precondition', 'Not a pending submission.');
+    }
+    const update = {
+      status: decision === 'approve' ? 'approved' : 'rejected',
+      reviewedBy: request.auth.uid,
+      reviewedAtMs: nowMs,
+      reviewNote: typeof note === 'string' ? note.slice(0, 500) : '',
+    };
+    let eventId = null;
+    if (decision === 'approve') {
+      const eventRef = db.collection('events').doc();
+      eventId = eventRef.id;
+      tx.set(eventRef, submissionToEvent(snap.data(), {
+        reviewerUid: request.auth.uid,
+        nowMs,
+        eventId,
+      }));
+      tx.set(eventRef.collection('private').doc('contact'), privateContactDoc(snap.data(), nowMs));
+      update.eventId = eventId;
+    }
+    tx.update(subRef, update);
+    return { ok: true, eventId };
+  });
+});
 /**
  * Authoritative create/update for organizer events. Premium perks are
  * applied only after a RevenueCat `pro` check (or an admin roster hit).
