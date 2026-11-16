@@ -120,6 +120,9 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
               onTap: () => context.push('/user-event/${event.id}'),
               onEdit: () => context.push('/edit-event/${event.id}'),
               onDelete: () => _confirmDelete(context, event),
+              onPostNext: () => context.push(
+                '/create-event?continueFrom=${event.id}',
+              ),
             ),
             if (event.isCreatorPro || isAdmin) ...[
               const SizedBox(height: AppTheme.spacingXs),
@@ -241,7 +244,7 @@ class _EventAnalyticsRow extends StatelessWidget {
             Icon(Icons.bar_chart_rounded, size: AppTheme.iconSm, color: appColors.creatorTeal),
             const SizedBox(width: AppTheme.spacingXs),
             Text(
-              '${event.analyticsViews} views · ${event.analyticsSaves} saves · ${event.analyticsClicks} clicks',
+              '${event.analyticsViews} views · ${event.analyticsSaves} saves · ${event.analyticsShares} shares',
               style: text.labelSmall?.copyWith(color: appColors.creatorTeal, fontWeight: FontWeight.w600),
             ),
             const Spacer(),

@@ -10,7 +10,9 @@ import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
 import '../../models/user_event.dart';
 import '../../services/deep_link_service.dart';
+import '../../services/event_analytics_service.dart';
 import '../../services/share_analytics_service.dart';
+import 'package:provider/provider.dart';
 import '../../theme/category_colors.dart';
 import '../../platform/share_bytes.dart';
 import '../../theme/theme.dart';
@@ -96,11 +98,13 @@ void showEventShareSheet(
   BuildContext context, {
   required Event event,
   ShareAnalyticsService? analytics,
+  EventAnalyticsService? eventAnalytics,
 }) {
   _showShareSheet(
     context,
     event: ShareEventData.fromEvent(event),
     analytics: analytics,
+    eventAnalytics: eventAnalytics ?? _maybeEventAnalytics(context),
   );
 }
 
@@ -109,24 +113,39 @@ void showUserEventShareSheet(
   BuildContext context, {
   required UserCreatedEvent event,
   ShareAnalyticsService? analytics,
+  EventAnalyticsService? eventAnalytics,
 }) {
   _showShareSheet(
     context,
     event: ShareEventData.fromUserEvent(event),
     analytics: analytics,
+    eventAnalytics: eventAnalytics ?? _maybeEventAnalytics(context),
   );
+}
+
+EventAnalyticsService? _maybeEventAnalytics(BuildContext context) {
+  try {
+    return context.read<EventAnalyticsService>();
+  } catch (_) {
+    return null;
+  }
 }
 
 void _showShareSheet(
   BuildContext context, {
   required ShareEventData event,
   ShareAnalyticsService? analytics,
+  EventAnalyticsService? eventAnalytics,
 }) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => _ShareSheet(event: event, analytics: analytics),
+    builder: (_) => _ShareSheet(
+      event: event,
+      analytics: analytics,
+      eventAnalytics: eventAnalytics,
+    ),
   );
 }
 
@@ -137,8 +156,13 @@ void _showShareSheet(
 class _ShareSheet extends StatefulWidget {
   final ShareEventData event;
   final ShareAnalyticsService? analytics;
+  final EventAnalyticsService? eventAnalytics;
 
-  const _ShareSheet({required this.event, this.analytics});
+  const _ShareSheet({
+    required this.event,
+    this.analytics,
+    this.eventAnalytics,
+  });
 
   @override
   State<_ShareSheet> createState() => _ShareSheetState();
@@ -147,6 +171,10 @@ class _ShareSheet extends StatefulWidget {
 class _ShareSheetState extends State<_ShareSheet> {
   final GlobalKey _cardKey = GlobalKey();
   bool _isCapturingCard = false;
+
+  void _persistShare() {
+    widget.eventAnalytics?.recordShare(_event.id);
+  }
   bool _isBuildingLink = false;
 
   ShareEventData get _event => widget.event;
@@ -221,6 +249,7 @@ class _ShareSheetState extends State<_ShareSheet> {
         category: _event.category,
         method: ShareMethod.card,
       );
+      _persistShare();
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -251,6 +280,7 @@ class _ShareSheetState extends State<_ShareSheet> {
         category: _event.category,
         method: ShareMethod.link,
       );
+      _persistShare();
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -275,6 +305,7 @@ class _ShareSheetState extends State<_ShareSheet> {
       category: _event.category,
       method: ShareMethod.clipboard,
     );
+      _persistShare();
     if (mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(

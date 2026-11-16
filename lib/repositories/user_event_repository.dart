@@ -126,6 +126,7 @@ class UserEventRepository {
     String? brandColor,
     String? brandLogoUrl,
     String? featuredWeekKey,
+    String? seriesId,
   }) async {
     await Future.delayed(const Duration(milliseconds: 300));
     final event = UserCreatedEvent(
@@ -160,6 +161,7 @@ class UserEventRepository {
       brandColor: brandColor,
       brandLogoUrl: brandLogoUrl,
       featuredWeekKey: featuredWeekKey,
+      seriesId: seriesId,
     );
     _events.add(event);
     return event;
@@ -226,6 +228,7 @@ class UserEventRepository {
     int views = 0,
     int saves = 0,
     int clicks = 0,
+    int shares = 0,
   }) async {
     final index = _events.indexWhere((e) => e.id == eventId);
     if (index == -1) return;
@@ -235,6 +238,7 @@ class UserEventRepository {
       analyticsViews: event.analyticsViews + views,
       analyticsSaves: event.analyticsSaves + saves,
       analyticsClicks: event.analyticsClicks + clicks,
+      analyticsShares: event.analyticsShares + shares,
     );
   }
 }

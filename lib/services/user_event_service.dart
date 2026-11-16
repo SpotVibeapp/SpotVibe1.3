@@ -56,6 +56,7 @@ class UserEventService {
     EventSocialLinks socialLinks = const EventSocialLinks.empty(),
     String? brandColor,
     String? brandLogoUrl,
+    String? seriesId,
   }) async {
     if (title.trim().isEmpty) throw ArgumentError('Event title is required.');
     if (description.trim().isEmpty) throw ArgumentError('Description is required.');
@@ -108,6 +109,7 @@ class UserEventService {
       socialLinks: socialLinks,
       brandColor: brandColor?.trim().isNotEmpty == true ? brandColor!.trim() : null,
       brandLogoUrl: brandLogoUrl?.trim().isNotEmpty == true ? brandLogoUrl!.trim() : null,
+      seriesId: seriesId,
     );
 
     // The weekly featured slot is a paid perk granted server-side (the

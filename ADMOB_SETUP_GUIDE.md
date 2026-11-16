@@ -1,4 +1,11 @@
-# AdMob (ads) setup — step by step
+# AdMob (ads) setup — obsolete
+
+> **November 14, 2026:** SpotVibe no longer ships ads. Banner ads were the
+> only format, so the AdMob SDK, UMP consent, and this setup guide are no
+> longer in use. Do not add AdMob ids or `app-ads.txt` for the 1.0.15
+> release. The steps below are kept only as historical notes.
+
+
 
 **Big picture:** The app's ad code is already finished and shipped. It uses Google's
 official **test ad IDs** by default, so it safely shows placeholder ads with no setup.

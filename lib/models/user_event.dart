@@ -7,6 +7,35 @@ import 'event_social_link.dart';
 /// How often a Premium event auto-repeats.
 enum RecurringType { none, weekly, monthly }
 
+/// Next date for a new occurrence of an existing series.
+/// Weekly (the default when the parent is a one-off) advances 7 days;
+/// monthly advances one calendar month. Skips until the date is after [now].
+DateTime nextSeriesOccurrence(
+  DateTime previousStart,
+  RecurringType type, {
+  DateTime? now,
+}) {
+  final clock = now ?? DateTime.now();
+  var next = previousStart;
+  var guard = 0;
+  do {
+    if (type == RecurringType.monthly) {
+      next = DateTime(
+        next.year,
+        next.month + 1,
+        next.day,
+        next.hour,
+        next.minute,
+        next.second,
+      );
+    } else {
+      next = next.add(const Duration(days: 7));
+    }
+    guard += 1;
+  } while (!next.isAfter(clock) && guard < 120);
+  return next;
+}
+
 @immutable
 class UserCreatedEvent {
   final String id;
@@ -36,6 +65,10 @@ class UserCreatedEvent {
   final bool isPremiumListing;
   final int interestedCount;
   final DateTime createdAt;
+  /// Shared id for every occurrence of a recurring/weekly series. When null,
+  /// [id] is the series key. Instances that share this value count as one
+  /// free-tier post in a calendar month.
+  final String? seriesId;
 
   // ── Premium fields (`isCreatorPro` kept for stored documents) ──────────────
   /// Whether this event was created by a Premium subscriber.
@@ -62,6 +95,8 @@ class UserCreatedEvent {
   final int analyticsSaves;
   /// Live click-through count for the analytics dashboard.
   final int analyticsClicks;
+  /// Public share count shown on the event page for every organizer.
+  final int analyticsShares;
   /// Public organizer profile links shown on this event page.
   final EventSocialLinks socialLinks;
 
@@ -89,6 +124,7 @@ class UserCreatedEvent {
     this.isPremiumListing = false,
     this.interestedCount = 0,
     required this.createdAt,
+    this.seriesId,
     this.isCreatorPro = false,
     this.recurringType = RecurringType.none,
     this.contactPhone,
@@ -101,6 +137,7 @@ class UserCreatedEvent {
     this.analyticsViews = 0,
     this.analyticsSaves = 0,
     this.analyticsClicks = 0,
+    this.analyticsShares = 0,
     this.socialLinks = const EventSocialLinks.empty(),
   });
 
@@ -123,6 +160,11 @@ class UserCreatedEvent {
       (contactWebsite?.isNotEmpty ?? false) ||
       (contactSocial?.isNotEmpty ?? false);
   bool get isRecurring => recurringType != RecurringType.none;
+  /// Key used by the free-tier monthly post cap.
+  String get quotaKey {
+    final series = seriesId?.trim() ?? '';
+    return series.isEmpty ? id : series;
+  }
   String get recurringLabel {
     switch (recurringType) {
       case RecurringType.weekly:
@@ -160,6 +202,7 @@ class UserCreatedEvent {
     bool clearChatLink = false,
     bool? isPremiumListing,
     int? interestedCount,
+    String? seriesId,
     bool? isCreatorPro,
     RecurringType? recurringType,
     String? contactPhone,
@@ -178,6 +221,7 @@ class UserCreatedEvent {
     int? analyticsViews,
     int? analyticsSaves,
     int? analyticsClicks,
+    int? analyticsShares,
     EventSocialLinks? socialLinks,
   }) =>
       UserCreatedEvent(
@@ -205,6 +249,7 @@ class UserCreatedEvent {
         isPremiumListing: isPremiumListing ?? this.isPremiumListing,
         interestedCount: interestedCount ?? this.interestedCount,
         createdAt: createdAt,
+        seriesId: seriesId ?? this.seriesId,
         isCreatorPro: isCreatorPro ?? this.isCreatorPro,
         recurringType: recurringType ?? this.recurringType,
         contactPhone: clearContactPhone ? null : (contactPhone ?? this.contactPhone),
@@ -219,6 +264,7 @@ class UserCreatedEvent {
         analyticsViews: analyticsViews ?? this.analyticsViews,
         analyticsSaves: analyticsSaves ?? this.analyticsSaves,
         analyticsClicks: analyticsClicks ?? this.analyticsClicks,
+        analyticsShares: analyticsShares ?? this.analyticsShares,
         socialLinks: socialLinks ?? this.socialLinks,
       );
 }
