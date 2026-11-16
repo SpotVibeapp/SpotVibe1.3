@@ -14,12 +14,12 @@ import '../theme/responsive.dart';
 import '../theme/theme.dart';
 import '../services/event_analytics_service.dart';
 import '../widgets/events/claim_venue_banner.dart';
-import '../widgets/events/detail_ad.dart';
 import '../widgets/events/event_media_gallery.dart';
 import '../widgets/events/event_share_card.dart';
 import '../widgets/events/organizer_social_links.dart';
 import '../widgets/common/app_avatar.dart';
 import '../widgets/common/event_image_placeholder.dart';
+import '../widgets/events/repeated_event_date_badge.dart';
 import '../widgets/common/fullscreen_image_viewer.dart';
 import '../widgets/common/guided_tour.dart';
 import '../widgets/common/jambase_attribution.dart';
@@ -96,8 +96,15 @@ class _DetailContent extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final isAdmin = context.watch<AuthProvider>().isAdmin;
     final catColor = categoryAccent(event.category);
+    final feedEvents = context.watch<EventProvider>().events;
+    final scopeEvents = [
+      event,
+      ...feedEvents.where((other) => other.id != event.id),
+    ];
 
-    return Scaffold(
+    return RepeatedImageryScope(
+      events: scopeEvents,
+      child: Scaffold(
       body: WideContent(
         maxWidth: 880,
         child: Stack(
@@ -294,13 +301,6 @@ class _DetailContent extends StatelessWidget {
                     const SizedBox(height: AppTheme.spacingLg),
                     ClaimVenueBanner(event: event),
                   ],
-                  if (!isAdmin && event.showsAds) ...[
-                    const SizedBox(height: AppTheme.spacingLg),
-                    // Real AdMob banner for free users (collapses to nothing for
-                    // Premium/web). The house promo is the fallback when ads are
-                    // unsupported so the space is never wasted.
-                    const DetailAd(),
-                  ],
                   const SizedBox(height: AppTheme.spacingLg),
                   AttendeesSection(accent: catColor),
                   const SizedBox(height: AppTheme.spacingLg),
@@ -340,6 +340,7 @@ class _DetailContent extends StatelessWidget {
         ],
         ),
       ),
+    ),
     );
   }
 

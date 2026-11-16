@@ -8,7 +8,6 @@ import '../l10n/app_localizations.dart';
 import '../models/user_event.dart';
 import '../providers/auth_provider.dart';
 import '../services/event_analytics_service.dart';
-import '../widgets/events/detail_ad.dart';
 import '../theme/category_colors.dart';
 import '../theme/theme.dart';
 import '../widgets/events/add_to_calendar_button.dart';
@@ -104,6 +103,13 @@ class _UserEventDetailContent extends StatelessWidget {
                     onPressed: () => context.push('/event-analytics/${event.id}', extra: event),
                   ),
                 IconButton(
+                  icon: const Icon(Icons.event_repeat_rounded),
+                  tooltip: 'Post next date',
+                  onPressed: () => context.push(
+                    '/create-event?continueFrom=${event.id}',
+                  ),
+                ),
+                IconButton(
                   icon: const Icon(Icons.edit_rounded),
                   tooltip: 'Edit event',
                   onPressed: () => context.push('/edit-event/${event.id}'),
@@ -144,6 +150,15 @@ class _UserEventDetailContent extends StatelessWidget {
                           event.featuredWeekKey != null)
                         _FeaturedBadge(appColors: appColors),
                     ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    l10n.eventPublicStats(
+                      event.analyticsViews,
+                      event.analyticsSaves,
+                      event.analyticsShares,
+                    ),
+                    style: text.bodySmall?.copyWith(color: colors.onSurfaceVariant),
                   ),
                   if (event.isHappeningNow) ...[
                     const SizedBox(height: AppTheme.spacingXs),
@@ -345,10 +360,6 @@ class _UserEventDetailContent extends StatelessWidget {
                   AttendeesSection(accent: categoryAccent(event.category)),
                   const SizedBox(height: AppTheme.spacingLg),
                   CommentSection(accent: categoryAccent(event.category)),
-                  if (!event.isCreatorPro && !auth.isAdmin) ...[
-                    const SizedBox(height: AppTheme.spacingLg),
-                    const DetailAd(),
-                  ],
                   const SizedBox(height: AppTheme.spacingXl),
                 ],
               ),

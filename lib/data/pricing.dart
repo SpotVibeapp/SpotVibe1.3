@@ -47,21 +47,51 @@ const int kFreeUserActiveEventLimit = 2;
 
 const List<String> kFreePlanPerks = [
   'Post up to 2 upcoming one-time events at a time',
-  'Basic event page — title, description, 1 cover photo, 1 short video, location, time',
-  'Public organizer social links',
+  'Basic event page — title, short description, 1 cover photo, location, time',
+  'Basic RSVP: going, a headcount, and the attendee name list',
   'Event appears in the public feed',
+  'Public view, save, and share counts',
+  'Edit your listing anytime',
+  'Simple share card you can post anywhere',
+  'Your first claim of an existing event is free',
+  'Up to 4 event posts per calendar month (a weekly or recurring series counts as one post; 2 upcoming at a time)',
+  'Share a basic Hidden Gem for free — a trail or a cool spot, no promotions',
 ];
 
 const List<(String, String)> kPremiumPlanPerks = [
   ('Recurring events', 'Post once — repeats weekly or monthly'),
   ('Featured placement', 'Top of the category feed 1× per week'),
-  ('Analytics dashboard', 'Live views, saves, and click-throughs'),
+  ('Social media links', 'Instagram, Facebook, TikTok, X, and a website on the event page'),
+  ('Full analytics dashboard', 'Views, taps, RSVPs, and saves — totals only, on top of public counts'),
+  ('RSVP tools and ticket link', 'Capacity limits, reminders, attendee exports, and the Get-tickets button'),
   ('Custom branding', 'Logo and brand colors on your event page'),
-  ('Contact button', 'Phone, website, and organizer contact tools'),
-  ('No ads', 'Clean event pages with no ads'),
-  ('Claim existing events', 'Verify first. Your first claim is free'),
+  ('Contact button', 'Phone and website on your event page'),
+  ('Additional event claims', 'Unlock more claims after your first free one'),
   ('Rich media gallery', 'Up to 5 photos and 3 short videos on every event'),
+  ('Unlimited upcoming events', 'No two-event cap and no monthly post cap'),
+  ('Early Hidden Gems', 'See newly added gems immediately, plus a nearby heads-up'),
+  ('30-day business Hidden Gems', 'Photos, a full description, contact details, and promo offers. Renews with your \$12.99/month subscription.'),
 ];
+
+/// Store intro-offer eligibility for the paywall CTA.
+enum IntroOfferEligibility { unknown, eligible, ineligible }
+
+enum PaywallCta { trial, subscribe, alreadyPremium }
+
+/// Eligible users see "Start 7-day free trial". Everyone else — including
+/// unknown eligibility — sees a priced Subscribe CTA so we never promise a
+/// trial the store will not give.
+PaywallCta paywallCta({
+  required bool isSubscribed,
+  required IntroOfferEligibility eligibility,
+}) {
+  if (isSubscribed) return PaywallCta.alreadyPremium;
+  if (eligibility == IntroOfferEligibility.eligible) return PaywallCta.trial;
+  return PaywallCta.subscribe;
+}
+
+bool paywallPromisesTrial(IntroOfferEligibility eligibility) =>
+    eligibility == IntroOfferEligibility.eligible;
 
 const _kPersonalEmailDomains = {
   'gmail.com',
@@ -102,6 +132,61 @@ int countActiveUserEvents(Iterable<DateTime> startTimes, {DateTime? now}) {
 bool canPostAnotherFreeEvent(int activeCount, {required bool isPremium}) {
   if (isPremium) return true;
   return activeCount < kFreeUserActiveEventLimit;
+}
+
+int countPostsInCalendarMonth(Iterable<DateTime> createdAts, {DateTime? now}) {
+  final clock = now ?? DateTime.now();
+  return createdAts.where((t) => t.year == clock.year && t.month == clock.month).length;
+}
+
+/// Identity used so every occurrence of a series shares one monthly quota slot.
+String quotaKeyForPost({required String id, String? seriesId}) {
+  final series = seriesId?.trim() ?? '';
+  return series.isEmpty ? id : series;
+}
+
+/// One record of a post used to count the free-tier monthly quota.
+class QuotaPost {
+  const QuotaPost({
+    required this.id,
+    required this.createdAt,
+    this.seriesId,
+  });
+
+  final String id;
+  final DateTime createdAt;
+  final String? seriesId;
+
+  String get quotaKey => quotaKeyForPost(id: id, seriesId: seriesId);
+}
+
+/// Counts unique series (or one-off posts) created in the current calendar month.
+int countQuotaPostsInCalendarMonth(Iterable<QuotaPost> posts, {DateTime? now}) {
+  final clock = now ?? DateTime.now();
+  final keys = <String>{};
+  for (final post in posts) {
+    if (post.createdAt.year == clock.year && post.createdAt.month == clock.month) {
+      keys.add(post.quotaKey);
+    }
+  }
+  return keys.length;
+}
+
+/// True when this series already used its one slot in the current calendar month.
+bool seriesAlreadyCountedThisMonth(
+  String seriesId,
+  Iterable<QuotaPost> posts, {
+  DateTime? now,
+}) {
+  final key = seriesId.trim();
+  if (key.isEmpty) return false;
+  final clock = now ?? DateTime.now();
+  return posts.any(
+    (post) =>
+        post.createdAt.year == clock.year &&
+        post.createdAt.month == clock.month &&
+        post.quotaKey == key,
+  );
 }
 
 /// First approved claim is free. Later claims need Premium to unlock edits.

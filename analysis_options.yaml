@@ -6,3 +6,6 @@ analyzer:
     # template files that are not part of this app.
     - "**/node_modules/**"
     - build/**
+    - android/**
+    - ios/**
+    - web/**

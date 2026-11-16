@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
-import '../data/el_paso_events.dart';
 import '../data/event_dedupe.dart';
 import '../data/event_images.dart';
 import '../models/event.dart';
@@ -290,10 +289,10 @@ String _bestUrl(List<Map> pool) {
   if (pool.isEmpty) return '';
   String pickFrom(List<Map> images, {required bool preferLarge}) {
     String best = '';
-    var bestScore = -1;
+    var bestScore = -0x7fffffff;
     for (final raw in images) {
       final score = _imageScore(raw, preferLarge: preferLarge);
-      if (score > bestScore) {
+      if (best.isEmpty || score > bestScore) {
         bestScore = score;
         best = raw['url'] as String? ?? '';
       }
@@ -461,10 +460,8 @@ Event? eventFromTicketmaster(Map<String, dynamic> json) {
   }
 
   var imageUrl = pickTicketmasterImage(collectTicketmasterImages(json));
-  if (isGenericEventImage(imageUrl)) {
-    final venuePhoto = venueImageFor(venueName, title: name);
-    if (venuePhoto != null) imageUrl = venuePhoto;
-  }
+  // Generic / stock covers are left as-is. The UI shows a text-only
+  // placeholder instead of substituting a bundled venue photo.
 
   double? cost;
   final priceRanges = json['priceRanges'];

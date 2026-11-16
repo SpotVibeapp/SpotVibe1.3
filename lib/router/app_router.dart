@@ -11,6 +11,7 @@ import '../providers/notification_provider.dart';
 import '../providers/notification_preferences_provider.dart';
 import '../repositories/notification_preferences_repository.dart';
 import '../providers/auth_provider.dart';
+import '../providers/subscription_provider.dart';
 import '../providers/create_event_provider.dart';
 import '../providers/event_provider.dart';
 import '../providers/gem_provider.dart';
@@ -50,6 +51,7 @@ import '../services/deep_link_service.dart';
 import '../services/event_service.dart';
 import '../services/gem_service.dart';
 import '../services/live_event_source.dart';
+import '../services/feature_flags.dart';
 import '../services/notification_service.dart';
 import '../services/permission_service.dart';
 import '../services/user_event_service.dart';
@@ -180,7 +182,13 @@ class AppRouter {
                 ),
                 ChangeNotifierProvider(
                   create: (ctx) =>
-                      GemProvider(service: ctx.read<GemService>()),
+                      GemProvider(
+                        service: ctx.read<GemService>(),
+                        flags: ctx.read<FeatureFlags>(),
+                        isPremium: () => ctx.read<SubscriptionProvider>().isSubscribed,
+                        viewerId: () => ctx.read<AuthProvider>().user?.id,
+                        notifications: ctx.read<NotificationService>(),
+                      ),
                 ),
               ],
               child: const EventMapScreen(),
@@ -191,7 +199,13 @@ class AppRouter {
           path: '/gems',
           builder: (context, state) {
             return ChangeNotifierProvider(
-              create: (ctx) => GemProvider(service: ctx.read<GemService>()),
+              create: (ctx) => GemProvider(
+                        service: ctx.read<GemService>(),
+                        flags: ctx.read<FeatureFlags>(),
+                        isPremium: () => ctx.read<SubscriptionProvider>().isSubscribed,
+                        viewerId: () => ctx.read<AuthProvider>().user?.id,
+                        notifications: ctx.read<NotificationService>(),
+                      ),
               child: const GemsScreen(),
             );
           },
@@ -214,7 +228,13 @@ class AppRouter {
             final gem = state.extra;
             if (gem is! Gem) {
               return ChangeNotifierProvider(
-                create: (ctx) => GemProvider(service: ctx.read<GemService>()),
+                create: (ctx) => GemProvider(
+                        service: ctx.read<GemService>(),
+                        flags: ctx.read<FeatureFlags>(),
+                        isPremium: () => ctx.read<SubscriptionProvider>().isSubscribed,
+                        viewerId: () => ctx.read<AuthProvider>().user?.id,
+                        notifications: ctx.read<NotificationService>(),
+                      ),
                 child: const GemsScreen(),
               );
             }
@@ -371,6 +391,7 @@ class AppRouter {
             }
             final userEventRepo = context.read<UserEventRepository>();
             final service = UserEventService(repository: userEventRepo);
+            final continueFrom = state.uri.queryParameters['continueFrom'];
             return MultiProvider(
               providers: [
                 Provider(create: (_) => service),
@@ -383,7 +404,13 @@ class AppRouter {
                       ),
                 ),
               ],
-              child: const CreateEventScreen(),
+              child: continueFrom == null || continueFrom.isEmpty
+                  ? const CreateEventScreen()
+                  : _EditEventLoader(
+                      eventId: continueFrom,
+                      service: service,
+                      asContinuation: true,
+                    ),
             );
           },
         ),
@@ -655,8 +682,13 @@ class _UserEventDetailLoaderState extends State<_UserEventDetailLoader> {
 class _EditEventLoader extends StatefulWidget {
   final String eventId;
   final UserEventService service;
+  final bool asContinuation;
 
-  const _EditEventLoader({required this.eventId, required this.service});
+  const _EditEventLoader({
+    required this.eventId,
+    required this.service,
+    this.asContinuation = false,
+  });
 
   @override
   State<_EditEventLoader> createState() => _EditEventLoaderState();
@@ -686,6 +718,9 @@ class _EditEventLoaderState extends State<_EditEventLoader> {
     if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
     if (_event == null)
       return Scaffold(appBar: AppBar(), body: const Center(child: Text('Event not found.')));
+    if (widget.asContinuation) {
+      return CreateEventScreen(continueFrom: _event);
+    }
     return CreateEventScreen(editingEvent: _event);
   }
 }

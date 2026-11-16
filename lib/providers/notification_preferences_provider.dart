@@ -31,6 +31,7 @@ class NotificationPreferencesProvider extends ChangeNotifier {
   bool _socialComments = true;
   bool _socialFriendRsvp = true;
   bool _socialFriendRequests = true;
+  bool _newGemsNearby = true;
   Map<String, bool> _categoryPrefs = {};
 
   bool get isLoaded => _loaded;
@@ -39,6 +40,7 @@ class NotificationPreferencesProvider extends ChangeNotifier {
   bool get socialComments => _socialComments;
   bool get socialFriendRsvp => _socialFriendRsvp;
   bool get socialFriendRequests => _socialFriendRequests;
+  bool get newGemsNearby => _newGemsNearby;
   Map<String, bool> get categoryPrefs => Map.unmodifiable(_categoryPrefs);
 
   bool isCategoryEnabled(String category) =>
@@ -52,6 +54,7 @@ class NotificationPreferencesProvider extends ChangeNotifier {
     _socialComments = await _repo.getSocialComments();
     _socialFriendRsvp = await _repo.getSocialFriendRsvp();
     _socialFriendRequests = await _repo.getSocialFriendRequests();
+    _newGemsNearby = await _repo.getNewGemsNearby();
     _categoryPrefs =
         await _repo.getAllCategoryPrefs(kNotificationCategories);
     _loaded = true;
@@ -88,6 +91,12 @@ class NotificationPreferencesProvider extends ChangeNotifier {
     _socialFriendRequests = value;
     notifyListeners();
     await _repo.setSocialFriendRequests(value);
+  }
+
+  Future<void> toggleNewGemsNearby(bool value) async {
+    _newGemsNearby = value;
+    notifyListeners();
+    await _repo.setNewGemsNearby(value);
   }
 
   Future<void> toggleCategory(String category, bool value) async {

@@ -4,24 +4,60 @@
       "collectionGroup": "events",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "geoCells", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "visibleUntilMs", "order": "ASCENDING" }
+        {
+          "fieldPath": "geoCells",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "visibleUntilMs",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "events",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "kind", "order": "ASCENDING" },
-        { "fieldPath": "visibleUntilMs", "order": "ASCENDING" }
+        {
+          "fieldPath": "kind",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "visibleUntilMs",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "events",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "cityKey", "order": "ASCENDING" },
-        { "fieldPath": "visibleUntilMs", "order": "ASCENDING" }
+        {
+          "fieldPath": "cityKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "visibleUntilMs",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "gems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "geoCells",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "hidden",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAtMs",
+          "order": "DESCENDING"
+        }
       ]
     }
   ],
@@ -30,14 +66,20 @@
       "collectionGroup": "rsvps",
       "fieldPath": "userId",
       "indexes": [
-        { "queryScope": "COLLECTION_GROUP", "order": "ASCENDING" }
+        {
+          "queryScope": "COLLECTION_GROUP",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "comments",
       "fieldPath": "authorId",
       "indexes": [
-        { "queryScope": "COLLECTION_GROUP", "order": "ASCENDING" }
+        {
+          "queryScope": "COLLECTION_GROUP",
+          "order": "ASCENDING"
+        }
       ]
     },
     {

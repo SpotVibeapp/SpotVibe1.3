@@ -25,7 +25,7 @@ void main() {
     expect(find.text('Create with confidence'), findsOneWidget);
     expect(
       find.text(
-        'Free: 1 cover photo + 1 short video. Premium: up to 5 photos total (including the cover) + 3 short videos.',
+        'Free: 1 cover photo and a short description. Premium: up to 5 photos, 3 short videos, a longer description, social links, and analytics.',
       ),
       findsOneWidget,
     );
@@ -46,7 +46,7 @@ void main() {
     expect(find.text('Crea con confianza'), findsOneWidget);
     expect(
       find.text(
-        'Gratis: 1 foto de portada + 1 video corto. Premium: hasta 5 fotos en total (incluida la portada) + 3 videos cortos.',
+        'Gratis: 1 foto de portada y una descripción corta. Premium: hasta 5 fotos, 3 videos cortos, una descripción más larga, enlaces sociales y analíticas.',
       ),
       findsOneWidget,
     );
@@ -70,11 +70,11 @@ void main() {
     expect(find.text('1. Start with the details'), findsOneWidget);
 
     await tester.scrollUntilVisible(
-      find.text('1 cover photo total and 1 short video per event'),
+      find.text('1 cover photo and a short description (about 300 characters)'),
       300,
     );
     expect(
-      find.text('1 cover photo total and 1 short video per event'),
+      find.text('1 cover photo and a short description (about 300 characters)'),
       findsOneWidget,
     );
     expect(
