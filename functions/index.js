@@ -70,6 +70,12 @@ const {
   visibleToFreeAtMs,
   shouldGateBasicRsvp,
 } = require('./lib/featureFlags');
+const {
+  collectOwnedSeriesIds,
+  resolveSeriesId,
+  shouldChargeMonthlyQuota,
+  seriesCountedThisMonth,
+} = require('./lib/postQuota');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const zlib = require('zlib');
 const { planFeedFields } = require('./lib/feedFields');
@@ -1481,6 +1487,14 @@ exports.saveUserEvent = onCall(
         : (row.dateTime && typeof row.dateTime.toMillis === 'function' ? row.dateTime.toMillis() : 0);
       return start > nowMs;
     }).length;
+    const ownedSeriesIds = collectOwnedSeriesIds(others.docs, [eventId]);
+    const seriesId = resolveSeriesId({
+      incomingSeriesId: incoming.seriesId,
+      eventId,
+      ownedSeriesIds,
+    });
+    const monthEvents = others.docs.map((doc) => ({ id: doc.id, ...(doc.data() || {}) }));
+    const seriesAlreadyCounted = seriesCountedThisMonth(monthEvents, seriesId, nowMs);
 
     const flags = await loadFeatureFlags(db);
     const result = applyEntitlementToEvent(
@@ -1509,23 +1523,31 @@ exports.saveUserEvent = onCall(
     let postedThisMonth = 0;
     const month = calendarMonthKey(nowMs);
     const quotaRef = db.collection('users').doc(uid).collection('private').doc('post_quota');
+    const chargeQuota = shouldChargeMonthlyQuota({
+      isCreate: creating,
+      pro: status.pro,
+      isAdmin: adminSnap.exists,
+      seriesAlreadyCounted,
+    });
     if (creating) {
       const quotaSnap = await quotaRef.get();
       if (quotaSnap.exists && quotaSnap.get('period') === month) {
         postedThisMonth = quotaSnap.get('count') || 0;
       }
-      const monthly = canPostThisMonth({
-        pro: status.pro,
-        isAdmin: adminSnap.exists,
-        postedThisMonth,
-        cap: flags.free_event_posts_per_month,
-      });
-      if (!monthly.ok) {
-        throw new HttpsError(
-          'failed-precondition',
-          'Free organizers can post a limited number of events each month. Upgrade to Premium to post more.',
-          { reason: 'monthly-cap', cap: flags.free_event_posts_per_month, postedThisMonth }
-        );
+      if (chargeQuota) {
+        const monthly = canPostThisMonth({
+          pro: status.pro,
+          isAdmin: adminSnap.exists,
+          postedThisMonth,
+          cap: flags.free_event_posts_per_month,
+        });
+        if (!monthly.ok) {
+          throw new HttpsError(
+            'failed-precondition',
+            'Free organizers can post a limited number of events each month. A weekly or recurring series counts as one post. Upgrade to Premium to post more.',
+            { reason: 'monthly-cap', cap: flags.free_event_posts_per_month, postedThisMonth }
+          );
+        }
       }
     }
 
@@ -1536,6 +1558,7 @@ exports.saveUserEvent = onCall(
       ...event,
       id: eventId,
       creatorId: uid,
+      seriesId,
       kind: 'user',
       dateTimeMs: toMillis(event.dateTimeMs || event.dateTime) || nowMs,
       endDateTimeMs: toMillis(event.endDateTimeMs || event.endDateTime) || null,
@@ -1574,7 +1597,7 @@ exports.saveUserEvent = onCall(
     const batch = db.batch();
     batch.set(userEventRef, toWrite, { merge: !creating });
     batch.set(eventRef, toWrite, { merge: !creating });
-    if (creating && !status.pro && !adminSnap.exists) {
+    if (chargeQuota) {
       batch.set(quotaRef, {
         period: month,
         count: postedThisMonth + 1,

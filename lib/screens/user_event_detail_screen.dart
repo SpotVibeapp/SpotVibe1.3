@@ -103,6 +103,13 @@ class _UserEventDetailContent extends StatelessWidget {
                     onPressed: () => context.push('/event-analytics/${event.id}', extra: event),
                   ),
                 IconButton(
+                  icon: const Icon(Icons.event_repeat_rounded),
+                  tooltip: 'Post next date',
+                  onPressed: () => context.push(
+                    '/create-event?continueFrom=${event.id}',
+                  ),
+                ),
+                IconButton(
                   icon: const Icon(Icons.edit_rounded),
                   tooltip: 'Edit event',
                   onPressed: () => context.push('/edit-event/${event.id}'),

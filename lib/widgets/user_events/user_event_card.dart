@@ -10,6 +10,7 @@ class UserEventCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback? onPostNext;
 
   const UserEventCard({
     super.key,
@@ -17,6 +18,7 @@ class UserEventCard extends StatelessWidget {
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
+    this.onPostNext,
   });
 
   @override
@@ -121,6 +123,21 @@ class UserEventCard extends StatelessWidget {
                       ),
                       const Spacer(),
                       // Admin action buttons
+                      if (onPostNext != null) ...[
+                        IconButton(
+                          onPressed: onPostNext,
+                          icon: const Icon(Icons.event_repeat_rounded),
+                          iconSize: AppTheme.iconSm,
+                          tooltip: 'Post next date',
+                          style: IconButton.styleFrom(
+                            backgroundColor: colors.primaryContainer.withValues(alpha: 0.6),
+                            foregroundColor: colors.primary,
+                            padding: const EdgeInsets.all(AppTheme.spacingXs),
+                            minimumSize: const Size(32, 32),
+                          ),
+                        ),
+                        const SizedBox(width: AppTheme.spacingXs),
+                      ],
                       IconButton(
                         onPressed: onEdit,
                         icon: const Icon(Icons.edit_rounded),

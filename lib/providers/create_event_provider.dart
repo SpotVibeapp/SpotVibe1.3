@@ -67,6 +67,7 @@ class CreateEventProvider extends ChangeNotifier {
     EventSocialLinks socialLinks = const EventSocialLinks.empty(),
     String? brandColor,
     String? brandLogoUrl,
+    String? seriesId,
   }) async {
     _status = CreateEventStatus.submitting;
     _errorMessage = null;
@@ -143,6 +144,7 @@ class CreateEventProvider extends ChangeNotifier {
           socialLinks: socialLinks,
           brandColor: brandColor,
           brandLogoUrl: brandLogoUrl,
+          seriesId: seriesId,
         );
       }
 

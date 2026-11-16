@@ -72,6 +72,22 @@ void main() {
     expect(priceAmount(founding: false), 12.99);
   });
 
+  test('a weekly series counts as one monthly free-tier post', () {
+    final now = DateTime(2026, 11, 16);
+    final posts = [
+      QuotaPost(id: 'game-1', seriesId: 'game-night', createdAt: DateTime(2026, 11, 5)),
+      QuotaPost(id: 'game-2', seriesId: 'game-night', createdAt: DateTime(2026, 11, 12)),
+      QuotaPost(id: 'game-3', seriesId: 'game-night', createdAt: DateTime(2026, 11, 19)),
+      QuotaPost(id: 'one-off', createdAt: DateTime(2026, 11, 8)),
+      QuotaPost(id: 'last-month', seriesId: 'old', createdAt: DateTime(2026, 10, 31)),
+    ];
+    expect(countQuotaPostsInCalendarMonth(posts, now: now), 2);
+    expect(seriesAlreadyCountedThisMonth('game-night', posts, now: now), isTrue);
+    expect(seriesAlreadyCountedThisMonth('other', posts, now: now), isFalse);
+    expect(quotaKeyForPost(id: 'evt-1', seriesId: 'series-a'), 'series-a');
+    expect(quotaKeyForPost(id: 'evt-1', seriesId: '  '), 'evt-1');
+  });
+
   test('featured week key is stable for a Thursday in the same ISO week', () {
     final monday = DateTime(2026, 8, 10);
     final sunday = DateTime(2026, 8, 16);
