@@ -54,7 +54,7 @@ const List<String> kFreePlanPerks = [
   'Edit your listing anytime',
   'Simple share card you can post anywhere',
   'Your first claim of an existing event is free',
-  'Up to 4 event posts per calendar month (and 2 upcoming at a time)',
+  'Up to 4 event posts per calendar month (a weekly or recurring series counts as one post; 2 upcoming at a time)',
   'Share a basic Hidden Gem for free — a trail or a cool spot, no promotions',
 ];
 
@@ -137,6 +137,56 @@ bool canPostAnotherFreeEvent(int activeCount, {required bool isPremium}) {
 int countPostsInCalendarMonth(Iterable<DateTime> createdAts, {DateTime? now}) {
   final clock = now ?? DateTime.now();
   return createdAts.where((t) => t.year == clock.year && t.month == clock.month).length;
+}
+
+/// Identity used so every occurrence of a series shares one monthly quota slot.
+String quotaKeyForPost({required String id, String? seriesId}) {
+  final series = seriesId?.trim() ?? '';
+  return series.isEmpty ? id : series;
+}
+
+/// One record of a post used to count the free-tier monthly quota.
+class QuotaPost {
+  const QuotaPost({
+    required this.id,
+    required this.createdAt,
+    this.seriesId,
+  });
+
+  final String id;
+  final DateTime createdAt;
+  final String? seriesId;
+
+  String get quotaKey => quotaKeyForPost(id: id, seriesId: seriesId);
+}
+
+/// Counts unique series (or one-off posts) created in the current calendar month.
+int countQuotaPostsInCalendarMonth(Iterable<QuotaPost> posts, {DateTime? now}) {
+  final clock = now ?? DateTime.now();
+  final keys = <String>{};
+  for (final post in posts) {
+    if (post.createdAt.year == clock.year && post.createdAt.month == clock.month) {
+      keys.add(post.quotaKey);
+    }
+  }
+  return keys.length;
+}
+
+/// True when this series already used its one slot in the current calendar month.
+bool seriesAlreadyCountedThisMonth(
+  String seriesId,
+  Iterable<QuotaPost> posts, {
+  DateTime? now,
+}) {
+  final key = seriesId.trim();
+  if (key.isEmpty) return false;
+  final clock = now ?? DateTime.now();
+  return posts.any(
+    (post) =>
+        post.createdAt.year == clock.year &&
+        post.createdAt.month == clock.month &&
+        post.quotaKey == key,
+  );
 }
 
 /// First approved claim is free. Later claims need Premium to unlock edits.

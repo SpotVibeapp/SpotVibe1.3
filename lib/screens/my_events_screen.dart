@@ -120,6 +120,9 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
               onTap: () => context.push('/user-event/${event.id}'),
               onEdit: () => context.push('/edit-event/${event.id}'),
               onDelete: () => _confirmDelete(context, event),
+              onPostNext: () => context.push(
+                '/create-event?continueFrom=${event.id}',
+              ),
             ),
             if (event.isCreatorPro || isAdmin) ...[
               const SizedBox(height: AppTheme.spacingXs),
