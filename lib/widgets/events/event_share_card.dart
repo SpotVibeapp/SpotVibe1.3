@@ -15,6 +15,7 @@ import '../../services/share_analytics_service.dart';
 import 'package:provider/provider.dart';
 import '../../theme/category_colors.dart';
 import '../../platform/share_bytes.dart';
+import 'event_qr_flyer.dart';
 import '../../theme/theme.dart';
 import '../common/event_image_placeholder.dart';
 import '../common/network_photo.dart';
@@ -295,6 +296,28 @@ class _ShareSheetState extends State<_ShareSheet> {
     }
   }
 
+  // ── printable QR flyer ────────────────────────────────────────────────────
+
+  void _openQrFlyer() {
+    final venue = _event.fullLocation;
+    showEventQrFlyerSheet(
+      context,
+      eventId: _event.id,
+      title: _event.title,
+      dateLabel: _formatDate(_event.dateTime),
+      venueLabel: venue,
+      link: _buildShareLink(),
+      onShared: () {
+        widget.analytics?.recordShare(
+          eventId: _event.id,
+          category: _event.category,
+          method: ShareMethod.qrFlyer,
+        );
+        _persistShare();
+      },
+    );
+  }
+
   // ── copy link to clipboard ────────────────────────────────────────────────
 
   Future<void> _copyLink() async {
@@ -429,6 +452,20 @@ class _ShareSheetState extends State<_ShareSheet> {
                       : const Icon(Icons.link_rounded, size: AppTheme.iconSm),
                   label: Text(
                       _isBuildingLink ? 'Building link...' : 'Share with Link'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize:
+                        const Size(double.infinity, AppTheme.buttonHeight),
+                  ),
+                ),
+                const SizedBox(height: AppTheme.spacingSm),
+
+                // Printable QR flyer for venue windows and boards.
+                OutlinedButton.icon(
+                  key: const ValueKey('share-qr-flyer'),
+                  onPressed: _openQrFlyer,
+                  icon: const Icon(Icons.qr_code_2_rounded,
+                      size: AppTheme.iconSm),
+                  label: Text(AppLocalizations.of(context)!.flyerButton),
                   style: OutlinedButton.styleFrom(
                     minimumSize:
                         const Size(double.infinity, AppTheme.buttonHeight),

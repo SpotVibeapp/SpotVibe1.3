@@ -8,6 +8,7 @@ class ShareMethod {
   static const String link = 'native_share';
   static const String clipboard = 'clipboard';
   static const String instagramStory = 'instagram_story';
+  static const String qrFlyer = 'qr_flyer';
 }
 
 /// Holds aggregated analytics for a single event.
