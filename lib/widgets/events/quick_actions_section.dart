@@ -5,6 +5,7 @@ import '../../services/maps_service.dart';
 import '../../theme/theme.dart';
 import 'add_to_calendar_button.dart';
 import 'event_share_card.dart';
+import 'report_event_sheet.dart';
 import 'story_card.dart';
 
 class QuickActionsSection extends StatelessWidget {
@@ -29,39 +30,8 @@ class QuickActionsSection extends StatelessWidget {
   }
 
   void _reportEvent(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        final controller = TextEditingController();
-        return AlertDialog(
-          title: Text(l10n.reportEvent),
-          content: TextField(
-            controller: controller,
-            decoration: InputDecoration(hintText: l10n.whatsWrong),
-            maxLines: 3,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(l10n.cancel),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(l10n.reportSubmittedThanks),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-              child: Text(l10n.submit),
-            ),
-          ],
-        );
-      },
-    );
+    // Files a real report (it used to show "thanks" and save nothing).
+    showEventReportSheet(context, event: event);
   }
 
   void _shareStory(BuildContext context) {

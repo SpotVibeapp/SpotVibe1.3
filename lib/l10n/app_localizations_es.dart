@@ -2709,4 +2709,52 @@ class AppLocalizationsEs extends AppLocalizations {
   String eventTextPlaceholderSemantics(String headline) {
     return 'Sin foto del evento. $headline';
   }
+
+  @override
+  String get reportReasonFake => 'Falso, spam o copiado sin permiso';
+
+  @override
+  String get reportReasonWrongDetails => 'Fecha, hora o lugar incorrectos';
+
+  @override
+  String get reportReasonCancelled => 'Cancelado o no se realizó';
+
+  @override
+  String get reportReasonOffensive => 'Ofensivo, inseguro o inapropiado';
+
+  @override
+  String get reportReasonOther => 'Otra cosa';
+
+  @override
+  String get reportNoteHint => 'Agrega detalles (opcional)';
+
+  @override
+  String get reportSignInRequired =>
+      'Inicia sesión para reportar un evento y que nuestro equipo pueda darle seguimiento.';
+
+  @override
+  String get reportFailed =>
+      'Tu reporte no se envió. Revisa tu conexión e inténtalo de nuevo.';
+
+  @override
+  String get flyerButton => 'Volante con QR para imprimir';
+
+  @override
+  String get flyerTitle => 'Imprime un volante con QR';
+
+  @override
+  String get flyerHint =>
+      'Pégalo en el lugar, en un tablero de café o en la recepción. La gente lo escanea para abrir y guardar tu evento.';
+
+  @override
+  String get flyerScanToSave => 'Escanea para guardar este evento';
+
+  @override
+  String get flyerFooter => 'Eventos locales gratis en SpotVibe';
+
+  @override
+  String get flyerShare => 'Compartir o imprimir volante';
+
+  @override
+  String get flyerFailed => 'No se pudo crear el volante. Inténtalo de nuevo.';
 }

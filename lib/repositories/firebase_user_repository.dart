@@ -238,21 +238,19 @@ class FirebaseUserRepository implements UserRepository {
     String reportedUserId = '',
     required String reason,
   }) async {
-    try {
-      await _db.collection('user_reports').add({
-        // Stored in the same `user_reports` queue the admin dashboard reads.
-        'reportedUserId': reportedUserId,
-        'reportedById': _auth.currentUser?.uid,
-        'contentType': contentType,
-        'contentId': contentId,
-        'reason': reason.isEmpty
-            ? 'Reported $contentType'
-            : '[$contentType] $reason',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    } catch (_) {
-      // Reporting should never crash the app.
-    }
+    // Errors propagate: AuthProvider.reportContent turns them into `false`
+    // so the screen can say the report was not sent (no silent drops).
+    await _db.collection('user_reports').add({
+      // Stored in the same `user_reports` queue the admin dashboard reads.
+      'reportedUserId': reportedUserId,
+      'reportedById': _auth.currentUser?.uid,
+      'contentType': contentType,
+      'contentId': contentId,
+      'reason': reason.isEmpty
+          ? 'Reported $contentType'
+          : '[$contentType] $reason',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
   }
 
   // ── Account deletion ──────────────────────────────────────────────────────
