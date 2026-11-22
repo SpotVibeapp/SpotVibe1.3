@@ -224,6 +224,7 @@ Map<String, dynamic> userEventToMap(UserCreatedEvent event) {
     'chatLink': event.chatLink,
     'isPremiumListing': event.isPremiumListing,
     'createdAtMs': event.createdAt.millisecondsSinceEpoch,
+    'seriesId': event.seriesId ?? event.id,
     'isCreatorPro': event.isCreatorPro,
     'recurringType': event.recurringType.name,
     'contactPhone': event.contactPhone,
@@ -281,6 +282,9 @@ UserCreatedEvent userEventFromMap(String id, Map<String, dynamic> data) {
     isPremiumListing: data['isPremiumListing'] as bool? ?? false,
     interestedCount: (data['interestedCount'] as num?)?.toInt() ?? 0,
     createdAt: parseStoreDate(data['createdAt'] ?? data['createdAtMs']),
+    seriesId: (data['seriesId'] as String?)?.trim().isNotEmpty == true
+        ? (data['seriesId'] as String).trim()
+        : id,
     isCreatorPro: data['isCreatorPro'] as bool? ?? false,
     recurringType: recurringTypeFromName(data['recurringType'] as String?),
     contactPhone: data['contactPhone'] as String?,

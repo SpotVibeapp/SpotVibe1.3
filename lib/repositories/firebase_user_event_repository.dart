@@ -299,6 +299,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
     String? brandColor,
     String? brandLogoUrl,
     String? featuredWeekKey,
+    String? seriesId,
   }) {
     return _guard(() async {
       final event = UserCreatedEvent(
@@ -333,6 +334,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
         brandColor: brandColor,
         brandLogoUrl: brandLogoUrl,
         featuredWeekKey: featuredWeekKey,
+        seriesId: seriesId,
       );
       return _saveEvent(event, isCreate: true, endDateTime: endDateTime);
     }, () => super.createEvent(
@@ -366,6 +368,7 @@ class FirebaseUserEventRepository extends UserEventRepository {
           brandColor: brandColor,
           brandLogoUrl: brandLogoUrl,
           featuredWeekKey: featuredWeekKey,
+          seriesId: seriesId,
         ));
   }
 

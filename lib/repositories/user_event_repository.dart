@@ -126,6 +126,7 @@ class UserEventRepository {
     String? brandColor,
     String? brandLogoUrl,
     String? featuredWeekKey,
+    String? seriesId,
   }) async {
     await Future.delayed(const Duration(milliseconds: 300));
     final event = UserCreatedEvent(
@@ -160,6 +161,7 @@ class UserEventRepository {
       brandColor: brandColor,
       brandLogoUrl: brandLogoUrl,
       featuredWeekKey: featuredWeekKey,
+      seriesId: seriesId,
     );
     _events.add(event);
     return event;

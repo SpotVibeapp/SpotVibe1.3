@@ -33,7 +33,9 @@ export '../models/user_event.dart' show RecurringType;
 
 class CreateEventScreen extends StatefulWidget {
   final UserCreatedEvent? editingEvent;
-  const CreateEventScreen({super.key, this.editingEvent});
+  /// When set, this is a new occurrence of an existing series, not an edit.
+  final UserCreatedEvent? continueFrom;
+  const CreateEventScreen({super.key, this.editingEvent, this.continueFrom});
 
   @override
   State<CreateEventScreen> createState() => _CreateEventScreenState();
@@ -79,6 +81,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   bool _aiGeneratedCover = false;
   bool _uploadingMedia = false;
   bool _hasCheckedEventCreationGuide = false;
+  String? _seriesId;
 
   // ── Premium fields ────────────────────────────────────────────────────────
   bool _isCreatorPro = false;
@@ -105,8 +108,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   @override
   void initState() {
     super.initState();
+    final continuing = widget.continueFrom;
     _eventMediaId = widget.editingEvent?.id ?? const Uuid().v4();
-    final e = widget.editingEvent;
+    _seriesId = widget.editingEvent?.quotaKey ?? continuing?.quotaKey;
+    final e = widget.editingEvent ?? continuing;
     if (e != null) {
       _titleController.text = e.title;
       _descriptionController.text = e.description;
@@ -157,6 +162,29 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       _youtubeController.text = e.socialLinks[SocialPlatform.youtube] ?? '';
       _brandColorController.text = e.brandColor ?? '';
       _brandLogoController.text = e.brandLogoUrl ?? '';
+      if (widget.editingEvent == null && continuing != null) {
+        final nextStart = nextSeriesOccurrence(e.dateTime, e.recurringType);
+        _selectedDate = nextStart;
+        _selectedTime = TimeOfDay(hour: nextStart.hour, minute: nextStart.minute);
+        final previousEnd = e.endDateTime;
+        if (previousEnd != null) {
+          final duration = previousEnd.difference(e.dateTime);
+          final nextEnd = nextStart.add(duration);
+          _selectedEndDate = nextEnd;
+          _selectedEndTime = TimeOfDay(hour: nextEnd.hour, minute: nextEnd.minute);
+        } else {
+          _selectedEndDate = nextStart;
+          _selectedEndTime = null;
+        }
+        // A continued occurrence is a new post, even if the parent was
+        // created on Premium. Creator access is reapplied below.
+        _isPremiumListing = false;
+        _isCreatorPro = false;
+        _initialDescriptionLength = 0;
+        _hadExistingSocialLinks = false;
+        _initialPhotoCount = 0;
+        _initialVideoCount = 0;
+      }
     }
     // Administrator creator access is role-based, not a store purchase. Apply
     // it before the first frame so no upgrade promo flashes on this form.
@@ -714,12 +742,18 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         final mine = await context.read<UserEventRepository>().getEventsForUser(uid);
         final active = countActiveUserEvents(mine.map((e) => e.dateTime));
         final flags = context.read<FeatureFlags>();
-        final postedThisMonth = countPostsInCalendarMonth(mine.map((e) => e.createdAt));
-        if (!canPostAnotherFreeEventThisMonth(
-              postedThisMonth,
-              isPremium: false,
-              cap: flags.freeEventPostsPerMonth,
-            ) ||
+        final quotaPosts = mine.map(
+          (e) => QuotaPost(id: e.id, createdAt: e.createdAt, seriesId: e.seriesId),
+        );
+        final postedThisMonth = countQuotaPostsInCalendarMonth(quotaPosts);
+        final continuingSeries = _seriesId != null &&
+            seriesAlreadyCountedThisMonth(_seriesId!, quotaPosts);
+        if ((!continuingSeries &&
+                !canPostAnotherFreeEventThisMonth(
+                  postedThisMonth,
+                  isPremium: false,
+                  cap: flags.freeEventPostsPerMonth,
+                )) ||
             !canPostAnotherFreeEvent(active, isPremium: false)) {
           if (!mounted) return;
           final upgrade = await showDialog<bool>(
@@ -894,6 +928,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       socialLinks: socialLinks,
       brandColor: hasCreatorAccess ? _brandColorController.text.trim() : null,
       brandLogoUrl: hasCreatorAccess ? _brandLogoController.text.trim() : null,
+      seriesId: _seriesId,
     );
 
     if (!mounted) return;

@@ -104,6 +104,14 @@ class AppConfig {
     defaultValue: 'https://liveeventsproxy-kfzltbt5ja-uc.a.run.app',
   );
 
+  /// `submitWebEvent`: no-app web event form. Not deployed until Blake OKs.
+  /// Confirm the Cloud Run URL after the first deploy and override with
+  /// `--dart-define=SUBMIT_WEB_EVENT_FUNCTION_URL=https://...a.run.app`.
+  static const String submitWebEventFunctionUrl = String.fromEnvironment(
+    'SUBMIT_WEB_EVENT_FUNCTION_URL',
+    defaultValue: 'https://submitwebevent-kfzltbt5ja-uc.a.run.app',
+  );
+
   /// `saveUserEvent`: authoritative create/update. Premium perks are
   /// applied only after the server checks the RevenueCat `pro` entitlement.
   static const String saveUserEventFunctionUrl = String.fromEnvironment(

@@ -39,6 +39,7 @@ import '../screens/submit_gem_screen.dart';
 import '../screens/gem_detail_screen.dart';
 import '../screens/legal_document_screen.dart';
 import '../screens/login_screen.dart';
+import '../screens/web_submit_event_screen.dart';
 import '../screens/my_events_screen.dart';
 import '../screens/my_gems_screen.dart';
 import '../screens/paywall_screen.dart';
@@ -289,6 +290,10 @@ class AppRouter {
           },
         ),
         GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+        // Public, no account required. Used by the Flutter web app at
+        // https://spotvibeapp.com/app/submit. Submissions go to the
+        // submitWebEvent callable and stay in the moderation queue.
+        GoRoute(path: '/submit', builder: (context, state) => const WebSubmitEventScreen()),
         GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
         GoRoute(
           path: '/admin',
@@ -391,6 +396,7 @@ class AppRouter {
             }
             final userEventRepo = context.read<UserEventRepository>();
             final service = UserEventService(repository: userEventRepo);
+            final continueFrom = state.uri.queryParameters['continueFrom'];
             return MultiProvider(
               providers: [
                 Provider(create: (_) => service),
@@ -403,7 +409,13 @@ class AppRouter {
                       ),
                 ),
               ],
-              child: const CreateEventScreen(),
+              child: continueFrom == null || continueFrom.isEmpty
+                  ? const CreateEventScreen()
+                  : _EditEventLoader(
+                      eventId: continueFrom,
+                      service: service,
+                      asContinuation: true,
+                    ),
             );
           },
         ),
@@ -675,8 +687,13 @@ class _UserEventDetailLoaderState extends State<_UserEventDetailLoader> {
 class _EditEventLoader extends StatefulWidget {
   final String eventId;
   final UserEventService service;
+  final bool asContinuation;
 
-  const _EditEventLoader({required this.eventId, required this.service});
+  const _EditEventLoader({
+    required this.eventId,
+    required this.service,
+    this.asContinuation = false,
+  });
 
   @override
   State<_EditEventLoader> createState() => _EditEventLoaderState();
@@ -706,6 +723,9 @@ class _EditEventLoaderState extends State<_EditEventLoader> {
     if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
     if (_event == null)
       return Scaffold(appBar: AppBar(), body: const Center(child: Text('Event not found.')));
+    if (widget.asContinuation) {
+      return CreateEventScreen(continueFrom: _event);
+    }
     return CreateEventScreen(editingEvent: _event);
   }
 }

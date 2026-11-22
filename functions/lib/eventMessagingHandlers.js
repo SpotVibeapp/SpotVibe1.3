@@ -78,7 +78,7 @@ function install(deps) {
       throw new HttpsError('failed-precondition', 'That message cannot be sent.');
     }
     const db = admin.firestore();
-    const part = await requireParticipant(db, eventId, uid);
+    await requireParticipant(db, eventId, uid);
     await bumpRate(db, uid, 'thread', THREAD_RATE_LIMIT, THREAD_RATE_WINDOW_MS);
     const text = maskContactInfo(raw);
     const displayName = (request.data && request.data.authorName) || '';
