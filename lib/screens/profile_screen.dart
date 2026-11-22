@@ -16,6 +16,7 @@ import '../providers/theme_provider.dart';
 import '../repositories/user_event_repository.dart';
 import '../services/user_event_service.dart';
 import '../theme/theme.dart';
+import '../widgets/events/host_rating_badge.dart';
 import '../widgets/common/editable_avatar.dart';
 import '../widgets/common/app_icon_mark.dart';
 import '../widgets/common/follow_stats_row.dart';
@@ -193,6 +194,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppTheme.spacingMd),
                 Text(user.displayName, style: text.headlineSmall),
+                HostRatingBadge(hostId: user.id),
                 const SizedBox(height: AppTheme.spacingXs),
                 // Apple / Facebook accounts may have no email; hide the line.
                 if (user.email.isNotEmpty)

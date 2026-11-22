@@ -5,6 +5,7 @@ import '../models/user_event.dart';
 import '../providers/auth_provider.dart';
 import '../providers/user_events_provider.dart';
 import '../theme/theme.dart';
+import '../widgets/events/event_reviews_section.dart';
 
 /// The Premium dashboard — live searches, views, and RSVPs for every
 /// Premium event the user owns.
@@ -132,6 +133,17 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                   AppTheme.spacingMd, AppTheme.spacingMd, AppTheme.spacingMd, AppTheme.spacingXs,
                 ),
                 child: _AggregateSummaryRow(events: proEvents, colors: colors, appColors: appColors, text: text),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppTheme.spacingMd, AppTheme.spacingMd, AppTheme.spacingMd, AppTheme.spacingXs,
+                ),
+                child: HostReviewsPanel(
+                  hostId: context.read<AuthProvider>().user?.id ?? '',
+                  isPremium: true,
+                ),
               ),
             ),
 

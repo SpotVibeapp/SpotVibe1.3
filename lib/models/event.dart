@@ -145,6 +145,8 @@ class Event {
 
   /// Public organizer profile links associated with this event.
   final EventSocialLinks socialLinks;
+  /// Optional Hidden Gem this event is held at. Reviews also attach there.
+  final String? gemId;
 
   const Event({
     required this.id,
@@ -182,6 +184,7 @@ class Event {
     this.creatorId = '',
     this.isSample = false,
     this.socialLinks = const EventSocialLinks.empty(),
+    this.gemId,
   });
 
   Event copyWith({
@@ -219,6 +222,8 @@ class Event {
     String? creatorId,
     bool? isSample,
     EventSocialLinks? socialLinks,
+    String? gemId,
+    bool clearGemId = false,
   }) =>
       Event(
         id: id,
@@ -257,6 +262,7 @@ class Event {
         creatorId: creatorId ?? this.creatorId,
         isSample: isSample ?? this.isSample,
         socialLinks: socialLinks ?? this.socialLinks,
+        gemId: clearGemId ? null : (gemId ?? this.gemId),
       );
 
   /// Ticketed listings (e.g. Ticketmaster) are never "free" just because the
