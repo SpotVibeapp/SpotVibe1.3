@@ -2677,4 +2677,73 @@ class AppLocalizationsEn extends AppLocalizations {
   String eventTextPlaceholderSemantics(String headline) {
     return 'No event photo. $headline';
   }
+
+  @override
+  String get eventReviewTitle => 'Reviews';
+
+  @override
+  String get eventReviewHelp =>
+      'Only people who RSVP\'d can leave a short star review after the event ends. Notes go through the same moderation as other posts.';
+
+  @override
+  String get eventReviewCta => 'Rate this event';
+
+  @override
+  String get eventReviewEdit => 'Update your review';
+
+  @override
+  String get eventReviewNoteHint => 'Optional short note';
+
+  @override
+  String get eventReviewSubmit => 'Submit review';
+
+  @override
+  String get eventReviewSubmitted => 'Thanks for the review.';
+
+  @override
+  String get eventReviewFailed => 'Couldn\'t save that review. Try again.';
+
+  @override
+  String get eventReviewRsvpRequired =>
+      'RSVP to this event, then come back after it ends to leave a review.';
+
+  @override
+  String get eventReviewNotEnded => 'Reviews open after the event ends.';
+
+  @override
+  String get eventReviewEmpty => 'No reviews yet.';
+
+  @override
+  String eventReviewHostRating(String avg, int count) {
+    return '$avg ($count)';
+  }
+
+  @override
+  String get eventReviewReply => 'Reply';
+
+  @override
+  String get eventReviewReplyHint => 'Write a reply';
+
+  @override
+  String eventReviewHostReply(String reply) {
+    return 'Host reply: $reply';
+  }
+
+  @override
+  String get eventReviewReplyPremiumTitle =>
+      'Review replies are a Premium perk';
+
+  @override
+  String get eventReviewReplyPremiumBody =>
+      'Premium businesses can reply to reviews and see them in analytics. Your rating is already visible on your profile for free.';
+
+  @override
+  String get eventReviewReport => 'Report review';
+
+  @override
+  String get eventReviewGemHelp =>
+      'These reviews come from events held at this Hidden Gem. Standing spots are not reviewed directly.';
+
+  @override
+  String get eventReviewAnonymous => 'Attendee';
 }

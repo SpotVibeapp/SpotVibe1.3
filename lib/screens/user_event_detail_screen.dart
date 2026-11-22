@@ -8,6 +8,7 @@ import '../l10n/app_localizations.dart';
 import '../models/user_event.dart';
 import '../providers/auth_provider.dart';
 import '../services/event_analytics_service.dart';
+import '../services/event_review_service.dart';
 import '../theme/category_colors.dart';
 import '../theme/theme.dart';
 import '../widgets/events/add_to_calendar_button.dart';
@@ -21,6 +22,7 @@ import '../widgets/common/event_image_placeholder.dart';
 import '../widgets/common/fullscreen_image_viewer.dart';
 import '../widgets/events/attendees_section.dart';
 import '../widgets/events/comment_section.dart';
+import '../widgets/events/event_reviews_section.dart';
 import '../widgets/events/rsvp_button.dart';
 
 class UserEventDetailScreen extends StatefulWidget {
@@ -43,6 +45,11 @@ class _UserEventDetailScreenState extends State<UserEventDetailScreen> {
               viewerId: context.read<AuthProvider>().user?.id,
               creatorId: widget.event.creatorId,
             );
+        final uid = context.read<AuthProvider>().user?.id;
+        if (uid != null && uid.isNotEmpty &&
+            isEventEnded(widget.event.dateTime, widget.event.endDateTime)) {
+          EventReviewService().maybeRequestPlayReview(eventId: widget.event.id);
+        }
       } catch (_) {}
     });
   }
@@ -358,6 +365,15 @@ class _UserEventDetailContent extends StatelessWidget {
                   const RsvpButton(),
                   const SizedBox(height: AppTheme.spacingLg),
                   AttendeesSection(accent: categoryAccent(event.category)),
+                  const SizedBox(height: AppTheme.spacingLg),
+                  const SizedBox(height: AppTheme.spacingLg),
+                  EventReviewsSection(
+                    eventId: event.id,
+                    creatorId: event.creatorId,
+                    dateTime: event.dateTime,
+                    endDateTime: event.endDateTime,
+                    accent: categoryAccent(event.category),
+                  ),
                   const SizedBox(height: AppTheme.spacingLg),
                   CommentSection(accent: categoryAccent(event.category)),
                   const SizedBox(height: AppTheme.spacingXl),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/user_event.dart';
 import '../theme/theme.dart';
+import '../theme/category_colors.dart';
+import '../widgets/events/event_reviews_section.dart';
 
 /// Analytics dashboard for a single Premium event.
 /// Shows views, saves, and click-throughs with a visual bar chart.
@@ -105,6 +107,15 @@ class CreatorAnalyticsScreen extends StatelessWidget {
 
           // Tips section
           _TipsCard(colors: colors, appColors: appColors, text: text),
+          const SizedBox(height: AppTheme.spacingMd),
+          EventReviewsSection(
+            eventId: event.id,
+            creatorId: event.creatorId,
+            dateTime: event.dateTime,
+            endDateTime: event.endDateTime,
+            accent: categoryAccent(event.category),
+            showComposer: false,
+          ),
           const SizedBox(height: AppTheme.spacingXl),
         ],
       ),

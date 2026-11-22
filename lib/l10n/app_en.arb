@@ -1261,5 +1261,32 @@
     "placeholders": {
       "headline": { "type": "String" }
     }
-  }
+  },
+  "eventReviewTitle": "Reviews",
+  "eventReviewHelp": "Only people who RSVP'd can leave a short star review after the event ends. Notes go through the same moderation as other posts.",
+  "eventReviewCta": "Rate this event",
+  "eventReviewEdit": "Update your review",
+  "eventReviewNoteHint": "Optional short note",
+  "eventReviewSubmit": "Submit review",
+  "eventReviewSubmitted": "Thanks for the review.",
+  "eventReviewFailed": "Couldn't save that review. Try again.",
+  "eventReviewRsvpRequired": "RSVP to this event, then come back after it ends to leave a review.",
+  "eventReviewNotEnded": "Reviews open after the event ends.",
+  "eventReviewEmpty": "No reviews yet.",
+  "eventReviewHostRating": "{avg} ({count})",
+  "@eventReviewHostRating": {
+    "placeholders": {
+      "avg": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "eventReviewReply": "Reply",
+  "eventReviewReplyHint": "Write a reply",
+  "eventReviewHostReply": "Host reply: {reply}",
+  "@eventReviewHostReply": { "placeholders": { "reply": { "type": "String" } } },
+  "eventReviewReplyPremiumTitle": "Review replies are a Premium perk",
+  "eventReviewReplyPremiumBody": "Premium businesses can reply to reviews and see them in analytics. Your rating is already visible on your profile for free.",
+  "eventReviewReport": "Report review",
+  "eventReviewGemHelp": "These reviews come from events held at this Hidden Gem. Standing spots are not reviewed directly.",
+  "eventReviewAnonymous": "Attendee"
 }

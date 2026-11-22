@@ -60,6 +60,15 @@ void main() {
     expect(formatEventDayChip(DateTime(2026, 8, 13, 18, 0), now: now), 'Tomorrow');
   });
 
+  test('an event is ended after its end time, or after start when it has no end', () {
+    final start = DateTime(2026, 8, 12, 9, 0);
+    final end = DateTime(2026, 8, 12, 13, 0);
+    expect(isEventEnded(start, end, now: DateTime(2026, 8, 12, 12, 59)), isFalse);
+    expect(isEventEnded(start, end, now: DateTime(2026, 8, 12, 13, 0)), isTrue);
+    expect(isEventEnded(start, null, now: DateTime(2026, 8, 12, 8, 59)), isFalse);
+    expect(isEventEnded(start, null, now: DateTime(2026, 8, 12, 9, 0)), isTrue);
+  });
+
   test('later this week uses weekday', () {
     expect(
       formatEventWhen(DateTime(2026, 8, 15, 18, 0), now: now),

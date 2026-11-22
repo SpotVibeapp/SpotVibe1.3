@@ -74,6 +74,7 @@ Map<String, dynamic> eventToMap(Event event, {String kind = 'curated'}) {
     'isCreatorPro': event.isCreatorPro,
     'featuredWeekKey': event.featuredWeekKey,
     'socialLinks': event.socialLinks.toStorageMap(),
+    if (event.gemId != null && event.gemId!.isNotEmpty) 'gemId': event.gemId,
   };
 }
 
@@ -128,6 +129,9 @@ Event eventFromMap(String id, Map<String, dynamic> data) {
         (data['creatorId'] as String?)?.isNotEmpty == true,
     creatorId: data['creatorId'] as String? ?? '',
     socialLinks: EventSocialLinks.fromStorage(data['socialLinks']),
+    gemId: (data['gemId'] as String?)?.trim().isEmpty == true
+        ? null
+        : data['gemId'] as String?,
   );
 }
 
@@ -235,6 +239,7 @@ Map<String, dynamic> userEventToMap(UserCreatedEvent event) {
     'analyticsClicks': event.analyticsClicks,
     'analyticsShares': event.analyticsShares,
     'socialLinks': event.socialLinks.toStorageMap(),
+    if (event.gemId != null && event.gemId!.isNotEmpty) 'gemId': event.gemId,
   };
 }
 
@@ -295,5 +300,8 @@ UserCreatedEvent userEventFromMap(String id, Map<String, dynamic> data) {
     analyticsShares: (data['analyticsShares'] as num?)?.toInt() ?? 0,
     featuredWeekKey: data['featuredWeekKey'] as String?,
     socialLinks: EventSocialLinks.fromStorage(data['socialLinks']),
+    gemId: (data['gemId'] as String?)?.trim().isEmpty == true
+        ? null
+        : data['gemId'] as String?,
   );
 }

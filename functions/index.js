@@ -45,6 +45,9 @@
  *  - downgradeExpiredGems scheduled — hide expired promotional fields
  *  - spawnRecurringEvents scheduled — creates the next Premium recurring
  *                           occurrence after the current one has started
+ *  - submitEventReview / replyToEventReview / listEventReviews callables —
+ *                           event reviews in server-only event_reviews
+ *  - recordEndedRsvp / markPlayReviewPrompted callables — Play rating prompt
  */
 const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
 const { onObjectFinalized } = require('firebase-functions/v2/storage');
@@ -85,6 +88,8 @@ const { onSchedule } = require('firebase-functions/v2/scheduler');
 const zlib = require('zlib');
 const { planFeedFields } = require('./lib/feedFields');
 const { shouldSpawn, nextOccurrence, buildSpawnedEvent } = require('./lib/recurringSpawn');
+const eventReviewHandlers = require('./lib/eventReviewHandlers');
+const { collectReviewRefs } = require('./lib/eventReviewCleanup');
 const { assessParallelModeration } = require('./lib/parallelModeration');
 const {
   applyEntitlementToGem,
@@ -228,6 +233,13 @@ async function collectUserDeletions(uid) {
   // firestore.indexes.json).
   push(await db.collectionGroup('rsvps').where('userId', '==', uid).get());
   push(await db.collectionGroup('comments').where('authorId', '==', uid).get());
+
+  // Event reviews they wrote or received as host, plus Play-prompt state.
+  try {
+    (await collectReviewRefs(db, uid)).forEach((ref) => refs.push(ref));
+  } catch (e) {
+    console.warn('reviews purge skipped:', e && e.message);
+  }
 
   push(await db.collection('event_claims').where('userId', '==', uid).get());
   push(await db.collection('user_reports').where('reportedById', '==', uid).get());
@@ -2334,3 +2346,18 @@ exports.spawnRecurringEvents = onSchedule(
     console.log(`spawnRecurringEvents: spawned ${spawned}, skipped ${skipped}`);
   }
 );
+
+// Event reviews and the Play rating prompt. Reads and writes go through
+// these callables (server-only collections), so RSVP, ended-event, star
+// range, PII masking, and moderation stay server-enforced with no rules
+// change. Not deployed until Blake's Firebase re-auth.
+eventReviewHandlers.install({
+  exports,
+  onCall,
+  HttpsError,
+  admin,
+  containsBanned,
+  runParallelModeration,
+  verifiedEntitlement,
+  revenueCatSecretKey,
+});

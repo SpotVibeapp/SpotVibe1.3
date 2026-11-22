@@ -36,6 +36,21 @@ bool isEventVisibleInFeed(
       isEventHappeningNow(dateTime, endDateTime, now: clock);
 }
 
+/// Whether the event is over, so an RSVP'd attendee may leave a review.
+///
+/// Uses the explicit end time when one exists. Legacy events without an
+/// end time are treated as ended once their start time has passed, which
+/// matches how the feed already hides them.
+bool isEventEnded(
+  DateTime dateTime,
+  DateTime? endDateTime, {
+  DateTime? now,
+}) {
+  final clock = now ?? DateTime.now();
+  final end = endDateTime ?? dateTime;
+  return !end.isAfter(clock);
+}
+
 /// Full start/end range for an event detail page.
 String formatEventTimeRange(DateTime dateTime, DateTime? endDateTime) {
   final start = dateTime.toLocal();
