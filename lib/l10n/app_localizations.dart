@@ -4830,6 +4830,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No event photo. {headline}'**
   String eventTextPlaceholderSemantics(String headline);
+
+  /// No description provided for @reportReasonFake.
+  ///
+  /// In en, this message translates to:
+  /// **'Fake, spam or copied without permission'**
+  String get reportReasonFake;
+
+  /// No description provided for @reportReasonWrongDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong date, time or place'**
+  String get reportReasonWrongDetails;
+
+  /// No description provided for @reportReasonCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled or didn\'t happen'**
+  String get reportReasonCancelled;
+
+  /// No description provided for @reportReasonOffensive.
+  ///
+  /// In en, this message translates to:
+  /// **'Offensive, unsafe or inappropriate'**
+  String get reportReasonOffensive;
+
+  /// No description provided for @reportReasonOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Something else'**
+  String get reportReasonOther;
+
+  /// No description provided for @reportNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add details (optional)'**
+  String get reportNoteHint;
+
+  /// No description provided for @reportSignInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to report an event so our team can follow up.'**
+  String get reportSignInRequired;
+
+  /// No description provided for @reportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Your report wasn\'t sent. Check your connection and try again.'**
+  String get reportFailed;
+
+  /// No description provided for @flyerButton.
+  ///
+  /// In en, this message translates to:
+  /// **'QR flyer to print'**
+  String get flyerButton;
+
+  /// No description provided for @flyerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Print a QR flyer'**
+  String get flyerTitle;
+
+  /// No description provided for @flyerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Post it at the venue, a cafe board or the front desk. People scan it to open and save your event.'**
+  String get flyerHint;
+
+  /// No description provided for @flyerScanToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan to save this event'**
+  String get flyerScanToSave;
+
+  /// No description provided for @flyerFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Free local events on SpotVibe'**
+  String get flyerFooter;
+
+  /// No description provided for @flyerShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share or print flyer'**
+  String get flyerShare;
+
+  /// No description provided for @flyerFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t create the flyer. Please try again.'**
+  String get flyerFailed;
 }
 
 class _AppLocalizationsDelegate

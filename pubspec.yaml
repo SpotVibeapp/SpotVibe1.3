@@ -47,6 +47,8 @@ dependencies:
   # Deep links / sharing
   app_links: ^6.3.4
   share_plus: ^10.1.4
+  # Printable QR flyers for organizers (pure Dart, no native code).
+  qr_flutter: ^4.1.0
 
   # Subscriptions
   # v9+ uses Google Play Billing Library 8, required for new Play submissions.

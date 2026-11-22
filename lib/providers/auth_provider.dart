@@ -162,7 +162,10 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Files a moderation report against an event or hidden gem.
-  Future<void> reportContent({
+  ///
+  /// Returns `true` only when the report was saved, so screens never show
+  /// "Report submitted" for a report that was dropped.
+  Future<bool> reportContent({
     required String contentType,
     required String contentId,
     String reportedUserId = '',
@@ -175,7 +178,10 @@ class AuthProvider extends ChangeNotifier {
         reportedUserId: reportedUserId,
         reason: reason,
       );
-    } catch (_) {}
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> addFriend(String userId, {String friendName = 'this user'}) async {

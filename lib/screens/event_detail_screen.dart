@@ -31,6 +31,7 @@ import '../widgets/events/comment_section.dart';
 import '../widgets/events/practical_details_section.dart';
 import '../widgets/events/get_tickets_button.dart';
 import '../widgets/events/quick_actions_section.dart';
+import '../widgets/events/report_event_sheet.dart';
 import '../widgets/events/rsvp_button.dart';
 import '../widgets/events/similar_events_section.dart';
 
@@ -648,30 +649,6 @@ class _OrganizerRow extends StatelessWidget {
 
   void _showReportDialog(
       BuildContext context, AuthProvider auth, String organizerId) {
-    final l10n = AppLocalizations.of(context)!;
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.reportEvent),
-        content: TextField(controller: controller, decoration: InputDecoration(hintText: l10n.reasonForReporting), maxLines: 3),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
-          ElevatedButton(
-            onPressed: () {
-              auth.reportContent(
-                contentType: 'event',
-                contentId: event.id,
-                reportedUserId: organizerId,
-                reason: controller.text,
-              );
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.reportSubmitted)));
-            },
-            child: Text(l10n.submit),
-          ),
-        ],
-      ),
-    );
+    showEventReportSheet(context, event: event);
   }
 }

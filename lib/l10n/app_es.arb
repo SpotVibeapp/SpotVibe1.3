@@ -1261,5 +1261,20 @@
     "placeholders": {
       "headline": { "type": "String" }
     }
-  }
+  },
+  "reportReasonFake": "Falso, spam o copiado sin permiso",
+  "reportReasonWrongDetails": "Fecha, hora o lugar incorrectos",
+  "reportReasonCancelled": "Cancelado o no se realizó",
+  "reportReasonOffensive": "Ofensivo, inseguro o inapropiado",
+  "reportReasonOther": "Otra cosa",
+  "reportNoteHint": "Agrega detalles (opcional)",
+  "reportSignInRequired": "Inicia sesión para reportar un evento y que nuestro equipo pueda darle seguimiento.",
+  "reportFailed": "Tu reporte no se envió. Revisa tu conexión e inténtalo de nuevo.",
+  "flyerButton": "Volante con QR para imprimir",
+  "flyerTitle": "Imprime un volante con QR",
+  "flyerHint": "Pégalo en el lugar, en un tablero de café o en la recepción. La gente lo escanea para abrir y guardar tu evento.",
+  "flyerScanToSave": "Escanea para guardar este evento",
+  "flyerFooter": "Eventos locales gratis en SpotVibe",
+  "flyerShare": "Compartir o imprimir volante",
+  "flyerFailed": "No se pudo crear el volante. Inténtalo de nuevo."
 }

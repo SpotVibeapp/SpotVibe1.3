@@ -43,6 +43,12 @@
  *  - saveGem / renewGemRich callables — Hidden Gems basic vs 30-day rich
  *                           business listings; richUntil is set only here
  *  - downgradeExpiredGems scheduled — hide expired promotional fields
+ *  - eventLandingPage    HTTP — server-rendered /e/<id> pages (schema.org
+ *                           Event JSON-LD + link-preview tags) for
+ *                           organizer-posted events only. NOT deployed: it
+ *                           needs a public invoker (blocked by the org's
+ *                           domain-restricted sharing policy) and a Hosting
+ *                           rewrite for /e/**, both Blake's call.
  */
 const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
 const { onObjectFinalized } = require('firebase-functions/v2/storage');
@@ -57,6 +63,11 @@ const {
   onDocumentWritten,
 } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
+const {
+  eventIdFromPath,
+  isSafeEventId,
+  landingResponse,
+} = require('./lib/eventLanding');
 const { planPublicPiiScrub } = require('./lib/userPrivacy');
 const { entitlementStatus, fetchSubscriber } = require('./lib/revenuecat');
 const { claimFoundingSlotIn, isoWeekKey } = require('./lib/featuring');
@@ -2224,4 +2235,37 @@ exports.downgradeExpiredGems = onSchedule(
     const result = await downgradeExpiredRichGems();
     console.log(`downgradeExpiredGems: hid rich fields on ${result.updated} gem(s)`);
   }
+);
+
+/**
+ * Public, server-rendered event page for search engines and link previews.
+ * Served at https://spotvibeapp.com/e/<id> through a Hosting rewrite
+ * ({"source": "/e/**", "function": "eventLandingPage"}). Read-only: it only
+ * reads events/{id}. Indexing rules live in lib/eventLanding.js.
+ */
+exports.eventLandingPage = onRequest(
+  { memory: '256MiB', timeoutSeconds: 10, maxInstances: 5 },
+  async (req, res) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      res.set('Allow', 'GET, HEAD').status(405).send('');
+      return;
+    }
+    const id = eventIdFromPath(req.path);
+    let data = null;
+    if (isSafeEventId(id)) {
+      try {
+        const snap = await admin.firestore().collection('events').doc(id).get();
+        data = snap.exists ? snap.data() : null;
+      } catch (e) {
+        console.error('eventLandingPage read failed', e && e.message);
+        res.set('Retry-After', '60').status(503).send('');
+        return;
+      }
+    }
+    const out = landingResponse(id, data, {
+      baseUrl: 'https://spotvibeapp.com',
+      playUrl: 'https://play.google.com/store/apps/details?id=app.spotvibe',
+    });
+    res.status(out.status).set(out.headers).send(out.body);
+  },
 );

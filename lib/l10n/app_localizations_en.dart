@@ -2677,4 +2677,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String eventTextPlaceholderSemantics(String headline) {
     return 'No event photo. $headline';
   }
+
+  @override
+  String get reportReasonFake => 'Fake, spam or copied without permission';
+
+  @override
+  String get reportReasonWrongDetails => 'Wrong date, time or place';
+
+  @override
+  String get reportReasonCancelled => 'Cancelled or didn\'t happen';
+
+  @override
+  String get reportReasonOffensive => 'Offensive, unsafe or inappropriate';
+
+  @override
+  String get reportReasonOther => 'Something else';
+
+  @override
+  String get reportNoteHint => 'Add details (optional)';
+
+  @override
+  String get reportSignInRequired =>
+      'Sign in to report an event so our team can follow up.';
+
+  @override
+  String get reportFailed =>
+      'Your report wasn\'t sent. Check your connection and try again.';
+
+  @override
+  String get flyerButton => 'QR flyer to print';
+
+  @override
+  String get flyerTitle => 'Print a QR flyer';
+
+  @override
+  String get flyerHint =>
+      'Post it at the venue, a cafe board or the front desk. People scan it to open and save your event.';
+
+  @override
+  String get flyerScanToSave => 'Scan to save this event';
+
+  @override
+  String get flyerFooter => 'Free local events on SpotVibe';
+
+  @override
+  String get flyerShare => 'Share or print flyer';
+
+  @override
+  String get flyerFailed => 'Couldn\'t create the flyer. Please try again.';
 }

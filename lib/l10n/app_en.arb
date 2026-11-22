@@ -1261,5 +1261,20 @@
     "placeholders": {
       "headline": { "type": "String" }
     }
-  }
+  },
+  "reportReasonFake": "Fake, spam or copied without permission",
+  "reportReasonWrongDetails": "Wrong date, time or place",
+  "reportReasonCancelled": "Cancelled or didn't happen",
+  "reportReasonOffensive": "Offensive, unsafe or inappropriate",
+  "reportReasonOther": "Something else",
+  "reportNoteHint": "Add details (optional)",
+  "reportSignInRequired": "Sign in to report an event so our team can follow up.",
+  "reportFailed": "Your report wasn't sent. Check your connection and try again.",
+  "flyerButton": "QR flyer to print",
+  "flyerTitle": "Print a QR flyer",
+  "flyerHint": "Post it at the venue, a cafe board or the front desk. People scan it to open and save your event.",
+  "flyerScanToSave": "Scan to save this event",
+  "flyerFooter": "Free local events on SpotVibe",
+  "flyerShare": "Share or print flyer",
+  "flyerFailed": "Couldn't create the flyer. Please try again."
 }
